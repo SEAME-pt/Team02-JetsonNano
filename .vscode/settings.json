@@ -1,4 +1,5 @@
 {
+    "cmake.buildDirectory": "${workspaceFolder}/CarController/build",
     "editor.defaultFormatter": "xaver.clang-format",
     "[cpp]": {
         "editor.defaultFormatter": "xaver.clang-format",
