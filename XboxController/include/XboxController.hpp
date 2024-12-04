@@ -13,28 +13,26 @@
 enum Button
 {
     BUTTON_A = 0,
-    BUTTON_B,
-    BUTTON_X,
-    BUTTON_Y,
-    BUTTON_LB,
-    BUTTON_RB,
-    BUTTON_BACK,
-    BUTTON_START,
-    BUTTON_HOME,
-    BUTTON_LEFT_STICK,
-    BUTTON_RIGHT_STICK
+    BUTTON_B = 1,
+    BUTTON_BACK = 2,
+    BUTTON_X = 3,
+    BUTTON_Y = 4,
+    BUTTON_UNKNOWN= 5,
+    BUTTON_LB = 6,
+    BUTTON_RB = 7,
+    BUTTON_L2 = 8,
+    BUTTON_R2 = 9,
+    BUTTON_SELECT = 10,
+    BUTTON_START = 11,
+    BUTTON_HOME = 12,
+    BUTTON_LEFT_STICK = 13,
+    BUTTON_RIGHT_STICK = 14
 };
 
 enum Axis
 {
-    AXIS_LEFT_STICK_X = 0,
-    AXIS_LEFT_STICK_Y,
-    AXIS_RIGHT_STICK_X,
-    AXIS_RIGHT_STICK_Y,
-    AXIS_LEFT_TRIGGER,
-    AXIS_RIGHT_TRIGGER,
-    AXIS_DPAD_X,
-    AXIS_DPAD_Y
+    AXIS_RIGHT_STICK = 0,
+    AXIS_LEFT_STICK = 1,
 };
 
 struct axis_state {

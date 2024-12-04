@@ -6,15 +6,12 @@
 #define JS_EVENT_AXIS		0x02	/* joystick moved */
 #define JS_EVENT_INIT		0x80	/* initial state of device */
 
-#define SHM_NAME "/xbox_shm"
-#define SHM_SIZE 1024
-
 int main(void)
 {
     XboxController player;
     size_t axis;
+    std::cout << player.getButtonCount() <<std::endl;
 
-    /* This loop will exit if the controller is unplugged. */
     while (player.readEvent() == 0)
     {
         switch (player.event.type)
@@ -43,11 +40,23 @@ int main(void)
                     case BUTTON_BACK:
                         std::cout << "Button Back" << std::endl;
                         break;
+                    case BUTTON_UNKNOWN:
+                        std::cout << "Button Start" << std::endl;
+                        break;
+                    case BUTTON_L2:
+                        std::cout << "Button L2" << std::endl;
+                        break;
+                    case BUTTON_R2:
+                        std::cout << "Button R2" << std::endl;
+                        break;
+                    case BUTTON_SELECT:
+                        std::cout << "Button Select" << std::endl;
+                        break;
                     case BUTTON_START:
                         std::cout << "Button Start" << std::endl;
                         break;
                     case BUTTON_HOME:
-                        std::cout << "Button Home" << std::endl;
+                        std::cout << "Button HOME" << std::endl;
                         break;
                     case BUTTON_LEFT_STICK:
                         std::cout << "Button Left Stick" << std::endl;
@@ -59,11 +68,20 @@ int main(void)
                         std::cout << "Unknown button" << std::endl;
                         break;
                 }
+                break;
             case JS_EVENT_AXIS:
                 axis = player.getAxisState();
-                if (axis )
-                    printf("Axis %zu at (%6d, %6d)\n", axis, player.axes[axis]->x, player.axes[axis]->y);
-                break;
+                switch (axis)
+                {
+                    case (AXIS_LEFT_STICK):
+                        printf("Axis %zu at (%6d, %6d)\n", axis, player.axes[axis]->x, -player.axes[axis]->y);
+                        break;
+                    case (AXIS_RIGHT_STICK):
+                        printf("Axis %zu at (%6d, %6d)\n", axis, player.axes[axis]->x, -player.axes[axis]->y);
+                        break;
+                    default:
+                        break;
+                }
             default:
                 break;
         }
