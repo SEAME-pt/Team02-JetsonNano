@@ -11,7 +11,6 @@ int main()
         RaceCar raceCar;
 
         raceCar.init("/dev/i2c-1", 0x60, 0x40);
-
         raceCar.run();
     }
     catch (const std::exception& e)
