@@ -1,8 +1,6 @@
 #include "../include/PCA9685.hpp"
 
-PCA9685::PCA9685()
-{
-}
+PCA9685::PCA9685() {}
 
 PCA9685::~PCA9685()
 {
@@ -22,6 +20,17 @@ PCA9685& PCA9685::operator=(const PCA9685& originalPCA9685)
 {
     (void)originalPCA9685;
     return *this;
+}
+
+void PCA9685::init(I2C* m_i2c, int deviceAddress)
+{
+    this->_i2c           = m_i2c;
+    this->_deviceAddress = deviceAddress;
+    _i2c->writeByte(_deviceAddress, MODE1, 0x00);
+    _i2c->writeByte(_deviceAddress, ALL_LED_ON_L, 0x00);
+    _i2c->writeByte(_deviceAddress, ALL_LED_ON_H, 0x00);
+    _i2c->writeByte(_deviceAddress, ALL_LED_OFF_L, 0x00);
+    _i2c->writeByte(_deviceAddress, ALL_LED_OFF_H, 0x10);
 }
 
 void PCA9685::setPWMFreq(float freq_hz)
@@ -50,15 +59,4 @@ void PCA9685::setDutyCicle(uint8_t channel, uint16_t pulseWidth)
 void PCA9685::setGPIO(uint8_t channel, uint16_t on)
 {
     this->setPWM(channel, 0x1000 * on, 0x1000 * !on);
-}
-
-void PCA9685::init(I2C* m_i2c, int deviceAddress)
-{
-    this->_i2c = m_i2c;
-    this->_deviceAddress = deviceAddress;
-    _i2c->writeByte(_deviceAddress, MODE1, 0x00);
-    _i2c->writeByte(_deviceAddress, ALL_LED_ON_L, 0x00);
-    _i2c->writeByte(_deviceAddress, ALL_LED_ON_H, 0x00);
-    _i2c->writeByte(_deviceAddress, ALL_LED_OFF_L, 0x00);
-    _i2c->writeByte(_deviceAddress, ALL_LED_OFF_H, 0x10);
 }

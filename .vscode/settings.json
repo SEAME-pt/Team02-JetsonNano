@@ -5,7 +5,11 @@
         "editor.defaultFormatter": "xaver.clang-format",
         "editor.formatOnSave": true
     },
-    "clang-format.executable": "C:\\Program Files\\LLVM\\bin\\clang-format.exe",
+    "clang-format.executable": "/usr/bin/clang-format",
     "C_Cpp.codeAnalysis.clangTidy.enabled": true,
-    "C_Cpp.codeAnalysis.clangTidy.path": "C:\\Program Files\\LLVM\\bin\\clang-tidy.exe"
+    "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-format",
+    "files.associations": {
+        "iostream": "cpp",
+        "stdexcept": "cpp"
+    }
 }

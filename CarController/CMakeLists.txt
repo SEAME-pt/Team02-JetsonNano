@@ -18,6 +18,7 @@ add_subdirectory(external/PCA9685)
 
 set(SOURCES
     ./src/main.cpp
+    ./src/RaceCar.cpp
 )
 
 add_executable(i2c
