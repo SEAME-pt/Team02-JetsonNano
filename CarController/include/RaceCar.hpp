@@ -3,6 +3,13 @@
 #include "Motor.hpp"
 #include "Servo.hpp"
 #include "PCA9685.hpp"
+#include "SharedMemory.hpp"
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <iostream>
+#include <chrono>
+#include <thread>
 
 class RaceCar
 {
@@ -14,12 +21,16 @@ class RaceCar
     Motor motorLeft;
     Servo servo;
 
+  private:
   public:
+    void setDirection(uint8_t angle);
+    void setSpeed(int8_t speed);
+    SharedMemory* sharedData;
     RaceCar();
     ~RaceCar();
 
     void init(const std::string& i2cDevice, uint8_t motorAddress,
               uint8_t servoAddress);
-    void setDirection(uint8_t angle);
-    void setSpeed(int speed);
+    void run(void);
+    void stop(void);
 };
