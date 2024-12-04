@@ -1,10 +1,10 @@
-#include "../include/RaceCar.hpp"
+#include "RaceCar.hpp"
 
 RaceCar::RaceCar()
 {
-    this->m_I2c   = new I2C;
-    this->m_Motor = new PCA9685;
-    this->m_Servo = new PCA9685;
+    this->m_I2c      = new I2C;
+    this->m_motorPCA = new PCA9685;
+    this->m_ServoPCA = new PCA9685;
 }
 
 RaceCar::~RaceCar()
@@ -18,18 +18,18 @@ RaceCar::~RaceCar()
         // nothing
     }
 
-    if (this->m_Motor)
+    if (this->m_motorPCA)
     {
-        delete this->m_Motor;
+        delete this->m_motorPCA;
     }
     else
     {
         // nothing
     }
 
-    if (this->m_Servo)
+    if (this->m_ServoPCA)
     {
-        delete this->m_Servo;
+        delete this->m_ServoPCA;
     }
     else
     {
@@ -41,38 +41,21 @@ void RaceCar::init(const std::string& i2cDevice, uint8_t motorAddress,
                    uint8_t servoAddress)
 {
     this->m_I2c->init(i2cDevice);
-    this->m_Motor->init(m_I2c, motorAddress);
-    this->m_Servo->init(m_I2c, servoAddress);
-    this->m_Motor->setPWMFreq(1600);
-    this->m_Servo->setPWMFreq(50);
+    this->m_motorPCA->init(m_I2c, motorAddress);
+    this->m_ServoPCA->init(m_I2c, servoAddress);
+
+    this->motorLeft.init(m_motorPCA);
+    this->motorRight.init(m_motorPCA);
+    this->servo.init(m_ServoPCA);
 }
 
 void RaceCar::setDirection(uint8_t angle)
 {
-    uint16_t pulseWidth = static_cast<uint16_t>(205 + (angle * 205) / 180);
-    m_Servo->setPWM(0, 0, pulseWidth);
+    servo.setDirection(angle);
 }
 
 void RaceCar::setSpeed(int speed)
 {
-    if (speed < 0)
-    {
-        uint16_t pulseWidth = -speed * 4095 / 100;
-        m_Motor->setDutyCicle(0, pulseWidth);
-        m_Motor->setGPIO(1, true);
-        m_Motor->setGPIO(2, false);
-        m_Motor->setGPIO(5, false);
-        m_Motor->setGPIO(6, true);
-        m_Motor->setDutyCicle(7, pulseWidth);
-    }
-    else
-    {
-        uint16_t pulseWidth = speed * 4095 / 100;
-        m_Motor->setDutyCicle(0, pulseWidth);
-        m_Motor->setGPIO(1, false);
-        m_Motor->setGPIO(2, true);
-        m_Motor->setGPIO(5, true);
-        m_Motor->setGPIO(6, false);
-        m_Motor->setDutyCicle(7, pulseWidth);
-    }
+    motorLeft.setSpeed(speed);
+    motorRight.setSpeed(speed);
 }

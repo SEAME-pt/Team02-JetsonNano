@@ -13,12 +13,16 @@ set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)
 
 set(CMAKE_EXE_LINKER_FLAGS "-static")
 
+include_directories(include)
+
 add_subdirectory(external/I2C)
 add_subdirectory(external/PCA9685)
 
 set(SOURCES
     ./src/main.cpp
     ./src/RaceCar.cpp
+    ./src/Motor.cpp
+    ./src/Servo.cpp
 )
 
 add_executable(i2c

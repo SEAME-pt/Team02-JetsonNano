@@ -1,4 +1,4 @@
-#include "../include/RaceCar.hpp"
+#include "RaceCar.hpp"
 #include <iostream>
 #include <termios.h>
 #include <unistd.h>
