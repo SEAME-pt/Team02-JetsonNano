@@ -16,7 +16,10 @@ int main(void)
         throw std::exception();
 
     struct js_event event;
-    read(js, &event, sizeof(event));
+
+    while(read(js, &event, sizeof(event)))
+    {
+
     switch (event.type)
     {
         case JS_EVENT_BUTTON:
@@ -37,6 +40,7 @@ int main(void)
         default:
             break;
 
+    }
     }
 
 }
