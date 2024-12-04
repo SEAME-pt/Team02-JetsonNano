@@ -1,4 +1,4 @@
- switch (event.number)
+switch (event.number)
                 {
                     case 0:
                         std::cout << "Button 0 (A)" << std::endl;

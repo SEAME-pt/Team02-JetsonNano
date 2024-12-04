@@ -61,6 +61,8 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
+    
+
 }
  
 XboxController::~XboxController()

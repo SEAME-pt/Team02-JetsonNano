@@ -64,6 +64,9 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "__nullptr": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "map": "cpp",
+        "sstream": "cpp",
+        "cinttypes": "cpp"
     }
 }

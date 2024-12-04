@@ -17,11 +17,48 @@ int main(void)
         switch (player.event.type)
         {
             case JS_EVENT_BUTTON:
-                std::cout << "Button " << player.event.number << " , " << player.event.value << std::endl;
-                break;
+                switch (player.event.number)
+                {
+                    case BUTTON_A:
+                        std::cout << "Button A" << std::endl;
+                        break;
+                    case BUTTON_B:
+                        std::cout << "Button B" << std::endl;
+                        break;
+                    case BUTTON_X:
+                        std::cout << "Button X" << std::endl;
+                        break;
+                    case BUTTON_Y:
+                        std::cout << "Button Y" << std::endl;
+                        break;
+                    case BUTTON_LB:
+                        std::cout << "Button LB" << std::endl;
+                        break;
+                    case BUTTON_RB:
+                        std::cout << "Button RB" << std::endl;
+                        break;
+                    case BUTTON_BACK:
+                        std::cout << "Button Back" << std::endl;
+                        break;
+                    case BUTTON_START:
+                        std::cout << "Button Start" << std::endl;
+                        break;
+                    case BUTTON_HOME:
+                        std::cout << "Button Home" << std::endl;
+                        break;
+                    case BUTTON_LEFT_STICK:
+                        std::cout << "Button Left Stick" << std::endl;
+                        break;
+                    case BUTTON_RIGHT_STICK:
+                        std::cout << "Button Right Stick" << std::endl;
+                        break;
+                    default:
+                        std::cout << "Unknown button" << std::endl;
+                        break;
+                }
             case JS_EVENT_AXIS:
                 axis = player.getAxisState();
-                if (axis < 4)
+                if (axis )
                     printf("Axis %zu at (%6d, %6d)\n", axis, player.axes[axis]->x, player.axes[axis]->y);
                 break;
             default:
