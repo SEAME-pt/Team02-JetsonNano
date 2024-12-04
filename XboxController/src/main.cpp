@@ -6,6 +6,9 @@
 #define JS_EVENT_AXIS		0x02	/* joystick moved */
 #define JS_EVENT_INIT		0x80	/* initial state of device */
 
+#define SHM_NAME "/xbox_shm"
+#define SHM_SIZE 1024
+
 int main(void)
 {
     XboxController player;
