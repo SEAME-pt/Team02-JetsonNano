@@ -20,6 +20,6 @@ class I2C
     I2C& operator=(const I2C& originalI2C);
 
     void init(const std::string& i2cDevice);
-    void writeByte(int deviceAddress, uint8_t reg,
-                   uint8_t value);
+    void writeByte(uint8_t deviceAddress, uint8_t reg, uint8_t value);
+    uint8_t readByte(uint8_t deviceAddress);
 };
