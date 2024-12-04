@@ -1,10 +1,14 @@
 
+#pragma once
+
 #include <linux/joystick.h>
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <vector>
+#include <map>
 
 enum Button
 {
@@ -31,4 +35,31 @@ enum Axis
     AXIS_RIGHT_TRIGGER,
     AXIS_DPAD_X,
     AXIS_DPAD_Y
+};
+
+struct axis_state {
+    int x = 0;
+    int y = 0;
+};
+
+
+class XboxController
+{
+    private:
+        std::map<int, int> buttons;
+        int js;
+
+    public:
+        std::vector<struct axis_state*> axes;
+        struct js_event event;
+        
+        XboxController();
+        ~XboxController();
+        int readEvent( void );
+        int getButtonCount( void );
+        int getAxisCount( void );
+        int getAxisState( void );
+
+
+
 };

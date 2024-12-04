@@ -1,107 +1,33 @@
 
-#include <linux/joystick.h>
-#include <iostream>
-#include <cstdlib>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
 
+#include "../include/XboxController.hpp"
+
+#define JS_EVENT_BUTTON		0x01	/* button pressed/released */
+#define JS_EVENT_AXIS		0x02	/* joystick moved */
+#define JS_EVENT_INIT		0x80	/* initial state of device */
 
 int main(void)
 {
-    std::string deviceRoute = "/dev/input/js0";
-    int js = open(deviceRoute.c_str(), O_RDONLY);
+    XboxController player;
+    size_t axis;
 
-    if (js == -1)
-        throw std::exception();
-
-    struct js_event event;
-    while (read(js, &event, sizeof(event)) > 0)
+    /* This loop will exit if the controller is unplugged. */
+    while (player.readEvent() == 0)
     {
-        switch (event.type)
+        switch (player.event.type)
         {
             case JS_EVENT_BUTTON:
-                std::cout << "Button event: ";
-                switch (event.number)
-                {
-                    case 0:
-                        std::cout << "Button 0 (A)" << std::endl;
-                        break;
-                    case 1:
-                        std::cout << "Button 1 (B)" << std::endl;
-                        break;
-                    case 2:
-                        std::cout << "Button 2 (X)" << std::endl;
-                        break;
-                    case 3:
-                        std::cout << "Button 3 (Y)" << std::endl;
-                        break;
-                    case 4:
-                        std::cout << "Button 4 (LB)" << std::endl;
-                        break;
-                    case 5:
-                        std::cout << "Button 5 (RB)" << std::endl;
-                        break;
-                     case 6:
-                        std::cout << "Button 6 (Back)" << std::endl;
-                        break;
-                    case 7:
-                        std::cout << "Button 7 (Start)" << std::endl;
-                        break;
-                    case 8:
-                        std::cout << "Button 8 (Home)" << std::endl;
-                        break;
-                    case 9:
-                        std::cout << "Button 9 (Left Stick)" << std::endl;
-                        break;
-                    case 10:
-                        std::cout << "Button 10 (Right Stick)" << std::endl;
-                        break;
-                    default:
-                        std::cout << "Unknown button" << std::endl;
-                        break;
-                }
+                std::cout << "Button " << player.event.number << " , " << player.event.value << std::endl;
                 break;
-
             case JS_EVENT_AXIS:
-                std::cout << "Axis event: ";
-                switch (event.number)
-                {
-                    case 0:
-                        std::cout << "Left Stick X Axis " << event.value << std::endl;
-                        break;
-                    case 1:
-                        std::cout << "Left Stick Y Axis " << event.value << std::endl;
-                        break;
-                    case 2:
-                        std::cout << "Right Stick X Axis " << event.value << std::endl;
-                        break;
-                    case 3:
-                        std::cout << "Right Stick Y Axis " << event.value << std::endl;
-                        break;
-                    case 4:
-                        std::cout << "Left Trigger " << event.value << std::endl;
-                        break;
-                    case 5:
-                        std::cout << "Right Trigger " << event.value << std::endl;
-                        break;
-                    case 6:
-                        std::cout << "D-Pad X Axis " << event.value << std::endl;
-                        break;
-                    case 7:
-                        std::cout << "D-Pad Y Axis " << event.value << std::endl;
-                        break;
-                    default:
-                        std::cout << "Unknown axis" << std::endl;
-                        break;
-                }
+                axis = player.getAxisState();
+                if (axis < 4)
+                    printf("Axis %zu at (%6d, %6d)\n", axis, player.axes[axis]->x, player.axes[axis]->y);
                 break;
-
             default:
                 break;
         }
+        fflush(stdout);
     }
-
-    close(js);
     return 0;
 }
