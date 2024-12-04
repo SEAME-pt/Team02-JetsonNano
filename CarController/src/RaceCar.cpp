@@ -98,7 +98,6 @@ void RaceCar::run(void)
             setSpeed(this->sharedData->speed);
             setDirection(this->sharedData->direction);
         }
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(100)); // Sleep for 100ms
+        usleep(1000);
     }
 }
