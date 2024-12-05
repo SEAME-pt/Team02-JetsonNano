@@ -120,6 +120,6 @@ void XboxController::test( void )
             std::cout << "DIRECTION: " << this->sharedData->direction << std::endl;
             pthread_mutex_unlock(&this->sharedData->mtx);
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        //std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

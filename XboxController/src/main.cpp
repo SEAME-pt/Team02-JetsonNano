@@ -30,7 +30,7 @@ int main(void)
                             pthread_mutex_unlock(&player.sharedData->mtx);
 
                         }
-                        sleep(1);
+                        //sleep(1);
                         break;
                     case (AXIS_RIGHT_STICK):
                         {
@@ -39,7 +39,7 @@ int main(void)
                             pthread_mutex_unlock(&player.sharedData->mtx);
                             
                         }
-                        sleep(1);
+                        //sleep(1);
                         break;
                     default:
                         break;
