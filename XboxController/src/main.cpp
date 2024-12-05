@@ -35,7 +35,8 @@ int main(void)
                     case (AXIS_RIGHT_STICK):
                         {
                             pthread_mutex_lock(&player.sharedData->mtx);
-                            player.sharedData->direction = player.axes[axis]->x * 100 / 32767;
+                            uint8_t x = 90 + player.axes[axis]->x * 90 / 32767;
+                            player.sharedData->direction = x;
                             pthread_mutex_unlock(&player.sharedData->mtx);
                             
                         }
