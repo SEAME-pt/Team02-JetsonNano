@@ -11,6 +11,8 @@
 #include <chrono>
 #include <thread>
 
+extern int signalTo;
+
 class RaceCar
 {
   private:
@@ -24,7 +26,7 @@ class RaceCar
   private:
   public:
     void setDirection(uint8_t angle);
-    void setSpeed(int8_t speed);
+    void setSpeed(int speed);
     SharedMemory* sharedData;
     RaceCar();
     ~RaceCar();

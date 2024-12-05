@@ -2,10 +2,6 @@
 
 RaceCar::RaceCar()
 {
-    this->m_I2c      = new I2C;
-    this->m_motorPCA = new PCA9685;
-    this->m_ServoPCA = new PCA9685;
-
     int shm_fd = shm_open("/shared_memory", O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1)
     {
@@ -24,19 +20,18 @@ RaceCar::RaceCar()
     {
         throw std::runtime_error("Failed to map shared memory segment");
     }
+
+    this->m_I2c      = new I2C;
+    this->m_motorPCA = new PCA9685;
+    this->m_ServoPCA = new PCA9685;
+
+    std::lock_guard<std::mutex> lock(this->sharedData->mtx);
+    this->sharedData->speed     = 0;
+    this->sharedData->direction = 90;
 }
 
 RaceCar::~RaceCar()
 {
-    if (this->m_I2c)
-    {
-        delete this->m_I2c;
-    }
-    else
-    {
-        // nothing
-    }
-
     if (this->m_motorPCA)
     {
         delete this->m_motorPCA;
@@ -49,6 +44,14 @@ RaceCar::~RaceCar()
     if (this->m_ServoPCA)
     {
         delete this->m_ServoPCA;
+    }
+    else
+    {
+        // nothing
+    }
+    if (this->m_I2c)
+    {
+        delete this->m_I2c;
     }
     else
     {
@@ -70,12 +73,15 @@ void RaceCar::init(const std::string& i2cDevice, uint8_t motorAddress,
                    uint8_t servoAddress)
 {
     this->m_I2c->init(i2cDevice);
-    this->m_motorPCA->init(m_I2c, motorAddress);
-    this->m_ServoPCA->init(m_I2c, servoAddress);
+    this->m_motorPCA->init(this->m_I2c, motorAddress);
+    this->m_ServoPCA->init(this->m_I2c, servoAddress);
 
-    this->motorLeft.init(m_motorPCA, LEFT);
-    this->motorRight.init(m_motorPCA, RIGHT);
-    this->servo.init(m_ServoPCA);
+    this->m_motorPCA->setPWMFreq(1600);
+    this->m_ServoPCA->setPWMFreq(50);
+
+    this->motorLeft.init(this->m_motorPCA, LEFT);
+    this->motorRight.init(this->m_motorPCA, RIGHT);
+    this->servo.init(this->m_ServoPCA);
 }
 
 void RaceCar::setDirection(uint8_t angle)
@@ -83,7 +89,7 @@ void RaceCar::setDirection(uint8_t angle)
     servo.setDirection(angle);
 }
 
-void RaceCar::setSpeed(int8_t speed)
+void RaceCar::setSpeed(int speed)
 {
     motorLeft.setSpeed(speed);
     motorRight.setSpeed(speed);
@@ -91,13 +97,28 @@ void RaceCar::setSpeed(int8_t speed)
 
 void RaceCar::run(void)
 {
-    while (true)
+    int32_t prevSpeed;
+    int32_t prevDirection;
+    {
+        std::lock_guard<std::mutex> lock(this->sharedData->mtx);
+        prevSpeed     = this->sharedData->speed;
+        prevDirection = this->sharedData->direction;
+    }
+    while (signalTo)
     {
         {
             std::lock_guard<std::mutex> lock(this->sharedData->mtx);
-            setSpeed(this->sharedData->speed);
-            setDirection(this->sharedData->direction);
+            if (prevSpeed != this->sharedData->speed)
+            {
+                setSpeed(this->sharedData->speed);
+                prevSpeed = this->sharedData->speed;
+            }
+            if (prevDirection != this->sharedData->direction)
+            {
+                setDirection(this->sharedData->direction);
+                prevDirection = this->sharedData->direction;
+            }
         }
-        usleep(1000);
+        sleep(1);
     }
 }

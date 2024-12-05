@@ -27,7 +27,7 @@ class PCA9685
     PCA9685(const PCA9685& originalPCA9685);
     PCA9685& operator=(const PCA9685& originalPCA9685);
 
-    void init(I2C* m_i2c, int deviceAddress);
+    void init(I2C* m_i2c, uint8_t deviceAddress);
     void setPWMFreq(float freq_hz);
     void setPWM(uint8_t channel, uint16_t on, uint16_t off);
     void setDutyCicle(uint8_t channel, uint16_t pulseWidth);

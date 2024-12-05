@@ -22,7 +22,7 @@ PCA9685& PCA9685::operator=(const PCA9685& originalPCA9685)
     return *this;
 }
 
-void PCA9685::init(I2C* m_i2c, int deviceAddress)
+void PCA9685::init(I2C* m_i2c, uint8_t deviceAddress)
 {
     this->_i2c           = m_i2c;
     this->_deviceAddress = deviceAddress;
