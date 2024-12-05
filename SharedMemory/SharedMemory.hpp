@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include <mutex>
+#include <pthread.h>
 
 struct SharedMemory
 {
     int32_t speed;
     int32_t direction;
-    std::mutex mtx;
+    pthread_mutex_t mtx;
 };

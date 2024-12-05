@@ -80,7 +80,12 @@ XboxController::XboxController()
         throw std::runtime_error("Failed to map shared memory segment");
     }
 
-    
+    // Initialize the mutex
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+    pthread_mutex_init(&sharedData->mtx, &attr);
+    pthread_mutexattr_destroy(&attr);
 
 }
  
@@ -110,9 +115,10 @@ void XboxController::test( void )
     while (1)
     {
         {
-            std::lock_guard<std::mutex> lock(this->sharedData->mtx);
+            pthread_mutex_lock(&this->sharedData->mtx);
             std::cout << "SPEED: " << this->sharedData->speed << std::endl;
             std::cout << "DIRECTION: " << this->sharedData->direction << std::endl;
+            pthread_mutex_unlock(&this->sharedData->mtx);
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

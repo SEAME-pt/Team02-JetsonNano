@@ -12,28 +12,34 @@ int main(void)
     size_t axis;
     //std::cout << player.getButtonCount() <<std::endl;
 
-    //std::thread runThread(&XboxController::test, player);
+    std::thread runThread(&XboxController::test, player);
     while (player.readEvent() == 0)
     {
-        std::cout << player.event.type << std::endl;
         switch (player.event.type)
         {
+            case JS_EVENT_BUTTON:
+                 std::cout << "BUTTON" << std::endl;
             case JS_EVENT_AXIS:
                 axis = player.getAxisState();
                 switch (axis)
                 {
                     case (AXIS_LEFT_STICK):
                         {
-                            std::lock_guard<std::mutex> lock(player.sharedData->mtx);
-                            std::cout << "ESTOU AQUI" << std::endl;
+                            pthread_mutex_lock(&player.sharedData->mtx);
                             player.sharedData->speed = -player.axes[axis]->y* 100 / 32767;
+                            pthread_mutex_unlock(&player.sharedData->mtx);
+
                         }
+                        sleep(1);
                         break;
                     case (AXIS_RIGHT_STICK):
                         {
-                            std::lock_guard<std::mutex> lock(player.sharedData->mtx);
-                                player.sharedData->direction = player.axes[axis]->x * 100 / 32767;
+                            pthread_mutex_lock(&player.sharedData->mtx);
+                            player.sharedData->direction = player.axes[axis]->x * 100 / 32767;
+                            pthread_mutex_unlock(&player.sharedData->mtx);
+                            
                         }
+                        sleep(1);
                         break;
                     default:
                         break;
@@ -43,6 +49,6 @@ int main(void)
         }
         fflush(stdout);
     }
-    //runThread.join();
+    runThread.join();
     return 0;
 }
