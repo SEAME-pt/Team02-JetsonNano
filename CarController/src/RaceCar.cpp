@@ -108,6 +108,7 @@ void RaceCar::run(void)
     {
         {
             std::lock_guard<std::mutex> lock(this->sharedData->mtx);
+            std::cout << "SPEED " << this->sharedData->speed << " DIRECTION " << this->sharedData->direction << std::endl;
             if (prevSpeed != this->sharedData->speed)
             {
                 setSpeed(this->sharedData->speed);

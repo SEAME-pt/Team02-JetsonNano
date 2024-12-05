@@ -61,6 +61,25 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
+    int shm_fd = shm_open("/shared_memory", O_CREAT | O_RDWR, 0666);
+    if (shm_fd == -1)
+    {
+        throw std::runtime_error("Failed to create shared memory segment");
+    }
+
+    if (ftruncate(shm_fd, sizeof(SharedMemory)) == -1)
+    {
+        throw std::runtime_error("Failed to set size of shared memory segment");
+    }
+
+    this->sharedData = static_cast<SharedMemory*>(
+        mmap(nullptr, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED,
+             shm_fd, 0));
+    if (this->sharedData == MAP_FAILED)
+    {
+        throw std::runtime_error("Failed to map shared memory segment");
+    }
+
     
 
 }
@@ -74,4 +93,27 @@ XboxController::~XboxController()
 
     close(js);
 
+    if (munmap(this->sharedData, sizeof(SharedMemory)) == -1)
+    {
+        std::cerr << "Failed to unmap shared memory segment" << std::endl;
+    }
+
+    if (shm_unlink("/shared_memory") == -1)
+    {
+        std::cerr << "Failed to unlink shared memory segment" << std::endl;
+    }
+}
+
+
+void XboxController::test( void )
+{
+    while (1)
+    {
+        {
+            std::lock_guard<std::mutex> lock(this->sharedData->mtx);
+            std::cout << "SPEED: " << this->sharedData->speed << std::endl;
+            std::cout << "DIRECTION: " << this->sharedData->direction << std::endl;
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }

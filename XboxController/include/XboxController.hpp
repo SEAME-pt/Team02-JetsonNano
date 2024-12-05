@@ -1,7 +1,9 @@
 
 #pragma once
 
+#include "SharedMemory.hpp"
 #include <linux/joystick.h>
+#include <thread>
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -9,6 +11,7 @@
 #include <fcntl.h>
 #include <vector>
 #include <map>
+#include <sys/mman.h>
 
 enum Button
 {
@@ -50,6 +53,7 @@ class XboxController
     public:
         std::vector<struct axis_state*> axes;
         struct js_event event;
+        SharedMemory* sharedData;
         
         XboxController();
         ~XboxController();
@@ -57,6 +61,7 @@ class XboxController
         int getButtonCount( void );
         int getAxisCount( void );
         int getAxisState( void );
+        void test( void );
 
 
 

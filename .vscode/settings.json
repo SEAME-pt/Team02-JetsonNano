@@ -70,6 +70,7 @@
         "thread": "cpp",
         "variant": "cpp",
         "map": "cpp",
-        "csignal": "cpp"
+        "csignal": "cpp",
+        "cstring": "cpp"
     }
 }
