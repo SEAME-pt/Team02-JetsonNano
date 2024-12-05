@@ -12,7 +12,7 @@ int main(void)
     size_t axis;
     //std::cout << player.getButtonCount() <<std::endl;
 
-    std::thread runThread(&XboxController::test, player);
+    //std::thread runThread(&XboxController::test, player);
     while (player.readEvent() == 0)
     {
         switch (player.event.type)
@@ -50,6 +50,6 @@ int main(void)
         }
         fflush(stdout);
     }
-    runThread.join();
+    //runThread.join();
     return 0;
 }
