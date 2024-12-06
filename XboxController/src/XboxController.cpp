@@ -1,7 +1,7 @@
 
 #include "../include/XboxController.hpp"
 
-int XboxController::readEvent( void )
+int XboxController::readEvent(void)
 {
     int bytes;
 
@@ -13,7 +13,7 @@ int XboxController::readEvent( void )
     return -1;
 }
 
-int XboxController::getButtonCount( void )
+int XboxController::getButtonCount(void)
 {
     int buttons;
     if (ioctl(js, JSIOCGBUTTONS, &buttons) == -1)
@@ -22,7 +22,7 @@ int XboxController::getButtonCount( void )
     return buttons;
 }
 
-int XboxController::getAxisCount( void )
+int XboxController::getAxisCount(void)
 {
     int axes;
     if (ioctl(js, JSIOCGAXES, &axes) == -1)
@@ -31,7 +31,7 @@ int XboxController::getAxisCount( void )
     return axes;
 }
 
-int XboxController::getAxisState( void )
+int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
 
@@ -45,11 +45,10 @@ int XboxController::getAxisState( void )
     return axis;
 }
 
-
 XboxController::XboxController()
 {
-    const char *device = "/dev/input/js0";
-    js = open(device, O_RDONLY);
+    const char* device = "/dev/input/js0";
+    js                 = open(device, O_RDONLY);
 
     if (js == -1)
         throw std::exception();
@@ -57,7 +56,7 @@ XboxController::XboxController()
     int numAxes = this->getAxisCount();
     for (int i = 0; i < numAxes; i++)
     {
-        struct axis_state *axis = new struct axis_state();
+        struct axis_state* axis = new struct axis_state();
         axes.push_back(axis);
     }
 
@@ -84,11 +83,11 @@ XboxController::XboxController()
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-    pthread_mutex_init(&sharedData->mtx, &attr);
+    pthread_mutex_init(&sharedData->mtx_speed, &attr);
+    pthread_mutex_init(&sharedData->mtx_direction, &attr);
     pthread_mutexattr_destroy(&attr);
-
 }
- 
+
 XboxController::~XboxController()
 {
     for (int i = 0; i < axes.size(); i++)
@@ -109,17 +108,19 @@ XboxController::~XboxController()
     }
 }
 
-
-void XboxController::test( void )
+void XboxController::test(void)
 {
     while (1)
     {
         {
-            pthread_mutex_lock(&this->sharedData->mtx);
+            pthread_mutex_lock(&this->sharedData->mtx_speed);
             std::cout << "SPEED: " << this->sharedData->speed << std::endl;
-            std::cout << "DIRECTION: " << this->sharedData->direction << std::endl;
-            pthread_mutex_unlock(&this->sharedData->mtx);
+            pthread_mutex_unlock(&this->sharedData->mtx_speed);
+            pthread_mutex_lock(&this->sharedData->mtx_direction);
+            std::cout << "DIRECTION: " << this->sharedData->direction
+                      << std::endl;
+            pthread_mutex_unlock(&this->sharedData->mtx_direction);
         }
-        //std::this_thread::sleep_for(std::chrono::seconds(1));
+        // std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
