@@ -2,7 +2,7 @@
 
 # Set variables
 BUILD_DIR=build
-EXECUTABLE=i2c
+EXECUTABLE=RaceCar
 TARGET_USER=team02
 TARGET_IP=10.21.221.71
 TARGET_DIR=/home/team02

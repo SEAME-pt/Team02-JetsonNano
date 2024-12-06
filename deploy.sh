@@ -3,7 +3,7 @@
 # Set variables
 BUILD_DIR1=CarController/build
 BUILD_DIR2=XboxController/build
-EXECUTABLE1=i2c
+EXECUTABLE1=RaceCar
 EXECUTABLE2=controller
 TARGET_USER=team02
 TARGET_IP=10.21.221.71
@@ -11,10 +11,8 @@ TARGET_DIR=/home/team02
 
 # Build the project
 
-mkdir BUILD_DIR1
 cmake --build $BUILD_DIR1
 
-mkdir BUILD_DIR2
 cmake --build $BUILD_DIR2
 
 # Remove old executables on the target machine

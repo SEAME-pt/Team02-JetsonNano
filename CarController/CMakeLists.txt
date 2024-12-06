@@ -26,8 +26,8 @@ set(SOURCES
     ./src/Servo.cpp
 )
 
-add_executable(i2c
+add_executable(RaceCar
     ${SOURCES}
 )
 
-target_link_libraries(i2c I2C PCA9685)
+target_link_libraries(RaceCar I2C PCA9685)
