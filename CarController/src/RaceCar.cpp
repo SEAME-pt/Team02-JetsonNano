@@ -2,15 +2,10 @@
 
 RaceCar::RaceCar()
 {
-    int shm_fd = shm_open("/shared_memory", O_CREAT | O_RDWR, 0666);
+    int shm_fd = shm_open("/shared_memory", O_RDWR, 0666);
     if (shm_fd == -1)
     {
         throw std::runtime_error("Failed to create shared memory segment");
-    }
-
-    if (ftruncate(shm_fd, sizeof(SharedMemory)) == -1)
-    {
-        throw std::runtime_error("Failed to set size of shared memory segment");
     }
 
     this->sharedData = static_cast<SharedMemory*>(
@@ -25,9 +20,7 @@ RaceCar::RaceCar()
     this->m_motorPCA = new PCA9685;
     this->m_ServoPCA = new PCA9685;
 
-    std::lock_guard<std::mutex> lock(this->sharedData->mtx);
-    this->sharedData->speed     = 0;
-    this->sharedData->direction = 90;
+    std::cout << "Car created!" << std::endl;
 }
 
 RaceCar::~RaceCar()
@@ -97,29 +90,34 @@ void RaceCar::setSpeed(int speed)
 
 void RaceCar::run(void)
 {
+    std::cout << "Car running!" << std::endl;
     int32_t prevSpeed;
     int32_t prevDirection;
     {
-        std::lock_guard<std::mutex> lock(this->sharedData->mtx);
-        prevSpeed     = this->sharedData->speed;
+        pthread_mutex_lock(&this->sharedData->mtx_speed);
+        prevSpeed = this->sharedData->speed;
+        pthread_mutex_unlock(&this->sharedData->mtx_speed);
+        pthread_mutex_lock(&this->sharedData->mtx_direction);
         prevDirection = this->sharedData->direction;
+        pthread_mutex_unlock(&this->sharedData->mtx_direction);
     }
     while (signalTo)
     {
         {
-            std::lock_guard<std::mutex> lock(this->sharedData->mtx);
-            std::cout << "SPEED " << this->sharedData->speed << " DIRECTION " << this->sharedData->direction << std::endl;
+            pthread_mutex_lock(&this->sharedData->mtx_speed);
             if (prevSpeed != this->sharedData->speed)
             {
                 setSpeed(this->sharedData->speed);
                 prevSpeed = this->sharedData->speed;
             }
+            pthread_mutex_unlock(&this->sharedData->mtx_speed);
+            pthread_mutex_lock(&this->sharedData->mtx_direction);
             if (prevDirection != this->sharedData->direction)
             {
                 setDirection(this->sharedData->direction);
                 prevDirection = this->sharedData->direction;
             }
+            pthread_mutex_unlock(&this->sharedData->mtx_direction);
         }
-        sleep(1);
     }
 }

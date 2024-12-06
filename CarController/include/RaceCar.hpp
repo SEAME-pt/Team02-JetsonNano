@@ -22,12 +22,13 @@ class RaceCar
     Motor motorRight;
     Motor motorLeft;
     Servo servo;
+    SharedMemory* sharedData;
 
   private:
-  public:
     void setDirection(uint8_t angle);
     void setSpeed(int speed);
-    SharedMemory* sharedData;
+
+  public:
     RaceCar();
     ~RaceCar();
 
