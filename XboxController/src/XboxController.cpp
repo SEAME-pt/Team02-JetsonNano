@@ -79,7 +79,6 @@ XboxController::XboxController()
         throw std::runtime_error("Failed to map shared memory segment");
     }
 
-    // Initialize the mutex
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);

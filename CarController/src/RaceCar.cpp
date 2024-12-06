@@ -5,7 +5,7 @@ RaceCar::RaceCar()
     int shm_fd = shm_open("/shared_memory", O_RDWR, 0666);
     if (shm_fd == -1)
     {
-        throw std::runtime_error("Failed to create shared memory segment");
+        throw std::runtime_error("Failed to open shared memory segment");
     }
 
     this->sharedData = static_cast<SharedMemory*>(
@@ -15,6 +15,8 @@ RaceCar::RaceCar()
     {
         throw std::runtime_error("Failed to map shared memory segment");
     }
+
+    close(shm_fd);
 
     this->m_I2c      = new I2C;
     this->m_motorPCA = new PCA9685;
@@ -54,11 +56,6 @@ RaceCar::~RaceCar()
     if (munmap(this->sharedData, sizeof(SharedMemory)) == -1)
     {
         std::cerr << "Failed to unmap shared memory segment" << std::endl;
-    }
-
-    if (shm_unlink("/shared_memory") == -1)
-    {
-        std::cerr << "Failed to unlink shared memory segment" << std::endl;
     }
 }
 
