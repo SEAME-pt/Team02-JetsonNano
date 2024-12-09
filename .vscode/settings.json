@@ -72,5 +72,6 @@
         "map": "cpp",
         "csignal": "cpp",
         "cstring": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/home/Team02-Course/PyRacer/CarController"
 }

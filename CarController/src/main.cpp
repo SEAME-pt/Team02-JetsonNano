@@ -9,6 +9,7 @@ int signalTo = 1;
 
 void handler(int code)
 {
+    (void)code;
     signalTo = 0;
 }
 

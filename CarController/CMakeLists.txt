@@ -30,4 +30,6 @@ add_executable(RaceCar
     ${SOURCES}
 )
 
+target_compile_options(RaceCar PRIVATE -Wall -Werror -Wextra)
+
 target_link_libraries(RaceCar I2C PCA9685)
