@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - move-the-car-with-the-controller
 
 jobs:
   build-and-deploy:
