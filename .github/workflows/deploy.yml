@@ -15,6 +15,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Install compilers
+      - name: Install Compilers
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
       # Set up SSH
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
