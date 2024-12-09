@@ -12,6 +12,8 @@ void Motor::init(PCA9685* motorPCA, Side side)
 
 void Motor::setSpeed(int speed)
 {
+    speed = std::clamp(speed, -100, 100);
+
     if (speed < 0)
     {
         uint16_t pulseWidth = -speed * 4095 / 100;

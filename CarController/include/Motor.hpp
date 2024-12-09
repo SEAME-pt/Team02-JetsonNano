@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PCA9685.hpp"
+#include <algorithm>
 
 enum Side
 {
