@@ -18,6 +18,10 @@ jobs:
         with:
           submodules: true
 
+      # Install CMake
+      - name: Install CMake
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
       # Install clang-tidy
       - name: Install clang-tidy
         run: sudo apt-get install -y clang-tidy
