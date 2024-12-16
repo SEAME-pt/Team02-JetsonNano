@@ -19,18 +19,10 @@ jobs:
       - name: Install Compilers
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Build CarController
-      - name: Build CarController
+      - name: Configure and Build Projects
         run: |
-          mkdir -p CarController/build
-          cd CarController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-          make
-
-      # Build XboxController
-      - name: Build XboxController
-        run: |
-          mkdir -p XboxController/build
-          cd XboxController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-          make
+          for dir in $(find . -name CMakeLists.txt -exec dirname {} \;); do
+            mkdir -p $dir/build
+            cd $dir/build
+            cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+            make
