@@ -1,3 +1,0 @@
-[submodule "CarController/libs"]
-	path = CarController/libs
-	url = git@github.com:SEAME-pt/libs.git
