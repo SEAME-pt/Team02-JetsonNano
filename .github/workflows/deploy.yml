@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p CarController/build
           cd CarController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
       # Build XboxController
@@ -38,5 +38,5 @@ jobs:
         run: |
           mkdir -p XboxController/build
           cd XboxController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
