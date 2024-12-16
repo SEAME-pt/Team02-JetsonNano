@@ -19,12 +19,6 @@ jobs:
       - name: Install Compilers
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Set up SSH
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       # Build CarController
       - name: Build CarController
         run: |
@@ -40,21 +34,3 @@ jobs:
           cd XboxController/build
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
-
-      # Deploy executables
-      - name: Deploy Executables
-        run: |
-          CarController_Dir=CarController/build
-          XboxController_Dir=XboxController/build
-          EXECUTABLE_RaceCar=RaceCar
-          EXECUTABLE_XboxController=controller
-          TARGET_USER=team02
-          TARGET_IP=10.21.221.71
-          TARGET_DIR=/home/team02
-
-          # Remove old executables on the target machine
-          ssh $TARGET_USER@$TARGET_IP "cd $TARGET_DIR && rm -rf ./$EXECUTABLE_RaceCar ./$EXECUTABLE_XboxController"
-
-          # Transfer the executables to the target machine
-          scp $CarController_Dir/$EXECUTABLE_RaceCar $TARGET_USER@$TARGET_IP:$TARGET_DIR
-          scp $XboxController_Dir/$EXECUTABLE_XboxController $TARGET_USER@$TARGET_IP:$TARGET_DIR
