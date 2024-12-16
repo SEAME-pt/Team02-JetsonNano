@@ -6,6 +6,12 @@ EXECUTABLE=RaceCar
 TARGET_USER=team02
 TARGET_IP=10.21.221.71
 TARGET_DIR=/home/team02
+TOOLCHAIN_FILE=../aarch64-toolchain.cmake
+
+mkdir -p $BUILD_DIR
+cd $BUILD_DIR
+cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE ..
+cd ..
 
 # Build the project
 cmake --build $BUILD_DIR
