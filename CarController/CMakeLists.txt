@@ -10,8 +10,8 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 include_directories(include)
 include_directories(../SharedMemory)
 
-add_subdirectory(external/libs/I2C)
-add_subdirectory(external/Peripherals/PCA9685)
+add_subdirectory(libs/Communication/I2C)
+add_subdirectory(libs/Peripherals/PCA9685)
 
 set(SOURCES
     ./src/main.cpp

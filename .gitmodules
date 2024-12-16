@@ -1,6 +1,0 @@
-[submodule "CarController/external/libs"]
-	path = CarController/external/libs
-	url = git@github.com:SEAME-pt/libs.git
-[submodule "CarController/external/Peripherals"]
-	path = CarController/external/Peripherals
-	url = git@github.com:SEAME-pt/Peripherals.git
