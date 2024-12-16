@@ -16,6 +16,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+    
+      # Install CMake
+      - name: Install CMake
+        run: sudo apt-get update && sudo apt-get install -y cmake
 
       # Install compilers
       - name: Install Compilers
@@ -26,7 +30,7 @@ jobs:
         run: |
           mkdir -p CarController/build
           cd CarController/build
-          cmake -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake
           make
 
       # Build XboxController
@@ -34,5 +38,5 @@ jobs:
         run: |
           mkdir -p XboxController/build
           cd XboxController/build
-          cmake -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake
           make
