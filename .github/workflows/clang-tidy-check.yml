@@ -29,16 +29,21 @@ jobs:
       - name: Install Compilers
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Find and process each subdirectory with a CMakeLists.txt
-      - name: Configure and Build Projects
+      # Build CarController
+      - name: Build CarController
         run: |
-          for dir in $(find . -name CMakeLists.txt -exec dirname {} \;); do
-            mkdir -p $dir/build
-            cd $dir/build
-            cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-            make
-            cd -
-          done
+          mkdir -p CarController/build
+          cd CarController/build
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+          make
+
+      # Build XboxController
+      - name: Build XboxController
+        run: |
+          mkdir -p XboxController/build
+          cd XboxController/build
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+          make
 
       # Run clang-tidy check for all projects
       - name: Run clang-tidy
