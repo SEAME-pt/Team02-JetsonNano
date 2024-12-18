@@ -69,8 +69,8 @@ void RaceCar::init(const std::string& i2cDevice, uint8_t motorAddress,
     this->m_motorPCA->setPWMFreq(1600);
     this->m_ServoPCA->setPWMFreq(50);
 
-    this->motorLeft.init(this->m_motorPCA, LEFT);
-    this->motorRight.init(this->m_motorPCA, RIGHT);
+    this->motorLeft.init(this->m_motorPCA, Motor::LEFT);
+    this->motorRight.init(this->m_motorPCA, Motor::RIGHT);
     this->servo.init(this->m_ServoPCA);
 }
 
