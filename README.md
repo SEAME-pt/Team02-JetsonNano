@@ -5,9 +5,9 @@
     Hands-on project assembling and testing a JetRacer using the Jetson Nano for robotics and electronics experience.
     <br />
     ·
-    <a href="https://github.com/your-repository-url/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/SEAME-pt/Team02-PyRacer/issues/new?labels=bug&template=external-contribution-bug-report.md">Report Bug</a>
     ·
-    <a href="https://github.com/your-repository-url/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+    <a href="https://github.com/SEAME-pt/Team02-PyRacer/issues/new?labels=enhancement&template=external-contribution-feature-request.md">Request Feature</a>
   </p>
 </div>
 
