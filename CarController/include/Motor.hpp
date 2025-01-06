@@ -3,14 +3,15 @@
 #include "PCA9685.hpp"
 #include <algorithm>
 
-enum Side
-{
-    RIGHT,
-    LEFT
-};
-
 class Motor
 {
+  public:
+    enum Side
+    {
+        RIGHT,
+        LEFT
+    };
+
   private:
     PCA9685* m_MotorPCA;
     Side _side;
