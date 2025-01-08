@@ -41,7 +41,15 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Create the GitHub Release
+      # Create a tag (this step ensures there is always a tag before creating a release)
+      - name: Create Tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag v1.0.0  # Adjust this to use the versioning pattern you need
+          git push origin v1.0.0
+
+      # Create the GitHub Release and Upload Assets
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
