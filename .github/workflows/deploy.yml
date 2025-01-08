@@ -17,7 +17,7 @@ jobs:
         with:
           submodules: true
     
-      # Install CMake and other dependencies
+      # Install Dependencies
       - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
@@ -43,21 +43,21 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
+      # Set up Git credentials with PAT_SH
+      - name: Set up Git credentials
+        run: |
+          git config --global credential.helper store
+          echo "https://x-access-token:${{ secrets.PAT_SH }}" > ~/.git-credentials
+          
       # Create the tag and push it with the PAT_SH secret
       - name: Create Tag and Push
         run: |
           git tag v1.0.0  # Adjust the version tag accordingly
           git push https://x-access-token:${{ secrets.PAT_SH }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
-        env:
-          PAT_SH: ${{ secrets.PAT_SH }}  # Use your PAT_SH stored in secrets
 
-      # Create the GitHub Release and upload the executables to it
+      # Create the GitHub Release and Upload Executables
       - name: Create Release and Upload Executables
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            CarController/build/CarController
-            XboxController/build/XboxController
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_SH }}  # Use your PAT_SH stored in secrets
-
+            CarController/build/Ca
