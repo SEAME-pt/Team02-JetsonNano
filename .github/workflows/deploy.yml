@@ -41,33 +41,12 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Create a new release (or use an existing one)
-      - name: Create Release
-        id: create_release
-        uses: gh-actions/create-release@v1
+      # Create the GitHub Release
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: v1.0.0    # Match your tag name here
-          release_name: 'Executables pyracer'
-          body: 'Release for pyracer executables'
-          draft: false
-          prerelease: false
+          files: |
+            CarController/build/CarController
+            XboxController/build/XboxController
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      # Upload the CarController executable
-      - name: Upload CarController Executable
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./CarController/build/CarController
-          asset_name: CarController
-          asset_content_type: application/octet-stream
-
-      # Upload the XboxController executable
-      - name: Upload XboxController Executable
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./XboxController/build/XboxController
-          asset_name: XboxController
-          asset_content_type: application/octet-stream
