@@ -41,15 +41,21 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Create a tag (this step ensures there is always a tag before creating a release)
-      - name: Create Tag
+      # Set up Git user for tagging
+      - name: Set up Git user
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag v1.0.0  # Adjust this to use the versioning pattern you need
-          git push origin v1.0.0
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+      # Create a tag
+      - name: Create Tag and Push
+        run: |
+          git tag v1.0.0  # Adjust the version to your needs
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token to authenticate the push
 
-      # Create the GitHub Release and Upload Assets
+      # Create GitHub release and upload assets
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
