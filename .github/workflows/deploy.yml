@@ -45,7 +45,7 @@ jobs:
       - name: Send CarController to JetRacer
         run: |
           echo "Sending CarController executable to JetRacer..."
-          curl -X POST http://10.21.221.71:5000/download_and_run \
+          curl -v -X POST http://10.21.221.71:5000/download_and_run \
             -H "Content-Type: application/json" \
             -d "{\"file_url\": \"https://github.com/SEAME-pt/Team02-PyRacer/raw/main/CarController/CarController\"}"
 
@@ -53,6 +53,6 @@ jobs:
       - name: Send XboxController to JetRacer
         run: |
           echo "Sending XboxController executable to JetRacer..."
-          curl -X POST http://10.21.221.71:5000/download_and_run \
+          curl -v -X POST http://10.21.221.71:5000/download_and_run \
             -H "Content-Type: application/json" \
             -d "{\"file_url\": \"https://github.com/SEAME-pt/Team02-PyRacer/raw/23577131a548967f0f1c8627112fbb057098990a/XboxController/XboxController\"}"
