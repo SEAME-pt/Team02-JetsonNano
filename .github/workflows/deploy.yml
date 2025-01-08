@@ -17,15 +17,11 @@ jobs:
         with:
           submodules: true
     
-      # Install CMake
-      - name: Install CMake
-        run: sudo apt-get update && sudo apt-get install -y cmake
+      # Install CMake and other dependencies
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Install compilers
-      - name: Install Compilers
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
-      # Build CarController
+      # Build your applications (adjust as needed)
       - name: Build CarController
         run: |
           mkdir -p CarController/build
@@ -33,30 +29,22 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Build XboxController
-      - name: Build XboxController
-        run: |
-          mkdir -p XboxController/build
-          cd XboxController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-          make
-
-      # Set up Git user for tagging
+      # Set up Git user for committing and tagging
       - name: Set up Git user
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
-      # Create a tag
+      # Create a tag and push it
       - name: Create Tag and Push
         run: |
-          git tag v1.0.0  # Adjust the version to your needs
+          git tag v1.0.0  # Adjust the version tag accordingly
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token to authenticate the push
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Create GitHub release and upload assets
-      - name: Create Release and Upload Assets
+      # Create the GitHub Release and Upload Executables
+      - name: Create Release and Upload Executables
         uses: softprops/action-gh-release@v1
         with:
           files: |
