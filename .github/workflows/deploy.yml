@@ -43,21 +43,18 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
-      # Set up Git credentials with PAT_SH
-      - name: Set up Git credentials
-        run: |
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.PAT_SH }}" > ~/.git-credentials
-          
-      # Create the tag and push it with the PAT_SH secret
+      # Create the tag and push it with GITHUB_TOKEN
       - name: Create Tag and Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git tag v1.0.0  # Adjust the version tag accordingly
-          git push https://x-access-token:${{ secrets.PAT_SH }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
+          git push https://github.com/SEAME-pt/Team02-PyRacer.git --tags
 
       # Create the GitHub Release and Upload Executables
       - name: Create Release and Upload Executables
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            CarController/build/Ca
+            CarController/build/CarController
+            XboxController/build/XboxController
