@@ -37,24 +37,33 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Set up Git user for committing and tagging
+      # Set up Git user for tagging
       - name: Set up Git user
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
-      # Create the tag and push it with GITHUB_TOKEN
-      - name: Create Tag and Push
+      # Generate Dynamic Tag (Optional)
+      - name: Generate Version Tag
+        id: version
+        run: |
+          echo "v$(date +'%Y%m%d%H%M')" > version_tag.txt
+          echo "VERSION_TAG=$(cat version_tag.txt)" >> $GITHUB_ENV
+
+      # Push Tags
+      - name: Push Tag
+        if: env.VERSION_TAG
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git tag v1.0.0  # Adjust the version tag accordingly
+          git tag $VERSION_TAG
           git push https://github.com/SEAME-pt/Team02-PyRacer.git --tags
 
-      # Create the GitHub Release and Upload Executables
+      # Create Release and Upload Executables
       - name: Create Release and Upload Executables
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.VERSION_TAG }}
           files: |
             CarController/build/CarController
             XboxController/build/XboxController
