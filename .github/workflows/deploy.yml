@@ -45,13 +45,16 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      # Create the tag and push it with the token (using GitHub Secrets)
-      - name: Create Tag and Push
+      # Create a Tag based on Git reference and push it using the token
+      - name: Create and Push Tag
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
         run: |
-          VERSION_TAG="v1.0.0"  # Adjust version tag accordingly
+          # Extract version from tag (e.g., v1.0.0)
+          VERSION_TAG=$(echo ${GITHUB_REF} | sed 's/^refs\/tags\///')
 
+          echo "Creating and pushing tag: $VERSION_TAG"
+          
           # Ensure the latest changes are fetched
           git fetch origin
 
