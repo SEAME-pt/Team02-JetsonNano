@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - dev
+    tags:
+      - 'v*'  # Trigger workflow on version tags like v1.0.0
 
 jobs:
   build-and-deploy:
@@ -49,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
         run: |
           VERSION_TAG="v1.0.0"  # Adjust version tag accordingly
-          
+
           # Ensure the latest changes are fetched
           git fetch origin
 
@@ -58,7 +60,7 @@ jobs:
           git push https://x-access-token:${{ secrets.PAT_LUIS_TOKEN }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
 
       # Create the GitHub Release and Upload Executables
-      - name: Create Release and Upload Executables
+      - name: Create GitHub Release and Upload Executables
         uses: softprops/action-gh-release@v1
         with:
           files: |
@@ -66,3 +68,4 @@ jobs:
             XboxController/build/XboxController
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
+
