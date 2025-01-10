@@ -43,14 +43,19 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      # Create the tag and push it with the token
+      # Create the tag and push it with the token (using GitHub Secrets)
       - name: Create Tag and Push
         env:
-          GITHUB_TOKEN: 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
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
         run: |
           VERSION_TAG="v1.0.0"  # Adjust version tag accordingly
+          
+          # Ensure the latest changes are fetched
+          git fetch origin
+
+          # Create and push the tag using the personal access token
           git tag $VERSION_TAG
-          git push https://x-access-token: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@github.com/SEAME-pt/Team02-PyRacer.git --tags
+          git push https://x-access-token:${{ secrets.PAT_LUIS_TOKEN }}@github.com/SEAME-pt/Team02-PyRacer.git --tags
 
       # Create the GitHub Release and Upload Executables
       - name: Create Release and Upload Executables
@@ -60,4 +65,4 @@ jobs:
             CarController/build/CarController
             XboxController/build/XboxController
         env:
-          GITHUB_TOKEN: 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
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
