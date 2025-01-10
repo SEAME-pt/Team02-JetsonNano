@@ -50,7 +50,8 @@ jobs:
         run: |
           VERSION_TAG="v1.0.0"  # Adjust the version tag as needed
           git tag $VERSION_TAG
-          git push https://x-access-token:${PAT_LUIS_TOKEN}@github.com/SEAME-pt/Team02-PyRacer.git --tags
+          git remote set-url origin https://${{ secrets.PAT_LUIS_TOKEN }}@github.com/SEAME-pt/Team02-PyRacer.git
+          git push origin --tags
 
       # Step 7: Create GitHub Release and Upload Executables
       - name: Create Release and Upload Executables
