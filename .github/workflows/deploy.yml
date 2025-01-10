@@ -11,17 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
+      # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: true
-    
-      # Install Dependencies
+
+      # Step 2: Install Dependencies
       - name: Install Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      # Build CarController
+      # Step 3: Build CarController
       - name: Build CarController
         run: |
           mkdir -p CarController/build
@@ -29,7 +29,7 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Build XboxController
+      # Step 4: Build XboxController
       - name: Build XboxController
         run: |
           mkdir -p XboxController/build
@@ -37,43 +37,27 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
-      # Set up Git user for tagging
+      # Step 5: Set up Git user for committing and tagging
       - name: Set up Git user
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      # Generate Dynamic Tag (Optional)
-      - name: Generate Version Tag
-        id: version
-        run: |
-          echo "v$(date +'%Y%m%d%H%M')" > version_tag.txt
-          echo "VERSION_TAG=$(cat version_tag.txt)" >> $GITHUB_ENV
-
-      # Push Tags
-      - name: Push Tag
+      # Step 6: Create the tag and push it using PAT
+      - name: Create Tag and Push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAT_LUIS_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}
         run: |
+          VERSION_TAG="v1.0.0"  # Adjust the version tag as needed
           git tag $VERSION_TAG
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/SEAME-pt/Team02-PyRacer.git --tags
+          git push https://x-access-token:${PAT_LUIS_TOKEN}@github.com/SEAME-pt/Team02-PyRacer.git --tags
 
-      # Create Release
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 7: Create GitHub Release and Upload Executables
+      - name: Create Release and Upload Executables
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.VERSION_TAG }}
-          release_name: Release ${{ env.VERSION_TAG }}
-          draft: false
-          prerelease: false
-
-      # Upload Release Assets
-      - name: Upload Release Assets
-        uses: AButler/upload-release-assets@v3.0
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             CarController/build/CarController
             XboxController/build/XboxController
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}
