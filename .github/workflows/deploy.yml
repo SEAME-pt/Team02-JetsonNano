@@ -67,5 +67,4 @@ jobs:
             CarController/build/CarController
             XboxController/build/XboxController
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secrets
-
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS_TOKEN }}  # Reference the token from Secret
