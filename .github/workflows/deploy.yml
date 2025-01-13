@@ -54,7 +54,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag.outputs.new_tag }}
-          files: speedometer
+          files: | 
+            CarController/build/RaceCar
+            XboxController/build/controller
           name: Release ${{ steps.tag.outputs.new_tag }}
           draft: false
           prerelease: false
