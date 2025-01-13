@@ -44,6 +44,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: CarController/build/RaceCar
+          tag_name: v1.0.0-test
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
