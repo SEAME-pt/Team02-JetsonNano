@@ -39,6 +39,18 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: CarController/build/RaceCar
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHU1B_TOKEN }}
+
       #Saw the commands here https://github.com/actions/upload-artifact
       #Upload RaceCar binary
       - uses: actions/upload-artifact@v4
