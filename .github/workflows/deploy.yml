@@ -32,12 +32,12 @@ jobs:
           make
 
       # Build XboxController
-      - name: Build XboxController
-        run: |
-          mkdir -p XboxController/build
-          cd XboxController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-          make
+      #- name: Build XboxController
+      #  run: |
+      #    mkdir -p XboxController/build
+      #    cd XboxController/build
+      #    cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+      #    make
 
       #Upload artifact
       - uses: actions/upload-artifact@v4
