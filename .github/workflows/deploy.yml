@@ -38,3 +38,10 @@ jobs:
           cd XboxController/build
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
+
+      #Upload artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: my-artifact
+          path: CarController/build/carcontroller
+            #XboxController/build/xboxcontroller
