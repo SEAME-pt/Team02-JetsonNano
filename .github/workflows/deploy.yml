@@ -43,5 +43,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: my-artifact
-          path: CarController/build/CarController
+          path: CarController/build/RaceCar
         #XboxController/build/xboxcontroller
