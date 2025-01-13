@@ -39,10 +39,11 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
+      #Saw the commands here https://github.com/actions/upload-artifact
       #Upload RaceCar binary
       - uses: actions/upload-artifact@v4
         with:
-          name: RaceCar Upload
+          name: RaceCar Uploading
           path: CarController/build/RaceCar
           retention-days: 1
           overwrite: true
@@ -50,7 +51,7 @@ jobs:
       #Upload XboxController binary
       - uses: actions/upload-artifact@v4
         with:
-          name: XboxController Upload
+          name: XboxController Uploading
           path: XboxController/build/controller
           retention-days: 1
           overwrite: true
