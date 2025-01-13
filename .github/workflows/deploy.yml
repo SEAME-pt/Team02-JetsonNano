@@ -44,7 +44,4 @@ jobs:
         with:
           name: my-artifact
           path: CarController/build/CarController
-          run: |
-            ls
-            pwd
         #XboxController/build/xboxcontroller
