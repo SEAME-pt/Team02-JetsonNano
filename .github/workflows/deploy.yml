@@ -49,4 +49,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: XboxController Upload
-          path: XboxController/build/xboxcontroller
+          path: XboxController/build/controller
