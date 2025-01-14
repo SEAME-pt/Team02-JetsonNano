@@ -70,7 +70,7 @@ jobs:
           prerelease: false
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHU1B_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS }}
 
 
 #Artifacts:
