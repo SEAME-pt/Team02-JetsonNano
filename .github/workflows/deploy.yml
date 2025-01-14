@@ -64,6 +64,7 @@ jobs:
           name: Release ${{ steps.tag.outputs.new_tag }}
           draft: false
           prerelease: false
+          make_latest: true
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHU1B_TOKEN }}
