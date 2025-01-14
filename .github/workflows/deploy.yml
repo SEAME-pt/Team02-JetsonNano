@@ -6,7 +6,7 @@ on:
       - main
       - dev
     tags:
-      - 'v*'  # Trigger workflow on version tags like v1.0.0
+      - 'v*'
 
 jobs:
   build-and-deploy:
@@ -39,6 +39,10 @@ jobs:
           cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
           make
 
+
+
+#Version Release and Tag Update
+
       - name: Get latest tag and increment
         id: tag
         run: |
@@ -64,6 +68,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHU1B_TOKEN }}
 
+
+#Artifacts:
+
       #Saw the commands here https://github.com/actions/upload-artifact
       #Upload RaceCar binary
       - uses: actions/upload-artifact@v4
@@ -80,4 +87,3 @@ jobs:
           path: XboxController/build/controller
           retention-days: 1
           overwrite: true
-      #testing 2
