@@ -46,8 +46,12 @@ jobs:
       - name: Get latest tag and increment
         id: tag
         run: |
-          git fetch --tags
-          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v1.0.0")
+          git fetch --tags --force
+          git fetch origin # Ensures the branch is up to date
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v1.0.0"
+          fi
           major=$(echo $latest_tag | cut -d. -f1 | tr -d 'v')
           minor=$(echo $latest_tag | cut -d. -f2)
           patch=$(echo $latest_tag | cut -d. -f3)
