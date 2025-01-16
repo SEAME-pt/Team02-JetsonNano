@@ -31,7 +31,7 @@ class RaceCar
     void setThrottle(int speed);
 
   public:
-    RaceCar(Session &session);
+    RaceCar(Session& session);
     ~RaceCar();
 
     void init(const std::string& i2cDevice, uint8_t motorAddress,

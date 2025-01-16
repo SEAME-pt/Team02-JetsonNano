@@ -1,6 +1,6 @@
 #include "RaceCar.hpp"
 
-RaceCar::RaceCar(Session &session) : m_session(session)
+RaceCar::RaceCar(Session& session) : m_session(session)
 {
     this->m_I2c      = new I2C;
     this->m_motorPCA = new PCA9685;
