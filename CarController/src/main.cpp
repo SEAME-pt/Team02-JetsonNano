@@ -16,9 +16,13 @@ void handler(int code)
 int main()
 {
     signal(SIGINT, handler);
+
+    Config config = Config::create_default();
+    auto session  = Session::open(std::move(config));
+
     try
     {
-        RaceCar raceCar;
+        RaceCar raceCar(session);
 
         raceCar.init("/dev/i2c-1", 0x60, 0x40);
         raceCar.run();

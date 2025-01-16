@@ -15,11 +15,12 @@ class Motor
   private:
     PCA9685* m_MotorPCA;
     Side _side;
+    int16_t m_currThrottle;
 
   public:
     Motor();
     ~Motor();
 
     void init(PCA9685* motorPCA, Side side);
-    void setSpeed(int angle);
+    void setThrottle(int throttle);
 };

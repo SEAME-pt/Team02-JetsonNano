@@ -1,5 +1,3 @@
-
-
 #include "../include/XboxController.hpp"
 
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
@@ -8,47 +6,78 @@
 
 int main(void)
 {
-    XboxController player;
-    size_t axis;
-    // std::cout << player.getButtonCount() <<std::endl;
+    Config config = Config::create_default();
+    auto session  = Session::open(std::move(config));
 
-    // std::thread runThread(&XboxController::test, player);
+    XboxController player(session);
+    size_t axis;
+    size_t button;
+
+    auto pubThrottle =
+        session.declare_publisher(KeyExpr("seame/car/1/throttle"));
+    auto pubDirection =
+        session.declare_publisher(KeyExpr("seame/car/1/direction"));
+    auto pubLights = session.declare_publisher(KeyExpr("seame/car/1/lights"));
+
     while (player.readEvent() == 0)
     {
         switch (player.event.type)
         {
             case JS_EVENT_BUTTON:
-                //  std::cout << "BUTTON" << std::endl;
+            {
+                button = player.event.number;
+                switch (button)
+                {
+                    case BUTTON_RB:
+                    {
+                        bool rightBlinker = true;
+                        pubLights.put(std::to_string(rightBlinker).c_str());
+                        std::cout << "RightBlinker" << std::endl;
+                        break;
+                    }
+                    case BUTTON_LB:
+                    {
+                        bool leftBlinker = true;
+                        pubLights.put(std::to_string(leftBlinker).c_str());
+                        std::cout << "LeftBlinker" << std::endl;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
             case JS_EVENT_AXIS:
+            {
                 axis = player.getAxisState();
                 switch (axis)
                 {
                     case (AXIS_LEFT_STICK):
                     {
-                        pthread_mutex_lock(&player.sharedData->mtx_speed);
-                        player.sharedData->speed =
-                            -player.axes[axis]->y * 100 / 32767;
-                        pthread_mutex_unlock(&player.sharedData->mtx_speed);
+                        int speed = -player.axes[axis]->y * 100 / 32767;
+                        std::string speedStr = std::to_string(speed);
+                        pubThrottle.put(speedStr.c_str());
+                        std::cout << "Speed" << std::endl;
+                        break;
                     }
-                    // sleep(1);
-                    break;
                     case (AXIS_RIGHT_STICK):
                     {
-                        pthread_mutex_lock(&player.sharedData->mtx_direction);
-                        uint8_t x = 90 + player.axes[axis]->x * 90 / 32767;
-                        player.sharedData->direction = x;
-                        pthread_mutex_unlock(&player.sharedData->mtx_direction);
+                        uint8_t direction =
+                            90 + player.axes[axis]->x * 90 / 32767;
+                        std::string dirStr = std::to_string(direction);
+                        pubDirection.put(dirStr.c_str());
+                        std::cout << "Direction" << std::endl;
+                        break;
                     }
-                    // sleep(1);
-                    break;
                     default:
                         break;
                 }
+                break;
+            }
             default:
                 break;
         }
         fflush(stdout);
     }
-    // runThread.join();
     return 0;
 }
