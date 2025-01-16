@@ -1,7 +1,7 @@
 
 #include "../include/XboxController.hpp"
 
-XboxController::XboxController(Session &session) : m_session(session)
+XboxController::XboxController(Session& session) : m_session(session)
 {
     const char* device = "/dev/input/js0";
     js                 = open(device, O_RDONLY);
