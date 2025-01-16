@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "SharedMemory.hpp"
 #include <linux/joystick.h>
-#include <thread>
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
@@ -11,7 +9,8 @@
 #include <fcntl.h>
 #include <vector>
 #include <map>
-#include <sys/mman.h>
+#include <string>
+#include "zenoh.hxx"
 
 enum Button
 {
@@ -43,26 +42,23 @@ struct axis_state {
     int y = 0;
 };
 
+using namespace zenoh;
 
 class XboxController
 {
     private:
         std::map<int, int> buttons;
         int js;
+        Session& m_session;
 
     public:
         std::vector<struct axis_state*> axes;
         struct js_event event;
-        SharedMemory* sharedData;
         
-        XboxController();
+        XboxController(Session &session);
         ~XboxController();
         int readEvent( void );
         int getButtonCount( void );
         int getAxisCount( void );
         int getAxisState( void );
-        void test( void );
-
-
-
 };
