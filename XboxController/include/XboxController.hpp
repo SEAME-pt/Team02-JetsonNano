@@ -48,7 +48,6 @@ using namespace zenoh;
 class XboxController
 {
   private:
-    std::map<int, int> buttons;
     int js;
     Session& m_session;
 
