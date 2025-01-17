@@ -48,15 +48,16 @@ struct axis_state
     int y = 0;
 };
 
-struct LightsInfo {
-  bool rightBlinker;
-  bool leftBlinker;
-  bool lowBeam;
-  bool highBeam;
-  bool frontFogLight;
-  bool rearFogLight;
-  bool hazardLight;
-  bool parkingLight;
+struct LightsInfo
+{
+    bool rightBlinker;
+    bool leftBlinker;
+    bool lowBeam;
+    bool highBeam;
+    bool frontFogLight;
+    bool rearFogLight;
+    bool hazardLight;
+    bool parkingLight;
 };
 
 using namespace zenoh;
