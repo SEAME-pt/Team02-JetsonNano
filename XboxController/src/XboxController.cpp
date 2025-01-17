@@ -83,6 +83,7 @@ void XboxController::run()
     size_t axis;
     size_t button;
     LightStatus test;
+    char buffer[1];
 
     while (this->readEvent() == 0)
     {
@@ -97,12 +98,11 @@ void XboxController::run()
                     {
                         case BUTTON_RB:
                         {
-                            if (test.leftBlinker == true)
-                                test.leftBlinker= false;
+                            
+                            if (buffer[0] & 1 = 1)
+                                buffer[0] -= (0 << 0);
                             else
-                                test.leftBlinker = true;
-                            char buffer[1];
-                            buffer[0] = 1 << 4;
+                                buffer[0] += (1 << 0);
                             //memcpy(buffer, &test, sizeof(LightStatus));
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
@@ -110,6 +110,10 @@ void XboxController::run()
                         }
                         case BUTTON_LB:
                         {
+                            if (buffer[0] & (1 << 1) = 1)
+                                buffer[0] -= (1 << 1);
+                            else
+                                buffer[0] += (1 << 1);
                             bool leftBlinker = true;
                             this->m_pubLights.put(std::to_string(leftBlinker));
                             std::cout << "LeftBlinker" << std::endl;
