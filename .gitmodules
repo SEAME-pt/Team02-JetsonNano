@@ -1,3 +1,6 @@
 [submodule "CarController/Libs"]
 	path = CarController/Libs
 	url = git@github.com:SEAME-pt/Team02-Libs.git
+[submodule "MiddleWare/Libs"]
+	path = MiddleWare/Libs
+	url = git@github.com:SEAME-pt/Team02-Libs.git
