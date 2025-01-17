@@ -97,11 +97,12 @@ void XboxController::run()
                     {
                         case BUTTON_RB:
                         {
-                            if (test.lowBeam == true)
-                                test.lowBeam = false;
+                            if (test.leftBlinker == true)
+                                test.leftBlinker= false;
                             else
-                                test.lowBeam = true;
-                            char buffer[sizeof(LightStatus)];
+                                test.leftBlinker = true;
+                            char buffer;
+                            buffer = 1 << 4;
                             memcpy(buffer, &test, sizeof(LightStatus));
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
