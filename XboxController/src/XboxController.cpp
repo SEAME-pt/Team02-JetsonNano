@@ -82,6 +82,7 @@ void XboxController::run()
 {
     size_t axis;
     size_t button;
+    LightStatus test;
 
     while (this->readEvent() == 0)
     {
@@ -96,10 +97,12 @@ void XboxController::run()
                     {
                         case BUTTON_RB:
                         {
-                            LightsInfo test;
-                            test.lowBeam = true;
-                            char buffer[sizeof(LightsInfo)];
-                            memcpy(buffer, &test, sizeof(LightsInfo));
+                            if (test.lowBeam == true)
+                                test.lowBeam = false;
+                            else
+                                test.lowBeam = true;
+                            char buffer[sizeof(LightStatus)];
+                            memcpy(buffer, &test, sizeof(LightStatus));
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
                             break;
@@ -114,8 +117,8 @@ void XboxController::run()
                         default:
                             break;
                     }
-                    break;
                 }
+                break;
             }
             case JS_EVENT_AXIS:
             {
