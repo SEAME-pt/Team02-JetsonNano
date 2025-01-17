@@ -10,7 +10,12 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <cstring>
 #include "zenoh.hxx"
+
+#define JS_EVENT_BUTTON 0x01 /* button pressed/released */
+#define JS_EVENT_AXIS 0x02   /* joystick moved */
+#define JS_EVENT_INIT 0x80   /* initial state of device */
 
 enum Button
 {
@@ -43,22 +48,38 @@ struct axis_state
     int y = 0;
 };
 
+struct LightsInfo {
+  bool rightBlinker;
+  bool leftBlinker;
+  bool lowBeam;
+  bool highBeam;
+  bool frontFogLight;
+  bool rearFogLight;
+  bool hazardLight;
+  bool parkingLight;
+};
+
 using namespace zenoh;
 
 class XboxController
 {
   private:
     int js;
-    Session& m_session;
+    Session m_session;
+    Publisher m_pubThrottle;
+    Publisher m_pubDirection;
+    Publisher m_pubLights;
+    LightsInfo lightsInfo;
 
   public:
     std::vector<struct axis_state*> axes;
     struct js_event event;
 
-    XboxController(Session& session);
+    XboxController();
     ~XboxController();
     int readEvent(void);
     int getButtonCount(void);
     int getAxisCount(void);
     int getAxisState(void);
+    void run();
 };
