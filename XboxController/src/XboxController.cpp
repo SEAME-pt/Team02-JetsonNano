@@ -99,7 +99,7 @@ void XboxController::run()
                         case BUTTON_RB:
                         {
                             
-                            if (buffer[0] & 1 = 1)
+                            if (buffer[0] & 1 == 1)
                                 buffer[0] -= (0 << 0);
                             else
                                 buffer[0] += (1 << 0);
@@ -110,7 +110,7 @@ void XboxController::run()
                         }
                         case BUTTON_LB:
                         {
-                            if (buffer[0] & (1 << 1) = 1)
+                            if (buffer[0] & (1 << 1) == 1)
                                 buffer[0] -= (1 << 1);
                             else
                                 buffer[0] += (1 << 1);
