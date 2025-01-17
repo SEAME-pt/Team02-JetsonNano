@@ -3,15 +3,17 @@
 #include "Motor.hpp"
 #include "Servo.hpp"
 #include "PCA9685.hpp"
-#include "SharedMemory.hpp"
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include "zenoh.hxx"
 
 extern int signalTo;
+
+using namespace zenoh;
 
 class RaceCar
 {
@@ -22,18 +24,17 @@ class RaceCar
     Motor motorRight;
     Motor motorLeft;
     Servo servo;
-    SharedMemory* sharedData;
+    Session& m_session;
 
   private:
     void setDirection(uint8_t angle);
-    void setSpeed(int speed);
+    void setThrottle(int speed);
 
   public:
-    RaceCar();
+    RaceCar(Session& session);
     ~RaceCar();
 
     void init(const std::string& i2cDevice, uint8_t motorAddress,
               uint8_t servoAddress);
     void run(void);
-    void stop(void);
 };

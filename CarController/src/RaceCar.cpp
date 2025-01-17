@@ -1,23 +1,7 @@
 #include "RaceCar.hpp"
 
-RaceCar::RaceCar()
+RaceCar::RaceCar(Session& session) : m_session(session)
 {
-    int shm_fd = shm_open("/shared_memory", O_RDWR, 0666);
-    if (shm_fd == -1)
-    {
-        throw std::runtime_error("Failed to open shared memory segment");
-    }
-
-    this->sharedData = static_cast<SharedMemory*>(
-        mmap(nullptr, sizeof(SharedMemory), PROT_READ | PROT_WRITE, MAP_SHARED,
-             shm_fd, 0));
-    if (this->sharedData == MAP_FAILED)
-    {
-        throw std::runtime_error("Failed to map shared memory segment");
-    }
-
-    close(shm_fd);
-
     this->m_I2c      = new I2C;
     this->m_motorPCA = new PCA9685;
     this->m_ServoPCA = new PCA9685;
@@ -52,11 +36,7 @@ RaceCar::~RaceCar()
     {
         // nothing
     }
-
-    if (munmap(this->sharedData, sizeof(SharedMemory)) == -1)
-    {
-        std::cerr << "Failed to unmap shared memory segment" << std::endl;
-    }
+    this->m_session.close();
 }
 
 void RaceCar::init(const std::string& i2cDevice, uint8_t motorAddress,
@@ -79,42 +59,38 @@ void RaceCar::setDirection(uint8_t angle)
     servo.setDirection(angle);
 }
 
-void RaceCar::setSpeed(int speed)
+void RaceCar::setThrottle(int speed)
 {
-    motorLeft.setSpeed(speed);
-    motorRight.setSpeed(speed);
+    motorLeft.setThrottle(speed);
+    motorRight.setThrottle(speed);
 }
 
 void RaceCar::run(void)
 {
     std::cout << "Car running!" << std::endl;
-    int32_t prevSpeed;
-    int32_t prevDirection;
+
+    auto throttle_handler = [this](const Sample& sample)
     {
-        pthread_mutex_lock(&this->sharedData->mtx_speed);
-        prevSpeed = this->sharedData->speed;
-        pthread_mutex_unlock(&this->sharedData->mtx_speed);
-        pthread_mutex_lock(&this->sharedData->mtx_direction);
-        prevDirection = this->sharedData->direction;
-        pthread_mutex_unlock(&this->sharedData->mtx_direction);
-    }
+        int throttle = std::stoi(sample.get_payload().as_string());
+        std::cout << "Sub throttle: " << throttle << std::endl;
+        this->setThrottle(throttle);
+    };
+
+    auto direction_handler = [this](const Sample& sample)
+    {
+        int direction = std::stoi(sample.get_payload().as_string());
+        std::cout << "Sub direction: " << direction << std::endl;
+        this->setDirection(direction);
+    };
+
+    auto subThrottle = this->m_session.declare_subscriber(
+        "seame/car/1/throttle", throttle_handler, closures::none);
+
+    auto subDirection = this->m_session.declare_subscriber(
+        "seame/car/1/direction", direction_handler, closures::none);
+
     while (signalTo)
     {
-        {
-            pthread_mutex_lock(&this->sharedData->mtx_speed);
-            if (prevSpeed != this->sharedData->speed)
-            {
-                setSpeed(this->sharedData->speed);
-                prevSpeed = this->sharedData->speed;
-            }
-            pthread_mutex_unlock(&this->sharedData->mtx_speed);
-            pthread_mutex_lock(&this->sharedData->mtx_direction);
-            if (prevDirection != this->sharedData->direction)
-            {
-                setDirection(this->sharedData->direction);
-                prevDirection = this->sharedData->direction;
-            }
-            pthread_mutex_unlock(&this->sharedData->mtx_direction);
-        }
+        usleep(10);
     }
 }

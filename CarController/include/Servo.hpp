@@ -7,6 +7,7 @@ class Servo
 {
   private:
     PCA9685* m_ServoPCA;
+    uint16_t m_currDirection;
 
   public:
     Servo();

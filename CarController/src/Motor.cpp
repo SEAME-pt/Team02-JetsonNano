@@ -1,6 +1,6 @@
 #include "../include/Motor.hpp"
 
-Motor::Motor() {}
+Motor::Motor() : m_currThrottle(0) {}
 
 Motor::~Motor() {}
 
@@ -10,13 +10,21 @@ void Motor::init(PCA9685* motorPCA, Side side)
     this->_side      = side;
 }
 
-void Motor::setSpeed(int speed)
+void Motor::setThrottle(int throttle)
 {
-    speed = std::clamp(speed, -100, 100);
+    throttle = std::clamp(throttle, -100, 100);
 
-    if (speed < 0)
+    if (throttle == m_currThrottle)
     {
-        uint16_t pulseWidth = -speed * 4095 / 100;
+        return;
+    }
+    else
+    {
+        m_currThrottle = throttle;
+    }
+    if (throttle < 0)
+    {
+        uint16_t pulseWidth = -throttle * 4095 / 100;
         if (this->_side == RIGHT)
         {
             m_MotorPCA->setDutyCicle(0, pulseWidth);
@@ -35,7 +43,7 @@ void Motor::setSpeed(int speed)
     }
     else
     {
-        uint16_t pulseWidth = speed * 4095 / 100;
+        uint16_t pulseWidth = throttle * 4095 / 100;
         if (this->_side == RIGHT)
         {
             m_MotorPCA->setDutyCicle(0, pulseWidth);
