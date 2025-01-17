@@ -101,9 +101,9 @@ void XboxController::run()
                                 test.leftBlinker= false;
                             else
                                 test.leftBlinker = true;
-                            char buffer;
-                            buffer = 1 << 4;
-                            memcpy(buffer, &test, sizeof(LightStatus));
+                            char buffer[1];
+                            buffer[0] = 1 << 4;
+                            //memcpy(buffer, &test, sizeof(LightStatus));
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
                             break;
