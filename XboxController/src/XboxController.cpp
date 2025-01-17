@@ -90,28 +90,32 @@ void XboxController::run()
             case JS_EVENT_BUTTON:
             {
                 button = this->event.number;
-                switch (button)
+                if (this->event.value == 1) // Check if the button is pressed
                 {
-                    case BUTTON_RB:
+                    switch (button)
                     {
-                        LightsInfo test;
-                        char buffer[sizeof(LightsInfo)];
-                        memcpy(buffer, &test, sizeof(LightsInfo));
-                        this->m_pubLights.put(buffer);
-                        std::cout << "RightBlinker" << std::endl;
-                        break;
+                        case BUTTON_RB:
+                        {
+                            LightsInfo test;
+                            test.lowBeam = true;
+                            char buffer[sizeof(LightsInfo)];
+                            memcpy(buffer, &test, sizeof(LightsInfo));
+                            this->m_pubLights.put(buffer);
+                            std::cout << "RightBlinker" << std::endl;
+                            break;
+                        }
+                        case BUTTON_LB:
+                        {
+                            bool leftBlinker = true;
+                            this->m_pubLights.put(std::to_string(leftBlinker));
+                            std::cout << "LeftBlinker" << std::endl;
+                            break;
+                        }
+                        default:
+                            break;
                     }
-                    case BUTTON_LB:
-                    {
-                        bool leftBlinker = true;
-                        this->m_pubLights.put(std::to_string(leftBlinker));
-                        std::cout << "LeftBlinker" << std::endl;
-                        break;
-                    }
-                    default:
-                        break;
+                    break;
                 }
-                break;
             }
             case JS_EVENT_AXIS:
             {
