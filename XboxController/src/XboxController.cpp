@@ -1,7 +1,12 @@
-
 #include "../include/XboxController.hpp"
 
-XboxController::XboxController(Session& session) : m_session(session)
+XboxController::XboxController()
+    : m_session(Session::open(std::move(Config::create_default()))),
+      m_pubThrottle(
+          m_session.declare_publisher(KeyExpr("seame/car/1/throttle"))),
+      m_pubDirection(
+          m_session.declare_publisher(KeyExpr("seame/car/1/direction"))),
+      m_pubLights(m_session.declare_publisher(KeyExpr("seame/car/1/lights")))
 {
     const char* device = "/dev/input/js0";
     js                 = open(device, O_RDONLY);
@@ -71,4 +76,71 @@ int XboxController::getAxisState(void)
             axes[axis]->y = event.value;
     }
     return axis;
+}
+
+void XboxController::run()
+{
+    size_t axis;
+    size_t button;
+
+    while (this->readEvent() == 0)
+    {
+        switch (this->event.type)
+        {
+            case JS_EVENT_BUTTON:
+            {
+                button = this->event.number;
+                switch (button)
+                {
+                    case BUTTON_RB:
+                    {
+                        LightsInfo test;
+                        char buffer[sizeof(LightsInfo)];
+                        memcpy(buffer, &test, sizeof(LightsInfo));
+                        this->m_pubLights.put(buffer);
+                        std::cout << "RightBlinker" << std::endl;
+                        break;
+                    }
+                    case BUTTON_LB:
+                    {
+                        bool leftBlinker = true;
+                        this->m_pubLights.put(std::to_string(leftBlinker));
+                        std::cout << "LeftBlinker" << std::endl;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            case JS_EVENT_AXIS:
+            {
+                axis = this->getAxisState();
+                switch (axis)
+                {
+                    case (AXIS_LEFT_STICK):
+                    {
+                        int speed = -this->axes[axis]->y * 100 / 32767;
+                        this->m_pubThrottle.put(std::to_string(speed));
+                        std::cout << "Speed" << std::endl;
+                        break;
+                    }
+                    case (AXIS_RIGHT_STICK):
+                    {
+                        uint8_t direction =
+                            90 + this->axes[axis]->x * 90 / 32767;
+                        this->m_pubDirection.put(std::to_string(direction));
+                        std::cout << "Direction" << std::endl;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+        fflush(stdout);
+    }
 }
