@@ -11,10 +11,11 @@ set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 
-include_directories(include)
-
 add_subdirectory(libs/Communication/I2C)
 add_subdirectory(libs/Peripherals/PCA9685)
+
+
+include_directories(include)
 
 set(SOURCES
     ./src/main.cpp
@@ -30,3 +31,21 @@ add_executable(RaceCar
 target_compile_options(RaceCar PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(RaceCar I2C PCA9685 zenohcxx::zenohc)
+
+
+###TESTS###
+
+add_subdirectory(../external/googletest)
+
+include_directories(../external/googletest/googletest/include)
+include_directories(tests/unit/mocks)
+
+add_executable(tests 
+    ./tests/I2CTest.cpp
+    ./tests/PCA9685Test.cpp
+    ./tests/RaceCarTest.cpp
+)
+
+target_link_libraries(tests gtest gtest_main I2C PCA9685)
+
+enable_testing()

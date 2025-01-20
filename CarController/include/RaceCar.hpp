@@ -21,10 +21,12 @@ class RaceCar
     I2C* m_I2c;
     PCA9685* m_ServoPCA;
     PCA9685* m_motorPCA;
-    Motor motorRight;
-    Motor motorLeft;
-    Servo servo;
-    Session& m_session;
+    Motor m_motorRight;
+    Motor m_motorLeft;
+    Servo m_servo;
+    Session m_session;
+    Subscriber<void> m_subThrottle;
+    Subscriber<void> m_subDirection;
 
   private:
     void setDirection(uint8_t angle);
