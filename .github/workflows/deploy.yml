@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - 61-task-update-compilation-using-dockerimage
     tags:
       - 'v*'
 
