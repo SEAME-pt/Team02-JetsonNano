@@ -11,8 +11,8 @@ set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 
-add_subdirectory(libs/Communication/I2C)
-add_subdirectory(libs/Peripherals/PCA9685)
+add_subdirectory(Libs/Communication/I2C)
+add_subdirectory(Libs/Peripherals/PCA9685)
 
 
 include_directories(include)
@@ -35,17 +35,23 @@ target_link_libraries(RaceCar I2C PCA9685 zenohcxx::zenohc)
 
 ###TESTS###
 
-add_subdirectory(../external/googletest)
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG release-1.12.1
+)
+FetchContent_MakeAvailable(googletest)
 
-include_directories(../external/googletest/googletest/include)
 include_directories(tests/unit/mocks)
 
 add_executable(tests 
-    ./tests/I2CTest.cpp
-    ./tests/PCA9685Test.cpp
-    ./tests/RaceCarTest.cpp
+    ./tests/unit/I2CTest.cpp
+    ./tests/unit/PCA9685Test.cpp
+    ./tests/unit/RaceCarTest.cpp
 )
 
-target_link_libraries(tests gtest gtest_main I2C PCA9685)
+target_link_libraries(tests gtest gtest_main gmock
+gmock_main I2C PCA9685 zenohcxx::zenohc)
 
 enable_testing()
