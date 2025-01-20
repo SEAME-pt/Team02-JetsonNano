@@ -136,7 +136,7 @@ void XboxController::run()
                             else
                                 buffer[0] |= (1 << 3);
                             bool leftBlinker = true;
-                            this->m_pubLights.put(buffer));
+                            this->m_pubLights.put(buffer);
                             std::cout << "highBeam" << std::endl;
                             break;
                         }
@@ -158,40 +158,29 @@ void XboxController::run()
                             else
                                 buffer[0] |= (1 << 5);
                             bool leftBlinker = true;
-                            this->m_pubLights.put(buffer));
+                            this->m_pubLights.put(buffer);
                             std::cout << "rearFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_L2:
                         {
-                            if ((buffer[0] >> 3) & 1 == 1)
-                                buffer[0] &= (1 << 3);
+                            if ((buffer[0] >> 6) & 1 == 1)
+                                buffer[0] &= (1 << 6);
                             else
-                                buffer[0] |= (1 << 3);
+                                buffer[0] |= (1 << 6);
                             bool leftBlinker = true;
-                            this->m_pubLights.put(buffer));
-                            std::cout << "highBeam" << std::endl;
+                            this->m_pubLights.put(buffer);
+                            std::cout << "hazardLight" << std::endl;
                             break;
                         }
                         case BUTTON_R2:
                         {
                             
-                            if ((buffer[0] >> 4) & 1 == 1)
-                                buffer[0] &= (0 << 4);
+                            if ((buffer[0] >> 7) & 1 == 1)
+                                buffer[0] &= (0 << 7);
                             else
-                                buffer[0] |= (1 << 4);
+                                buffer[0] |= (1 << 7);
                             this->m_pubLights.put(buffer);
-                            std::cout << "frontFogLight" << std::endl;
-                            break;
-                        }
-                        case BUTTON_START:
-                        {
-                            if ((buffer[0] >> 5) & 1 == 1)
-                                buffer[0] &= (1 << 5);
-                            else
-                                buffer[0] |= (1 << 5);
-                            bool leftBlinker = true;
-                            this->m_pubLights.put(buffer));
                             std::cout << "parkingLight" << std::endl;
                             break;
                         }
