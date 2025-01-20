@@ -10,14 +10,14 @@ using namespace zenoh;
 class RaceCarTest : public ::testing::Test
 {
   protected:
-    void SetUp() override
+    RaceCarTest()
+        : car(new RaceCar()),
+          testSession(Session::open(std::move(Config::create_default()))),
+          pubThrottle(testSession.declare_publisher("seame/car/1/throttle")),
+          pubDirection(testSession.declare_publisher("seame/car/1/direction"))
     {
-        car = new RaceCar();
-        // Create test publisher session
-        testSession  = Session::open(Config::default_config());
-        pubThrottle  = testSession.declare_publisher("seame/car/1/throttle");
-        pubDirection = testSession.declare_publisher("seame/car/1/direction");
     }
+    void SetUp() override {}
 
     void TearDown() override
     {

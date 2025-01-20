@@ -45,13 +45,16 @@ FetchContent_MakeAvailable(googletest)
 
 include_directories(tests/unit/mocks)
 
-add_executable(tests 
+add_executable(UnitTests 
     ./tests/unit/I2CTest.cpp
     ./tests/unit/PCA9685Test.cpp
     ./tests/unit/RaceCarTest.cpp
+    ./src/RaceCar.cpp
+    ./src/Motor.cpp
+    ./src/Servo.cpp
 )
 
-target_link_libraries(tests gtest gtest_main gmock
+target_link_libraries(UnitTests gtest gtest_main gmock
 gmock_main I2C PCA9685 zenohcxx::zenohc)
 
 enable_testing()

@@ -11,8 +11,6 @@
 #include <thread>
 #include "zenoh.hxx"
 
-extern int signalTo;
-
 using namespace zenoh;
 
 class RaceCar

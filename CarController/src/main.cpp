@@ -5,18 +5,8 @@
 #include <fcntl.h>
 #include <csignal>
 
-int signalTo = 1;
-
-void handler(int code)
-{
-    (void)code;
-    signalTo = 0;
-}
-
 int main()
 {
-    signal(SIGINT, handler);
-
     try
     {
         RaceCar raceCar;

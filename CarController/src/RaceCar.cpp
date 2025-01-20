@@ -88,7 +88,7 @@ void RaceCar::run(void)
 {
     std::cout << "Car running!" << std::endl;
 
-    while (signalTo)
+    while (1)
     {
         usleep(10);
     }
