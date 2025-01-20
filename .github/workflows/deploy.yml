@@ -19,30 +19,31 @@ jobs:
         with:
           submodules: true
 
-      # Install Dependencies
-      - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-
-      # Build CarController
-      - name: Build CarController
+      # Set up Docker
+      - name: Set Up Docker
         run: |
-          mkdir -p CarController/build
-          cd CarController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
-          make
+          echo "Setting up Docker environment..."
+          docker pull ruipires99/jetsoncrosscompile:latest
 
-      # Build XboxController
-      - name: Build XboxController
+      # Build inside Docker
+      - name: Build in Docker
         run: |
-          mkdir -p XboxController/build
-          cd XboxController/build
-          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+          docker run --rm \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          ruipires99/jetsoncrosscompile:latest \
+          bash -c "
+          mkdir -p /workspace/CarController/build && \
+          cd /workspace/CarController/build && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake .. && \
+          make && \
+          mkdir -p /workspace/XboxController/build && \
+          cd /workspace/XboxController/build && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake .. && \
           make
+          "
 
-
-
-#Version Release and Tag Update
-
+      #Version Release and Tag Update
       - name: Get latest tag and increment
         id: tag
         run: |
@@ -62,7 +63,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag.outputs.new_tag }}
-          files: | 
+          files: |
             CarController/build/RaceCar
             XboxController/build/controller
           name: Release ${{ steps.tag.outputs.new_tag }}
@@ -72,20 +73,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_LUIS }}
 
-
-#Artifacts:
-
-      #Saw the commands here https://github.com/actions/upload-artifact
-      #Upload RaceCar binary
-      - uses: actions/upload-artifact@v4
+      #Artifacts:
+      - name: Upload RaceCar binary
+        uses: actions/upload-artifact@v4
         with:
           name: RaceCar
           path: CarController/build/RaceCar
           retention-days: 1
           overwrite: true
 
-      #Upload XboxController binary
-      - uses: actions/upload-artifact@v4
+      - name: Upload XboxController binary
+        uses: actions/upload-artifact@v4
         with:
           name: controller
           path: XboxController/build/controller
