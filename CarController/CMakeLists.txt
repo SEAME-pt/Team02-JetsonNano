@@ -11,11 +11,18 @@ set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 
-add_subdirectory(Libs/Communication/I2C)
-add_subdirectory(Libs/Peripherals/PCA9685)
-
+include(FetchContent)
+FetchContent_Declare(
+    Libs
+    GIT_REPOSITORY https://github.com/SEAME-pt/Team02-Libs
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(Libs)    
 
 include_directories(include)
+include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
+include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
+include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 
 set(SOURCES
     ./src/main.cpp
@@ -31,7 +38,6 @@ add_executable(RaceCar
 target_compile_options(RaceCar PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(RaceCar I2C PCA9685 zenohcxx::zenohc)
-
 
 ###TESTS###
 

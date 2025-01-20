@@ -38,7 +38,7 @@ TEST_F(RaceCarTest, ZenohPublishTest)
     // Publish test throttle message
     pubThrottle.put("50");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
+    EXPECT_(car->)
     // Publish test direction message
     pubDirection.put("90");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

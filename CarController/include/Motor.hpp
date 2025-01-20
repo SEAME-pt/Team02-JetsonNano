@@ -14,13 +14,18 @@ class Motor
 
   private:
     PCA9685* m_MotorPCA;
-    Side _side;
+    Side m_side;
     int16_t m_currThrottle;
 
   public:
     Motor();
     ~Motor();
 
-    void init(PCA9685* motorPCA, Side side);
+    PCA9685* getMotorPCA(void) const;
+    Side getSide(void) const;
+    int16_t getThrottle(void) const;
+
     void setThrottle(int throttle);
+
+    void init(PCA9685* motorPCA, Side side);
 };
