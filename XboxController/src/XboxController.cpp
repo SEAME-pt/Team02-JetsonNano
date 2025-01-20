@@ -115,10 +115,11 @@ void XboxController::run()
                             else
                                 buffer[0] |= (1 << 1);
                             bool leftBlinker = true;
-                            this->m_pubLights.put(std::to_string(leftBlinker));
+                            this->m_pubLights.put(buffer));
                             std::cout << "LeftBlinker" << std::endl;
                             break;
                         }
+                        
                         default:
                             break;
                     }
