@@ -103,7 +103,6 @@ void XboxController::run()
                                 buffer[0] &= (0 << 0);
                             else
                                 buffer[0] |= (1 << 0);
-                            //memcpy(buffer, &test, sizeof(LightStatus));
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
                             break;
@@ -119,7 +118,84 @@ void XboxController::run()
                             std::cout << "LeftBlinker" << std::endl;
                             break;
                         }
-                        
+                        case BUTTON_A:
+                        {
+                            
+                            if ((buffer[0] >> 2) & 1 == 1)
+                                buffer[0] &= (0 << 2);
+                            else
+                                buffer[0] |= (1 << 2);
+                            this->m_pubLights.put(buffer);
+                            std::cout << "lowBeam" << std::endl;
+                            break;
+                        }
+                        case BUTTON_B:
+                        {
+                            if ((buffer[0] >> 3) & 1 == 1)
+                                buffer[0] &= (1 << 3);
+                            else
+                                buffer[0] |= (1 << 3);
+                            bool leftBlinker = true;
+                            this->m_pubLights.put(buffer));
+                            std::cout << "highBeam" << std::endl;
+                            break;
+                        }
+                        case BUTTON_X:
+                        {
+                            
+                            if ((buffer[0] >> 4) & 1 == 1)
+                                buffer[0] &= (0 << 4);
+                            else
+                                buffer[0] |= (1 << 4);
+                            this->m_pubLights.put(buffer);
+                            std::cout << "frontFogLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_Y:
+                        {
+                            if ((buffer[0] >> 5) & 1 == 1)
+                                buffer[0] &= (1 << 5);
+                            else
+                                buffer[0] |= (1 << 5);
+                            bool leftBlinker = true;
+                            this->m_pubLights.put(buffer));
+                            std::cout << "rearFogLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_L2:
+                        {
+                            if ((buffer[0] >> 3) & 1 == 1)
+                                buffer[0] &= (1 << 3);
+                            else
+                                buffer[0] |= (1 << 3);
+                            bool leftBlinker = true;
+                            this->m_pubLights.put(buffer));
+                            std::cout << "highBeam" << std::endl;
+                            break;
+                        }
+                        case BUTTON_R2:
+                        {
+                            
+                            if ((buffer[0] >> 4) & 1 == 1)
+                                buffer[0] &= (0 << 4);
+                            else
+                                buffer[0] |= (1 << 4);
+                            this->m_pubLights.put(buffer);
+                            std::cout << "frontFogLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_START:
+                        {
+                            if ((buffer[0] >> 5) & 1 == 1)
+                                buffer[0] &= (1 << 5);
+                            else
+                                buffer[0] |= (1 << 5);
+                            bool leftBlinker = true;
+                            this->m_pubLights.put(buffer));
+                            std::cout << "parkingLight" << std::endl;
+                            break;
+                        }
+
                         default:
                             break;
                     }
