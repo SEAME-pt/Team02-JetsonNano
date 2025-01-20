@@ -35,14 +35,17 @@ jobs:
           -w /workspace \
           ruipires99/jetsoncrosscompile:latest \
           bash -c "
+          apt-get update && apt-get install -y build-essential && \
           mkdir -p /workspace/CarController/build && \
           cd /workspace/CarController/build && \
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake .. && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
           make && \
           mkdir -p /workspace/XboxController/build && \
           cd /workspace/XboxController/build && \
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake .. && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
           make
+          "
+
           "
 
       #Version Release and Tag Update
