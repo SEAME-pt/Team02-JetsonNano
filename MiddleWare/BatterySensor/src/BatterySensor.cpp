@@ -2,7 +2,8 @@
 
 BatterySensor::BatterySensor() : m_session(Session::open(std::move(Config::create_default()))),
       m_pubBattery(
-          m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor")))
+          m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor"))),
+      smoothedVoltage(0.0f);
 {
     this->m_I2c = new I2C();
     this->batteryINA = new INA219();
@@ -31,18 +32,21 @@ void BatterySensor::run( void )
     {
         usleep(100000); // Add a small delay to avoid busy waiting
 
-        double status = this->batteryINA->readVoltage(0x02);
-        char buf[sizeof(status)];
-        memcpy(buf, &status, sizeof(status));
-        std::cout << "Battery: " << status << std::endl;
+        double voltage = this->batteryINA->readVoltage(0x02);
+        // char buf[sizeof(voltage)];
+        // memcpy(buf, &voltage, sizeof(voltage));
+        std::cout << "Battery: " << voltage << std::endl;
+
+        float alpha = 0.1f;
+        smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
-        memcpy(value, &status, sizeof(status));
-        this->canBus->writeMessage(0x02, value, sizeof(value));
+        memcpy(value, &smoothedVoltage, sizeof());
 
-        float percentage = ((status - 9.5f) / (12.6f - 9.5f)) * 100.0f;
-        status = std::min(100.0f, std::max(0.0f, percentage));
-        std::string battery_str = std::to_string(status);
+        this->canBus->writeMessage(0x02, value, sizeof(value));
+        float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+        percentage = std::min(100.0f, std::max(0.0f, percentage));
+        std::string battery_str = std::to_string(percentage);
         this->m_pubBattery.put(battery_str);
     }
     return;
