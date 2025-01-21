@@ -20,8 +20,8 @@ int main(int argc, char** argv)
 
     BatterySensor  jetsonBat;
 
-    auto pubBattery =
-        session.declare_publisher(KeyExpr("seame/car/1/batterySensor"));
+    // auto pubBattery =
+    //     session.declare_publisher(KeyExpr("seame/car/1/batterySensor"));
     
     jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
 

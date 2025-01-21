@@ -2,7 +2,7 @@
 
 BatterySensor::BatterySensor() : m_session(Session::open(std::move(Config::create_default()))),
       m_pubBattery(
-          m_session.declare_publisher(KeyExpr("seame/car/1/battery")))
+          m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor")))
 {
     this->m_I2c = new I2C();
     this->batteryINA = new INA219();

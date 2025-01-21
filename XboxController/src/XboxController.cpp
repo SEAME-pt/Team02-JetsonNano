@@ -6,7 +6,10 @@ XboxController::XboxController()
           m_session.declare_publisher(KeyExpr("seame/car/1/throttle"))),
       m_pubDirection(
           m_session.declare_publisher(KeyExpr("seame/car/1/direction"))),
-      m_pubLights(m_session.declare_publisher(KeyExpr("seame/car/1/lights")))
+      m_pubLights(
+            m_session.declare_publisher(KeyExpr("seame/car/1/lights"))),
+      m_pubGear(
+            m_session.declare_publisher(KeyExpr("seame/car/1/gear")))
 {
     const char* device = "/dev/input/js0";
     js                 = open(device, O_RDONLY);
@@ -84,6 +87,9 @@ void XboxController::run()
     size_t button;
     LightStatus test;
     char buffer[1];
+    char gear[1];
+    gear[0] = 'P';
+    this->m_pubGear.put(gear);
 
     while (this->readEvent() == 0)
     {
@@ -98,65 +104,47 @@ void XboxController::run()
                     {
                         case BUTTON_RB:
                         {
-                            
-                            if (buffer[0] & 1 == 1)
-                                buffer[0] &= (0 << 0);
-                            else
-                                buffer[0] |= (1 << 0);
+                            buffer[0] ^= (1 << 0);
+                            if ((buffer[0] >> 1) & 1 == 1)
+                                buffer[0] ^= (1 << 1);
                             this->m_pubLights.put(buffer);
                             std::cout << "RightBlinker" << std::endl;
                             break;
                         }
                         case BUTTON_LB:
                         {
-                            if ((buffer[0] >> 1) & 1 == 1)
-                                buffer[0] &= (1 << 1);
-                            else
-                                buffer[0] |= (1 << 1);
+                            buffer[0] ^= (1 << 1);
+                            if ((buffer[0] >> 0) & 1 == 1)
+                                buffer[0] ^= (1 << 0);
                             bool leftBlinker = true;
-                            this->m_pubLights.put(buffer));
+                            this->m_pubLights.put(buffer);
                             std::cout << "LeftBlinker" << std::endl;
                             break;
                         }
                         case BUTTON_A:
                         {
-                            
-                            if ((buffer[0] >> 2) & 1 == 1)
-                                buffer[0] &= (0 << 2);
-                            else
-                                buffer[0] |= (1 << 2);
+                            buffer[0] ^= (1 << 2);
                             this->m_pubLights.put(buffer);
                             std::cout << "lowBeam" << std::endl;
                             break;
                         }
                         case BUTTON_B:
                         {
-                            if ((buffer[0] >> 3) & 1 == 1)
-                                buffer[0] &= (1 << 3);
-                            else
-                                buffer[0] |= (1 << 3);
-                            bool leftBlinker = true;
+                            buffer[0] ^= (1 << 3);
                             this->m_pubLights.put(buffer);
                             std::cout << "highBeam" << std::endl;
                             break;
                         }
                         case BUTTON_X:
                         {
-                            
-                            if ((buffer[0] >> 4) & 1 == 1)
-                                buffer[0] &= (0 << 4);
-                            else
-                                buffer[0] |= (1 << 4);
+                            buffer[0] ^= (1 << 4);
                             this->m_pubLights.put(buffer);
                             std::cout << "frontFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_Y:
                         {
-                            if ((buffer[0] >> 5) & 1 == 1)
-                                buffer[0] &= (1 << 5);
-                            else
-                                buffer[0] |= (1 << 5);
+                            buffer[0] ^= (1 << 5);
                             bool leftBlinker = true;
                             this->m_pubLights.put(buffer);
                             std::cout << "rearFogLight" << std::endl;
@@ -164,10 +152,7 @@ void XboxController::run()
                         }
                         case BUTTON_L2:
                         {
-                            if ((buffer[0] >> 6) & 1 == 1)
-                                buffer[0] &= (1 << 6);
-                            else
-                                buffer[0] |= (1 << 6);
+                            buffer[0] ^= (1 << 6);
                             bool leftBlinker = true;
                             this->m_pubLights.put(buffer);
                             std::cout << "hazardLight" << std::endl;
@@ -175,11 +160,7 @@ void XboxController::run()
                         }
                         case BUTTON_R2:
                         {
-                            
-                            if ((buffer[0] >> 7) & 1 == 1)
-                                buffer[0] &= (0 << 7);
-                            else
-                                buffer[0] |= (1 << 7);
+                            buffer[0] ^= (1 << 7);
                             this->m_pubLights.put(buffer);
                             std::cout << "parkingLight" << std::endl;
                             break;
@@ -199,6 +180,21 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         int speed = -this->axes[axis]->y * 100 / 32767;
+                        if (speed < -5)
+                        {
+                            gear[0] = 'R';
+                            this->m_pubGear.put(gear);
+                        }
+                        else if (speed > 5)
+                        {
+                            gear[0] = 'D';
+                            this->m_pubGear.put(gear);
+                        }
+                        else
+                        {
+                            gear[0] = 'N';
+                            this->m_pubGear.put(gear);
+                        }
                         this->m_pubThrottle.put(std::to_string(speed));
                         std::cout << "Speed" << std::endl;
                         break;
@@ -217,7 +213,12 @@ void XboxController::run()
                 break;
             }
             default:
-                break;
+                if (gear[0] == 'R' || gear[0] == 'D')
+                {
+                    gear[0] = 'N';
+                    this->m_pubGear.put(gear);
+                }
+
         }
         fflush(stdout);
     }

@@ -81,6 +81,7 @@ class XboxController
     Publisher m_pubThrottle;
     Publisher m_pubDirection;
     Publisher m_pubLights;
+    Publisher m_pubGear;
     LightStatus lightsInfo;
 
   public:
