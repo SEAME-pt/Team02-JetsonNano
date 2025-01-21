@@ -88,7 +88,7 @@ void XboxController::run()
     LightStatus test;
     char buffer[1];
     char gear[1];
-    gear[0] = 'P';
+    gear[0] = 1;
     this->m_pubGear.put(gear);
 
     while (this->readEvent() == 0)
@@ -145,7 +145,6 @@ void XboxController::run()
                         case BUTTON_Y:
                         {
                             buffer[0] ^= (1 << 5);
-                            bool leftBlinker = true;
                             this->m_pubLights.put(buffer);
                             std::cout << "rearFogLight" << std::endl;
                             break;
@@ -153,7 +152,6 @@ void XboxController::run()
                         case BUTTON_L2:
                         {
                             buffer[0] ^= (1 << 6);
-                            bool leftBlinker = true;
                             this->m_pubLights.put(buffer);
                             std::cout << "hazardLight" << std::endl;
                             break;
@@ -182,17 +180,20 @@ void XboxController::run()
                         int speed = -this->axes[axis]->y * 100 / 32767;
                         if (speed < -5)
                         {
-                            gear[0] = 'R';
+                            gear[0] = 0;;
+                            gear[0] ^= (1 << 1);
                             this->m_pubGear.put(gear);
                         }
                         else if (speed > 5)
                         {
-                            gear[0] = 'D';
+                            gear[0] = 0;;
+                            gear[0] ^= (1 << 3);
                             this->m_pubGear.put(gear);
                         }
                         else
                         {
-                            gear[0] = 'N';
+                            gear[0] = 0;;
+                            gear[0] ^= (1 << 2);
                             this->m_pubGear.put(gear);
                         }
                         this->m_pubThrottle.put(std::to_string(speed));
@@ -213,12 +214,12 @@ void XboxController::run()
                 break;
             }
             default:
-                if (gear[0] == 'R' || gear[0] == 'D')
+                if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
                 {
-                    gear[0] = 'N';
+                    gear[0] = 0;;
+                    gear[0] ^= (1 << 2);
                     this->m_pubGear.put(gear);
                 }
-
         }
         fflush(stdout);
     }

@@ -42,6 +42,14 @@ enum Axis
     AXIS_LEFT_STICK  = 1,
 };
 
+enum Gear
+{
+    P,
+    R,
+    N,
+    D,
+};
+
 struct axis_state
 {
     int x = 0;

@@ -42,13 +42,14 @@ void BatterySensor::run( void )
         memcpy(buf, &status, sizeof(status));
         std::cout << "Battery: " << status << std::endl;
 
-        char tx[8];
-        memcpy(tx, &status, sizeof(status));
-        this->m_pubBattery.put(tx);
-
         uint8_t value[8];
         memcpy(value, &status, sizeof(status));
         this->canBus->writeMessage(0x02, value, sizeof(tx));
+
+
+        char tx[8];
+        memcpy(tx, &status, sizeof(status));
+        this->m_pubBattery.put(tx);
     }
     return;
 }

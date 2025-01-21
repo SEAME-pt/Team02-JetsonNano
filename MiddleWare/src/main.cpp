@@ -15,9 +15,6 @@ using namespace zenoh;
 int main(int argc, char** argv)
 {
 
-    Config config = Config::create_default();
-    auto session  = Session::open(std::move(config));
-
     BatterySensor  jetsonBat;
 
     // auto pubBattery =
