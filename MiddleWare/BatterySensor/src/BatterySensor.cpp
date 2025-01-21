@@ -29,13 +29,7 @@ void BatterySensor::run( void )
 {
     while(1)
     {
-        usleep(10000);
-        int buffer = this->canBus->checkReceive();
-        if (buffer != -1) {
-            this->canBus->readMessage(buffer);
-        }
-
-        usleep(1000); // Add a small delay to avoid busy waiting
+        usleep(100000); // Add a small delay to avoid busy waiting
 
         double status = this->batteryINA->readVoltage(0x02);
         char buf[sizeof(status)];
@@ -44,12 +38,12 @@ void BatterySensor::run( void )
 
         uint8_t value[8];
         memcpy(value, &status, sizeof(status));
-        this->canBus->writeMessage(0x02, value, sizeof(tx));
+        this->canBus->writeMessage(0x02, value, sizeof(value));
 
-
-        char tx[8];
-        memcpy(tx, &status, sizeof(status));
-        this->m_pubBattery.put(tx);
+        float percentage = ((status - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+        status = std::min(100.0f, std::max(0.0f, percentage));
+        std::string battery_str = std::to_string(status);
+        this->m_pubBattery.put(battery_str);
     }
     return;
 }

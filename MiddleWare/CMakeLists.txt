@@ -12,11 +12,13 @@ find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 
 add_subdirectory(BatterySensor)
+add_subdirectory(Signals)
 
 include_directories(BatterySensor/include)
+include_directories(Signals/include)
 
 add_executable(middleWare
     ./src/main.cpp
 )
 
-target_link_libraries(middleWare BatterySensor zenohcxx::zenohc)
+target_link_libraries(middleWare BatterySensor Signals zenohcxx::zenohc)

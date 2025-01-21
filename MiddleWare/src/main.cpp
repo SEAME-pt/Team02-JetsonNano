@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <csignal>
 #include "BatterySensor.hpp"
+#include "Signals.hpp"
 
 
 using namespace zenoh;
@@ -16,14 +17,18 @@ int main(int argc, char** argv)
 {
 
     BatterySensor  jetsonBat;
+    Signals        allSigs;
 
     // auto pubBattery =
     //     session.declare_publisher(KeyExpr("seame/car/1/batterySensor"));
     
     jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
+    allSigs.init("/dev/spidev0.0");
 
     std::thread batteryThread(&BatterySensor::run, &jetsonBat);
+    std::thread signalsThread(&Signals::run, &allSigs);
     batteryThread.join();
+    signalsThread.join();
 
 
     // while(1)
