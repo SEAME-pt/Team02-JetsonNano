@@ -29,18 +29,19 @@ void Signals::run()
             uint32_t can_id;
             uint8_t data[8];
             this->canBus->readMessage(buffer, can_id, data);
-            if (frame.can_id == 0x01)
+            if (can_id == 0x01)
             {
                 int speed;
                 double wheelDiame = 0.067;
 
-                memcpy(&speed, data, sizeof(data));
+                memcpy(&speed, &data[1], 4);
+
                 speed = ntohl(speed);
                 speed = wheelDiame * 3.14 * speed * 10 / 60;
                 std::string speed_str = std::to_string(speed);
 
                 printf("Publishing speed: '%d'\n", speed);
-                pubSpeed.put(speed_str.c_str());
+                m_pubSpeed.put(speed_str.c_str());
             }
         }
     }

@@ -5,6 +5,7 @@
 #include <iostream>
 #include "CAN.hpp"
 #include "zenoh.hxx"
+#include <arpa/inet.h>
 
 using namespace zenoh;
 
@@ -23,5 +24,5 @@ class Signals {
         void run();
 
 
-}
+};
 
