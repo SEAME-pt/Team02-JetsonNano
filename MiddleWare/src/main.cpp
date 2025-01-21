@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <thread>
 #include <iostream>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -6,7 +7,7 @@
 #include "zenoh.hxx"
 #include <fcntl.h>
 #include <csignal>
-#include "../BatterySensor/include/BatterySensor.hpp"
+#include "BatterySensor.hpp"
 
 
 using namespace zenoh;
@@ -17,14 +18,14 @@ int main(int argc, char** argv)
     Config config = Config::create_default();
     auto session  = Session::open(std::move(config));
 
-    BatterySensor  jetsonBat(session);
+    BatterySensor  jetsonBat;
 
     auto pubBattery =
         session.declare_publisher(KeyExpr("seame/car/1/batterySensor"));
     
     jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
 
-    std::thread batteryThread(&BatterySensor::run(), &jetsonBat);
+    std::thread batteryThread(&BatterySensor::run, &jetsonBat);
     batteryThread.join();
 
 
@@ -65,18 +66,18 @@ int main(int argc, char** argv)
 
 
 
-int main()
-{
-    try
-    {
-        BatterySensor  jetsonBat;
+// int main()
+// {
+//     try
+//     {
+//         BatterySensor  jetsonBat;
 
-        jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
-        jetsonBat.run();
-    }
-    catch( std::exception &e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    return 0;
-}
+//         jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
+//         jetsonBat.run();
+//     }
+//     catch( std::exception &e)
+//     {
+//         std::cerr << e.what() << '\n';
+//     }
+//     return 0;
+// }

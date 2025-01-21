@@ -1,4 +1,4 @@
-#include "../include/BatterySensor.hpp"
+#include "BatterySensor.hpp"
 
 BatterySensor::BatterySensor() : m_session(Session::open(std::move(Config::create_default()))),
       m_pubBattery(
@@ -16,16 +16,6 @@ BatterySensor::~BatterySensor()
     delete (m_I2c);
     delete this->canBus;
 
-}
-BatterySensor::BatterySensor(const  BatterySensor& originalI2C)
-{
-    (void)originalI2C;
-}
-
-BatterySensor& BatterySensor::operator=(const   BatterySensor& originalI2C)
-{
-    (void)originalI2C;
-    return *this;
 }
 
 void BatterySensor::init(const std::string& i2cDevice, uint8_t sensorAddress, const std::string& canDevice)
@@ -47,15 +37,18 @@ void BatterySensor::run( void )
 
         usleep(1000); // Add a small delay to avoid busy waiting
 
-        double voltage = this->batteryINA->readVoltage(0x02);
-        char buffer[sizeof(status)];
-        memcpy(buffer, &status, sizeof(status));
+        double status = this->batteryINA->readVoltage(0x02);
+        char buf[sizeof(status)];
+        memcpy(buf, &status, sizeof(status));
         std::cout << "Battery: " << status << std::endl;
 
-        uint8_t tx[8];
+        char tx[8];
         memcpy(tx, &status, sizeof(status));
-        this->m_pub.put(tx);
-        this->canBus->writeMessage(0x02, tx, sizeof(tx));
+        this->m_pubBattery.put(tx);
+
+        uint8_t value[8];
+        memcpy(value, &status, sizeof(status));
+        this->canBus->writeMessage(0x02, value, sizeof(tx));
     }
     return;
 }

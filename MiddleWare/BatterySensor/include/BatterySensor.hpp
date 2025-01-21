@@ -19,15 +19,13 @@ class BatterySensor
         I2C* m_I2c;
         INA219* batteryINA;
         CAN* canBus;
-        Session& m_session;
+        Session m_session;
         Publisher m_pubBattery;
 
 
     public:
     BatterySensor();
     ~BatterySensor();
-    BatterySensor(const  BatterySensor& originalI2C);
-    BatterySensor& operator=(const   BatterySensor& originalI2C);
 
     void init(const std::string& i2cDevice, uint8_t sensorAddress, const std::string& canDevice);
     void run( void );
