@@ -37,7 +37,10 @@ add_executable(RaceCar
 
 target_compile_options(RaceCar PRIVATE -Wall -Werror -Wextra)
 
-target_link_libraries(RaceCar I2C PCA9685 zenohcxx::zenohc)
+target_link_libraries(RaceCar
+    I2C
+    PCA9685
+    zenohcxx::zenohc)
 
 ###TESTS###
 
@@ -60,7 +63,14 @@ add_executable(UnitTests
     ./src/Servo.cpp
 )
 
-target_link_libraries(UnitTests gtest gtest_main gmock
-gmock_main I2C PCA9685 zenohcxx::zenohc)
+target_link_libraries(UnitTests
+    gtest
+    gtest_main
+    gmock
+    gmock_main
+    I2C
+    PCA9685
+    zenohcxx::zenohc
+)
 
 enable_testing()
