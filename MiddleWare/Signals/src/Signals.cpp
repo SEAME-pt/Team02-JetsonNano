@@ -27,7 +27,7 @@ void Signals::run()
         if (buffer != -1)
         {
             uint32_t can_id;
-            uint8_t *data;
+            uint8_t data[8];
             this->canBus->readMessage(buffer, can_id, data);
             if (frame.can_id == 0x01)
             {
