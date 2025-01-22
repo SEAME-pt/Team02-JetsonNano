@@ -3,8 +3,7 @@
 BatterySensor::BatterySensor()
     : m_session(Session::open(std::move(Config::create_default()))),
       m_pubBattery(
-          m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor"))),
-      smoothedVoltage(0.0f)
+          m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor")))
 {
     this->m_I2c      = new I2C();
     this->batteryINA = new INA219();
@@ -28,17 +27,28 @@ void BatterySensor::init(const std::string& i2cDevice, uint8_t sensorAddress,
 
 void BatterySensor::run(void)
 {
+    static const size_t BUFFER_SIZE                      = 50;
+    static std::array<double, BUFFER_SIZE> voltageBuffer = {0};
+    static size_t bufferIndex                            = 0;
+
     while (1)
     {
-        usleep(100000); // Add a small delay to avoid busy waiting
-
+        usleep(100000);
         double voltage = this->batteryINA->readVoltage(0x02);
-        // char buf[sizeof(voltage)];
-        // memcpy(buf, &voltage, sizeof(voltage));
-        std::cout << "Battery: " << voltage << std::endl;
 
-        float alpha     = 0.009f;
-        smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
+        // Update buffer
+        voltageBuffer[bufferIndex] = voltage;
+        bufferIndex                = (bufferIndex + 1) % BUFFER_SIZE;
+
+        // Calculate average
+        double sum = 0.0;
+        for (const auto& v : voltageBuffer)
+        {
+            sum += v;
+        }
+        double smoothedVoltage = sum / BUFFER_SIZE;
+
+        std::cout << "Battery: " << smoothedVoltage << std::endl;
 
         uint8_t value[8];
         memcpy(value, &smoothedVoltage, sizeof(value));
