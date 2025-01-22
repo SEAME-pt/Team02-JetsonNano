@@ -36,11 +36,9 @@ void BatterySensor::run(void)
         usleep(100000);
         double voltage = this->batteryINA->readVoltage(0x02);
 
-        // Update buffer
         voltageBuffer[bufferIndex] = voltage;
         bufferIndex                = (bufferIndex + 1) % BUFFER_SIZE;
 
-        // Calculate average
         double sum = 0.0;
         for (const auto& v : voltageBuffer)
         {
