@@ -21,7 +21,7 @@ class BatterySensor
         CAN* canBus;
         Session m_session;
         Publisher m_pubBattery;
-        float smoothedVoltage;
+        double smoothedVoltage;
 
 
     public:
