@@ -37,11 +37,11 @@ void BatterySensor::run(void)
         // memcpy(buf, &voltage, sizeof(voltage));
         std::cout << "Battery: " << voltage << std::endl;
 
-        float alpha     = 0.1f;
+        float alpha     = 0.009f;
         smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
-        memcpy(value, &smoothedVoltage, sizeof());
+        memcpy(value, &smoothedVoltage, sizeof(value));
 
         this->canBus->writeMessage(0x02, value, sizeof(value));
         float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
