@@ -3,7 +3,7 @@
 BatterySensor::BatterySensor() : m_session(Session::open(std::move(Config::create_default()))),
       m_pubBattery(
           m_session.declare_publisher(KeyExpr("seame/car/1/batterySensor"))),
-      smoothedVoltage(0.0f);
+      smoothedVoltage(0.0f)
 {
     this->m_I2c = new I2C();
     this->batteryINA = new INA219();
@@ -37,11 +37,11 @@ void BatterySensor::run( void )
         // memcpy(buf, &voltage, sizeof(voltage));
         std::cout << "Battery: " << voltage << std::endl;
 
-        float alpha = 0.1f;
+        float alpha = 0.009f;
         smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
-        memcpy(value, &smoothedVoltage, sizeof());
+        memcpy(value, &smoothedVoltage, sizeof(value));
 
         this->canBus->writeMessage(0x02, value, sizeof(value));
         float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
