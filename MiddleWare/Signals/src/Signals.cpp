@@ -37,6 +37,8 @@ void Signals::run()
                 memcpy(&speed, &data[1], 4);
 
                 speed = ntohl(speed);
+                if (speed < 0 || speed > 100)
+                    speed = 0;
                 speed = wheelDiame * 3.14 * speed * 10 / 60;
                 std::string speed_str = std::to_string(speed);
 
