@@ -32,14 +32,14 @@ void BatterySensor::run(void)
     {
         usleep(100000); // Add a small delay to avoid busy waiting
         double voltage = this->batteryINA->readVoltage(0x02);
-        if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.08)
+        if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.05)
             voltage = prev_voltage;
         // char buf[sizeof(voltage)];
         // memcpy(buf, &voltage, sizeof(voltage));
-        std::cout << "Battery: " << voltage << std::endl;
+        // std::cout << "Battery: " << voltage << std::endl;
 
         float alpha = 0.01f;
-        smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
+        double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
         memcpy(value, &smoothedVoltage, sizeof(value));
