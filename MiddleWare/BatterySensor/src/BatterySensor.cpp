@@ -28,16 +28,18 @@ void BatterySensor::init(const std::string& i2cDevice, uint8_t sensorAddress, co
 
 void BatterySensor::run( void )
 {
+    double prev_voltage = 0;
     while(1)
     {
         usleep(100000); // Add a small delay to avoid busy waiting
-
         double voltage = this->batteryINA->readVoltage(0x02);
+        if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.15)
+            voltage = prev_voltage;
         // char buf[sizeof(voltage)];
         // memcpy(buf, &voltage, sizeof(voltage));
         std::cout << "Battery: " << voltage << std::endl;
 
-        float alpha = 0.009f;
+        float alpha = 0.01f;
         smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
@@ -48,6 +50,7 @@ void BatterySensor::run( void )
         percentage = std::min(100.0f, std::max(0.0f, percentage));
         std::string battery_str = std::to_string(percentage);
         this->m_pubBattery.put(battery_str);
+        prev_voltage = voltage;
     }
     return;
 }
