@@ -17,8 +17,8 @@ add_subdirectory(Signals)
 include_directories(BatterySensor/include)
 include_directories(Signals/include)
 
-add_executable(middleWare
+add_executable(middlewareApp
     ./src/main.cpp
 )
 
-target_link_libraries(middleWare BatterySensor Signals zenohcxx::zenohc)
+target_link_libraries(middlewareApp BatterySensor Signals zenohcxx::zenohc)

@@ -9,20 +9,19 @@
 
 using namespace zenoh;
 
-class Signals {
+class Signals
+{
+  private:
+    CAN* canBus;
+    Session m_session;
+    Publisher m_pubSpeed;
+    Subscriber<void> m_subLights;
+    Subscriber<void> m_subGear;
 
-    private:
-        CAN* canBus;
-        Session m_session;
-        Publisher m_pubSpeed;
+  public:
+    Signals();
+    ~Signals();
 
-    public:
-        Signals();
-        ~Signals();
-
-        void init(const std::string& canDevice);
-        void run();
-
-
+    void init(const std::string& canDevice);
+    void run();
 };
-
