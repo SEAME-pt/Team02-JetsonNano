@@ -52,7 +52,7 @@ void Signals::run()
         int buffer = this->canBus->checkReceive();
         if (buffer != -1)
         {
-            uint32_t can_id;
+            uint32_t can_id = 0;
             uint8_t data[8];
             this->canBus->readMessage(buffer, can_id, data);
             if (can_id == 0x01)
@@ -63,13 +63,14 @@ void Signals::run()
                 memcpy(&speed, &data[1], 4);
 
                 speed = ntohl(speed);
+                speed = wheelDiame * 3.14 * speed * 10 / 60;
+                printf("Publishing speed: '%d'\n", speed);
                 if (speed < 0 || speed > 100)
                     speed = 0;
-                speed                 = wheelDiame * 3.14 * speed * 10 / 60;
                 std::string speed_str = std::to_string(speed);
 
                 // printf("Publishing speed: '%d'\n", speed);
-                m_pubSpeed.put(speed_str.c_str());
+                // m_pubSpeed.put(speed_str.c_str());
             }
         }
     }
