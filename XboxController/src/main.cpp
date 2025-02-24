@@ -1,4 +1,4 @@
-#include "../include/XboxController.hpp"
+#include "XboxController.hpp"
 
 int main(void)
 {

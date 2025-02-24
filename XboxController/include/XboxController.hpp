@@ -42,22 +42,41 @@ enum Axis
     AXIS_LEFT_STICK  = 1,
 };
 
+enum Gear
+{
+    P,
+    R,
+    N,
+    D,
+};
+
 struct axis_state
 {
     int x = 0;
     int y = 0;
 };
 
-struct LightsInfo
+struct LightStatus
 {
-    bool rightBlinker;
-    bool leftBlinker;
-    bool lowBeam;
-    bool highBeam;
-    bool frontFogLight;
-    bool rearFogLight;
-    bool hazardLight;
-    bool parkingLight;
+    bool rightBlinker{false};
+    bool leftBlinker{false};
+    bool lowBeam{false};
+    bool highBeam{false};
+    bool frontFogLight{false};
+    bool rearFogLight{false};
+    bool hazardLight{false};
+    bool parkingLight{false};
+
+    bool operator!=(const LightStatus& lights) const
+    {
+        return rightBlinker != lights.rightBlinker ||
+               leftBlinker != lights.leftBlinker || lowBeam != lights.lowBeam ||
+               highBeam != lights.highBeam ||
+               frontFogLight != lights.frontFogLight ||
+               rearFogLight != lights.rearFogLight ||
+               hazardLight != lights.hazardLight ||
+               parkingLight != lights.parkingLight;
+    }
 };
 
 using namespace zenoh;
@@ -70,7 +89,8 @@ class XboxController
     Publisher m_pubThrottle;
     Publisher m_pubDirection;
     Publisher m_pubLights;
-    LightsInfo lightsInfo;
+    Publisher m_pubGear;
+    LightStatus lightsInfo;
 
   public:
     std::vector<struct axis_state*> axes;
