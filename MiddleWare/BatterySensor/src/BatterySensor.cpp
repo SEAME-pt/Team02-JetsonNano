@@ -36,10 +36,10 @@ void BatterySensor::run(void)
             voltage = prev_voltage;
         // char buf[sizeof(voltage)];
         // memcpy(buf, &voltage, sizeof(voltage));
-        std::cout << "Battery: " << voltage << std::endl;
+        // std::cout << "Battery: " << voltage << std::endl;
 
         float alpha = 0.01f;
-        smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
+        double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
         memcpy(value, &smoothedVoltage, sizeof(value));
