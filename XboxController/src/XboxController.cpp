@@ -1,4 +1,4 @@
-#include "../include/XboxController.hpp"
+#include "XboxController.hpp"
 
 XboxController::XboxController()
     : m_session(Session::open(std::move(Config::create_default()))),

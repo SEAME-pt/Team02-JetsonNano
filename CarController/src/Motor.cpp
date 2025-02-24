@@ -4,10 +4,19 @@ Motor::Motor() : m_currThrottle(0) {}
 
 Motor::~Motor() {}
 
-void Motor::init(PCA9685* motorPCA, Side side)
+PCA9685* Motor::getMotorPCA(void) const
 {
-    this->m_MotorPCA = motorPCA;
-    this->_side      = side;
+    return m_MotorPCA;
+}
+
+int16_t Motor::getThrottle(void) const
+{
+    return m_currThrottle;
+}
+
+Motor::Side Motor::getSide(void) const
+{
+    return m_side;
 }
 
 void Motor::setThrottle(int throttle)
@@ -25,13 +34,13 @@ void Motor::setThrottle(int throttle)
     if (throttle < 0)
     {
         uint16_t pulseWidth = -throttle * 4095 / 100;
-        if (this->_side == RIGHT)
+        if (this->m_side == RIGHT)
         {
             m_MotorPCA->setDutyCicle(0, pulseWidth);
             m_MotorPCA->setGPIO(1, true);
             m_MotorPCA->setGPIO(2, false);
         }
-        else if (this->_side == LEFT)
+        else if (this->m_side == LEFT)
         {
             m_MotorPCA->setGPIO(5, false);
             m_MotorPCA->setGPIO(6, true);
@@ -44,13 +53,13 @@ void Motor::setThrottle(int throttle)
     else
     {
         uint16_t pulseWidth = throttle * 4095 / 100;
-        if (this->_side == RIGHT)
+        if (this->m_side == RIGHT)
         {
             m_MotorPCA->setDutyCicle(0, pulseWidth);
             m_MotorPCA->setGPIO(1, false);
             m_MotorPCA->setGPIO(2, true);
         }
-        else if (this->_side == LEFT)
+        else if (this->m_side == LEFT)
         {
             m_MotorPCA->setGPIO(5, true);
             m_MotorPCA->setGPIO(6, false);
@@ -60,4 +69,10 @@ void Motor::setThrottle(int throttle)
         {
         }
     }
+}
+
+void Motor::init(PCA9685* motorPCA, Side side)
+{
+    this->m_MotorPCA = motorPCA;
+    this->m_side     = side;
 }

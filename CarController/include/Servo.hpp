@@ -13,6 +13,10 @@ class Servo
     Servo();
     ~Servo();
 
-    void init(PCA9685* servoPCA);
+    PCA9685* getServoPCA(void) const;
+    uint16_t getDirecton(void) const;
+
     void setDirection(uint8_t angle);
+
+    void init(PCA9685* servoPCA);
 };
