@@ -32,7 +32,7 @@ void BatterySensor::run(void)
     {
         usleep(100000); // Add a small delay to avoid busy waiting
         double voltage = this->batteryINA->readVoltage(0x02);
-        if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.05)
+        if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.04)
             voltage = prev_voltage;
         // char buf[sizeof(voltage)];
         // memcpy(buf, &voltage, sizeof(voltage));
