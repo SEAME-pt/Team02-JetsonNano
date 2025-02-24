@@ -22,6 +22,6 @@ add_executable(Controller
     ${SOURCES}
 )
 
-target_compile_options(Controller PRIVATE -Wall -Werror -Wextra)
+# target_compile_options(Controller PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(Controller zenohcxx::zenohc)
