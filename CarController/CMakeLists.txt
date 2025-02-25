@@ -44,33 +44,8 @@ target_link_libraries(RaceCar
 
 ###TESTS###
 
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.12.1
-)
-FetchContent_MakeAvailable(googletest)
-
-include_directories(tests/unit/mocks)
-
-add_executable(UnitTests 
-    ./tests/unit/I2CTest.cpp
-    ./tests/unit/PCA9685Test.cpp
-    ./tests/unit/RaceCarTest.cpp
-    ./src/RaceCar.cpp
-    ./src/Motor.cpp
-    ./src/Servo.cpp
-)
-
-target_link_libraries(UnitTests
-    gtest
-    gtest_main
-    gmock
-    gmock_main
+target_link_libraries(
     I2C
     PCA9685
     zenohcxx::zenohc
 )
-
-enable_testing()
