@@ -9,18 +9,7 @@ class VSSPublisher
   public:
     VSSPublisher(Vehicle& vehicle);
 
-    void publishSpeed(float speed);
-    void publishSteering(float steering);
-    void publishBeamLow(bool isOn);
-    void publishBeamHigh(bool isOn);
-    void publishRunning(bool isOn);
-    void publishParking(bool isOn);
-    void publishFogRear(bool isOn);
-    void publishFogFront(bool isOn);
-    void publishBrake(bool isActive);
-    void publishHazard(bool isSignaling);
-    void publishDirectionIndicatorLeft(bool isSignaling);
-    void publishDirectionIndicatorRight(bool isSignaling);
+    void monitor();
 
   private:
     std::unique_ptr<zenoh::Session> session;
