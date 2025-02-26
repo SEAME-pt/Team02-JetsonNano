@@ -74,7 +74,7 @@ target_link_libraries(VehicleSystem
 
 add_executable(XboxController
     ./src/Controllers/XboxController.cpp
-    ./src/Communication/XboxControllerPublisher.cpp
+    ./src/Communication/ControllerPublisher.cpp
     ./src/control.cpp
 )
 

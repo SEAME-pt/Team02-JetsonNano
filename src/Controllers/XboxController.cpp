@@ -15,7 +15,7 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
-    publisher_ = std::make_unique<XboxControllerPublisher>();
+    publisher_ = std::make_unique<ControllerPublisher>();
 
     std::cout << "Remote controller created!" << std::endl;
 }
@@ -77,91 +77,73 @@ void XboxController::run()
 {
     size_t axis;
     size_t button;
-    // LightStatus test;
-    // char buffer[1];
-    // char gear[1];
-    // gear[0] = 1;
-    // this->m_pubGear.put(gear);
 
     while (this->readEvent() == 0)
     {
         switch (this->event.type)
         {
-            // case JS_EVENT_BUTTON:
-            // {
-            //     button = this->event.number;
-            //     if (this->event.value == 1) // Check if the button is pressed
-            //     {
-            //         switch (button)
-            //         {
-            //             case BUTTON_RB:
-            //             {
-            //                 buffer[0] ^= (1 << 0);
-            //                 if ((buffer[0] >> 1) & 1 == 1)
-            //                     buffer[0] ^= (1 << 1);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "RightBlinker" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_LB:
-            //             {
-            //                 buffer[0] ^= (1 << 1);
-            //                 if ((buffer[0] >> 0) & 1 == 1)
-            //                     buffer[0] ^= (1 << 0);
-            //                 bool leftBlinker = true;
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "LeftBlinker" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_A:
-            //             {
-            //                 buffer[0] ^= (1 << 2);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "lowBeam" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_B:
-            //             {
-            //                 buffer[0] ^= (1 << 3);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "highBeam" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_X:
-            //             {
-            //                 buffer[0] ^= (1 << 4);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "frontFogLight" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_Y:
-            //             {
-            //                 buffer[0] ^= (1 << 5);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "rearFogLight" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_L2:
-            //             {
-            //                 buffer[0] ^= (1 << 6);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "hazardLight" << std::endl;
-            //                 break;
-            //             }
-            //             case BUTTON_R2:
-            //             {
-            //                 buffer[0] ^= (1 << 7);
-            //                 this->m_pubLights.put(buffer);
-            //                 std::cout << "parkingLight" << std::endl;
-            //                 break;
-            //             }
+            case JS_EVENT_BUTTON:
+            {
+                button = this->event.number;
+                if (this->event.value == 1)
+                {
+                    switch (button)
+                    {
+                        case BUTTON_RB:
+                        {
+                            publisher_->publishDirectionIndicatorRight(true);
+                            std::cout << "RightBlinker" << std::endl;
+                            break;
+                        }
+                        case BUTTON_LB:
+                        {
+                            publisher_->publishDirectionIndicatorLeft(true);
+                            std::cout << "LeftBlinker" << std::endl;
+                            break;
+                        }
+                        case BUTTON_A:
+                        {
+                            publisher_->publishBeamLow(true);
+                            std::cout << "lowBeam" << std::endl;
+                            break;
+                        }
+                        case BUTTON_B:
+                        {
+                            publisher_->publishBeamHigh(true);
+                            std::cout << "highBeam" << std::endl;
+                            break;
+                        }
+                        case BUTTON_X:
+                        {
+                            publisher_->publishFogRear(true);
+                            std::cout << "frontFogLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_Y:
+                        {
+                            publisher_->publishFogFront(true);
+                            std::cout << "rearFogLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_L2:
+                        {
+                            publisher_->publishHazard(true);
+                            std::cout << "hazardLight" << std::endl;
+                            break;
+                        }
+                        case BUTTON_R2:
+                        {
+                            publisher_->publishParking(true);
+                            std::cout << "parkingLight" << std::endl;
+                            break;
+                        }
 
-            //             default:
-            //                 break;
-            //         }
-            //     }
-            //     break;
-            // }
+                        default:
+                            break;
+                    }
+                }
+                break;
+            }
             case JS_EVENT_AXIS:
             {
                 axis = this->getAxisState();
@@ -189,7 +171,6 @@ void XboxController::run()
                         //     this->m_pubGear.put(gear);
                         // }
                         publisher_->publishSpeed(speed);
-                        // this->m_pubThrottle.put(std::to_string(speed));
                         std::cout << "Speed" << std::endl;
                         break;
                     }
@@ -197,7 +178,6 @@ void XboxController::run()
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
                         publisher_->publishSteering(direction);
-                        // this->m_pubDirection.put(std::to_string(direction));
                         std::cout << "Direction" << std::endl;
                         break;
                     }

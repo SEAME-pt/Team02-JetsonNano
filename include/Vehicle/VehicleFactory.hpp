@@ -105,7 +105,7 @@ class VehicleFactory
         // Setup steering
         auto& steering = chassis.get_mutable_steering_wheel();
         steering.set_type(Type::ACTUATOR);
-        steering.set_angle(0);
+        steering.set_angle(90);
     }
 
     static void setupExterior(Vehicle& vehicle)

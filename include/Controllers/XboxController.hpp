@@ -11,7 +11,7 @@
 #include <map>
 #include <string>
 #include <cstring>
-#include "XboxControllerPublisher.hpp"
+#include "ControllerPublisher.hpp"
 #include "zenoh.hxx"
 
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
@@ -43,51 +43,17 @@ enum Axis
     AXIS_LEFT_STICK  = 1,
 };
 
-enum Gear
-{
-    P,
-    R,
-    N,
-    D,
-};
-
 struct axis_state
 {
     int x = 0;
     int y = 0;
 };
 
-struct LightStatus
-{
-    bool rightBlinker{false};
-    bool leftBlinker{false};
-    bool lowBeam{false};
-    bool highBeam{false};
-    bool frontFogLight{false};
-    bool rearFogLight{false};
-    bool hazardLight{false};
-    bool parkingLight{false};
-
-    bool operator!=(const LightStatus& lights) const
-    {
-        return rightBlinker != lights.rightBlinker ||
-               leftBlinker != lights.leftBlinker || lowBeam != lights.lowBeam ||
-               highBeam != lights.highBeam ||
-               frontFogLight != lights.frontFogLight ||
-               rearFogLight != lights.rearFogLight ||
-               hazardLight != lights.hazardLight ||
-               parkingLight != lights.parkingLight;
-    }
-};
-
-using namespace zenoh;
-
 class XboxController
 {
   private:
     int js;
-    std::unique_ptr<XboxControllerPublisher> publisher_;
-    // LightStatus lightsInfo;
+    std::unique_ptr<ControllerPublisher> publisher_;
 
   public:
     std::vector<struct axis_state*> axes;
