@@ -1,7 +1,5 @@
 #include "Chassis.hpp"
 
-Chassis::Chassis() {};
-
 const Accelerator& Chassis::get_accelerator() const
 {
     return accelerator;

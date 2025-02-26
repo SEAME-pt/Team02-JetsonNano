@@ -1,7 +1,5 @@
 #include "Vehicle.hpp"
 
-Vehicle::Vehicle() {};
-
 const ADAS& Vehicle::get_adas() const
 {
     return adas;
@@ -41,7 +39,7 @@ void Vehicle::set_angular_velocity(const AngularVelocity& value)
     this->angular_velocity = value;
 }
 
-const float Vehicle::get_average_speed() const
+float Vehicle::get_average_speed() const
 {
     return average_speed;
 }
@@ -89,7 +87,7 @@ void Vehicle::set_connectivity(const Connectivity& value)
     this->connectivity = value;
 }
 
-const std::uint16_t Vehicle::get_current_overall_weight() const
+std::uint16_t Vehicle::get_current_overall_weight() const
 {
     return current_overall_weight;
 }
@@ -111,7 +109,7 @@ void Vehicle::set_exterior(const Exterior& value)
     this->exterior = value;
 }
 
-const std::uint16_t Vehicle::get_height() const
+std::uint16_t Vehicle::get_height() const
 {
     return height;
 }
@@ -120,7 +118,7 @@ void Vehicle::set_height(const std::uint16_t value)
     this->height = value;
 }
 
-const bool Vehicle::get_is_moving() const
+bool Vehicle::get_is_moving() const
 {
     return is_moving;
 }
@@ -129,7 +127,7 @@ void Vehicle::set_is_moving(const bool value)
     this->is_moving = value;
 }
 
-const std::uint16_t Vehicle::get_length() const
+std::uint16_t Vehicle::get_length() const
 {
     return length;
 }
@@ -164,11 +162,11 @@ void Vehicle::set_powertrain(const Powertrain& value)
     this->powertrain = value;
 }
 
-const float Vehicle::get_speed() const
+float Vehicle::get_speed() const
 {
     return speed;
 }
-void Vehicle::et_speed(const float value)
+void Vehicle::set_speed(const float value)
 {
     this->speed = value;
 }
@@ -182,7 +180,7 @@ void Vehicle::set_start_time(const std::string value)
     this->start_time = value;
 }
 
-const float Vehicle::get_traveled_distance() const
+float Vehicle::get_traveled_distance() const
 {
     return traveled_distance;
 }
@@ -191,7 +189,7 @@ void Vehicle::set_traveled_distance(const float value)
     this->traveled_distance = value;
 }
 
-const float Vehicle::get_traveled_distance_since_start() const
+float Vehicle::get_traveled_distance_since_start() const
 {
     return traveled_distance_since_start;
 }
@@ -200,7 +198,7 @@ void Vehicle::set_traveled_distance_since_start(const float value)
     this->traveled_distance_since_start = value;
 }
 
-const float Vehicle::get_trip_duration() const
+float Vehicle::get_trip_duration() const
 {
     return trip_duration;
 }
@@ -209,7 +207,7 @@ void Vehicle::set_trip_duration(const float value)
     this->trip_duration = value;
 }
 
-const std::uint16_t Vehicle::get_turning_diameter() const
+std::uint16_t Vehicle::get_turning_diameter() const
 {
     return turning_diameter;
 }

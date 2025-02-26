@@ -1,7 +1,5 @@
 #include "ObstacleDetection.hpp"
 
-Detection::Detection() {};
-
 float Detection::get_distance() const
 {
     return distance;
@@ -64,8 +62,6 @@ void Detection::set_warning_type(const std::string& value)
 {
     this->warning_type = value;
 }
-
-ObstacleDetection::ObstacleDetection() {}
 
 const Detection& ObstacleDetection::get_front() const
 {

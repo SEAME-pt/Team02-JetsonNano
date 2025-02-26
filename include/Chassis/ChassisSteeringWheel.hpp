@@ -3,7 +3,7 @@
 #include "Type.hpp"
 #include <iostream>
 
-class ChassisChassisSteeringWheel
+class ChassisSteeringWheel
 {
   public:
     ChassisSteeringWheel()          = default;

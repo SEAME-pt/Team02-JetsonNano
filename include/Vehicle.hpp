@@ -55,7 +55,7 @@ class Vehicle
     AngularVelocity& get_mutable_angular_velocity();
     void set_angular_velocity(const AngularVelocity& value);
 
-    const float get_average_speed() const;
+    float get_average_speed() const;
     void set_average_speed(const float value);
 
     const Body& get_body() const;
@@ -70,20 +70,20 @@ class Vehicle
     Connectivity& get_mutable_connectivity();
     void set_connectivity(const Connectivity& value);
 
-    const std::uint16_t get_current_overall_weight() const;
+    std::uint16_t get_current_overall_weight() const;
     void set_current_overall_weight(const std::uint16_t value);
 
     const Exterior& get_exterior() const;
     Exterior& get_mutable_exterior();
     void set_exterior(const Exterior& value);
 
-    const std::uint16_t get_height() const;
+    std::uint16_t get_height() const;
     void set_height(const std::uint16_t value);
 
-    const bool get_is_moving() const;
+    bool get_is_moving() const;
     void set_is_moving(const bool value);
 
-    const std::uint16_t get_length() const;
+    std::uint16_t get_length() const;
     void set_length(const std::uint16_t value);
 
     const MotionManagement& get_motion_management() const;
@@ -94,22 +94,22 @@ class Vehicle
     Powertrain& get_mutable_powertrain();
     void set_powertrain(const Powertrain& value);
 
-    const float get_speed() const;
+    float get_speed() const;
     void set_speed(const float value);
 
     const std::string get_start_time() const;
     void set_start_time(const std::string value);
 
-    const float get_traveled_distance() const;
+    float get_traveled_distance() const;
     void set_traveled_distance(const float value);
 
-    const float get_traveled_distance_since_start() const;
+    float get_traveled_distance_since_start() const;
     void set_traveled_distance_since_start(const float value);
 
-    const float get_trip_duration() const;
+    float get_trip_duration() const;
     void set_trip_duration(const float value);
 
-    const std::uint16_t get_turning_diameter() const;
+    std::uint16_t get_turning_diameter() const;
     void set_turning_diameter(const std::uint16_t value);
 
     const std::string& get_description() const;

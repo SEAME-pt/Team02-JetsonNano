@@ -1,7 +1,5 @@
 #include "Steering.hpp"
 
-Steering::Steering() {};
-
 const SteeringWheel& Steering::get_steering_wheel() const
 {
     return steering_wheel;

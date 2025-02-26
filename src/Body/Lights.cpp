@@ -1,90 +1,65 @@
 #include "Lights.hpp"
 
-SignalingLights::SignalingLights() {};
+bool SignalingLights::get_is_defect() const
+{
+    return is_defect;
+}
 
-const bool SignalingLights::get_is_defect() const
-{
-    return is_defect;
-}
-bool SignalingLights::get_mutable_is_defect()
-{
-    return is_defect;
-}
 void SignalingLights::set_is_defect(const bool value)
 {
     this->is_defect = value;
 }
 
-const bool SignalingLights::get_is_signaling() const
+bool SignalingLights::get_is_signaling() const
 {
     return is_signaling;
 }
-bool SignalingLights::get_mutable_is_signaling()
-{
-    return is_signaling;
-}
+
 void SignalingLights::set_is_signaling(const bool value)
 {
     this->is_signaling = value;
 }
 
-StaticLights::StaticLights() = default;
+bool StaticLights::get_is_defect() const
+{
+    return is_defect;
+}
 
-const bool StaticLights::get_is_defect() const
-{
-    return is_defect;
-}
-bool StaticLights::get_mutable_is_defect()
-{
-    return is_defect;
-}
 void StaticLights::set_is_defect(const bool value)
 {
     this->is_defect = value;
 }
 
-const bool StaticLights::get_is_on() const
+bool StaticLights::get_is_on() const
 {
     return is_on;
 }
-bool StaticLights::get_mutable_is_on()
-{
-    return is_on;
-}
+
 void StaticLights::set_is_on(const bool value)
 {
     this->is_on = value;
 }
 
-BrakeLights::BrakeLights() = default;
+bool BrakeLights::get_is_defect() const
+{
+    return is_defect;
+}
 
-const bool BrakeLights::get_is_defect() const
-{
-    return is_defect;
-}
-bool BrakeLights::get_mutable_is_defect()
-{
-    return is_defect;
-}
 void BrakeLights::set_is_defect(const bool value)
 {
     this->is_defect = value;
 }
 
-const bool BrakeLights::get_is_active() const
+bool BrakeLights::get_is_active() const
 {
     return is_active;
 }
-bool BrakeLights::get_mutable_is_active()
-{
-    return is_active;
-}
+
 void BrakeLights::set_is_active(const bool value)
 {
     this->is_active = value;
 }
 
-Lights::Lights() = default;
 const StaticLights& Lights::get_beam() const
 {
     return beam;

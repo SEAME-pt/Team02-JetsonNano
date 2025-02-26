@@ -25,6 +25,7 @@ include_directories(include/Body)
 include_directories(include/Chassis)
 include_directories(include/Powertrain)
 include_directories(include/Vehicle)
+include_directories(include/Vehicle/MotionManagement)
 # include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 # include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 # include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -38,7 +39,7 @@ set(SOURCES
     ./src/Chassis/Axle.cpp
     ./src/Chassis/Brake.cpp
     ./src/Chassis/Chassis.cpp
-    ./src/Chassis/SteeringWheel.cpp
+    ./src/Chassis/ChassisSteeringWheel.cpp
     ./src/Powertrain/ElectricMotor.cpp
     ./src/Powertrain/Powertrain.cpp
     ./src/Powertrain/Transmission.cpp

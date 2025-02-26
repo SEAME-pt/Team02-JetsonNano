@@ -1,7 +1,5 @@
 #include "Powertrain.hpp"
 
-Powertrain::Powertrain() {};
-
 const ElectricMotor& Powertrain::get_electric_motor() const
 {
     return electric_motor;

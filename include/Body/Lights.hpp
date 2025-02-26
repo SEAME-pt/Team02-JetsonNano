@@ -14,12 +14,10 @@ class SignalingLights
     bool is_defect;
 
   public:
-    const bool get_is_defect() const;
-    bool get_mutable_is_defect();
+    bool get_is_defect() const;
     void set_is_defect(const bool value);
 
-    const bool get_is_signaling() const;
-    bool get_mutable_is_signaling();
+    bool get_is_signaling() const;
     void set_is_signaling(const bool value);
 };
 
@@ -34,12 +32,10 @@ class StaticLights
     bool is_defect;
 
   public:
-    const bool get_is_defect() const;
-    bool get_mutable_is_defect();
+    bool get_is_defect() const;
     void set_is_defect(const bool value);
 
-    const bool get_is_on() const;
-    bool get_mutable_is_on();
+    bool get_is_on() const;
     void set_is_on(const bool value);
 };
 
@@ -54,12 +50,10 @@ class BrakeLights
     bool is_defect;
 
   public:
-    const bool get_is_defect() const;
-    bool get_mutable_is_defect();
+    bool get_is_defect() const;
     void set_is_defect(const bool value);
 
-    const bool get_is_active() const;
-    bool get_mutable_is_active();
+    bool get_is_active() const;
     void set_is_active(const bool value);
 };
 

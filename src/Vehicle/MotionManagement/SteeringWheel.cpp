@@ -1,7 +1,5 @@
 #include "SteeringWheel.hpp"
 
-SteeringWheel::SteeringWheel() {};
-
 float SteeringWheel::get_angle() const
 {
     return angle;

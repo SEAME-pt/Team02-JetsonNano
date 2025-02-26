@@ -1,7 +1,5 @@
 #include "Body.hpp"
 
-Body::Body() {};
-
 const Lights& Body::get_lights() const
 {
     return lights;

@@ -1,7 +1,5 @@
 #include "MotionManagement.hpp"
 
-MotionManagement::MotionManagement() {};
-
 const ElectricAxle& MotionManagement::get_electric_axle() const
 {
     return electric_axle;

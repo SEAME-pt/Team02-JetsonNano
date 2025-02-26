@@ -1,7 +1,5 @@
 #include "Transmission.hpp"
 
-Transmission::Transmission() {};
-
 std::int8_t Transmission::get_current_gear() const
 {
     return current_gear;

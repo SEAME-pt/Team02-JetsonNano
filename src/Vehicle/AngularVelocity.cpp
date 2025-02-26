@@ -1,7 +1,5 @@
 #include "AngularVelocity.hpp"
 
-AngularVelocity::AngularVelocity() {};
-
 float AngularVelocity::get_pitch() const
 {
     return pitch;

@@ -1,7 +1,5 @@
 #include "Accelerator.hpp"
 
-Accelerator::Accelerator() {};
-
 std::uint8_t Accelerator::get_pedal_position() const
 {
     return pedal_position;

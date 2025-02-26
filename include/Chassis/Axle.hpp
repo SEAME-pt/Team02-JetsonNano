@@ -53,30 +53,25 @@ class AxleRow
     Type type;
 
   public:
-    const std::uint16_t get_axle_width() const;
-    std::uint16_t get_mutable_axle_width();
+    std::uint16_t get_axle_width() const;
     void set_axle_width(const std::uint16_t value);
 
     float get_steering_angle() const;
     void set_steering_angle(const float value);
 
-    const std::uint8_t get_tire_aspect_ratio() const;
-    std::uint8_t get_mutable_tire_aspect_ratio();
+    std::uint8_t get_tire_aspect_ratio() const;
     void set_tire_aspect_ratio(const std::uint8_t value);
 
     float get_tire_diameter() const;
     void set_tire_diameter(const float value);
 
-    const std::uint16_t get_tire_width() const;
-    std::uint16_t get_mutable_tire_width();
+    std::uint16_t get_tire_width() const;
     void set_tire_width(const std::uint16_t value);
 
-    const std::uint16_t get_track_width() const;
-    std::uint16_t get_mutable_track_width();
+    std::uint16_t get_track_width() const;
     void set_track_width(const std::uint16_t value);
 
-    const std::uint16_t get_tread_width() const;
-    std::uint16_t get_mutable_tread_width();
+    std::uint16_t get_tread_width() const;
     void set_tread_width(const std::uint16_t value);
 
     const Wheel& get_wheel_right() const;

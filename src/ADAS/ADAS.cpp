@@ -1,7 +1,5 @@
 #include "ADAS.hpp"
 
-ADAS::ADAS() {}
-
 const std::string& ADAS::get_active_autonomy_level() const
 {
     return active_autonomy_level;

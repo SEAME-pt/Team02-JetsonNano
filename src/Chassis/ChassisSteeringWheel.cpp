@@ -1,7 +1,5 @@
 #include "ChassisSteeringWheel.hpp"
 
-ChassisSteeringWheel::ChassisSteeringWheel() {};
-
 int16_t ChassisSteeringWheel::get_angle() const
 {
     return angle;

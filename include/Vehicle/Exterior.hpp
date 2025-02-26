@@ -17,19 +17,19 @@ class Exterior
     Type type;
 
   public:
-    const float get_air_temperature() const;
+    float get_air_temperature() const;
     void set_air_temperature(const float value);
 
-    const float get_humidity() const;
+    float get_humidity() const;
     void set_humidity(const float value);
 
-    const float get_light_intensity() const;
+    float get_light_intensity() const;
     void set_light_intensity(const float value);
 
     const std::string& get_description() const;
     std::string& get_mutable_description();
     void set_description(const std::string& value);
 
-    Type get_type() const { return type; }
-    void set_type(Type value) { this->type = value; }
+    Type get_type() const;
+    void set_type(Type value);
 };

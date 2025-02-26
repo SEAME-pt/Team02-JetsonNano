@@ -24,9 +24,6 @@ class Brake
 
     const std::string& get_description() const;
     std::string& get_mutable_description();
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
     void set_description(const std::string& value);
 
     Type get_type() const;

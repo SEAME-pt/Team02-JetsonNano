@@ -1,7 +1,5 @@
 #include "Acceleration.hpp"
 
-Acceleration::Acceleration() {};
-
 float Acceleration::get_lateral() const
 {
     return lateral;

@@ -1,7 +1,5 @@
 #include "ElectricAxle.hpp"
 
-ElectricAxleRow::ElectricAxleRow() {};
-
 std::uint16_t ElectricAxleRow::get_rotational_speed() const
 {
     return rotational_speed;
@@ -21,8 +19,6 @@ void ElectricAxleRow::set_rotational_speed_target(const std::uint16_t value)
 {
     this->rotational_speed_target = value;
 }
-
-ElectricAxle::ElectricAxle() {};
 
 const ElectricAxleRow& ElectricAxle::get_row1() const
 {

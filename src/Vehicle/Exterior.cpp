@@ -1,8 +1,6 @@
 #include "Exterior.hpp"
 
-Exterior::Exterior() {};
-
-const float Exterior::get_air_temperature() const
+float Exterior::get_air_temperature() const
 {
     return air_temperature;
 }
@@ -11,7 +9,7 @@ void Exterior::set_air_temperature(const float value)
     this->air_temperature = value;
 }
 
-const float Exterior::get_humidity() const
+float Exterior::get_humidity() const
 {
     return humidity;
 }
@@ -20,7 +18,7 @@ void Exterior::set_humidity(const float value)
     this->humidity = value;
 }
 
-const float Exterior::get_light_intensity() const
+float Exterior::get_light_intensity() const
 {
     return light_intensity;
 }
@@ -46,6 +44,7 @@ Type Exterior::get_type() const
 {
     return type;
 }
+
 void Exterior::set_type(Type value)
 {
     this->type = value;

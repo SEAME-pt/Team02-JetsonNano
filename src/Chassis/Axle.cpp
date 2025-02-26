@@ -1,7 +1,5 @@
 #include "Axle.hpp"
 
-Wheel::Wheel() {};
-
 float Wheel::get_angular_speed() const
 {
     return angular_speed;
@@ -45,16 +43,11 @@ void Wheel::set_type(Type value)
     this->type = value;
 }
 
-AxleRow::AxleRow() {};
+std::uint16_t AxleRow::get_axle_width() const
+{
+    return axle_width;
+}
 
-const std::uint16_t AxleRow::get_axle_width() const
-{
-    return axle_width;
-}
-std::uint16_t AxleRow::get_mutable_axle_width()
-{
-    return axle_width;
-}
 void AxleRow::set_axle_width(const std::uint16_t value)
 {
     this->axle_width = value;
@@ -70,14 +63,11 @@ void AxleRow::set_steering_angle(const float value)
     this->steering_angle = value;
 }
 
-const std::uint8_t AxleRow::get_tire_aspect_ratio() const
+std::uint8_t AxleRow::get_tire_aspect_ratio() const
 {
     return tire_aspect_ratio;
 }
-std::uint8_t AxleRow::get_mutable_tire_aspect_ratio()
-{
-    return tire_aspect_ratio;
-}
+
 void AxleRow::set_tire_aspect_ratio(const std::uint8_t value)
 {
     this->tire_aspect_ratio = value;
@@ -93,40 +83,31 @@ void AxleRow::set_tire_diameter(const float value)
     this->tire_diameter = value;
 }
 
-const std::uint16_t AxleRow::get_tire_width() const
+std::uint16_t AxleRow::get_tire_width() const
 {
     return tire_width;
 }
-std::uint16_t AxleRow::get_mutable_tire_width()
-{
-    return tire_width;
-}
+
 void AxleRow::set_tire_width(const std::uint16_t value)
 {
     this->tire_width = value;
 }
 
-const std::uint16_t AxleRow::get_track_width() const
+std::uint16_t AxleRow::get_track_width() const
 {
     return track_width;
 }
-std::uint16_t AxleRow::get_mutable_track_width()
-{
-    return track_width;
-}
+
 void AxleRow::set_track_width(const std::uint16_t value)
 {
     this->track_width = value;
 }
 
-const std::uint16_t AxleRow::get_tread_width() const
+std::uint16_t AxleRow::get_tread_width() const
 {
     return tread_width;
 }
-std::uint16_t AxleRow::get_mutable_tread_width()
-{
-    return tread_width;
-}
+
 void AxleRow::set_tread_width(const std::uint16_t value)
 {
     this->tread_width = value;
@@ -209,8 +190,6 @@ void AxleRow::set_type(Type value)
 {
     this->type = value;
 }
-
-Axle::Axle() {};
 
 const AxleRow& Axle::get_row1() const
 {

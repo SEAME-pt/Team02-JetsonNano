@@ -1,7 +1,5 @@
 #include "Brake.hpp"
 
-Brake::Brake() {};
-
 bool Brake::get_is_driver_emergency_braking_detected() const
 {
     return is_driver_emergency_braking_detected;

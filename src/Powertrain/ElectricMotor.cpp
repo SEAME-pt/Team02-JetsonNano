@@ -1,7 +1,5 @@
 #include "ElectricMotor.hpp"
 
-ElectricMotor::ElectricMotor() {};
-
 std::uint16_t ElectricMotor::get_max_power() const
 {
     return max_power;
