@@ -1,11 +1,16 @@
-#include "VehicleFactory.hpp"
+#include "VehicleSystem.hpp"
 
 int main()
 {
-    Vehicle vehicle = VehicleFactory::createDefaultVehicle();
+    // Start vehicle system
+    VehicleSystem system;
 
-    vehicle.set_speed(50.0f);
-    vehicle.set_is_moving(true);
+    // Main loop
+    while (true)
+    {
+        system.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
 
     return 0;
 }

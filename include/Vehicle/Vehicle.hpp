@@ -10,8 +10,6 @@
 #include "AngularVelocity.hpp"
 #include "MotionManagement.hpp"
 
-using Default = std::variant<int64_t, std::string>;
-
 class Vehicle
 {
   public:

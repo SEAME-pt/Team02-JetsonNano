@@ -1,31 +1,19 @@
 #pragma once
 
 #include "Vehicle.hpp"
-#include "zenoh.hxx"
+#include <zenoh.hxx>
+#include <optional>
 
 class VSSSubscriber
 {
   public:
-    VSSSubscriber(Vehicle& vehicle) : vehicle_(vehicle)
-    {
-        // Setup Zenoh subscriber
-        setupZenohSubscription();
-    }
+    VSSSubscriber(Vehicle& vehicle);
 
   private:
     Vehicle& vehicle_;
-    zenoh::Session session_;
+    std::unique_ptr<zenoh::Session> session;
+    std::optional<zenoh::Subscriber<void>> throttle_subscriber;
+    std::optional<zenoh::Subscriber<void>> steering_subscriber;
 
-    void setupZenohSubscription()
-    {
-        session_.declare_subscriber("vehicle/control/throttle")
-            .callback(
-                [this](const zenoh::Sample& sample)
-                {
-                    float throttle = std::stof(sample.get_value().as_string());
-                    this->vehicle_.get_mutable_powertrain()
-                        .get_mutable_electric_motor()
-                        .set_speed(convertThrottleToSpeed(throttle));
-                });
-    }
+    void setupSubscriptions();
 };

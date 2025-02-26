@@ -21,7 +21,7 @@ piPath=/home/team02
 piPass=seameteam2
 
 echo "build docker image to build app"
-docker build -f dockerfiles/DockerfileDeployJetson \
+docker build -f ./JetsonNano/deploy/dockerfiles/DockerfileDeployJetson \
     --build-arg projectDir=/$projectDir \
     -t final-app .
 echo "Remove tmpapp container if it is exist"
@@ -30,5 +30,5 @@ echo "Create a tmp container to copy binary"
 docker create --name tmpapp final-app
 echo "Copy the binary from tmp container"
 docker cp tmpapp:/home/$projectDir/$executable ./$executable
-echo "Send binary to rasp over scp"
-sshpass -p "$piPass" scp $executable "$piUserName"@"$piIpAddress":"$piPath"
+# echo "Send binary to rasp over scp"
+# sshpass -p "$piPass" scp $executable "$piUserName"@"$piIpAddress":"$piPath"
