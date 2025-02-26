@@ -60,17 +60,30 @@ void BrakeLights::set_is_active(const bool value)
     this->is_active = value;
 }
 
-const StaticLights& Lights::get_beam() const
+const StaticLights& Lights::get_beam_low() const
 {
-    return beam;
+    return beam_low;
 }
-StaticLights& Lights::get_mutable_beam()
+StaticLights& Lights::get_mutable_beam_low()
 {
-    return beam;
+    return beam_low;
 }
-void Lights::set_beam(const StaticLights& value)
+void Lights::set_beam_low(const StaticLights& value)
 {
-    this->beam = value;
+    this->beam_low = value;
+}
+
+const StaticLights& Lights::get_beam_high() const
+{
+    return beam_high;
+}
+StaticLights& Lights::get_mutable_beam_high()
+{
+    return beam_high;
+}
+void Lights::set_beam_high(const StaticLights& value)
+{
+    this->beam_high = value;
 }
 
 const BrakeLights& Lights::get_brake() const
@@ -86,30 +99,56 @@ void Lights::set_brake(const BrakeLights& value)
     this->brake = value;
 }
 
-const SignalingLights& Lights::get_direction_indicator() const
+const SignalingLights& Lights::get_direction_indicator_left() const
 {
-    return direction_indicator;
+    return direction_indicator_left;
 }
-SignalingLights& Lights::get_mutable_direction_indicator()
+SignalingLights& Lights::get_mutable_direction_indicator_left()
 {
-    return direction_indicator;
+    return direction_indicator_left;
 }
-void Lights::set_direction_indicator(const SignalingLights& value)
+void Lights::set_direction_indicator_left(const SignalingLights& value)
 {
-    this->direction_indicator = value;
+    this->direction_indicator_left = value;
 }
 
-const StaticLights& Lights::get_fog() const
+const SignalingLights& Lights::get_direction_indicator_right() const
 {
-    return fog;
+    return direction_indicator_right;
 }
-StaticLights& Lights::get_mutable_fog()
+SignalingLights& Lights::get_mutable_direction_indicator_right()
 {
-    return fog;
+    return direction_indicator_right;
 }
-void Lights::set_fog(const StaticLights& value)
+void Lights::set_direction_indicator_right(const SignalingLights& value)
 {
-    this->fog = value;
+    this->direction_indicator_right = value;
+}
+
+const StaticLights& Lights::get_fog_rear() const
+{
+    return fog_rear;
+}
+StaticLights& Lights::get_mutable_fog_rear()
+{
+    return fog_rear;
+}
+void Lights::set_fog_rear(const StaticLights& value)
+{
+    this->fog_rear = value;
+}
+
+const StaticLights& Lights::get_fog_front() const
+{
+    return fog_front;
+}
+StaticLights& Lights::get_mutable_fog_front()
+{
+    return fog_front;
+}
+void Lights::set_fog_front(const StaticLights& value)
+{
+    this->fog_front = value;
 }
 
 const SignalingLights& Lights::get_hazard() const

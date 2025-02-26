@@ -64,10 +64,13 @@ class Lights
     virtual ~Lights() = default;
 
   private:
-    StaticLights beam;
+    StaticLights beam_low;
+    StaticLights beam_high;
     BrakeLights brake;
-    SignalingLights direction_indicator;
-    StaticLights fog;
+    SignalingLights direction_indicator_right;
+    SignalingLights direction_indicator_left;
+    StaticLights fog_rear;
+    StaticLights fog_front;
     SignalingLights hazard;
     std::string light_switch;
     StaticLights parking;
@@ -76,21 +79,33 @@ class Lights
     Type type;
 
   public:
-    const StaticLights& get_beam() const;
-    StaticLights& get_mutable_beam();
-    void set_beam(const StaticLights& value);
+    const StaticLights& get_beam_low() const;
+    StaticLights& get_mutable_beam_low();
+    void set_beam_low(const StaticLights& value);
+
+    const StaticLights& get_beam_high() const;
+    StaticLights& get_mutable_beam_high();
+    void set_beam_high(const StaticLights& value);
 
     const BrakeLights& get_brake() const;
     BrakeLights& get_mutable_brake();
     void set_brake(const BrakeLights& value);
 
-    const SignalingLights& get_direction_indicator() const;
-    SignalingLights& get_mutable_direction_indicator();
-    void set_direction_indicator(const SignalingLights& value);
+    const SignalingLights& get_direction_indicator_left() const;
+    SignalingLights& get_mutable_direction_indicator_left();
+    void set_direction_indicator_left(const SignalingLights& value);
 
-    const StaticLights& get_fog() const;
-    StaticLights& get_mutable_fog();
-    void set_fog(const StaticLights& value);
+    const SignalingLights& get_direction_indicator_right() const;
+    SignalingLights& get_mutable_direction_indicator_right();
+    void set_direction_indicator_right(const SignalingLights& value);
+
+    const StaticLights& get_fog_rear() const;
+    StaticLights& get_mutable_fog_rear();
+    void set_fog_rear(const StaticLights& value);
+
+    const StaticLights& get_fog_front() const;
+    StaticLights& get_mutable_fog_front();
+    void set_fog_front(const StaticLights& value);
 
     const SignalingLights& get_hazard() const;
     SignalingLights& get_mutable_hazard();
