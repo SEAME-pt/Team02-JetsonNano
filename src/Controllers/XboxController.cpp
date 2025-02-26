@@ -188,7 +188,7 @@ void XboxController::run()
                         //     gear[0] ^= (1 << 2);
                         //     this->m_pubGear.put(gear);
                         // }
-                        publisher_->publishControls(speed, 90.0f);
+                        publisher_->publishSpeed(speed);
                         // this->m_pubThrottle.put(std::to_string(speed));
                         std::cout << "Speed" << std::endl;
                         break;
@@ -196,7 +196,7 @@ void XboxController::run()
                     case (AXIS_RIGHT_STICK):
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
-                        publisher_->publishControls(0.0f, direction);
+                        publisher_->publishSteering(direction);
                         // this->m_pubDirection.put(std::to_string(direction));
                         std::cout << "Direction" << std::endl;
                         break;

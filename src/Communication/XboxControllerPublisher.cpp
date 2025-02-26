@@ -12,8 +12,12 @@ XboxControllerPublisher::XboxControllerPublisher()
         zenoh::KeyExpr("Vehicle/1/Chassis/SteeringWheel/Angle")));
 }
 
-void XboxControllerPublisher::publishControls(float throttle, float steering)
+void XboxControllerPublisher::publishSpeed(float speed)
 {
-    throttle_pub->put(std::to_string(throttle));
+    throttle_pub->put(std::to_string(speed));
+}
+
+void XboxControllerPublisher::publishSteering(float steering)
+{
     steering_pub->put(std::to_string(steering));
 }

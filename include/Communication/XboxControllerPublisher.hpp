@@ -9,7 +9,8 @@ class XboxControllerPublisher
   public:
     XboxControllerPublisher();
 
-    void publishControls(float throttle, float steering);
+    void publishSpeed(float speed);
+    void publishSteering(float steering);
 
   private:
     std::unique_ptr<zenoh::Session> session;
