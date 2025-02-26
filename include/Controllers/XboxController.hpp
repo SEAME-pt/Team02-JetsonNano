@@ -11,6 +11,7 @@
 #include <map>
 #include <string>
 #include <cstring>
+#include "XboxControllerPublisher.hpp"
 #include "zenoh.hxx"
 
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
@@ -85,12 +86,8 @@ class XboxController
 {
   private:
     int js;
-    Session m_session;
-    Publisher m_pubThrottle;
-    Publisher m_pubDirection;
-    Publisher m_pubLights;
-    Publisher m_pubGear;
-    LightStatus lightsInfo;
+    std::unique_ptr<XboxControllerPublisher> publisher_;
+    // LightStatus lightsInfo;
 
   public:
     std::vector<struct axis_state*> axes;

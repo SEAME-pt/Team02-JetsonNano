@@ -30,5 +30,5 @@ echo "Create a tmp container to copy binary"
 docker create --name tmpapp final-app
 echo "Copy the binary from tmp container"
 docker cp tmpapp:/home/$projectDir/$executable ./$executable
-# echo "Send binary to rasp over scp"
-# sshpass -p "$piPass" scp $executable "$piUserName"@"$piIpAddress":"$piPath"
+echo "Send binary to rasp over scp"
+sshpass -p "$piPass" scp $executable "$piUserName"@"$piIpAddress":"$piPath"

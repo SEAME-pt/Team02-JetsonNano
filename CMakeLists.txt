@@ -20,6 +20,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Libs)    
 
 include_directories(include/Communication)
+include_directories(include/Controllers)
 include_directories(include/Hardware)
 include_directories(include/ADAS)
 include_directories(include/Body)
@@ -33,7 +34,6 @@ include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
-    ./src/Communication/XboxControllerPublisher.cpp
     ./src/Hardware/MotorController.cpp
     ./src/Hardware/ServoController.cpp
     ./src/ADAS/ADAS.cpp
@@ -70,4 +70,15 @@ target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(VehicleSystem
     I2C
     PCA9685
+    zenohcxx::zenohc)
+
+add_executable(XboxController
+    ./src/Controllers/XboxController.cpp
+    ./src/Communication/XboxControllerPublisher.cpp
+    ./src/control.cpp
+)
+
+# target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
+
+target_link_libraries(XboxController
     zenohcxx::zenohc)
