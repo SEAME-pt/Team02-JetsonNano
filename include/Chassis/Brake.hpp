@@ -16,17 +16,19 @@ class Brake
     Type type;
 
   public:
-    const bool get_is_driver_emergency_braking_detected() const;
-    bool get_mutable_is_driver_emergency_braking_detected();
+    bool get_is_driver_emergency_braking_detected() const;
     void set_is_driver_emergency_braking_detected(const bool value);
 
-    const std::uint8_t get_pedal_position() const;
-    std::uint8_t get_mutable_pedal_position();
+    std::uint8_t get_pedal_position() const;
     void set_pedal_position(const std::uint8_t value);
 
     const std::string& get_description() const;
     std::string& get_mutable_description();
+
+    const std::string& get_description() const;
+    std::string& get_mutable_description();
     void set_description(const std::string& value);
+
     Type get_type() const;
     void set_type(Type value);
 };

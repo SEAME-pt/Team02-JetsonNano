@@ -98,7 +98,7 @@ class Lights
     StaticLights& get_mutable_fog();
     void set_fog(const StaticLights& value);
 
-    const SignalingLights& get_hazard();
+    const SignalingLights& get_hazard() const;
     SignalingLights& get_mutable_hazard();
     void set_hazard(const SignalingLights& value);
 

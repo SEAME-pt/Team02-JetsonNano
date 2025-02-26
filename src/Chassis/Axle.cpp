@@ -2,27 +2,21 @@
 
 Wheel::Wheel() {};
 
-const float Wheel::get_angular_speed() const
+float Wheel::get_angular_speed() const
 {
     return angular_speed;
 }
-float Wheel::get_mutable_angular_speed()
-{
-    return angular_speed;
-}
+
 void Wheel::set_angular_speed(const float value)
 {
     this->angular_speed = value;
 }
 
-const float Wheel::get_speed() const
+float Wheel::get_speed() const
 {
     return speed;
 }
-float Wheel::get_mutable_speed()
-{
-    return speed;
-}
+
 void Wheel::set_speed(const float value)
 {
     this->speed = value;
@@ -32,6 +26,7 @@ const std::string& Wheel::get_description() const
 {
     return description;
 }
+
 std::string& Wheel::get_mutable_description()
 {
     return description;
@@ -65,14 +60,11 @@ void AxleRow::set_axle_width(const std::uint16_t value)
     this->axle_width = value;
 }
 
-const float AxleRow::get_steering_angle() const
+float AxleRow::get_steering_angle() const
 {
     return steering_angle;
 }
-float AxleRow::get_mutable_steering_angle()
-{
-    return steering_angle;
-}
+
 void AxleRow::set_steering_angle(const float value)
 {
     this->steering_angle = value;
@@ -91,14 +83,11 @@ void AxleRow::set_tire_aspect_ratio(const std::uint8_t value)
     this->tire_aspect_ratio = value;
 }
 
-const float AxleRow::get_tire_diameter() const
+float AxleRow::get_tire_diameter() const
 {
     return tire_diameter;
 }
-float AxleRow::get_mutable_tire_diameter()
-{
-    return tire_diameter;
-}
+
 void AxleRow::set_tire_diameter(const float value)
 {
     this->tire_diameter = value;
@@ -169,40 +158,31 @@ void AxleRow::set_wheel_left(const Wheel& value)
     this->wheel_left = value;
 }
 
-const std::uint8_t AxleRow::get_wheel_count() const
+std::uint8_t AxleRow::get_wheel_count() const
 {
     return wheel_count;
 }
-std::uint8_t AxleRow::get_mutable_wheel_count()
-{
-    return wheel_count;
-}
+
 void AxleRow::set_wheel_count(const std::uint8_t value)
 {
     this->wheel_count = value;
 }
 
-const float AxleRow::get_wheel_diameter() const
+float AxleRow::get_wheel_diameter() const
 {
     return wheel_diameter;
 }
-float AxleRow::get_mutable_wheel_diameter()
-{
-    return wheel_diameter;
-}
+
 void AxleRow::set_wheel_diameter(const float value)
 {
     this->wheel_diameter = value;
 }
 
-const float AxleRow::get_wheel_width() const
+float AxleRow::get_wheel_width() const
 {
     return wheel_width;
 }
-float AxleRow::get_mutable_wheel_width()
-{
-    return wheel_width;
-}
+
 void AxleRow::set_wheel_width(const float value)
 {
     this->wheel_width = value;

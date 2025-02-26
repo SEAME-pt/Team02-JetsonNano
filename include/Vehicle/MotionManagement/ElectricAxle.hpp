@@ -14,12 +14,10 @@ class ElectricAxleRow
     std::uint16_t rotational_speed_target;
 
   public:
-    const std::uint16_t get_rotational_speed() const;
-    std::uint16_t get_mutable_rotational_speed();
+    std::uint16_t get_rotational_speed() const;
     void set_rotational_speed(const std::uint16_t value);
 
-    const std::uint16_t get_rotational_speed_target() const;
-    std::uint16_t get_mutable_rotational_speed_target();
+    std::uint16_t get_rotational_speed_target() const;
     void set_rotational_speed_target(const std::uint16_t value);
 };
 

@@ -17,16 +17,13 @@ class ElectricMotor
     Type type;
 
   public:
-    const std::uint16_t get_max_power() const;
-    std::uint16_t get_mutable_max_power();
+    std::uint16_t get_max_power() const;
     void set_max_power(const std::uint16_t value);
 
-    const std::int32_t get_speed() const;
-    std::int32_t get_mutable_speed();
+    std::int32_t get_speed() const;
     void set_speed(const std::int32_t value);
 
-    const float get_time_in_use() const;
-    float get_mutable_time_in_use();
+    float get_time_in_use() const;
     void set_time_in_use(const float value);
 
     const std::string& get_description() const;

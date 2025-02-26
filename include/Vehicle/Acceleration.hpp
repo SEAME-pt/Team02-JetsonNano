@@ -17,16 +17,13 @@ class Acceleration
     Type type;
 
   public:
-    const float get_lateral() const;
-    float get_mutable_lateral();
+    float get_lateral() const;
     void set_lateral(const float value);
 
-    const float get_longitudinal() const;
-    float get_mutable_longitudinal();
+    float get_longitudinal() const;
     void set_longitudinal(const float value);
 
-    const float get_vertical() const;
-    float get_mutable_vertical();
+    float get_vertical() const;
     void set_vertical(const float value);
 
     const std::string& get_description() const;

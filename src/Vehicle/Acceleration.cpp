@@ -2,40 +2,31 @@
 
 Acceleration::Acceleration() {};
 
-const float Acceleration::get_lateral() const
+float Acceleration::get_lateral() const
 {
     return lateral;
 }
-float Acceleration::get_mutable_lateral()
-{
-    return lateral;
-}
+
 void Acceleration::set_lateral(const float value)
 {
     this->lateral = value;
 }
 
-const float Acceleration::get_longitudinal() const
+float Acceleration::get_longitudinal() const
 {
     return longitudinal;
 }
-float Acceleration::get_mutable_longitudinal()
-{
-    return longitudinal;
-}
+
 void Acceleration::set_longitudinal(const float value)
 {
     this->longitudinal = value;
 }
 
-const float Acceleration::get_vertical() const
+float Acceleration::get_vertical() const
 {
     return vertical;
 }
-float Acceleration::get_mutable_vertical()
-{
-    return vertical;
-}
+
 void Acceleration::set_vertical(const float value)
 {
     this->vertical = value;

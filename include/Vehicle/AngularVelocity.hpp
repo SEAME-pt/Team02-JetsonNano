@@ -17,16 +17,13 @@ class AngularVelocity
     Type type;
 
   public:
-    const float get_pitch() const;
-    float get_mutable_pitch();
+    float get_pitch() const;
     void set_pitch(const float value);
 
-    const float get_roll() const;
-    float get_mutable_roll();
+    float get_roll() const;
     void set_roll(const float value);
 
-    const float get_yaw() const;
-    float get_mutable_yaw();
+    float get_yaw() const;
     void set_yaw(const float value);
 
     const std::string& get_description() const;

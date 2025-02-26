@@ -18,24 +18,19 @@ class Detection
     std::string warning_type;
 
   public:
-    const float get_distance() const;
-    float get_mutable_distance();
+    float get_distance() const;
     void set_distance(const float value);
 
-    const bool get_is_enabled() const;
-    bool get_mutable_is_enabled();
+    bool get_is_enabled() const;
     void set_is_enabled(const bool value);
 
-    const bool get_is_error() const;
-    bool get_mutable_is_error();
+    bool get_is_error() const;
     void set_is_error(const bool value);
 
-    const bool get_is_warning() const;
-    bool get_mutable_is_warning();
+    bool get_is_warning() const;
     void set_is_warning(const bool value);
 
-    const std::uint32_t get_time_gap() const;
-    std::uint32_t get_mutable_time_gap();
+    std::uint32_t get_time_gap() const;
     void set_time_gap(const std::uint32_t value);
 
     const std::string& get_warning_type() const;

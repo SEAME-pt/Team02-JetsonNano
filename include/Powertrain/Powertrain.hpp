@@ -24,12 +24,10 @@ class Powertrain
     ElectricMotor& get_mutable_electric_motor();
     void set_electric_motor(const ElectricMotor& value);
 
-    const uint32_t get_range() const;
-    uint32_t get_mutable_range();
+    uint32_t get_range() const;
     void set_range(const uint32_t value);
 
-    const uint32_t get_time_remaining() const;
-    uint32_t get_mutable_time_remaining();
+    uint32_t get_time_remaining() const;
     void set_time_remaining(const uint32_t value);
 
     const Transmission& get_transmission() const;

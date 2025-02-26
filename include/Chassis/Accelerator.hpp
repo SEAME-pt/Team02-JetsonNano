@@ -15,8 +15,7 @@ class Accelerator
     Type type;
 
   public:
-    const std::uint8_t get_pedal_position() const;
-    std::uint8_t get_mutable_pedal_position();
+    std::uint8_t get_pedal_position() const;
     void set_pedal_position(const std::uint8_t value);
 
     const std::string& get_description() const;

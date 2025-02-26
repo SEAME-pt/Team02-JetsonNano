@@ -2,14 +2,11 @@
 
 Transmission::Transmission() {};
 
-const std::int8_t Transmission::get_current_gear() const
+std::int8_t Transmission::get_current_gear() const
 {
     return current_gear;
 }
-std::int8_t Transmission::get_mutable_current_gear()
-{
-    return current_gear;
-}
+
 void Transmission::set_current_gear(const std::int8_t value)
 {
     this->current_gear = value;
@@ -41,14 +38,11 @@ void Transmission::set_gear_change_mode(const std::string& value)
     this->gear_change_mode = value;
 }
 
-const bool Transmission::get_is_park_lock_engaged() const
+bool Transmission::get_is_park_lock_engaged() const
 {
     return is_park_lock_engaged;
 }
-bool Transmission::get_mutable_is_park_lock_engaged()
-{
-    return is_park_lock_engaged;
-}
+
 void Transmission::set_is_park_lock_engaged(const bool value)
 {
     this->is_park_lock_engaged = value;
@@ -67,27 +61,21 @@ void Transmission::set_performance_mode(const std::string& value)
     this->performance_mode = value;
 }
 
-const std::int8_t Transmission::get_selected_gear() const
+std::int8_t Transmission::get_selected_gear() const
 {
     return selected_gear;
 }
-std::int8_t Transmission::get_mutable_selected_gear()
-{
-    return selected_gear;
-}
+
 void Transmission::set_selected_gear(const std::int8_t value)
 {
     this->selected_gear = value;
 }
 
-const float Transmission::get_travelled_distance() const
+float Transmission::get_travelled_distance() const
 {
     return travelled_distance;
 }
-float Transmission::get_mutable_travelled_distance()
-{
-    return travelled_distance;
-}
+
 void Transmission::set_travelled_distance(const float value)
 {
     this->travelled_distance = value;

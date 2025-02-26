@@ -3,11 +3,11 @@
 #include "Type.hpp"
 #include <iostream>
 
-class SteeringWheel
+class ChassisChassisSteeringWheel
 {
   public:
-    SteeringWheel()          = default;
-    virtual ~SteeringWheel() = default;
+    ChassisSteeringWheel()          = default;
+    virtual ~ChassisSteeringWheel() = default;
 
   private:
     std::int16_t angle;
@@ -15,8 +15,7 @@ class SteeringWheel
     Type type;
 
   public:
-    const int16_t get_angle() const;
-    int16_t get_mutable_angle();
+    int16_t get_angle() const;
     void set_angle(const int16_t value);
 
     const std::string& get_description() const;

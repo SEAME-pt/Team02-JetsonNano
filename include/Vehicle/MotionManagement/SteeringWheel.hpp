@@ -15,15 +15,12 @@ class SteeringWheel
     float angle_target_mode;
 
   public:
-    const float get_angle() const;
-    float get_mutable_angle();
+    float get_angle() const;
     void set_angle(const float value);
 
-    const float get_angle_target() const;
-    float get_mutable_angle_target();
+    float get_angle_target() const;
     void set_angle_target(const float value);
 
-    const float get_angle_target_mode() const;
-    float get_mutable_angle_target_mode();
+    float get_angle_target_mode() const;
     void set_angle_target_mode(const float value);
 };

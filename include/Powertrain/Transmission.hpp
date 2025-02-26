@@ -21,8 +21,7 @@ class Transmission
     Type type;
 
   public:
-    const std::int8_t get_current_gear() const;
-    std::int8_t get_mutable_current_gear();
+    std::int8_t get_current_gear() const;
     void set_current_gear(const std::int8_t value);
 
     const std::string get_drive_type() const;
@@ -33,20 +32,17 @@ class Transmission
     std::string& get_mutable_gear_change_mode();
     void set_gear_change_mode(const std::string& value);
 
-    const bool get_is_park_lock_engaged() const;
-    bool get_mutable_is_park_lock_engaged();
+    bool get_is_park_lock_engaged() const;
     void set_is_park_lock_engaged(const bool value);
 
     const std::string& get_performance_mode() const;
     std::string& get_mutable_performance_mode();
     void set_performance_mode(const std::string& value);
 
-    const std::int8_t get_selected_gear() const;
-    std::int8_t get_mutable_selected_gear();
+    std::int8_t get_selected_gear() const;
     void set_selected_gear(const std::int8_t value);
 
-    const float get_travelled_distance() const;
-    float get_mutable_travelled_distance();
+    float get_travelled_distance() const;
     void set_travelled_distance(const float value);
 
     const std::string& get_description() const;

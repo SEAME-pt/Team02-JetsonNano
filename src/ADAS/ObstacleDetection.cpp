@@ -2,66 +2,51 @@
 
 Detection::Detection() {};
 
-const float Detection::get_distance() const
+float Detection::get_distance() const
 {
     return distance;
 }
-float Detection::get_mutable_distance()
-{
-    return distance;
-}
+
 void Detection::set_distance(const float value)
 {
     this->distance = value;
 }
 
-const bool Detection::get_is_enabled() const
+bool Detection::get_is_enabled() const
 {
     return is_enabled;
 }
-bool Detection::get_mutable_is_enabled()
-{
-    return is_enabled;
-}
+
 void Detection::set_is_enabled(const bool value)
 {
     this->is_enabled = value;
 }
 
-const bool Detection::get_is_error() const
+bool Detection::get_is_error() const
 {
     return is_error;
 }
-bool Detection::get_mutable_is_error()
-{
-    return is_error;
-}
+
 void Detection::set_is_error(const bool value)
 {
     this->is_error = value;
 }
 
-const bool Detection::get_is_warning() const
+bool Detection::get_is_warning() const
 {
     return is_warning;
 }
-bool Detection::get_mutable_is_warning()
-{
-    return is_warning;
-}
+
 void Detection::set_is_warning(const bool value)
 {
     this->is_warning = value;
 }
 
-const std::uint32_t Detection::get_time_gap() const
+std::uint32_t Detection::get_time_gap() const
 {
     return time_gap;
 }
-std::uint32_t Detection::get_mutable_time_gap()
-{
-    return time_gap;
-}
+
 void Detection::set_time_gap(const std::uint32_t value)
 {
     this->time_gap = value;

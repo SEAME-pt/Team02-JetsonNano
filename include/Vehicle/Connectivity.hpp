@@ -15,8 +15,7 @@ class Connectivity
     Type type;
 
   public:
-    const bool get_is_connectivity_available() const;
-    bool get_mutable_is_connectivity_available();
+    bool get_is_connectivity_available() const;
     void set_is_connectivity_available(const bool value);
 
     const std::string& get_description() const;

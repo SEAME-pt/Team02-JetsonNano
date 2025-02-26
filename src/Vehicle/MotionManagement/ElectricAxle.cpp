@@ -2,27 +2,21 @@
 
 ElectricAxleRow::ElectricAxleRow() {};
 
-const std::uint16_t ElectricAxleRow::get_rotational_speed() const
+std::uint16_t ElectricAxleRow::get_rotational_speed() const
 {
     return rotational_speed;
 }
-std::uint16_t ElectricAxleRow::get_mutable_rotational_speed()
-{
-    return rotational_speed;
-}
+
 void ElectricAxleRow::set_rotational_speed(const std::uint16_t value)
 {
     this->rotational_speed = value;
 }
 
-const std::uint16_t ElectricAxleRow::get_rotational_speed_target() const
+std::uint16_t ElectricAxleRow::get_rotational_speed_target() const
 {
     return rotational_speed_target;
 }
-std::uint16_t ElectricAxleRow::get_mutable_rotational_speed_target()
-{
-    return rotational_speed_target;
-}
+
 void ElectricAxleRow::set_rotational_speed_target(const std::uint16_t value)
 {
     this->rotational_speed_target = value;

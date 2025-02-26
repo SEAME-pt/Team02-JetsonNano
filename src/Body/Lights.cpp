@@ -93,7 +93,7 @@ StaticLights& Lights::get_mutable_beam()
 {
     return beam;
 }
-void Lights::set_beam(const Lights::StaticLights& value)
+void Lights::set_beam(const StaticLights& value)
 {
     this->beam = value;
 }

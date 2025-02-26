@@ -1,3 +1,5 @@
+#pragma once
+
 enum class Type : int
 {
     ACTUATOR,

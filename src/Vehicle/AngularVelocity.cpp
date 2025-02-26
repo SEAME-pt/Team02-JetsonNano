@@ -2,40 +2,31 @@
 
 AngularVelocity::AngularVelocity() {};
 
-const float AngularVelocity::get_pitch() const
+float AngularVelocity::get_pitch() const
 {
     return pitch;
 }
-float AngularVelocity::get_mutable_pitch()
-{
-    return pitch;
-}
+
 void AngularVelocity::set_pitch(const float value)
 {
     this->pitch = value;
 }
 
-const float AngularVelocity::get_roll() const
+float AngularVelocity::get_roll() const
 {
     return roll;
 }
-float AngularVelocity::get_mutable_roll()
-{
-    return roll;
-}
+
 void AngularVelocity::set_roll(const float value)
 {
     this->roll = value;
 }
 
-const float AngularVelocity::get_yaw() const
+float AngularVelocity::get_yaw() const
 {
     return yaw;
 }
-float AngularVelocity::get_mutable_yaw()
-{
-    return yaw;
-}
+
 void AngularVelocity::set_yaw(const float value)
 {
     this->yaw = value;

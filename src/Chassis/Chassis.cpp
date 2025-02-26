@@ -28,14 +28,11 @@ void Chassis::set_axle(const Axle& value)
     this->axle = value;
 }
 
-const std::uint8_t Chassis::get_axle_count() const
+std::uint8_t Chassis::get_axle_count() const
 {
     return axle_count;
 }
-std::uint8_t Chassis::get_mutable_axle_count()
-{
-    return axle_count;
-}
+
 void Chassis::set_axle_count(const std::uint8_t value)
 {
     this->axle_count = value;
@@ -54,27 +51,24 @@ void Chassis::set_brake(const Brake& value)
     this->brake = value;
 }
 
-const SteeringWheel& Chassis::get_steering_wheel() const
+const ChassisSteeringWheel& Chassis::get_steering_wheel() const
 {
     return steering_wheel;
 }
-SteeringWheel& Chassis::get_mutable_steering_wheel()
+ChassisSteeringWheel& Chassis::get_mutable_steering_wheel()
 {
     return steering_wheel;
 }
-void Chassis::set_steering_wheel(const SteeringWheel& value)
+void Chassis::set_steering_wheel(const ChassisSteeringWheel& value)
 {
     this->steering_wheel = value;
 }
 
-const std::uint16_t Chassis::get_wheelbase() const
+std::uint16_t Chassis::get_wheelbase() const
 {
     return wheelbase;
 }
-std::uint16_t Chassis::get_mutable_wheelbase()
-{
-    return wheelbase;
-}
+
 void Chassis::set_wheelbase(const std::uint16_t value)
 {
     this->wheelbase = value;

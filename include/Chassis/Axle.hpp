@@ -16,12 +16,10 @@ class Wheel
     Type type;
 
   public:
-    const float get_angular_speed() const;
-    float get_mutable_angular_speed();
+    float get_angular_speed() const;
     void set_angular_speed(const float value);
 
-    const float get_speed() const;
-    float get_mutable_speed();
+    float get_speed() const;
     void set_speed(const float value);
 
     const std::string& get_description() const;
@@ -59,16 +57,14 @@ class AxleRow
     std::uint16_t get_mutable_axle_width();
     void set_axle_width(const std::uint16_t value);
 
-    const float get_steering_angle() const;
-    float get_mutable_steering_angle();
+    float get_steering_angle() const;
     void set_steering_angle(const float value);
 
     const std::uint8_t get_tire_aspect_ratio() const;
     std::uint8_t get_mutable_tire_aspect_ratio();
     void set_tire_aspect_ratio(const std::uint8_t value);
 
-    const float get_tire_diameter() const;
-    float get_mutable_tire_diameter();
+    float get_tire_diameter() const;
     void set_tire_diameter(const float value);
 
     const std::uint16_t get_tire_width() const;
@@ -91,16 +87,13 @@ class AxleRow
     Wheel& get_mutable_wheel_left();
     void set_wheel_left(const Wheel& value);
 
-    const std::uint8_t get_wheel_count() const;
-    std::uint8_t get_mutable_wheel_count();
+    std::uint8_t get_wheel_count() const;
     void set_wheel_count(const std::uint8_t value);
 
-    const float get_wheel_diameter() const;
-    float get_mutable_wheel_diameter();
+    float get_wheel_diameter() const;
     void set_wheel_diameter(const float value);
 
-    const float get_wheel_width() const;
-    float get_mutable_wheel_width();
+    float get_wheel_width() const;
     void set_wheel_width(const float value);
 
     const std::string& get_description() const;

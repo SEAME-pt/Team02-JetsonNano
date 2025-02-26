@@ -15,27 +15,21 @@ void Powertrain::set_electric_motor(const ElectricMotor& value)
     this->electric_motor = value;
 }
 
-const uint32_t Powertrain::get_range() const
+uint32_t Powertrain::get_range() const
 {
     return range;
 }
-uint32_t Powertrain::get_mutable_range()
-{
-    return range;
-}
+
 void Powertrain::set_range(const uint32_t value)
 {
     this->range = value;
 }
 
-const uint32_t Powertrain::get_time_remaining() const
+uint32_t Powertrain::get_time_remaining() const
 {
     return time_remaining;
 }
-uint32_t Powertrain::get_mutable_time_remaining()
-{
-    return time_remaining;
-}
+
 void Powertrain::set_time_remaining(const uint32_t value)
 {
     this->time_remaining = value;

@@ -2,14 +2,11 @@
 
 Connectivity::Connectivity() {};
 
-const bool Connectivity::get_is_connectivity_available() const
+bool Connectivity::get_is_connectivity_available() const
 {
     return is_connectivity_available;
 }
-bool Connectivity::get_mutable_is_connectivity_available()
-{
-    return is_connectivity_available;
-}
+
 void Connectivity::set_is_connectivity_available(const bool value)
 {
     this->is_connectivity_available = value;
