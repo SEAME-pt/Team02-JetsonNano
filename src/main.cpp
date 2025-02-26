@@ -1,9 +1,11 @@
-#include "Vehicle.hpp"
+#include "VehicleFactory.hpp"
 
-int main(void)
+int main()
 {
-    Vehicle vehicle;
+    Vehicle vehicle = VehicleFactory::createDefaultVehicle();
 
-    std::cout << "vehicle created!" << std::endl;
-    return (0);
+    vehicle.set_speed(50.0f);
+    vehicle.set_is_moving(true);
+
+    return 0;
 }

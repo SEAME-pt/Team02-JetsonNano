@@ -46,12 +46,12 @@ set(SOURCES
     ./src/Vehicle/Acceleration.cpp
     ./src/Vehicle/AngularVelocity.cpp
     ./src/Vehicle/Connectivity.cpp
+    ./src/Vehicle/Vehicle.cpp
     ./src/Vehicle/Exterior.cpp
     ./src/Vehicle/MotionManagement/ElectricAxle.cpp
     ./src/Vehicle/MotionManagement/MotionManagement.cpp
     ./src/Vehicle/MotionManagement/Steering.cpp
     ./src/Vehicle/MotionManagement/SteeringWheel.cpp
-    ./src/Vehicle.cpp
     ./src/Main.cpp
 )
 
