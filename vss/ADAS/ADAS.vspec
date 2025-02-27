@@ -1,0 +1,110 @@
+# Copyright (c) 2016 Contributors to COVESA
+#
+# This program and the accompanying materials are made available under the
+# terms of the Mozilla Public License 2.0 which is available at
+# https://www.mozilla.org/en-US/MPL/2.0/
+#
+# SPDX-License-Identifier: MPL-2.0
+
+#
+# All Advanced Driver Assist System signals
+#
+# Three signals are commonly used to describe status of a system.
+#
+# For systems that only takes action under specific circumstances (like ABS) two signals are often used:
+# IsEnabled indicates that the system has been turned on, is monitoring and is ready to take action
+# IsEngaged indicates that the system is currently taking action (e.g. regulating brake pressure)
+#
+# For systems that are taking action over an longer period of time (like Cruise Control) two signals are often used:
+# IsEnabled indicates that the system is enabled and available for e.g. configuration, but it is not yet taking action.
+# IsActive indicates that the system has been turned on and is continuously taking action,
+# (e.g. regulating speed and brakes)
+#
+
+ActiveAutonomyLevel:
+  datatype: string
+  type: sensor
+  allowed: [
+    'SAE_0',
+    'SAE_1',
+    'SAE_2_DISENGAGING',
+    'SAE_2',
+    'SAE_3_DISENGAGING',
+    'SAE_3',
+    'SAE_4_DISENGAGING',
+    'SAE_4',
+    'SAE_5_DISENGAGING',
+    'SAE_5'
+  ]
+  description: Indicates the currently active level of driving automation according to
+               the SAE J3016 (Taxonomy and Definitions for Terms Related to Driving Automation Systems for On-Road Motor Vehicles).
+  comment: Complies with https://www.sae.org/standards/content/j3016_202104/ and https://www.sae.org/blog/sae-j3016-update.
+           Level 5 and 4 ADS (Automated driving system) disengage, if appropriate, only after it achieves a minimal risk condition or a driver is performing the DDT.
+           Level 3 ADS disengages either an appropriate time after issuing a request to intervene or immediately upon user request.
+           Level 2 DAS (Driving automation system) disengages immediately upon driver request.
+           However, since many Level 2 DAS, often termed "Level 2.5", warn the driver shortly before reaching their operational limits,
+           the VSS also supports the DISENGAGING state for SAE_2.
+           Nevertheless, it should be noted that the SAE J3016 states that it is incorrect to describe driving automation features using fractional levels.
+
+SupportedAutonomyLevel:
+  datatype: string
+  type: attribute
+  allowed: [
+    'SAE_0', # No Driving Automation
+    'SAE_1', # Driver Assistance
+    'SAE_2', # Partial Driving Automation
+    'SAE_3', # Conditional Driving Automation
+    'SAE_4', # High Driving Automation
+    'SAE_5'  # Full Driving Automation
+  ]
+  description: Indicates the highest level of driving automation according to the SAE J3016 taxonomy the vehicle is capable of.
+
+#
+# Obstacle Sensor System
+#
+ObstacleDetection:
+  type: branch
+  instances:
+    - ["Front", "Rear"]
+    - ["Left", "Center", "Right"]
+  description: Signals form Obstacle Sensor System.
+
+ObstacleDetection.IsEnabled:
+  datatype: boolean
+  type: actuator
+  description: Indicates if obstacle sensor system is enabled (i.e. monitoring for obstacles).
+               True = Enabled. False = Disabled.
+
+ObstacleDetection.IsWarning:
+  datatype: boolean
+  type: sensor
+  description: Indicates if obstacle sensor system registered an obstacle.
+
+ObstacleDetection.IsError:
+  datatype: boolean
+  type: sensor
+  description: Indicates if obstacle sensor system incurred an error condition. True = Error. False = No Error.
+
+ObstacleDetection.Distance:
+  datatype: float
+  type: sensor
+  unit: m
+  min: 0.0
+  description: Distance in meters to detected object
+
+ObstacleDetection.TimeGap:
+  datatype: uint32
+  type: sensor
+  unit: ms
+  description: Time in milliseconds before potential impact object
+
+ObstacleDetection.WarningType:
+  datatype: string
+  type: sensor
+  allowed: [
+    'UNDEFINED',      # Object detection warning not further categorized
+    'CROSS_TRAFFIC',  # Detected object is on an indirect trajectory that may intersect
+    'BLIND_SPOT',     # Detected object may not be in driver line of sight, including from mirrors
+    ]
+  description: Indicates the type of obstacle warning detected as some track not only the presence of an obstacle but potential intercepting trajectory or other characteristics.
+  comment: Undefined obstacle warning type would merely alert of presence of obstacle and may measure distance.

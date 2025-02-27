@@ -48,14 +48,15 @@ void Signals::run()
 {
     while (1)
     {
-        usleep(100000);
-        int buffer = this->canBus->checkReceive();
+        // usleep(1000);
+        int buffer = this->canBus->checktheReceive();
         if (buffer != -1)
         {
             uint32_t can_id = 0;
+            int size        = 0;
             uint8_t data[8];
-            this->canBus->readMessage(buffer, can_id, data);
-            if (can_id == 0x01)
+            size = this->canBus->readMessage(buffer, can_id, data);
+            if (can_id == 0x01 && data[0] == 0x86)
             {
                 int speed;
                 double wheelDiame = 0.067;
