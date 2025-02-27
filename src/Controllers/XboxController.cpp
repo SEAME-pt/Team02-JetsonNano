@@ -1,6 +1,16 @@
 #include "XboxController.hpp"
 
 XboxController::XboxController()
+<<<<<<< HEAD:src/Controllers/XboxController.cpp
+=======
+    : m_session(Session::open(std::move(Config::create_default()))),
+      m_pubThrottle(
+          m_session.declare_publisher(KeyExpr("seame/car/1/throttle"))),
+      m_pubDirection(
+          m_session.declare_publisher(KeyExpr("seame/car/1/direction"))),
+      m_pubLights(m_session.declare_publisher(KeyExpr("seame/car/1/lights"))),
+      m_pubGear(m_session.declare_publisher(KeyExpr("seame/car/1/gear")))
+>>>>>>> origin/dev:XboxController/src/XboxController.cpp
 {
     const char* device = "/dev/input/js0";
     js                 = open(device, O_RDONLY);
@@ -151,6 +161,7 @@ void XboxController::run()
                 {
                     case (AXIS_LEFT_STICK):
                     {
+<<<<<<< HEAD:src/Controllers/XboxController.cpp
                         float speed = -this->axes[axis]->y * 100 / 32767;
                         // if (speed < -5)
                         // {
@@ -171,6 +182,31 @@ void XboxController::run()
                         //     this->m_pubGear.put(gear);
                         // }
                         publisher_->publishSpeed(speed);
+=======
+                        int speed = -this->axes[axis]->y * 100 / 32767;
+                        if (speed < -5)
+                        {
+                            gear[0] = 0;
+                            ;
+                            gear[0] ^= (1 << 1);
+                            this->m_pubGear.put(gear);
+                        }
+                        else if (speed > 5)
+                        {
+                            gear[0] = 0;
+                            ;
+                            gear[0] ^= (1 << 3);
+                            this->m_pubGear.put(gear);
+                        }
+                        else
+                        {
+                            gear[0] = 0;
+                            ;
+                            gear[0] ^= (1 << 2);
+                            this->m_pubGear.put(gear);
+                        }
+                        this->m_pubThrottle.put(std::to_string(speed));
+>>>>>>> origin/dev:XboxController/src/XboxController.cpp
                         std::cout << "Speed" << std::endl;
                         break;
                     }
@@ -187,6 +223,7 @@ void XboxController::run()
                 break;
             }
             default:
+<<<<<<< HEAD:src/Controllers/XboxController.cpp
                 break;
                 // if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
                 // {
@@ -195,6 +232,15 @@ void XboxController::run()
                 //     gear[0] ^= (1 << 2);
                 //     this->m_pubGear.put(gear);
                 // }
+=======
+                if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
+                {
+                    gear[0] = 0;
+                    ;
+                    gear[0] ^= (1 << 2);
+                    this->m_pubGear.put(gear);
+                }
+>>>>>>> origin/dev:XboxController/src/XboxController.cpp
         }
         fflush(stdout);
     }

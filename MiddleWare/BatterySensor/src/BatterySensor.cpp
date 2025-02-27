@@ -28,7 +28,7 @@ void BatterySensor::init(const std::string& i2cDevice, uint8_t sensorAddress,
 void BatterySensor::run(void)
 {
     double prev_voltage = 0;
-    while(1)
+    while (1)
     {
         usleep(100000); // Add a small delay to avoid busy waiting
         double voltage = this->batteryINA->readVoltage(0x02);
@@ -38,7 +38,7 @@ void BatterySensor::run(void)
         // memcpy(buf, &voltage, sizeof(voltage));
         // std::cout << "Battery: " << voltage << std::endl;
 
-        float alpha = 0.01f;
+        float alpha            = 0.01f;
         double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
         uint8_t value[8];
