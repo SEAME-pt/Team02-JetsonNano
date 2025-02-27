@@ -21,7 +21,7 @@ piPath=/home/team02
 piPass=seameteam2
 
 echo "build docker image to build app"
-docker buildx build --platform linux/arm64 --load -f ./deploy/dockerfiles/DockerfileDeployJetson \
+docker buildx build --no-cache --platform linux/arm64 --load -f ./deploy/dockerfiles/DockerfileDeployJetson \
     --build-arg projectDir=$projectDir \
     -t final-app .
 echo $projectDir
