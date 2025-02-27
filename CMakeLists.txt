@@ -28,6 +28,8 @@ include_directories(include/Chassis)
 include_directories(include/Powertrain)
 include_directories(include/Vehicle)
 include_directories(include/Vehicle/MotionManagement)
+include_directories(include/MiddleWare/BatterySensor)
+include_directories(include/MiddleWare/Signals)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -82,4 +84,19 @@ add_executable(XboxController
 # target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(XboxController
+    zenohcxx::zenohc)
+
+
+add_executable(MiddleWare
+    ./src/MiddleWare/BatterySensor/BatterySensor.cpp
+    ./src/MiddleWare/Signals/Signals.cpp
+    ./src/middleware.cpp
+)
+
+# target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
+
+target_link_libraries(MiddleWare
+    INA219
+    CAN
+    I2C
     zenohcxx::zenohc)
