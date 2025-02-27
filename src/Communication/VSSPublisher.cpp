@@ -4,8 +4,6 @@ VSSPublisher::VSSPublisher(Vehicle& vehicle) : vehicle_(vehicle)
 {
     auto config = zenoh::Config::create_default();
 
-    config.insert(zenoh::config::peer(), "tcp/localhost:7447");
-    config.insert(zenoh::config::mode(), "client");
     session = std::make_unique<zenoh::Session>(
         zenoh::Session::open(std::move(config)));
 

@@ -22,5 +22,4 @@ class VehicleSystem
     std::unique_ptr<ServoController> servo_controller_;
 
     void updateHardware();
-    void publish();
 };

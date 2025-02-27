@@ -9,8 +9,6 @@ class VSSPublisher
   public:
     VSSPublisher(Vehicle& vehicle);
 
-    void monitor();
-
   private:
     std::unique_ptr<zenoh::Session> session;
     std::optional<zenoh::Publisher> throttle_pub;

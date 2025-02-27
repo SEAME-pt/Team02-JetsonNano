@@ -9,7 +9,7 @@ int main()
     while (true)
     {
         system.update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     return 0;
