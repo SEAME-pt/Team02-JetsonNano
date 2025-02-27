@@ -20,13 +20,8 @@ piPath=/home/team02
 piPass=seameteam2
 
 echo "build docker image to build app"
-<<<<<<< HEAD
 docker build -f ./JetsonNano/deploy/dockerfiles/DockerfileDeployJetson \
     --build-arg projectDir=/$projectDir \
-=======
-docker buildx build --no-cache --platform linux/arm64 --load -f ./deploy/dockerfiles/DockerfileDeployJetson \
-    --build-arg projectDir=$projectDir \
->>>>>>> origin/dev
     -t final-app .
 echo $projectDir
 echo "Remove tmpapp container if it is exist"
