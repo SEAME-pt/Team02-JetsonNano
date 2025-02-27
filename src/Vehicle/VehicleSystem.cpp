@@ -10,6 +10,7 @@ VehicleSystem::VehicleSystem()
     motor_controller_ = std::make_unique<MotorController>(i2c_);
     servo_controller_ = std::make_unique<ServoController>(i2c_);
     vss_subscriber_   = std::make_unique<VSSSubscriber>(vehicle_);
+    vss_queryable_    = std::make_unique<VSSQueryable>(vehicle_);
 }
 
 void VehicleSystem::update()

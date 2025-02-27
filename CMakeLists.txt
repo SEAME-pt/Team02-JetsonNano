@@ -34,6 +34,7 @@ include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
+    ./src/Communication/VSSQueryable.cpp
     ./src/Hardware/MotorController.cpp
     ./src/Hardware/ServoController.cpp
     ./src/ADAS/ADAS.cpp
