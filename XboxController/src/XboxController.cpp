@@ -6,10 +6,8 @@ XboxController::XboxController()
           m_session.declare_publisher(KeyExpr("seame/car/1/throttle"))),
       m_pubDirection(
           m_session.declare_publisher(KeyExpr("seame/car/1/direction"))),
-      m_pubLights(
-            m_session.declare_publisher(KeyExpr("seame/car/1/lights"))),
-      m_pubGear(
-            m_session.declare_publisher(KeyExpr("seame/car/1/gear")))
+      m_pubLights(m_session.declare_publisher(KeyExpr("seame/car/1/lights"))),
+      m_pubGear(m_session.declare_publisher(KeyExpr("seame/car/1/gear")))
 {
     const char* device = "/dev/input/js0";
     js                 = open(device, O_RDONLY);
@@ -180,19 +178,22 @@ void XboxController::run()
                         int speed = -this->axes[axis]->y * 100 / 32767;
                         if (speed < -5)
                         {
-                            gear[0] = 0;;
+                            gear[0] = 0;
+                            ;
                             gear[0] ^= (1 << 1);
                             this->m_pubGear.put(gear);
                         }
                         else if (speed > 5)
                         {
-                            gear[0] = 0;;
+                            gear[0] = 0;
+                            ;
                             gear[0] ^= (1 << 3);
                             this->m_pubGear.put(gear);
                         }
                         else
                         {
-                            gear[0] = 0;;
+                            gear[0] = 0;
+                            ;
                             gear[0] ^= (1 << 2);
                             this->m_pubGear.put(gear);
                         }
@@ -216,7 +217,8 @@ void XboxController::run()
             default:
                 if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
                 {
-                    gear[0] = 0;;
+                    gear[0] = 0;
+                    ;
                     gear[0] ^= (1 << 2);
                     this->m_pubGear.put(gear);
                 }
