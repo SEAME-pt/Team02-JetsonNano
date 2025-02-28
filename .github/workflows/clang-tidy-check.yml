@@ -1,0 +1,53 @@
+name: Clang Tidy Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  clang-tidy:
+    name: Clang Tidy Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Install CMake
+      - name: Install CMake
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      # Install clang-tidy
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+
+      - name: Install Compilers
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      # Build CarController
+      - name: Build CarController
+        run: |
+          mkdir -p CarController/build
+          cd CarController/build
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+          make
+
+      # Build XboxController
+      - name: Build XboxController
+        run: |
+          mkdir -p XboxController/build
+          cd XboxController/build
+          cmake -DCMAKE_TOOLCHAIN_FILE=../aarch64-toolchain.cmake ..
+          make
+
+      # Run clang-tidy check for all projects
+      - name: Run clang-tidy
+        run: |
+          for dir in $(find . -name compile_commands.json -exec dirname {} \;); do
+            clang-tidy -p=$dir $(find $dir -name '*.cpp') --quiet
+          done

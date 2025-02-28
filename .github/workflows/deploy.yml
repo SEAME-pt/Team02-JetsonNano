@@ -1,0 +1,96 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - 61-task-update-compilation-using-dockerimage
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Set up QEMU for cross-architecture support
+      - name: Set Up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
+
+      # Pull and run the Docker container
+      - name: Build in Docker
+        run: |
+          docker run --rm \
+          --platform linux/arm64 \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          ruipires99/jetsoncrosscompile:latest \
+          bash -c "
+          apt-get update && apt-get install -y build-essential && \
+          mkdir -p /workspace/CarController/build && \
+          cd /workspace/CarController/build && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
+          make && \
+          mkdir -p /workspace/XboxController/build && \
+          cd /workspace/XboxController/build && \
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
+          make
+          "
+
+          "
+
+      #Version Release and Tag Update
+      - name: Get latest tag and increment
+        id: tag
+        run: |
+          git fetch --tags --force
+          git fetch origin
+          latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v1.0.0"
+          fi
+          major=$(echo $latest_tag | cut -d. -f1 | tr -d 'v')
+          minor=$(echo $latest_tag | cut -d. -f2)
+          patch=$(echo $latest_tag | cut -d. -f3)
+          new_tag="v$major.$minor.$((patch + 1))"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.new_tag }}
+          files: |
+            CarController/build/RaceCar
+            XboxController/build/controller
+          name: Release ${{ steps.tag.outputs.new_tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_LUIS }}
+
+      #Artifacts:
+      - name: Upload RaceCar binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: RaceCar
+          path: CarController/build/RaceCar
+          retention-days: 1
+          overwrite: true
+
+      - name: Upload XboxController binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: controller
+          path: XboxController/build/controller
+          retention-days: 1
+          overwrite: true
