@@ -26,26 +26,3 @@ void Exterior::set_light_intensity(const float value)
 {
     this->light_intensity = value;
 }
-
-const std::string& Exterior::get_description() const
-{
-    return description;
-}
-std::string& Exterior::get_mutable_description()
-{
-    return description;
-}
-void Exterior::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Exterior::get_type() const
-{
-    return type;
-}
-
-void Exterior::set_type(Type value)
-{
-    this->type = value;
-}

@@ -127,25 +127,3 @@ void ObstacleDetection::set_right(const Detection& value)
 {
     this->right = value;
 }
-
-const std::string& ObstacleDetection::get_description() const
-{
-    return description;
-}
-std::string& ObstacleDetection::get_mutable_description()
-{
-    return description;
-}
-void ObstacleDetection::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type ObstacleDetection::get_type() const
-{
-    return type;
-}
-void ObstacleDetection::set_type(Type value)
-{
-    this->type = value;
-}

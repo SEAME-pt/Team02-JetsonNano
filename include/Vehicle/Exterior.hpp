@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class Exterior
@@ -13,8 +12,6 @@ class Exterior
     float air_temperature;
     float humidity;
     float light_intensity;
-    std::string description;
-    Type type;
 
   public:
     float get_air_temperature() const;
@@ -25,11 +22,4 @@ class Exterior
 
     float get_light_intensity() const;
     void set_light_intensity(const float value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

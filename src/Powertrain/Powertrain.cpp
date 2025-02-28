@@ -45,25 +45,3 @@ void Powertrain::set_transmission(const Transmission& value)
 {
     this->transmission = value;
 }
-
-const std::string& Powertrain::get_description() const
-{
-    return description;
-}
-std::string& Powertrain::get_mutable_description()
-{
-    return description;
-}
-void Powertrain::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Powertrain::get_type() const
-{
-    return type;
-}
-void Powertrain::set_type(Type value)
-{
-    this->type = value;
-}

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class Detection
@@ -50,8 +49,6 @@ class ObstacleDetection
     Detection center;
     Detection left;
     Detection right;
-    std::string description;
-    Type type;
 
   public:
     const Detection& get_front() const;
@@ -73,11 +70,4 @@ class ObstacleDetection
     const Detection& get_right() const;
     Detection& get_mutable_right();
     void set_right(const Detection& value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

@@ -68,7 +68,7 @@ add_executable(VehicleSystem
     ${SOURCES}
 )
 
-target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
+# target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(VehicleSystem
     I2C

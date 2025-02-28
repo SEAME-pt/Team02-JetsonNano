@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class Wheel
@@ -12,8 +11,6 @@ class Wheel
   private:
     float angular_speed;
     float speed;
-    std::string description;
-    Type type;
 
   public:
     float get_angular_speed() const;
@@ -21,13 +18,6 @@ class Wheel
 
     float get_speed() const;
     void set_speed(const float value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };
 
 class AxleRow
@@ -49,8 +39,6 @@ class AxleRow
     std::uint8_t wheel_count;
     float wheel_diameter;
     float wheel_width;
-    std::string description;
-    Type type;
 
   public:
     std::uint16_t get_axle_width() const;
@@ -90,13 +78,6 @@ class AxleRow
 
     float get_wheel_width() const;
     void set_wheel_width(const float value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };
 
 class Axle
@@ -108,8 +89,6 @@ class Axle
   private:
     AxleRow row1;
     AxleRow row2;
-    std::string description;
-    Type type;
 
   public:
     const AxleRow& get_row1() const;
@@ -119,11 +98,4 @@ class Axle
     const AxleRow& get_row2() const;
     AxleRow& get_mutable_row2();
     void set_row2(const AxleRow& value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

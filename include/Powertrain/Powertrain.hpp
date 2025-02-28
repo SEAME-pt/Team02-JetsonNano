@@ -2,7 +2,6 @@
 
 #include "ElectricMotor.hpp"
 #include "Transmission.hpp"
-#include "Type.hpp"
 #include <iostream>
 
 class Powertrain
@@ -16,8 +15,6 @@ class Powertrain
     ElectricMotor electric_motor;
     std::uint32_t range;
     std::uint32_t time_remaining;
-    std::string description;
-    Type type;
 
   public:
     const ElectricMotor& get_electric_motor() const;
@@ -33,11 +30,4 @@ class Powertrain
     const Transmission& get_transmission() const;
     Transmission& get_mutable_transmission();
     void set_transmission(const Transmission& value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

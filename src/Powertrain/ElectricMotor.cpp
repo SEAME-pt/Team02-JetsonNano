@@ -29,25 +29,3 @@ void ElectricMotor::set_time_in_use(const float value)
 {
     this->time_in_use = value;
 }
-
-const std::string& ElectricMotor::get_description() const
-{
-    return description;
-}
-std::string& ElectricMotor::get_mutable_description()
-{
-    return description;
-}
-void ElectricMotor::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type ElectricMotor::get_type() const
-{
-    return type;
-}
-void ElectricMotor::set_type(Type value)
-{
-    this->type = value;
-}

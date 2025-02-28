@@ -29,25 +29,3 @@ void Acceleration::set_vertical(const float value)
 {
     this->vertical = value;
 }
-
-const std::string& Acceleration::get_description() const
-{
-    return description;
-}
-std::string& Acceleration::get_mutable_description()
-{
-    return description;
-}
-void Acceleration::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Acceleration::get_type() const
-{
-    return type;
-}
-void Acceleration::set_type(Type value)
-{
-    this->type = value;
-}
