@@ -39,6 +39,7 @@ set(SOURCES
     ./src/Communication/VSSQueryable.cpp
     ./src/Hardware/MotorController.cpp
     ./src/Hardware/ServoController.cpp
+    ./src/Hardware/HardwareObserver.cpp
     ./src/ADAS/ADAS.cpp
     ./src/ADAS/ObstacleDetection.cpp
     ./src/Body/Body.cpp
@@ -68,7 +69,7 @@ add_executable(VehicleSystem
     ${SOURCES}
 )
 
-# target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
+target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(VehicleSystem
     I2C
