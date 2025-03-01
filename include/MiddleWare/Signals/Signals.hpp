@@ -4,8 +4,11 @@
 #include <unistd.h>
 #include <iostream>
 #include "CAN.hpp"
-#include "zenoh.hxx"
 #include <arpa/inet.h>
+#include "VehicleFactory.hpp"
+#include "VSSSubscriber.hpp"
+#include "VSSQueryable.hpp"
+#include "SensoringPublisher.hpp"
 
 using namespace zenoh;
 
@@ -13,10 +16,9 @@ class Signals
 {
   private:
     CAN* canBus;
-    Session m_session;
-    Publisher m_pubSpeed;
-    Subscriber<void> m_subLights;
-    Subscriber<void> m_subGear;
+    Vehicle vehicle_;
+    std::unique_ptr<SensoringPublisher> publisher_;
+    std::unique_ptr<VSSSubscriber> vss_subscriber_;
 
   public:
     Signals();

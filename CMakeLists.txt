@@ -51,6 +51,7 @@ set(SOURCES
     ./src/Powertrain/ElectricMotor.cpp
     ./src/Powertrain/Powertrain.cpp
     ./src/Powertrain/Transmission.cpp
+    ./src/Powertrain/TractionBattery.cpp
     ./src/Vehicle/Acceleration.cpp
     ./src/Vehicle/AngularVelocity.cpp
     ./src/Vehicle/Connectivity.cpp
@@ -61,10 +62,10 @@ set(SOURCES
     ./src/Vehicle/MotionManagement/MotionManagement.cpp
     ./src/Vehicle/MotionManagement/Steering.cpp
     ./src/Vehicle/MotionManagement/SteeringWheel.cpp
-    ./src/main.cpp
 )
 
 add_executable(VehicleSystem
+    ./src/main.cpp
     ${SOURCES}
 )
 
@@ -73,6 +74,7 @@ target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(VehicleSystem
     I2C
     PCA9685
+    CAN
     zenohcxx::zenohc)
 
 add_executable(XboxController
@@ -88,6 +90,8 @@ target_link_libraries(XboxController
 
 
 add_executable(MiddleWare
+    ${SOURCES}
+    ./src/Communication/SensoringPublisher.cpp
     ./src/MiddleWare/BatterySensor/BatterySensor.cpp
     ./src/MiddleWare/Signals/Signals.cpp
     ./src/middleware.cpp
@@ -97,6 +101,7 @@ add_executable(MiddleWare
 
 target_link_libraries(MiddleWare
     INA219
+    PCA9685
     CAN
     I2C
     zenohcxx::zenohc)

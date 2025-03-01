@@ -7,7 +7,7 @@
 #include "I2C.hpp"
 #include "INA219.hpp"
 #include "CAN.hpp"
-#include "zenoh.hxx"
+#include "SensoringPublisher.hpp"
 
 using namespace zenoh;
 
@@ -19,8 +19,7 @@ class BatterySensor
     I2C* m_I2c;
     INA219* batteryINA;
     CAN* canBus;
-    Session m_session;
-    Publisher m_pubBattery;
+    std::unique_ptr<SensoringPublisher> publisher_;
 
   public:
     BatterySensor();
