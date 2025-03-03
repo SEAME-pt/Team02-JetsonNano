@@ -48,14 +48,22 @@ docker cp tmpapp:/home/$projectDir/MiddleWare ./MiddleWare
 
 if check_ssh_connection "$IpAddress" "$UserName"; then
     echo "Stopping services on JetsonNano..."
-    sshpass -p "$Pass" ssh "$UserName"@"$IpAddress" "sudo systemctl stop middleware.service vehiclesystem.service controller.service"
+    # Use -t to force pseudo-terminal allocation for sudo
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S systemctl stop middleware.service vehiclesystem.service controller.service"
+    
+    echo "Creating directories if they don't exist..."
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S mkdir -p $PathBin $PathEtc"
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S chown $UserName:$UserName $PathBin $PathEtc"
     
     echo "Send binary to jetson over scp"
     sshpass -p "$Pass" scp VehicleSystem XboxController MiddleWare "$UserName"@"$IpAddress":"$PathBin"
     sshpass -p "$Pass" scp ./$projectDir/ZenohConfig/VehicleSystemConfig.json ./$projectDir/ZenohConfig/ControllerConfig.json ./$projectDir/ZenohConfig/MiddleWareConfig.json "$UserName"@"$IpAddress":"$PathEtc"
     
+    echo "Setting correct permissions..."
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S chmod 755 $PathBin/* $PathEtc/*"
+    
     echo "Restarting services on JetsonNano..."
-    sshpass -p "$Pass" ssh "$UserName"@"$IpAddress" "sudo systemctl start middleware.service vehiclesystem.service controller.service"
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S systemctl start middleware.service vehiclesystem.service controller.service"
 else
     echo "ERROR: Cannot connect to Jetson at $IpAddress"
 fi
