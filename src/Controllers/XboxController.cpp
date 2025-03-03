@@ -152,24 +152,18 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
-                        // if (speed < -5)
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 1);
-                        //     this->m_pubGear.put(gear);
-                        // }
-                        // else if (speed > 5)
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 3);
-                        //     this->m_pubGear.put(gear);
-                        // }
-                        // else
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 2);
-                        //     this->m_pubGear.put(gear);
-                        // }
+                        if (speed < -5)
+                        {
+                            publisher_->publishCurrentGear(-1);
+                        }
+                        else if (speed > 5)
+                        {
+                            publisher_->publishCurrentGear(1);
+                        }
+                        else
+                        {
+                            publisher_->publishCurrentGear(0);
+                        }
                         publisher_->publishSpeed(speed);
                         std::cout << "Speed" << std::endl;
                         break;

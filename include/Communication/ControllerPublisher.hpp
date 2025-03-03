@@ -21,6 +21,7 @@ class ControllerPublisher
     void publishHazard(bool isSignaling);
     void publishDirectionIndicatorLeft(bool isSignaling);
     void publishDirectionIndicatorRight(bool isSignaling);
+    void publishCurrentGear(int gear);
 
   private:
     std::unique_ptr<zenoh::Session> session;
@@ -36,4 +37,5 @@ class ControllerPublisher
     std::optional<zenoh::Publisher> hazard_pub;
     std::optional<zenoh::Publisher> directionIndicatorLeft_pub;
     std::optional<zenoh::Publisher> directionIndicatorRight_pub;
+    std::optional<zenoh::Publisher> currentGear_pub;
 };

@@ -9,10 +9,9 @@ class VSSSubscriber
   public:
     VSSSubscriber(Vehicle& vehicle);
 
-    //Constructor with callback to send messages to CAN.
+    // Constructor with callback to send messages to CAN.
     VSSSubscriber(Vehicle& vehicle,
-      std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN);
-    
+                  std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN);
 
   private:
     Vehicle& vehicle_;
@@ -38,7 +37,7 @@ class VSSSubscriber
     std::optional<zenoh::Subscriber<void>> currentVoltage_subscriber;
     std::optional<zenoh::Subscriber<void>> currentCurrent_subscriber;
     std::optional<zenoh::Subscriber<void>> currentPower_subscriber;
-
+    std::optional<zenoh::Subscriber<void>> currentGear_subscriber;
 
     void setupSubscriptions();
 };

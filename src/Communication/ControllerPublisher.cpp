@@ -30,6 +30,8 @@ ControllerPublisher::ControllerPublisher()
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Left")));
     directionIndicatorRight_pub.emplace(session->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right")));
+    currentGear_pub.emplace(session->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/Powertrain/Transmission/CurrentGear")));
 }
 
 void ControllerPublisher::publishSpeed(float speed)
@@ -90,4 +92,9 @@ void ControllerPublisher::publishDirectionIndicatorLeft(bool isSignaling)
 void ControllerPublisher::publishDirectionIndicatorRight(bool isSignaling)
 {
     directionIndicatorRight_pub->put(std::to_string(isSignaling));
+}
+
+void ControllerPublisher::publishCurrentGear(int gear)
+{
+    currentGear_pub->put(std::to_string(gear));
 }

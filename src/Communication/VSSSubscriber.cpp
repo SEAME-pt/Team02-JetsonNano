@@ -270,4 +270,15 @@ void VSSSubscriber::setupSubscriptions()
                 .set_current_power(currentPower);
         },
         zenoh::closures::none));
+    currentGear_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/Transmission/CurrentGear",
+        [this](const zenoh::Sample& sample)
+        {
+            int currentGear = std::stoi(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_transmission()
+                .set_current_gear(currentGear);
+            this->sendToCAN_(0x04, currentGear, sizeof(currentGear));
+        },
+        zenoh::closures::none));
 }
