@@ -16,12 +16,10 @@ class Signals
 {
   private:
     CAN* canBus;
-    Vehicle vehicle_;
-    std::unique_ptr<SensoringPublisher> publisher_;
-    std::unique_ptr<VSSSubscriber> vss_subscriber_;
+    std::shared_ptr<SensoringPublisher> publisher_;
 
   public:
-    Signals();
+    Signals(std::shared_ptr<SensoringPublisher> publisher);
     ~Signals();
 
     void init(const std::string& canDevice);

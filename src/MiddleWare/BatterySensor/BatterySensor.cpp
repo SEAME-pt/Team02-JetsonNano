@@ -1,12 +1,12 @@
 #include "BatterySensor.hpp"
 
-BatterySensor::BatterySensor()
+BatterySensor::BatterySensor(std::shared_ptr<SensoringPublisher> publisher)
 {
     this->m_I2c      = new I2C();
     this->batteryINA = new INA219();
     this->canBus     = new CAN();
 
-    publisher_ = std::make_unique<SensoringPublisher>();
+    publisher_ = publisher;
 }
 
 BatterySensor::~BatterySensor()

@@ -7,7 +7,7 @@
 class ControllerPublisher
 {
   public:
-    ControllerPublisher();
+    ControllerPublisher(std::shared_ptr<zenoh::Session> session);
 
     void publishSpeed(float speed);
     void publishSteering(float steering);
@@ -24,7 +24,7 @@ class ControllerPublisher
     void publishCurrentGear(int gear);
 
   private:
-    std::unique_ptr<zenoh::Session> session;
+    std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::Publisher> throttle_pub;
     std::optional<zenoh::Publisher> steering_pub;
     std::optional<zenoh::Publisher> beamLow_pub;

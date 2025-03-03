@@ -4,9 +4,8 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
                              std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle)
 {
-    sendToCAN_  = [](uint32_t, uint8_t*, size_t) {};
-    auto config = zenoh::Config::create_default();
-    session_    = session;
+    sendToCAN_ = [](uint32_t, uint8_t*, size_t) {};
+    session_   = session;
 
     setupSubscriptions();
 }
@@ -16,8 +15,7 @@ VSSSubscriber::VSSSubscriber(
     std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle), sendToCAN_(sendToCAN)
 {
-    auto config = zenoh::Config::create_default();
-    session_    = session;
+    session_ = session;
 
     setupSubscriptions();
 }

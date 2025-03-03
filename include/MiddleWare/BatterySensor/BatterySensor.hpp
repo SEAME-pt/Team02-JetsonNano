@@ -19,10 +19,10 @@ class BatterySensor
     I2C* m_I2c;
     INA219* batteryINA;
     CAN* canBus;
-    std::unique_ptr<SensoringPublisher> publisher_;
+    std::shared_ptr<SensoringPublisher> publisher_;
 
   public:
-    BatterySensor();
+    BatterySensor(std::shared_ptr<SensoringPublisher> publisher);
     ~BatterySensor();
 
     void init(const std::string& i2cDevice, uint8_t sensorAddress,

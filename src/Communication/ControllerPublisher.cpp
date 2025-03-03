@@ -1,36 +1,35 @@
 #include <ControllerPublisher.hpp>
 
-ControllerPublisher::ControllerPublisher()
+ControllerPublisher::ControllerPublisher(
+    std::shared_ptr<zenoh::Session> session)
 {
-    auto config = zenoh::Config::create_default();
-    session     = std::make_unique<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+    session_ = session;
 
-    throttle_pub.emplace(session->declare_publisher(
+    throttle_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed")));
-    steering_pub.emplace(session->declare_publisher(
+    steering_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Chassis/SteeringWheel/Angle")));
-    beamLow_pub.emplace(session->declare_publisher(
+    beamLow_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/Low")));
-    beamHigh_pub.emplace(session->declare_publisher(
+    beamHigh_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/High")));
-    running_pub.emplace(session->declare_publisher(
+    running_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Running")));
-    parking_pub.emplace(session->declare_publisher(
+    parking_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Parking")));
-    fogRear_pub.emplace(session->declare_publisher(
+    fogRear_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Rear")));
-    fogFront_pub.emplace(session->declare_publisher(
+    fogFront_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Front")));
-    brake_pub.emplace(session->declare_publisher(
+    brake_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Brake")));
-    hazard_pub.emplace(session->declare_publisher(
+    hazard_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Hazard")));
-    directionIndicatorLeft_pub.emplace(session->declare_publisher(
+    directionIndicatorLeft_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Left")));
-    directionIndicatorRight_pub.emplace(session->declare_publisher(
+    directionIndicatorRight_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right")));
-    currentGear_pub.emplace(session->declare_publisher(
+    currentGear_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/Transmission/CurrentGear")));
 }
 

@@ -4,8 +4,6 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
                            std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle)
 {
-    auto config = zenoh::Config::create_default();
-
     session_ = session;
 
     throttle_queryable.emplace(session_->declare_queryable(

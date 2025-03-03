@@ -1,10 +1,10 @@
 
 #include "Signals.hpp"
 
-Signals::Signals()
+Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
 {
     this->canBus = new CAN();
-    publisher_   = std::make_unique<SensoringPublisher>();
+    publisher_   = publisher;
 }
 
 Signals::~Signals() {}

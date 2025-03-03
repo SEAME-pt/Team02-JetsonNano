@@ -1,20 +1,18 @@
 #include <SensoringPublisher.hpp>
 
-SensoringPublisher::SensoringPublisher()
+SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
 {
-    auto config = zenoh::Config::create_default();
-    session     = std::make_unique<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+    session_ = session;
 
     speed_pub.emplace(
-        session->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
-    current_voltage_pub.emplace(session->declare_publisher(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
+    current_voltage_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurentVoltage")));
-    current_current_pub.emplace(session->declare_publisher(
+    current_current_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentCurrent")));
-    current_power_pub.emplace(session->declare_publisher(
+    current_power_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentPower")));
-    state_of_charge_pub.emplace(session->declare_publisher(
+    state_of_charge_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/StateOfCharge")));
 }
 

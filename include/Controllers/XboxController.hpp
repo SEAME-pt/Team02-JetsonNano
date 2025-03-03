@@ -53,6 +53,7 @@ class XboxController
 {
   private:
     int js;
+    std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
 
   public:
@@ -60,6 +61,7 @@ class XboxController
     struct js_event event;
 
     XboxController();
+    XboxController(const std::string& configFile);
     ~XboxController();
     int readEvent(void);
     int getButtonCount(void);
