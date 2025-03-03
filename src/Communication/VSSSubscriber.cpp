@@ -2,7 +2,7 @@
 
 VSSSubscriber::VSSSubscriber(Vehicle& vehicle) : vehicle_(vehicle)
 {
-    sendToCAN_ = [](uint32_t, uint8_t*, size_t) {};
+    sendToCAN_  = [](uint32_t, uint8_t*, size_t) {};
     auto config = zenoh::Config::create_default();
     session     = std::make_unique<zenoh::Session>(
         zenoh::Session::open(std::move(config)));
@@ -10,9 +10,9 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle) : vehicle_(vehicle)
     setupSubscriptions();
 }
 
-VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
-    std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN)
-: vehicle_(vehicle), sendToCAN_(sendToCAN)
+VSSSubscriber::VSSSubscriber(
+    Vehicle& vehicle, std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN)
+    : vehicle_(vehicle), sendToCAN_(sendToCAN)
 {
     auto config = zenoh::Config::create_default();
     session     = std::make_unique<zenoh::Session>(
@@ -123,7 +123,7 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "RearFog" << std::endl;
             lights_[0] ^= (1 << 5);
-
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
 
@@ -141,6 +141,7 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "FrontFog" << std::endl;
             lights_[0] ^= (1 << 4);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
 
@@ -190,7 +191,6 @@ void VSSSubscriber::setupSubscriptions()
             if (((lights_[0] >> 0) & 1) == 1)
                 lights_[0] ^= (1 << 0);
             this->sendToCAN_(0x03, lights_, sizeof(lights_));
-
         },
         zenoh::closures::none));
 
@@ -205,9 +205,8 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_body()
                 .get_mutable_lights()
                 .set_direction_indicator_right(value);
-            
 
-            //CAN communication
+            // CAN communication
             std::cout << "Right" << std::endl;
             lights_[0] ^= (1 << 0);
             if (((lights_[0] >> 1) & 1) == 1)
@@ -231,7 +230,8 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Powertrain/TractionBattery/MaxVoltage",
         [this](const zenoh::Sample& sample)
         {
-            std::uint16_t maxVoltage = std::stoi(sample.get_payload().as_string());
+            std::uint16_t maxVoltage =
+                std::stoi(sample.get_payload().as_string());
             this->vehicle_.get_mutable_powertrain()
                 .get_mutable_traction_battery()
                 .set_max_voltage(maxVoltage);
