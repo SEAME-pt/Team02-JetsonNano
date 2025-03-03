@@ -45,25 +45,3 @@ void ElectricAxle::set_row2(const ElectricAxleRow& value)
 {
     this->row2 = value;
 }
-
-const std::string& ElectricAxle::get_description() const
-{
-    return description;
-}
-std::string& ElectricAxle::get_mutable_description()
-{
-    return description;
-}
-void ElectricAxle::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type ElectricAxle::get_type() const
-{
-    return type;
-}
-void ElectricAxle::set_type(Type value)
-{
-    this->type = value;
-}

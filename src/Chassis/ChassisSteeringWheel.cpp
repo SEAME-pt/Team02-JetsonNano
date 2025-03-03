@@ -7,27 +7,23 @@ int16_t ChassisSteeringWheel::get_angle() const
 
 void ChassisSteeringWheel::set_angle(const int16_t value)
 {
-    this->angle = value;
+    if (angle != value)
+    {
+        angle = value;
+        notifyAngleChanged(value);
+    }
 }
 
-const std::string& ChassisSteeringWheel::get_description() const
+void ChassisSteeringWheel::addObserver(
+    std::shared_ptr<IVehicleObserver> observer)
 {
-    return description;
-}
-std::string& ChassisSteeringWheel::get_mutable_description()
-{
-    return description;
-}
-void ChassisSteeringWheel::set_description(const std::string& value)
-{
-    this->description = value;
+    observers_.push_back(observer);
 }
 
-Type ChassisSteeringWheel::get_type() const
+void ChassisSteeringWheel::notifyAngleChanged(float angle)
 {
-    return type;
-}
-void ChassisSteeringWheel::set_type(Type value)
-{
-    this->type = value;
+    for (auto& observer : observers_)
+    {
+        observer->onSteeringAngleChanged(angle);
+    }
 }

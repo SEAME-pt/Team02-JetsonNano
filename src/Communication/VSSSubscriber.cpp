@@ -2,6 +2,18 @@
 
 VSSSubscriber::VSSSubscriber(Vehicle& vehicle) : vehicle_(vehicle)
 {
+    sendToCAN_ = [](uint32_t, uint8_t*, size_t) {};
+    auto config = zenoh::Config::create_default();
+    session     = std::make_unique<zenoh::Session>(
+        zenoh::Session::open(std::move(config)));
+
+    setupSubscriptions();
+}
+
+VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
+    std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN)
+: vehicle_(vehicle), sendToCAN_(sendToCAN)
+{
     auto config = zenoh::Config::create_default();
     session     = std::make_unique<zenoh::Session>(
         zenoh::Session::open(std::move(config)));
@@ -43,6 +55,10 @@ void VSSSubscriber::setupSubscriptions()
             value.set_is_on(isOn);
             this->vehicle_.get_mutable_body().get_mutable_lights().set_beam_low(
                 value);
+
+            std::cout << "Low" << std::endl;
+            lights_[0] ^= (1 << 2);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
 
@@ -57,6 +73,10 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_body()
                 .get_mutable_lights()
                 .set_beam_high(value);
+
+            std::cout << "High" << std::endl;
+            lights_[0] ^= (1 << 3);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
 
@@ -83,6 +103,10 @@ void VSSSubscriber::setupSubscriptions()
             value.set_is_on(isOn);
             this->vehicle_.get_mutable_body().get_mutable_lights().set_parking(
                 value);
+
+            std::cout << "Parking" << std::endl;
+            lights_[0] ^= (1 << 7);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
 
@@ -96,6 +120,10 @@ void VSSSubscriber::setupSubscriptions()
             value.set_is_on(isOn);
             this->vehicle_.get_mutable_body().get_mutable_lights().set_fog_rear(
                 value);
+
+            std::cout << "RearFog" << std::endl;
+            lights_[0] ^= (1 << 5);
+
         },
         zenoh::closures::none));
 
@@ -110,6 +138,9 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_body()
                 .get_mutable_lights()
                 .set_fog_front(value);
+
+            std::cout << "FrontFog" << std::endl;
+            lights_[0] ^= (1 << 4);
         },
         zenoh::closures::none));
 
@@ -136,6 +167,10 @@ void VSSSubscriber::setupSubscriptions()
             value.set_is_signaling(isSignaling);
             this->vehicle_.get_mutable_body().get_mutable_lights().set_hazard(
                 value);
+
+            std::cout << "Hazard" << std::endl;
+            lights_[0] ^= (1 << 6);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
     directionIndicatorLeft_subscriber.emplace(session->declare_subscriber(
@@ -149,6 +184,13 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_body()
                 .get_mutable_lights()
                 .set_direction_indicator_left(value);
+
+            std::cout << "Left" << std::endl;
+            lights_[0] ^= (1 << 1);
+            if (((lights_[0] >> 0) & 1) == 1)
+                lights_[0] ^= (1 << 0);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+
         },
         zenoh::closures::none));
 
@@ -163,6 +205,69 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_body()
                 .get_mutable_lights()
                 .set_direction_indicator_right(value);
+            
+
+            //CAN communication
+            std::cout << "Right" << std::endl;
+            lights_[0] ^= (1 << 0);
+            if (((lights_[0] >> 1) & 1) == 1)
+                lights_[0] ^= (1 << 1);
+            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+        },
+        zenoh::closures::none));
+
+    stateOfCharge_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/TractionBattery/StateOfCharge",
+        [this](const zenoh::Sample& sample)
+        {
+            float stateOfCharge = std::stof(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_traction_battery()
+                .set_state_of_charge_displayed(stateOfCharge);
+        },
+        zenoh::closures::none));
+
+    maxVoltage_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/TractionBattery/MaxVoltage",
+        [this](const zenoh::Sample& sample)
+        {
+            std::uint16_t maxVoltage = std::stoi(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_traction_battery()
+                .set_max_voltage(maxVoltage);
+        },
+        zenoh::closures::none));
+
+    currentVoltage_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/TractionBattery/CurrentVoltage",
+        [this](const zenoh::Sample& sample)
+        {
+            float currentVoltage = std::stof(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_traction_battery()
+                .set_current_voltage(currentVoltage);
+        },
+        zenoh::closures::none));
+
+    currentCurrent_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/TractionBattery/CurrentCurrent",
+        [this](const zenoh::Sample& sample)
+        {
+            float currentCurrent = std::stof(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_traction_battery()
+                .set_current_current(currentCurrent);
+        },
+        zenoh::closures::none));
+
+    currentPower_subscriber.emplace(session->declare_subscriber(
+        "Vehicle/1/Powertrain/TractionBattery/CurrentPower",
+        [this](const zenoh::Sample& sample)
+        {
+            float currentPower = std::stof(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_traction_battery()
+                .set_current_power(currentPower);
         },
         zenoh::closures::none));
 }

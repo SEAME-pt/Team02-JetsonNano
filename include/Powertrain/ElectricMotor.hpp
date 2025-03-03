@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
+#include <vector>
+#include <memory>
+#include "IVehicleObserver.hpp"
 
 class ElectricMotor
 {
@@ -13,8 +15,7 @@ class ElectricMotor
     std::uint16_t max_power;
     std::int32_t speed;
     float time_in_use;
-    std::string description;
-    Type type;
+    std::vector<std::shared_ptr<IVehicleObserver>> observers_;
 
   public:
     std::uint16_t get_max_power() const;
@@ -26,10 +27,8 @@ class ElectricMotor
     float get_time_in_use() const;
     void set_time_in_use(const float value);
 
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
+    void addObserver(std::shared_ptr<IVehicleObserver> observer);
 
-    Type get_type() const;
-    void set_type(Type value);
+  private:
+    void notifySpeedChanged(int32_t speed);
 };

@@ -20,29 +20,6 @@ void Wheel::set_speed(const float value)
     this->speed = value;
 }
 
-const std::string& Wheel::get_description() const
-{
-    return description;
-}
-
-std::string& Wheel::get_mutable_description()
-{
-    return description;
-}
-void Wheel::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Wheel::get_type() const
-{
-    return type;
-}
-void Wheel::set_type(Type value)
-{
-    this->type = value;
-}
-
 std::uint16_t AxleRow::get_axle_width() const
 {
     return axle_width;
@@ -169,28 +146,6 @@ void AxleRow::set_wheel_width(const float value)
     this->wheel_width = value;
 }
 
-const std::string& AxleRow::get_description() const
-{
-    return description;
-}
-std::string& AxleRow::get_mutable_description()
-{
-    return description;
-}
-void AxleRow::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type AxleRow::get_type() const
-{
-    return type;
-}
-void AxleRow::set_type(Type value)
-{
-    this->type = value;
-}
-
 const AxleRow& Axle::get_row1() const
 {
     return row1;
@@ -215,26 +170,4 @@ AxleRow& Axle::get_mutable_row2()
 void Axle::set_row2(const AxleRow& value)
 {
     this->row2 = value;
-}
-
-const std::string& Axle::get_description() const
-{
-    return description;
-}
-std::string& Axle::get_mutable_description()
-{
-    return description;
-}
-void Axle::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Axle::get_type() const
-{
-    return type;
-}
-void Axle::set_type(Type value)
-{
-    this->type = value;
 }

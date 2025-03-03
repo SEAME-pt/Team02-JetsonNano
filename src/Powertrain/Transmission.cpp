@@ -78,25 +78,3 @@ void Transmission::set_travelled_distance(const float value)
 {
     this->travelled_distance = value;
 }
-
-const std::string& Transmission::get_description() const
-{
-    return description;
-}
-std::string& Transmission::get_mutable_description()
-{
-    return description;
-}
-void Transmission::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Transmission::get_type() const
-{
-    return type;
-}
-void Transmission::set_type(Type value)
-{
-    this->type = value;
-}

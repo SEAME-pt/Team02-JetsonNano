@@ -31,9 +31,4 @@ AngleTarget:
   description: Steering-wheel angle request to the steering actuator (external set-point for steer-by-wire).
                Positive sign for angle in counterclockwise direction (based on ISO8855).
 
-AngleTargetMode:
-  datatype: uint8
-  type: actuator
-  description: Mode used for controlling Steering-wheel angle interface. 0 indicates interface disabled.
-               Other values activate vehicle specific modes.
 
