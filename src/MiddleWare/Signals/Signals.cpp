@@ -4,10 +4,7 @@
 Signals::Signals()
 {
     this->canBus = new CAN();
-    vehicle_ = VehicleFactory::createDefaultVehicle();
-    publisher_ = std::make_unique<SensoringPublisher>();
-    vss_subscriber_   = std::make_unique<VSSSubscriber>(vehicle_);
-
+    publisher_   = std::make_unique<SensoringPublisher>();
 }
 
 Signals::~Signals() {}

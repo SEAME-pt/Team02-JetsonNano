@@ -1,6 +1,6 @@
 #include "VehicleSystem.hpp"
 
-int main(int ac, char** argv)
+int main(int argc, char** argv)
 {
     // Start vehicle system
     VehicleSystem* system;

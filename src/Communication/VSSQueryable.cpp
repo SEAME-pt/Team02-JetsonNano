@@ -6,9 +6,9 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
 {
     auto config = zenoh::Config::create_default();
 
-    session = session;
+    session_ = session;
 
-    throttle_queryable.emplace(session->declare_queryable(
+    throttle_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed"),
         [this](const zenoh::Query& query)
         {
@@ -19,7 +19,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    steering_queryable.emplace(session->declare_queryable(
+    steering_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Chassis/SteeringWheel/Angle"),
         [this](const zenoh::Query& query)
         {
@@ -29,7 +29,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    beamLow_queryable.emplace(session->declare_queryable(
+    beamLow_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/Low"),
         [this](const zenoh::Query& query)
         {
@@ -41,7 +41,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    beamHigh_queryable.emplace(session->declare_queryable(
+    beamHigh_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/High"),
         [this](const zenoh::Query& query)
         {
@@ -53,7 +53,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    running_queryable.emplace(session->declare_queryable(
+    running_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Running"),
         [this](const zenoh::Query& query)
         {
@@ -65,7 +65,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    parking_queryable.emplace(session->declare_queryable(
+    parking_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Parking"),
         [this](const zenoh::Query& query)
         {
@@ -77,7 +77,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    fogRear_queryable.emplace(session->declare_queryable(
+    fogRear_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Rear"),
         [this](const zenoh::Query& query)
         {
@@ -89,7 +89,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    fogFront_queryable.emplace(session->declare_queryable(
+    fogFront_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Front"),
         [this](const zenoh::Query& query)
         {
@@ -101,7 +101,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    brake_queryable.emplace(session->declare_queryable(
+    brake_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Brake"),
         [this](const zenoh::Query& query)
         {
@@ -113,7 +113,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    hazard_queryable.emplace(session->declare_queryable(
+    hazard_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/Hazard"),
         [this](const zenoh::Query& query)
         {
@@ -125,7 +125,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    directionIndicatorLeft_queryable.emplace(session->declare_queryable(
+    directionIndicatorLeft_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Left"),
         [this](const zenoh::Query& query)
         {
@@ -137,7 +137,7 @@ VSSQueryable::VSSQueryable(Vehicle& vehicle,
         },
         zenoh::closures::none, // on_drop callback
         zenoh::Session::QueryableOptions()));
-    directionIndicatorRight_queryable.emplace(session->declare_queryable(
+    directionIndicatorRight_queryable.emplace(session_->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right"),
         [this](const zenoh::Query& query)
         {

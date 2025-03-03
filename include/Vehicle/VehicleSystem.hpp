@@ -16,6 +16,8 @@ class VehicleSystem
 
   private:
     Vehicle vehicle_;
+
+    std::shared_ptr<zenoh::Session> session;
     std::unique_ptr<VSSSubscriber> vss_subscriber_;
     std::unique_ptr<VSSQueryable> vss_queryable_;
     std::shared_ptr<I2C> i2c_;

@@ -6,7 +6,7 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
 {
     sendToCAN_  = [](uint32_t, uint8_t*, size_t) {};
     auto config = zenoh::Config::create_default();
-    session     = session;
+    session_    = session;
 
     setupSubscriptions();
 }
@@ -17,14 +17,14 @@ VSSSubscriber::VSSSubscriber(
     : vehicle_(vehicle), sendToCAN_(sendToCAN)
 {
     auto config = zenoh::Config::create_default();
-    session     = session;
+    session_    = session;
 
     setupSubscriptions();
 }
 
 void VSSSubscriber::setupSubscriptions()
 {
-    throttle_subscriber.emplace(session->declare_subscriber(
+    throttle_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/ElectricMotor/Speed",
         [this](const zenoh::Sample& sample)
         {
@@ -35,7 +35,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    steering_subscriber.emplace(session->declare_subscriber(
+    steering_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Chassis/SteeringWheel/Angle",
         [this](const zenoh::Sample& sample)
         {
@@ -46,7 +46,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    beamLow_subscriber.emplace(session->declare_subscriber(
+    beamLow_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Beam/Low",
         [this](const zenoh::Sample& sample)
         {
@@ -63,7 +63,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    beamHigh_subscriber.emplace(session->declare_subscriber(
+    beamHigh_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Beam/High",
         [this](const zenoh::Sample& sample)
         {
@@ -81,7 +81,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    running_subscriber.emplace(session->declare_subscriber(
+    running_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Running",
         [this](const zenoh::Sample& sample)
         {
@@ -94,7 +94,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    parking_subscriber.emplace(session->declare_subscriber(
+    parking_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Parking",
         [this](const zenoh::Sample& sample)
         {
@@ -111,7 +111,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    fogRear_subscriber.emplace(session->declare_subscriber(
+    fogRear_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Fog/Rear",
         [this](const zenoh::Sample& sample)
         {
@@ -128,7 +128,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    fogFront_subscriber.emplace(session->declare_subscriber(
+    fogFront_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Fog/Front",
         [this](const zenoh::Sample& sample)
         {
@@ -146,7 +146,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    brake_subscriber.emplace(session->declare_subscriber(
+    brake_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Brake",
         [this](const zenoh::Sample& sample)
         {
@@ -159,7 +159,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    hazard_subscriber.emplace(session->declare_subscriber(
+    hazard_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Hazard",
         [this](const zenoh::Sample& sample)
         {
@@ -175,7 +175,7 @@ void VSSSubscriber::setupSubscriptions()
             this->sendToCAN_(0x03, lights_, sizeof(lights_));
         },
         zenoh::closures::none));
-    directionIndicatorLeft_subscriber.emplace(session->declare_subscriber(
+    directionIndicatorLeft_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/DirectionIndicator/Left",
         [this](const zenoh::Sample& sample)
         {
@@ -195,7 +195,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    directionIndicatorRight_subscriber.emplace(session->declare_subscriber(
+    directionIndicatorRight_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/DirectionIndicator/Right",
         [this](const zenoh::Sample& sample)
         {
@@ -216,7 +216,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    stateOfCharge_subscriber.emplace(session->declare_subscriber(
+    stateOfCharge_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/StateOfCharge",
         [this](const zenoh::Sample& sample)
         {
@@ -227,7 +227,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    maxVoltage_subscriber.emplace(session->declare_subscriber(
+    maxVoltage_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/MaxVoltage",
         [this](const zenoh::Sample& sample)
         {
@@ -239,7 +239,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    currentVoltage_subscriber.emplace(session->declare_subscriber(
+    currentVoltage_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/CurrentVoltage",
         [this](const zenoh::Sample& sample)
         {
@@ -250,7 +250,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    currentCurrent_subscriber.emplace(session->declare_subscriber(
+    currentCurrent_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/CurrentCurrent",
         [this](const zenoh::Sample& sample)
         {
@@ -261,7 +261,7 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
-    currentPower_subscriber.emplace(session->declare_subscriber(
+    currentPower_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/CurrentPower",
         [this](const zenoh::Sample& sample)
         {
@@ -271,7 +271,7 @@ void VSSSubscriber::setupSubscriptions()
                 .set_current_power(currentPower);
         },
         zenoh::closures::none));
-    currentGear_subscriber.emplace(session->declare_subscriber(
+    currentGear_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/Transmission/CurrentGear",
         [this](const zenoh::Sample& sample)
         {

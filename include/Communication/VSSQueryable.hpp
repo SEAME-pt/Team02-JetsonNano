@@ -11,7 +11,8 @@ class VSSQueryable
 
   private:
     Vehicle& vehicle_;
-    std::unique_ptr<zenoh::Session> session;
+
+    std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::Queryable<void>> throttle_queryable;
     std::optional<zenoh::Queryable<void>> steering_queryable;
     std::optional<zenoh::Queryable<void>> beamLow_queryable;
