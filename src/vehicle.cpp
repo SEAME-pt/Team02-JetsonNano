@@ -14,7 +14,6 @@ int main(int argc, char** argv)
         system = new VehicleSystem();
     }
 
-    // Main loop
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
