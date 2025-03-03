@@ -1,17 +1,20 @@
 {
     "mode": "peer",
     "connect": {
-        "endpoints": []
+        "endpoints": ["tcp/192.168.1.1:7447"]
     },
     "listen": {
-        "endpoints": ["tcp/127.0.0.1:7447"]
+        "endpoints": ["tcp/0.0.0.0:7447"]
     },
     "scouting": {
         "multicast": {
-            "enabled": false
+            "enabled": true,
+            "interface": "wlan0",
+            "address": "224.0.0.224",
+            "port": 7446
         },
         "gossip": {
-            "enabled": false
+            "enabled": true
         }
     }
 }
