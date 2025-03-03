@@ -116,13 +116,13 @@ void XboxController::run()
                         case BUTTON_X:
                         {
                             publisher_->publishFogRear(true);
-                            std::cout << "frontFogLight" << std::endl;
+                            std::cout << "rearFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_Y:
                         {
                             publisher_->publishFogFront(true);
-                            std::cout << "rearFogLight" << std::endl;
+                            std::cout << "frontFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_L2:
