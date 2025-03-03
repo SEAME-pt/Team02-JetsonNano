@@ -1,6 +1,6 @@
 #include "XboxController.hpp"
 
-int main()
+int main(int ac, char** argv)
 {
     try
     {

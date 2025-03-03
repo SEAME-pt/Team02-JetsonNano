@@ -7,15 +7,16 @@
 class VSSSubscriber
 {
   public:
-    VSSSubscriber(Vehicle& vehicle);
+    VSSSubscriber(Vehicle& vehicle, std::shared_ptr<zenoh::Session> session);
 
     // Constructor with callback to send messages to CAN.
     VSSSubscriber(Vehicle& vehicle,
-                  std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN);
+                  std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN,
+                  std::shared_ptr<zenoh::Session> session);
 
   private:
     Vehicle& vehicle_;
-    std::unique_ptr<zenoh::Session> session;
+    std::shared_ptr<zenoh::Session> session;
 
     std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN_;
     uint8_t lights_[1] = {0};

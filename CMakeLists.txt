@@ -66,7 +66,7 @@ set(SOURCES
 )
 
 add_executable(VehicleSystem
-    ./src/main.cpp
+    ./src/vehicle.cpp
     ${SOURCES}
 )
 

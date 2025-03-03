@@ -12,6 +12,7 @@ class VehicleSystem
 {
   public:
     VehicleSystem();
+    VehicleSystem(const std::string& configFile);
 
   private:
     Vehicle vehicle_;

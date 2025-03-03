@@ -1,22 +1,23 @@
 #include "VSSSubscriber.hpp"
 
-VSSSubscriber::VSSSubscriber(Vehicle& vehicle) : vehicle_(vehicle)
+VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
+                             std::shared_ptr<zenoh::Session> session)
+    : vehicle_(vehicle)
 {
     sendToCAN_  = [](uint32_t, uint8_t*, size_t) {};
     auto config = zenoh::Config::create_default();
-    session     = std::make_unique<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+    session     = session;
 
     setupSubscriptions();
 }
 
 VSSSubscriber::VSSSubscriber(
-    Vehicle& vehicle, std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN)
+    Vehicle& vehicle, std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN,
+    std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle), sendToCAN_(sendToCAN)
 {
     auto config = zenoh::Config::create_default();
-    session     = std::make_unique<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+    session     = session;
 
     setupSubscriptions();
 }
@@ -274,11 +275,13 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Powertrain/Transmission/CurrentGear",
         [this](const zenoh::Sample& sample)
         {
-            int currentGear = std::stoi(sample.get_payload().as_string());
+            int8_t currentGear = std::stoi(sample.get_payload().as_string());
             this->vehicle_.get_mutable_powertrain()
                 .get_mutable_transmission()
                 .set_current_gear(currentGear);
-            this->sendToCAN_(0x04, currentGear, sizeof(currentGear));
+            uint8_t gearData[1];
+            gearData[0] = static_cast<uint8_t>(currentGear);
+            this->sendToCAN_(0x04, gearData, sizeof(gearData));
         },
         zenoh::closures::none));
 }

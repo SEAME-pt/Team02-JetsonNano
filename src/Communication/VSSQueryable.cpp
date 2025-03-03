@@ -1,11 +1,12 @@
 #include <VSSQueryable.hpp>
 
-VSSQueryable::VSSQueryable(Vehicle& vehicle) : vehicle_(vehicle)
+VSSQueryable::VSSQueryable(Vehicle& vehicle,
+                           std::shared_ptr<zenoh::Session> session)
+    : vehicle_(vehicle)
 {
     auto config = zenoh::Config::create_default();
 
-    session = std::make_unique<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+    session = session;
 
     throttle_queryable.emplace(session->declare_queryable(
         zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed"),

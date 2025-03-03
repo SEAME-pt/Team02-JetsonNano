@@ -7,7 +7,7 @@
 class VSSQueryable
 {
   public:
-    VSSQueryable(Vehicle& vehicle);
+    VSSQueryable(Vehicle& vehicle, std::shared_ptr<zenoh::Session> session);
 
   private:
     Vehicle& vehicle_;
