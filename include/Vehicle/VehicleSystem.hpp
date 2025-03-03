@@ -6,19 +6,19 @@
 #include "ServoController.hpp"
 #include "HardwareObserver.hpp"
 #include "I2C.hpp"
+#include "CAN.hpp"
 
 class VehicleSystem
 {
   public:
     VehicleSystem();
 
-    void update();
-
   private:
     Vehicle vehicle_;
     std::unique_ptr<VSSSubscriber> vss_subscriber_;
     std::unique_ptr<VSSQueryable> vss_queryable_;
     std::shared_ptr<I2C> i2c_;
-    std::shared_ptr<MotorController> motor_controller_;
-    std::shared_ptr<ServoController> servo_controller_;
+    std::shared_ptr<CAN> CAN_;
+    std::shared_ptrotorController> motor_controller_;
+    std::shared_ptrotorController<ServoController> servo_controller_;
 };

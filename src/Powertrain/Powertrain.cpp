@@ -45,3 +45,42 @@ void Powertrain::set_transmission(const Transmission& value)
 {
     this->transmission = value;
 }
+
+const std::string& Powertrain::get_description() const
+{
+    return description;
+}
+std::string& Powertrain::get_mutable_description()
+{
+    return description;
+}
+void Powertrain::set_description(const std::string& value)
+{
+    this->description = value;
+}
+
+Type Powertrain::get_type() const
+{
+    return type;
+}
+void Powertrain::set_type(Type value)
+{
+    this->type = value;
+}
+
+const TractionBattery& Powertrain::get_traction_battery() const
+{
+    return traction_battery;
+}
+
+TractionBattery& Powertrain::get_mutable_traction_battery()
+{
+    return traction_battery;
+}
+
+void Powertrain::set_traction_battery(const TractionBattery& value)
+{
+    this->traction_battery = value;
+}
+
+
