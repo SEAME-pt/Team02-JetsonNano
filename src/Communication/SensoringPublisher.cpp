@@ -6,9 +6,8 @@ SensoringPublisher::SensoringPublisher()
     session     = std::make_unique<zenoh::Session>(
         zenoh::Session::open(std::move(config)));
 
-    speed_pub.emplace(session->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Speed")));
-
+    speed_pub.emplace(
+        session->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
     current_voltage_pub.emplace(session->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurentVoltage")));
     current_current_pub.emplace(session->declare_publisher(
@@ -43,4 +42,3 @@ void SensoringPublisher::publishStateOfCharge(float state_of_charge)
 {
     state_of_charge_pub->put(std::to_string(state_of_charge));
 }
-
