@@ -73,18 +73,26 @@ set(SOURCES
     ./src/Vehicle/MotionManagement/SteeringWheel.cpp
 )
 
+add_library(vehicle_lib STATIC
+    ${SOURCES}
+)
+
+target_link_libraries(vehicle_lib PUBLIC
+    zenohcxx::zenohc
+    I2C
+    PCA9685
+    CAN
+)
+
 add_executable(VehicleSystem
     ./src/vehicle.cpp
-    ${SOURCES}
 )
 
 target_compile_options(VehicleSystem PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(VehicleSystem
-    I2C
-    PCA9685
-    CAN
-    zenohcxx::zenohc)
+    vehicle_lib
+)
 
 add_executable(XboxController
     ./src/Controllers/XboxController.cpp
@@ -99,7 +107,6 @@ target_link_libraries(XboxController
 
 
 add_executable(MiddleWare
-    ${SOURCES}
     ./src/Communication/SensoringPublisher.cpp
     ./src/MiddleWare/BatterySensor/BatterySensor.cpp
     ./src/MiddleWare/Signals/Signals.cpp
@@ -110,10 +117,7 @@ target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(MiddleWare
     INA219
-    PCA9685
-    CAN
-    I2C
-    zenohcxx::zenohc
+    vehicle_lib
 )
 
 # TESTING #
@@ -178,10 +182,7 @@ add_executable(vehicle_tests
 
 target_link_libraries(vehicle_tests PRIVATE
     Catch2::Catch2WithMain
-    I2C
-    PCA9685
-    CAN
-    zenohcxx::zenohc
+    vehicle_lib
 )
 
 # Add coverage targets if enabled
