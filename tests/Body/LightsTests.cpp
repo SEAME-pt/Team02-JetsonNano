@@ -113,4 +113,68 @@ TEST_CASE("Lights Integration Tests", "[lights]")
         brake.set_is_active(true);
         REQUIRE(lights.get_brake().get_is_active() == true);
     }
+
+    SECTION("Beam Lights Setter Tests")
+    {
+        StaticLights new_beam_low;
+        new_beam_low.set_is_on(true);
+        lights.set_beam_low(new_beam_low);
+        REQUIRE(lights.get_beam_low().get_is_on() == true);
+
+        StaticLights new_beam_high;
+        new_beam_high.set_is_on(true);
+        lights.set_beam_high(new_beam_high);
+        REQUIRE(lights.get_beam_high().get_is_on() == true);
+    }
+
+    SECTION("Direction Indicators Setter Tests")
+    {
+        SignalingLights new_left;
+        new_left.set_is_signaling(true);
+        lights.set_direction_indicator_left(new_left);
+        REQUIRE(lights.get_direction_indicator_left().get_is_signaling() ==
+                true);
+
+        SignalingLights new_right;
+        new_right.set_is_signaling(true);
+        lights.set_direction_indicator_right(new_right);
+        REQUIRE(lights.get_direction_indicator_right().get_is_signaling() ==
+                true);
+    }
+
+    SECTION("Fog Lights Setter Tests")
+    {
+        StaticLights new_front;
+        new_front.set_is_on(true);
+        lights.set_fog_front(new_front);
+        REQUIRE(lights.get_fog_front().get_is_on() == true);
+
+        StaticLights new_rear;
+        new_rear.set_is_on(true);
+        lights.set_fog_rear(new_rear);
+        REQUIRE(lights.get_fog_rear().get_is_on() == true);
+    }
+
+    SECTION("Other Lights Setter Tests")
+    {
+        SignalingLights new_hazard;
+        new_hazard.set_is_signaling(true);
+        lights.set_hazard(new_hazard);
+        REQUIRE(lights.get_hazard().get_is_signaling() == true);
+
+        StaticLights new_parking;
+        new_parking.set_is_on(true);
+        lights.set_parking(new_parking);
+        REQUIRE(lights.get_parking().get_is_on() == true);
+
+        StaticLights new_running;
+        new_running.set_is_on(true);
+        lights.set_running(new_running);
+        REQUIRE(lights.get_running().get_is_on() == true);
+
+        BrakeLights new_brake;
+        new_brake.set_is_active(true);
+        lights.set_brake(new_brake);
+        REQUIRE(lights.get_brake().get_is_active() == true);
+    }
 }

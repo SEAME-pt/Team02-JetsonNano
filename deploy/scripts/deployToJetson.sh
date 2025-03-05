@@ -57,11 +57,20 @@ echo "Remove tmpapp container if it is exist"
 docker rm -f tmpapp
 echo "Create a tmp container to copy binary"
 docker create --name tmpapp final-app
+
+# Handle coverage directory
+echo "Handling coverage reports..."
+if [ -d "./coverage" ]; then
+    echo "Existing coverage directory found, removing..."
+    rm -rf ./coverage
+fi
+echo "Copying coverage reports from container..."
+docker cp tmpapp:/home/$projectDir/coverage ./coverage
+
 echo "Copy the binary from tmp container"
 docker cp tmpapp:/home/$projectDir/VehicleSystem ./VehicleSystem
 docker cp tmpapp:/home/$projectDir/XboxController ./XboxController
 docker cp tmpapp:/home/$projectDir/MiddleWare ./MiddleWare
-docker cp tmpapp:/home/$projectDir/coverage ./coverage
 
 
 if check_ssh_connection "$IpAddress" "$UserName"; then
