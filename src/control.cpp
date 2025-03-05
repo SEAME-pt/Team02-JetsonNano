@@ -1,11 +1,21 @@
 #include "XboxController.hpp"
 
-int main(int ac, char** argv)
+int main(int argc, char** argv)
 {
     try
     {
-        XboxController controller;
-        controller.run();
+        XboxController* controller;
+        if (argc == 2)
+        {
+            controller = new XboxController(argv[1]);
+        }
+        else
+        {
+            controller = new XboxController();
+        }
+        controller->run();
+
+        delete controller;
     }
     catch (const std::exception& e)
     {

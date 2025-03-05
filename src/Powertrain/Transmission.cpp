@@ -10,11 +10,11 @@ void Transmission::set_current_gear(const std::int8_t value)
     this->current_gear = value;
 }
 
-const std::string Transmission::get_drive_type() const
+const std::string& Transmission::get_drive_type() const
 {
     return drive_type;
 }
-std::string Transmission::get_mutable_drive_type()
+std::string& Transmission::get_mutable_drive_type()
 {
     return drive_type;
 }

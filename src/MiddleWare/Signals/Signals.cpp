@@ -23,9 +23,7 @@ void Signals::run()
         if (buffer != -1)
         {
             uint32_t can_id = 0;
-            int size        = 0;
             uint8_t data[8];
-            size = this->canBus->readMessage(buffer, can_id, data);
             if (can_id == 0x01)
             {
                 int speed;

@@ -7,6 +7,7 @@ class MockObserver : public IVehicleObserver
   public:
     float last_angle = 0;
     void onSteeringAngleChanged(float angle) override { last_angle = angle; }
+    void onSpeedChanged(int32_t) override {}
 };
 
 TEST_CASE("ChassisSteeringWheel Tests", "[steering]")

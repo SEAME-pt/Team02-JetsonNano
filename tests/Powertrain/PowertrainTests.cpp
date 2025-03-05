@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "Powertrain.hpp"
 
 TEST_CASE("Powertrain Integration Tests", "[powertrain]")
@@ -50,10 +51,10 @@ TEST_CASE("Powertrain Integration Tests", "[powertrain]")
         battery.set_current_power(15000.0f);
 
         powertrain.set_traction_battery(battery);
-        REQUIRE(
-            powertrain.get_traction_battery().get_state_of_charge_displayed() ==
-            Approx(85.5f));
-        REQUIRE(powertrain.get_traction_battery().get_current_power() ==
-                Approx(15000.0f));
+        REQUIRE_THAT(
+            powertrain.get_traction_battery().get_state_of_charge_displayed(),
+            Catch::Matchers::WithinRel(85.5f, 0.001f));
+        REQUIRE_THAT(powertrain.get_traction_battery().get_current_power(),
+                     Catch::Matchers::WithinRel(15000.0f, 0.001f));
     }
 }

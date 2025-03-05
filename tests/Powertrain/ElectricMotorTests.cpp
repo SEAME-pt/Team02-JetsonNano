@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "ElectricMotor.hpp"
 
 class MockSpeedObserver : public IVehicleObserver
@@ -6,6 +7,7 @@ class MockSpeedObserver : public IVehicleObserver
   public:
     int32_t last_speed = 0;
     void onSpeedChanged(int32_t speed) override { last_speed = speed; }
+    void onSteeringAngleChanged(float) override {}
 };
 
 TEST_CASE("ElectricMotor Tests", "[electric_motor]")
@@ -35,6 +37,7 @@ TEST_CASE("ElectricMotor Tests", "[electric_motor]")
     SECTION("Time In Use Tests")
     {
         motor.set_time_in_use(1234.56f);
-        REQUIRE(motor.get_time_in_use() == Approx(1234.56f));
+        REQUIRE_THAT(motor.get_time_in_use(),
+                     Catch::Matchers::WithinRel(1234.56f, 0.001f));
     }
 }

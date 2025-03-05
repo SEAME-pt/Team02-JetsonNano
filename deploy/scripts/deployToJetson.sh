@@ -61,6 +61,8 @@ echo "Copy the binary from tmp container"
 docker cp tmpapp:/home/$projectDir/VehicleSystem ./VehicleSystem
 docker cp tmpapp:/home/$projectDir/XboxController ./XboxController
 docker cp tmpapp:/home/$projectDir/MiddleWare ./MiddleWare
+docker cp tmpapp:/home/$projectDir/test_results ./test_results
+
 
 if check_ssh_connection "$IpAddress" "$UserName"; then
     echo "Stopping services on JetsonNano..."

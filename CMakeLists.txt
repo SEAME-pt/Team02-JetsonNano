@@ -92,7 +92,7 @@ add_executable(XboxController
     ./src/control.cpp
 )
 
-# target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
+target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(XboxController
     zenohcxx::zenohc)
@@ -106,11 +106,92 @@ add_executable(MiddleWare
     ./src/middleware.cpp
 )
 
-# target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
+target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(MiddleWare
     INA219
     PCA9685
     CAN
     I2C
-    zenohcxx::zenohc)
+    zenohcxx::zenohc
+)
+
+# TESTING #
+enable_testing()
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+
+if(ENABLE_COVERAGE)
+    include(cmake/CodeCoverage.cmake)
+    append_coverage_compiler_flags()
+endif()
+
+# Group test files by component
+set(VEHICLE_TEST_FILES
+    ./tests/Vehicle/VehicleTests.cpp
+    # ./tests/Vehicle/VehicleSystemTests.cpp
+    ./tests/Vehicle/ExteriorTests.cpp
+    ./tests/Vehicle/ConnectivityTests.cpp
+    ./tests/Vehicle/AngularVelocityTests.cpp
+)
+
+set(MOTION_TEST_FILES
+    ./tests/Vehicle/MotionManagement/ElectricAxleTests.cpp
+    ./tests/Vehicle/MotionManagement/SteeringWheelTests.cpp
+    ./tests/Vehicle/MotionManagement/SteeringTests.cpp
+    ./tests/Vehicle/MotionManagement/MotionManagementTests.cpp
+)
+
+set(POWERTRAIN_TEST_FILES
+    ./tests/Powertrain/PowertrainTests.cpp
+    ./tests/Powertrain/ElectricMotorTests.cpp
+    ./tests/Powertrain/TransmissionTests.cpp
+    ./tests/Powertrain/TractionBatteryTests.cpp
+)
+
+set(CHASSIS_TEST_FILES
+    ./tests/Chassis/ChassisTests.cpp
+    ./tests/Chassis/AcceleratorTests.cpp
+    ./tests/Chassis/AxleTests.cpp
+    ./tests/Chassis/BrakeTests.cpp
+    ./tests/Chassis/ChassisSteeringWheelTests.cpp
+)
+
+set(BODY_TEST_FILES
+    ./tests/Body/BodyTests.cpp
+    ./tests/Body/LightsTests.cpp
+)
+
+set(ADAS_TEST_FILES
+    ./tests/ADAS/ADASTests.cpp
+    ./tests/ADAS/ObstacleDetectionTests.cpp
+)
+
+# Create test executable
+add_executable(vehicle_tests
+    ${VEHICLE_TEST_FILES}
+    ${MOTION_TEST_FILES}
+    ${POWERTRAIN_TEST_FILES}
+    ${CHASSIS_TEST_FILES}
+    ${BODY_TEST_FILES}
+    ${ADAS_TEST_FILES}
+)
+
+target_link_libraries(vehicle_tests PRIVATE
+    Catch2::Catch2WithMain
+    I2C
+    PCA9685
+    CAN
+    zenohcxx::zenohc
+)
+
+# Add coverage targets if enabled
+if(ENABLE_COVERAGE)
+    setup_target_for_coverage_gcovr_html(
+        NAME coverage
+        EXECUTABLE ctest -j ${PROCESSOR_COUNT}
+        DEPENDENCIES vehicle_tests
+    )
+endif()
+
+include(Catch)
+catch_discover_tests(vehicle_tests)

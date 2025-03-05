@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "Vehicle.hpp"
 
 TEST_CASE("Vehicle Tests", "[vehicle]")
@@ -8,7 +9,8 @@ TEST_CASE("Vehicle Tests", "[vehicle]")
     SECTION("Basic Properties Tests")
     {
         vehicle.set_average_speed(60.5f);
-        REQUIRE(vehicle.get_average_speed() == Approx(60.5f));
+        REQUIRE_THAT(vehicle.get_average_speed(),
+                     Catch::Matchers::WithinRel(60.5f, 0.001f));
 
         vehicle.set_current_overall_weight(1500);
         REQUIRE(vehicle.get_current_overall_weight() == 1500);
@@ -26,13 +28,16 @@ TEST_CASE("Vehicle Tests", "[vehicle]")
     SECTION("Movement Tests")
     {
         vehicle.set_speed(100.5f);
-        REQUIRE(vehicle.get_speed() == Approx(100.5f));
+        REQUIRE_THAT(vehicle.get_speed(),
+                     Catch::Matchers::WithinRel(100.5f, 0.001f));
 
         vehicle.set_traveled_distance(150.75f);
-        REQUIRE(vehicle.get_traveled_distance() == Approx(150.75f));
+        REQUIRE_THAT(vehicle.get_traveled_distance(),
+                     Catch::Matchers::WithinRel(150.75f, 0.001f));
 
         vehicle.set_trip_duration(3600.0f);
-        REQUIRE(vehicle.get_trip_duration() == Approx(3600.0f));
+        REQUIRE_THAT(vehicle.get_trip_duration(),
+                     Catch::Matchers::WithinRel(3600.0f, 0.001f));
 
         vehicle.set_turning_diameter(11000);
         REQUIRE(vehicle.get_turning_diameter() == 11000);

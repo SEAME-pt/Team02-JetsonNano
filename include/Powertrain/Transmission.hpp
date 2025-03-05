@@ -21,8 +21,8 @@ class Transmission
     std::int8_t get_current_gear() const;
     void set_current_gear(const std::int8_t value);
 
-    const std::string get_drive_type() const;
-    std::string get_mutable_drive_type();
+    const std::string& get_drive_type() const;
+    std::string& get_mutable_drive_type();
     void set_drive_type(const std::string value);
 
     const std::string& get_gear_change_mode() const;

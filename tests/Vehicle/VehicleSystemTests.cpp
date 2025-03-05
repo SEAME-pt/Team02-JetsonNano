@@ -1,6 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 #include "VehicleSystem.hpp"
-#include <filesystem>
 
 class MockI2C : public I2C
 {

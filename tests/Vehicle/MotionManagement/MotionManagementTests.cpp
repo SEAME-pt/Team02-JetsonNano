@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include "MotionManagement.hpp"
 
 TEST_CASE("MotionManagement Integration Tests", "[motion_management]")
@@ -35,10 +36,10 @@ TEST_CASE("MotionManagement Integration Tests", "[motion_management]")
         wheel.set_angle_target(45.0f);
 
         management.set_steering(steering);
-        REQUIRE(management.get_steering().get_steering_wheel().get_angle() ==
-                Approx(30.0f));
-        REQUIRE(
-            management.get_steering().get_steering_wheel().get_angle_target() ==
-            Approx(45.0f));
+        REQUIRE_THAT(management.get_steering().get_steering_wheel().get_angle(),
+                     Catch::Matchers::WithinRel(30.0f, 0.001f));
+        REQUIRE_THAT(
+            management.get_steering().get_steering_wheel().get_angle_target(),
+            Catch::Matchers::WithinRel(45.0f, 0.001f));
     }
 }
