@@ -23,6 +23,15 @@ function(setup_target_for_coverage_gcovr_html)
         message(FATAL_ERROR "gcovr not found! Aborting...")
     endif()
 
+    set(GCOVR_EXCLUDES 
+        ".*/_deps/.*"
+        ".*catch2.*"
+    )
+    foreach(EXCLUDE ${Coverage_EXCLUDE})
+        list(APPEND GCOVR_EXCLUDES "--exclude")
+        list(APPEND GCOVR_EXCLUDES "${EXCLUDE}")
+    endforeach()
+
     add_custom_target(${Coverage_NAME}
         # Run tests
         COMMAND ${Coverage_EXECUTABLE}
