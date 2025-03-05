@@ -3,7 +3,7 @@
 find_program(GCOVR_PATH gcovr)
 
 if(NOT GCOVR_PATH)
-    message(FATAL_ERROR "gcovr not found! Please install it using: brew install gcovr")
+    message(FATAL_ERROR "gcovr not found!")
 endif()
 
 # Add compiler flags for coverage
@@ -38,6 +38,6 @@ function(setup_target_for_coverage_gcovr_html)
         
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         DEPENDS ${Coverage_DEPENDENCIES}
-        COMMENT "Processing code coverage counters and generating HTML/Markdown reports."
+        COMMENT "Processing code coverage counters and generating HTML reports."
     )
 endfunction()
