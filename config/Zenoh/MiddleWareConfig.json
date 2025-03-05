@@ -15,23 +15,3 @@
         }
     }
 }
-
-[Unit]
-Description=Vehicle Middleware Service
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=team02
-Environment=DISPLAY=:0
-WorkingDirectory=/opt/vehicle/bin
-ExecStartPre=/bin/sleep 2
-ExecStart=/opt/vehicle/bin/MiddleWare /opt/vehicle/etc/zenoh/MiddleWareConfig.json
-Restart=always
-RestartSec=3
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
