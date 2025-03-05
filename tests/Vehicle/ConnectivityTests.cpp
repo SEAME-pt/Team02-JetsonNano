@@ -1,11 +1,16 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Connectivity.hpp"
 
-bool Connectivity::get_is_connectivity_available() const
+TEST_CASE("Connectivity Tests", "[connectivity]")
 {
-    return is_connectivity_available;
-}
+    Connectivity connectivity;
 
-void Connectivity::set_is_connectivity_available(const bool value)
-{
-    this->is_connectivity_available = value;
+    SECTION("Connectivity Availability Tests")
+    {
+        connectivity.set_is_connectivity_available(true);
+        REQUIRE(connectivity.get_is_connectivity_available() == true);
+
+        connectivity.set_is_connectivity_available(false);
+        REQUIRE(connectivity.get_is_connectivity_available() == false);
+    }
 }

@@ -1,65 +1,49 @@
+#include <catch2/catch_test_macros.hpp>
 #include "VehicleSystem.hpp"
+#include <filesystem>
 
-VehicleSystem::VehicleSystem()
+class MockI2C : public I2C
 {
-    vehicle_ = VehicleFactory::createDefaultVehicle();
+  public:
+    bool init(const std::string&) override { return true; }
+    bool write(uint8_t, uint8_t) override { return true; }
+};
 
-    auto config = zenoh::Config::create_default();
-    session     = std::make_shared<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
-
-    i2c_ = std::make_shared<I2C>();
-    i2c_->init("/dev/i2c-1");
-    CAN_ = std::make_shared<CAN>();
-    CAN_->init("/dev/spidev0.0");
-
-    motor_controller_ = std::make_unique<MotorController>(i2c_);
-    servo_controller_ = std::make_unique<ServoController>(i2c_);
-
-    auto hardware_observer = std::make_shared<HardwareObserver>(
-        motor_controller_, servo_controller_);
-
-    vehicle_.get_mutable_powertrain().get_mutable_electric_motor().addObserver(
-        hardware_observer);
-
-    vehicle_.get_mutable_chassis().get_mutable_steering_wheel().addObserver(
-        hardware_observer);
-
-    vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, [this](uint32_t can_id, uint8_t* data, size_t len)
-        { this->CAN_->writeMessage(can_id, data, len); }, session);
-
-    vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
-}
-
-VehicleSystem::VehicleSystem(const std::string& configFile)
+class MockCAN : public CAN
 {
-    vehicle_ = VehicleFactory::createDefaultVehicle();
+  public:
+    bool init(const std::string&) override { return true; }
+    bool writeMessage(uint32_t, uint8_t*, size_t) override { return true; }
+};
 
-    auto config = zenoh::Config::from_file(configFile);
-    session     = std::make_shared<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+TEST_CASE("VehicleSystem Tests", "[vehicle_system]")
+{
+    SECTION("Default Configuration")
+    {
+        auto mock_i2c = std::make_shared<MockI2C>();
+        auto mock_can = std::make_shared<MockCAN>();
 
-    i2c_ = std::make_shared<I2C>();
-    i2c_->init("/dev/i2c-1");
-    CAN_ = std::make_shared<CAN>();
-    CAN_->init("/dev/spidev0.0");
+        VehicleSystem system;
 
-    motor_controller_ = std::make_unique<MotorController>(i2c_);
-    servo_controller_ = std::make_unique<ServoController>(i2c_);
+        REQUIRE(system.getVehicle().get_is_moving() == false);
+        REQUIRE(system.getSession() != nullptr);
+    }
 
-    auto hardware_observer = std::make_shared<HardwareObserver>(
-        motor_controller_, servo_controller_);
+    SECTION("Custom Configuration File")
+    {
+        std::string config_path = "test_config.json";
+        std::ofstream config_file(config_path);
+        config_file << R"({
+            "mode": "client",
+            "connect": {
+                "endpoints": ["tcp/localhost:7447"]
+            }
+        })";
+        config_file.close();
 
-    vehicle_.get_mutable_powertrain().get_mutable_electric_motor().addObserver(
-        hardware_observer);
+        VehicleSystem system(config_path);
+        REQUIRE(system.getSession() != nullptr);
 
-    vehicle_.get_mutable_chassis().get_mutable_steering_wheel().addObserver(
-        hardware_observer);
-
-    vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, [this](uint32_t can_id, uint8_t* data, size_t len)
-        { this->CAN_->writeMessage(can_id, data, len); }, session);
-
-    vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
+        std::filesystem::remove(config_path);
+    }
 }

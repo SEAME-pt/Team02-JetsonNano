@@ -1,28 +1,25 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Exterior.hpp"
 
-float Exterior::get_air_temperature() const
+TEST_CASE("Exterior Tests", "[exterior]")
 {
-    return air_temperature;
-}
-void Exterior::set_air_temperature(const float value)
-{
-    this->air_temperature = value;
-}
+    Exterior exterior;
 
-float Exterior::get_humidity() const
-{
-    return humidity;
-}
-void Exterior::set_humidity(const float value)
-{
-    this->humidity = value;
-}
+    SECTION("Air Temperature Tests")
+    {
+        exterior.set_air_temperature(25.5f);
+        REQUIRE(exterior.get_air_temperature() == Approx(25.5f));
+    }
 
-float Exterior::get_light_intensity() const
-{
-    return light_intensity;
-}
-void Exterior::set_light_intensity(const float value)
-{
-    this->light_intensity = value;
+    SECTION("Humidity Tests")
+    {
+        exterior.set_humidity(65.0f);
+        REQUIRE(exterior.get_humidity() == Approx(65.0f));
+    }
+
+    SECTION("Light Intensity Tests")
+    {
+        exterior.set_light_intensity(1000.0f);
+        REQUIRE(exterior.get_light_intensity() == Approx(1000.0f));
+    }
 }

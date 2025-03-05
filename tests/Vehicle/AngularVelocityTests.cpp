@@ -1,31 +1,25 @@
+#include <catch2/catch_test_macros.hpp>
 #include "AngularVelocity.hpp"
 
-float AngularVelocity::get_pitch() const
+TEST_CASE("AngularVelocity Tests", "[angular_velocity]")
 {
-    return pitch;
-}
+    AngularVelocity angular_velocity;
 
-void AngularVelocity::set_pitch(const float value)
-{
-    this->pitch = value;
-}
+    SECTION("Pitch Tests")
+    {
+        angular_velocity.set_pitch(15.5f);
+        REQUIRE(angular_velocity.get_pitch() == Approx(15.5f));
+    }
 
-float AngularVelocity::get_roll() const
-{
-    return roll;
-}
+    SECTION("Roll Tests")
+    {
+        angular_velocity.set_roll(5.0f);
+        REQUIRE(angular_velocity.get_roll() == Approx(5.0f));
+    }
 
-void AngularVelocity::set_roll(const float value)
-{
-    this->roll = value;
-}
-
-float AngularVelocity::get_yaw() const
-{
-    return yaw;
-}
-
-void AngularVelocity::set_yaw(const float value)
-{
-    this->yaw = value;
+    SECTION("Yaw Tests")
+    {
+        angular_velocity.set_yaw(30.0f);
+        REQUIRE(angular_velocity.get_yaw() == Approx(30.0f));
+    }
 }

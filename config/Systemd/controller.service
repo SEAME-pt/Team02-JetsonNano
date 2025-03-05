@@ -2,7 +2,6 @@
 Description=Controller Service
 After=network-online.target
 Wants=network-online.target
-Requires=zenohd.service
 
 [Service]
 Type=simple
