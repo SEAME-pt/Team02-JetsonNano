@@ -1,47 +1,50 @@
+#include <catch2/catch_test_macros.hpp>
 #include "ElectricAxle.hpp"
 
-std::uint16_t ElectricAxleRow::get_rotational_speed() const
+TEST_CASE("ElectricAxleRow Tests", "[electric_axle]")
 {
-    return rotational_speed;
+    ElectricAxleRow axle_row;
+
+    SECTION("Rotational Speed Tests")
+    {
+        axle_row.set_rotational_speed(1500);
+        REQUIRE(axle_row.get_rotational_speed() == 1500);
+    }
+
+    SECTION("Target Speed Tests")
+    {
+        axle_row.set_rotational_speed_target(2000);
+        REQUIRE(axle_row.get_rotational_speed_target() == 2000);
+    }
 }
 
-void ElectricAxleRow::set_rotational_speed(const std::uint16_t value)
+TEST_CASE("ElectricAxle Tests", "[electric_axle]")
 {
-    this->rotational_speed = value;
-}
+    ElectricAxle axle;
 
-std::uint16_t ElectricAxleRow::get_rotational_speed_target() const
-{
-    return rotational_speed_target;
-}
+    SECTION("Row1 Tests")
+    {
+        ElectricAxleRow row1;
+        row1.set_rotational_speed(1800);
+        row1.set_rotational_speed_target(2200);
 
-void ElectricAxleRow::set_rotational_speed_target(const std::uint16_t value)
-{
-    this->rotational_speed_target = value;
-}
+        axle.set_row1(row1);
+        REQUIRE(axle.get_row1().get_rotational_speed() == 1800);
+        REQUIRE(axle.get_row1().get_rotational_speed_target() == 2200);
 
-const ElectricAxleRow& ElectricAxle::get_row1() const
-{
-    return row1;
-}
-ElectricAxleRow& ElectricAxle::get_mutable_row1()
-{
-    return row1;
-}
-void ElectricAxle::set_row1(const ElectricAxleRow& value)
-{
-    this->row1 = value;
-}
+        auto& mutable_row1 = axle.get_mutable_row1();
+        mutable_row1.set_rotational_speed(2000);
+        REQUIRE(axle.get_row1().get_rotational_speed() == 2000);
+    }
 
-const ElectricAxleRow& ElectricAxle::get_row2() const
-{
-    return row2;
-}
-ElectricAxleRow& ElectricAxle::get_mutable_row2()
-{
-    return row2;
-}
-void ElectricAxle::set_row2(const ElectricAxleRow& value)
-{
-    this->row2 = value;
+    SECTION("Row2 Tests")
+    {
+        ElectricAxleRow row2;
+        row2.set_rotational_speed(1700);
+        row2.set_rotational_speed_target(2100);
+
+        axle.set_row2(row2);
+        REQUIRE(axle.get_row2().get_rotational_speed() == 1700);
+        REQUIRE(axle.get_row2().get_rotational_speed_target() == 2100);
+    }
 }
