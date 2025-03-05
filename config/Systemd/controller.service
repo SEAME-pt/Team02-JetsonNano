@@ -1,0 +1,20 @@
+[Unit]
+Description=Controller Service
+After=network-online.target
+Wants=network-online.target
+Requires=zenohd.service
+
+[Service]
+Type=simple
+User=team02
+Environment=DISPLAY=:0
+WorkingDirectory=/opt/vehicle/bin
+ExecStartPre=/bin/sleep 2
+ExecStart=/opt/vehicle/bin/XboxController /opt/vehicle/etc/zenoh/ControllerConfig.json
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,37 @@
+{
+    "mode": "peer",
+    "connect": {
+        "endpoints": ["tcp/127.0.0.1:7447","tcp/127.0.0.1:7449"]
+    },
+    "listen": {
+        "endpoints": ["tcp/127.0.0.1:7448"]
+    },
+    "scouting": {
+        "multicast": {
+            "enabled": false
+        },
+        "gossip": {
+            "enabled": false
+        }
+    }
+}
+
+[Unit]
+Description=Vehicle Middleware Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=team02
+Environment=DISPLAY=:0
+WorkingDirectory=/opt/vehicle/bin
+ExecStartPre=/bin/sleep 2
+ExecStart=/opt/vehicle/bin/MiddleWare /opt/vehicle/etc/zenoh/MiddleWareConfig.json
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

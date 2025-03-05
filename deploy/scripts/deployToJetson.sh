@@ -3,6 +3,8 @@
 projectDir=JetsonNano
 UserName=team02
 IpAddress=10.21.221.71
+configDir=$projectDir/config/Zenoh
+systemdDir=$projectDir/config/Systemd
 PathBin=/opt/vehicle/bin
 PathEtc=/opt/vehicle/etc/zenoh
 Pass=seameteam2
@@ -20,6 +22,20 @@ check_ssh_connection() {
         fi
     fi
     return 1
+}
+
+setup_services() {
+    echo "Checking and setting up systemd services..."
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "
+        for service in middleware.service vehiclesystem.service controller.service; do
+            if ! systemctl list-unit-files | grep -q \$service; then
+                echo \"Installing \$service...\"
+                echo \"$Pass\" | sudo -S cp /opt/vehicle/etc/systemd/\$service /etc/systemd/system/
+                echo \"$Pass\" | sudo -S systemctl enable \$service
+            fi
+        done
+        echo \"$Pass\" | sudo -S systemctl daemon-reload
+    "
 }
 
 # Build docker image with appropriate platform flag
@@ -48,20 +64,24 @@ docker cp tmpapp:/home/$projectDir/MiddleWare ./MiddleWare
 
 if check_ssh_connection "$IpAddress" "$UserName"; then
     echo "Stopping services on JetsonNano..."
-    # Use -t to force pseudo-terminal allocation for sudo
     sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S systemctl stop middleware.service vehiclesystem.service controller.service"
     
     echo "Creating directories if they don't exist..."
-    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S mkdir -p $PathBin $PathEtc"
-    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S chown $UserName:$UserName $PathBin $PathEtc"
-    
+    sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "
+        echo $Pass | sudo -S mkdir -p $PathBin $PathEtc /opt/vehicle/etc/systemd
+        echo $Pass | sudo -S chown $UserName:$UserName $PathBin $PathEtc /opt/vehicle/etc/systemd
+    "
+
     echo "Send binary to jetson over scp"
     sshpass -p "$Pass" scp VehicleSystem XboxController MiddleWare "$UserName"@"$IpAddress":"$PathBin"
-    sshpass -p "$Pass" scp ./$projectDir/ZenohConfig/VehicleSystemConfig.json ./$projectDir/ZenohConfig/ControllerConfig.json ./$projectDir/ZenohConfig/MiddleWareConfig.json "$UserName"@"$IpAddress":"$PathEtc"
-    
+    sshpass -p "$Pass" scp ./$configDir/VehicleSystemConfig.json ./$configDir/ControllerConfig.json ./$configDir/MiddleWareConfig.json "$UserName"@"$IpAddress":"$PathEtc"
+    sshpass -p "$Pass" scp ./$systemdDir/*.service "$UserName"@"$IpAddress":"/opt/vehicle/etc/systemd/"
+
     echo "Setting correct permissions..."
     sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S chmod 755 $PathBin/* $PathEtc/*"
     
+    setup_services
+
     echo "Restarting services on JetsonNano..."
     sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S systemctl start middleware.service vehiclesystem.service controller.service"
 else
