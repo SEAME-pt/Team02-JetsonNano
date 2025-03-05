@@ -1,64 +1,59 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Powertrain.hpp"
 
-const ElectricMotor& Powertrain::get_electric_motor() const
+TEST_CASE("Powertrain Integration Tests", "[powertrain]")
 {
-    return electric_motor;
-}
-ElectricMotor& Powertrain::get_mutable_electric_motor()
-{
-    return electric_motor;
-}
-void Powertrain::set_electric_motor(const ElectricMotor& value)
-{
-    this->electric_motor = value;
-}
+    Powertrain powertrain;
 
-uint32_t Powertrain::get_range() const
-{
-    return range;
-}
+    SECTION("Electric Motor Integration")
+    {
+        ElectricMotor motor;
+        motor.set_max_power(300);
+        motor.set_speed(120);
 
-void Powertrain::set_range(const uint32_t value)
-{
-    this->range = value;
-}
+        powertrain.set_electric_motor(motor);
+        REQUIRE(powertrain.get_electric_motor().get_max_power() == 300);
+        REQUIRE(powertrain.get_electric_motor().get_speed() == 120);
 
-uint32_t Powertrain::get_time_remaining() const
-{
-    return time_remaining;
-}
+        auto& mutable_motor = powertrain.get_mutable_electric_motor();
+        mutable_motor.set_speed(150);
+        REQUIRE(powertrain.get_electric_motor().get_speed() == 150);
+    }
 
-void Powertrain::set_time_remaining(const uint32_t value)
-{
-    this->time_remaining = value;
-}
+    SECTION("Range Tests")
+    {
+        powertrain.set_range(350);
+        REQUIRE(powertrain.get_range() == 350);
+    }
 
-const Transmission& Powertrain::get_transmission() const
-{
-    return transmission;
-}
-Transmission& Powertrain::get_mutable_transmission()
-{
-    return transmission;
-}
-void Powertrain::set_transmission(const Transmission& value)
-{
-    this->transmission = value;
-}
+    SECTION("Time Remaining Tests")
+    {
+        powertrain.set_time_remaining(120);
+        REQUIRE(powertrain.get_time_remaining() == 120);
+    }
 
-const TractionBattery& Powertrain::get_traction_battery() const
-{
-    return traction_battery;
+    SECTION("Transmission Integration")
+    {
+        Transmission trans;
+        trans.set_current_gear(3);
+        trans.set_drive_type("AWD");
+
+        powertrain.set_transmission(trans);
+        REQUIRE(powertrain.get_transmission().get_current_gear() == 3);
+        REQUIRE(powertrain.get_transmission().get_drive_type() == "AWD");
+    }
+
+    SECTION("Traction Battery Integration")
+    {
+        TractionBattery battery;
+        battery.set_state_of_charge_displayed(85.5f);
+        battery.set_current_power(15000.0f);
+
+        powertrain.set_traction_battery(battery);
+        REQUIRE(
+            powertrain.get_traction_battery().get_state_of_charge_displayed() ==
+            Approx(85.5f));
+        REQUIRE(powertrain.get_traction_battery().get_current_power() ==
+                Approx(15000.0f));
+    }
 }
-
-TractionBattery& Powertrain::get_mutable_traction_battery()
-{
-    return traction_battery;
-}
-
-void Powertrain::set_traction_battery(const TractionBattery& value)
-{
-    this->traction_battery = value;
-}
-
-

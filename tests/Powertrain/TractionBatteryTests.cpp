@@ -1,72 +1,39 @@
+#include <catch2/catch_test_macros.hpp>
 #include "TractionBattery.hpp"
 
-float TractionBattery::get_state_of_charge_displayed() const
+TEST_CASE("TractionBattery Tests", "[traction_battery]")
 {
-    return state_of_charge_displayed;
+    TractionBattery battery;
+
+    SECTION("State of Charge Tests")
+    {
+        battery.set_state_of_charge_displayed(75.5f);
+        REQUIRE(battery.get_state_of_charge_displayed() == Approx(75.5f));
+        REQUIRE(battery.get_mutable_state_of_charge_displayed() ==
+                Approx(75.5f));
+    }
+
+    SECTION("Voltage Tests")
+    {
+        battery.set_max_voltage(400);
+        REQUIRE(battery.get_max_voltage() == 400);
+
+        battery.set_current_voltage(380.5f);
+        REQUIRE(battery.get_current_voltage() == Approx(380.5f));
+        REQUIRE(battery.get_mutable_current_voltage() == Approx(380.5f));
+    }
+
+    SECTION("Current Tests")
+    {
+        battery.set_current_current(50.2f);
+        REQUIRE(battery.get_current_current() == Approx(50.2f));
+        REQUIRE(battery.get_mutable_current_current() == Approx(50.2f));
+    }
+
+    SECTION("Power Tests")
+    {
+        battery.set_current_power(19000.5f);
+        REQUIRE(battery.get_current_power() == Approx(19000.5f));
+        REQUIRE(battery.get_mutable_current_power() == Approx(19000.5f));
+    }
 }
-
-float TractionBattery::get_mutable_state_of_charge_displayed()
-{
-    return state_of_charge_displayed;
-}   
-
-void TractionBattery::set_state_of_charge_displayed(const float value)
-{
-    this->state_of_charge_displayed = value;
-}   
-
-std::uint16_t TractionBattery::get_max_voltage() const
-{
-    return max_voltage;
-}
-
-void TractionBattery::set_max_voltage(const std::uint16_t value)
-{
-    this->max_voltage = value;
-}
-
-float TractionBattery::get_current_voltage() const
-{
-    return current_voltage;
-}
-
-float TractionBattery::get_mutable_current_voltage()
-{
-    return current_voltage;
-}
-
-void TractionBattery::set_current_voltage(const float value)
-{
-    this->current_voltage = value;
-}
-
-float TractionBattery::get_current_current() const
-{
-    return current_current;
-}
-
-float TractionBattery::get_mutable_current_current()
-{
-    return current_current;
-}
-
-void TractionBattery::set_current_current(const float value)
-{
-    this->current_current = value;
-}
-
-float TractionBattery::get_current_power() const
-{
-    return current_power;
-}
-
-float TractionBattery::get_mutable_current_power()
-{
-    return current_power;
-}
-
-void TractionBattery::set_current_power(const float value)
-{
-    this->current_power = value;
-}
-

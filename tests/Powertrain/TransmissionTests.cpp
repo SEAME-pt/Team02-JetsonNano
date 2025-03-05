@@ -1,80 +1,56 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Transmission.hpp"
 
-std::int8_t Transmission::get_current_gear() const
+TEST_CASE("Transmission Tests", "[transmission]")
 {
-    return current_gear;
-}
+    Transmission transmission;
 
-void Transmission::set_current_gear(const std::int8_t value)
-{
-    this->current_gear = value;
-}
+    SECTION("Current Gear Tests")
+    {
+        transmission.set_current_gear(-1);
+        REQUIRE(transmission.get_current_gear() == -1);
 
-const std::string Transmission::get_drive_type() const
-{
-    return drive_type;
-}
-std::string Transmission::get_mutable_drive_type()
-{
-    return drive_type;
-}
-void Transmission::set_drive_type(const std::string value)
-{
-    this->drive_type = value;
-}
+        transmission.set_current_gear(1);
+        REQUIRE(transmission.get_current_gear() == 1);
+    }
 
-const std::string& Transmission::get_gear_change_mode() const
-{
-    return gear_change_mode;
-}
-std::string& Transmission::get_mutable_gear_change_mode()
-{
-    return gear_change_mode;
-}
-void Transmission::set_gear_change_mode(const std::string& value)
-{
-    this->gear_change_mode = value;
-}
+    SECTION("Drive Type Tests")
+    {
+        transmission.set_drive_type("AWD");
+        REQUIRE(transmission.get_drive_type() == "AWD");
 
-bool Transmission::get_is_park_lock_engaged() const
-{
-    return is_park_lock_engaged;
-}
+        auto& mutable_type = transmission.get_mutable_drive_type();
+        mutable_type       = "FWD";
+        REQUIRE(transmission.get_drive_type() == "FWD");
+    }
 
-void Transmission::set_is_park_lock_engaged(const bool value)
-{
-    this->is_park_lock_engaged = value;
-}
+    SECTION("Gear Change Mode Tests")
+    {
+        transmission.set_gear_change_mode("AUTOMATIC");
+        REQUIRE(transmission.get_gear_change_mode() == "AUTOMATIC");
+    }
 
-const std::string& Transmission::get_performance_mode() const
-{
-    return performance_mode;
-}
-std::string& Transmission::get_mutable_performance_mode()
-{
-    return performance_mode;
-}
-void Transmission::set_performance_mode(const std::string& value)
-{
-    this->performance_mode = value;
-}
+    SECTION("Park Lock Tests")
+    {
+        transmission.set_is_park_lock_engaged(true);
+        REQUIRE(transmission.get_is_park_lock_engaged() == true);
+    }
 
-std::int8_t Transmission::get_selected_gear() const
-{
-    return selected_gear;
-}
+    SECTION("Performance Mode Tests")
+    {
+        transmission.set_performance_mode("SPORT");
+        REQUIRE(transmission.get_performance_mode() == "SPORT");
+    }
 
-void Transmission::set_selected_gear(const std::int8_t value)
-{
-    this->selected_gear = value;
-}
+    SECTION("Selected Gear Tests")
+    {
+        transmission.set_selected_gear(2);
+        REQUIRE(transmission.get_selected_gear() == 2);
+    }
 
-float Transmission::get_travelled_distance() const
-{
-    return travelled_distance;
-}
-
-void Transmission::set_travelled_distance(const float value)
-{
-    this->travelled_distance = value;
+    SECTION("Travelled Distance Tests")
+    {
+        transmission.set_travelled_distance(150.5f);
+        REQUIRE(transmission.get_travelled_distance() == Approx(150.5f));
+    }
 }

@@ -1,48 +1,40 @@
+#include <catch2/catch_test_macros.hpp>
 #include "ElectricMotor.hpp"
 
-std::uint16_t ElectricMotor::get_max_power() const
+class MockSpeedObserver : public IVehicleObserver
 {
-    return max_power;
-}
+  public:
+    int32_t last_speed = 0;
+    void onSpeedChanged(int32_t speed) override { last_speed = speed; }
+};
 
-void ElectricMotor::set_max_power(const std::uint16_t value)
+TEST_CASE("ElectricMotor Tests", "[electric_motor]")
 {
-    this->max_power = value;
-}
+    ElectricMotor motor;
 
-std::int32_t ElectricMotor::get_speed() const
-{
-    return speed;
-}
-
-void ElectricMotor::set_speed(const std::int32_t value)
-{
-    if (speed != value)
+    SECTION("Max Power Tests")
     {
-        speed = value;
-        notifySpeedChanged(value);
+        motor.set_max_power(250);
+        REQUIRE(motor.get_max_power() == 250);
     }
-}
 
-float ElectricMotor::get_time_in_use() const
-{
-    return time_in_use;
-}
-
-void ElectricMotor::set_time_in_use(const float value)
-{
-    this->time_in_use = value;
-}
-
-void ElectricMotor::addObserver(std::shared_ptr<IVehicleObserver> observer)
-{
-    observers_.push_back(observer);
-}
-
-void ElectricMotor::notifySpeedChanged(int32_t speed)
-{
-    for (auto& observer : observers_)
+    SECTION("Speed Tests")
     {
-        observer->onSpeedChanged(speed);
+        auto observer = std::make_shared<MockSpeedObserver>();
+        motor.addObserver(observer);
+
+        motor.set_speed(100);
+        REQUIRE(motor.get_speed() == 100);
+        REQUIRE(observer->last_speed == 100);
+
+        // Test that observer isn't notified when speed doesn't change
+        motor.set_speed(100);
+        REQUIRE(observer->last_speed == 100);
+    }
+
+    SECTION("Time In Use Tests")
+    {
+        motor.set_time_in_use(1234.56f);
+        REQUIRE(motor.get_time_in_use() == Approx(1234.56f));
     }
 }
