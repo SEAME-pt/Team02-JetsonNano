@@ -24,7 +24,3 @@ RUN cd /home/$projectDir && \
     cmake --build . && \
     ctest --output-on-failure && \
     make coverage
-
-# Create a directory to store test results and coverage reports
-RUN mkdir -p /home/$projectDir/test_results && \
-    cp -r /home/$projectDir/build/coverage/* /home/$projectDir/test_results/
