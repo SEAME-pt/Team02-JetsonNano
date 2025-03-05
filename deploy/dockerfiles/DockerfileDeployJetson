@@ -2,13 +2,6 @@ FROM ruipires99/jetsoncrosscompile:latest
 
 ARG projectDir
 
-####### To remove
-RUN apt-get update && apt-get install -y \
-    gcovr \
-    lcov \
-    && rm -rf /var/lib/apt/lists/*
-#######33
-
 RUN rm -rf /home/$projectDir
 
 RUN mkdir -p /home/$projectDir
@@ -18,9 +11,6 @@ COPY $projectDir /home/$projectDir
 RUN cd /home/$projectDir && \
     cmake . \
     -DCMAKE_BUILD_TYPE=Debug \
-    -DZENOHCXX_ZENOHC=ON \
-    -DENABLE_COVERAGE=ON \
-    -DBUILD_TESTING=ON && \
-    cmake --build . && \
-    ctest --output-on-failure && \
-    make coverage
+    -DZENOHCXX_ZENOHC=ON && \
+    cmake --build .
+
