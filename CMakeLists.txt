@@ -12,12 +12,20 @@ find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 
 include(FetchContent)
+
 FetchContent_Declare(
     Libs
     GIT_REPOSITORY https://github.com/SEAME-pt/Team02-Libs
     GIT_TAG main
 )
-FetchContent_MakeAvailable(Libs)    
+FetchContent_MakeAvailable(Libs)
+
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.4.0
+)
+FetchContent_MakeAvailable(Catch2)
 
 include_directories(include/Communication)
 include_directories(include/Controllers)
