@@ -1,29 +1,30 @@
+#include <catch2/catch_test_macros.hpp>
 #include "ChassisSteeringWheel.hpp"
+#include <memory>
 
-int16_t ChassisSteeringWheel::get_angle() const
+class MockObserver : public IVehicleObserver
 {
-    return angle;
-}
+  public:
+    float last_angle = 0;
+    void onSteeringAngleChanged(float angle) override { last_angle = angle; }
+};
 
-void ChassisSteeringWheel::set_angle(const int16_t value)
+TEST_CASE("ChassisSteeringWheel Tests", "[steering]")
 {
-    if (angle != value)
+    ChassisSteeringWheel steering;
+
+    SECTION("Angle Tests")
     {
-        angle = value;
-        notifyAngleChanged(value);
+        steering.set_angle(45);
+        REQUIRE(steering.get_angle() == 45);
     }
-}
 
-void ChassisSteeringWheel::addObserver(
-    std::shared_ptr<IVehicleObserver> observer)
-{
-    observers_.push_back(observer);
-}
-
-void ChassisSteeringWheel::notifyAngleChanged(float angle)
-{
-    for (auto& observer : observers_)
+    SECTION("Observer Tests")
     {
-        observer->onSteeringAngleChanged(angle);
+        auto observer = std::make_shared<MockObserver>();
+        steering.addObserver(observer);
+
+        steering.set_angle(30);
+        REQUIRE(observer->last_angle == 30);
     }
 }

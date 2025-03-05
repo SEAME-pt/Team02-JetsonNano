@@ -1,11 +1,16 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Accelerator.hpp"
 
-std::uint8_t Accelerator::get_pedal_position() const
+TEST_CASE("Accelerator Tests", "[accelerator]")
 {
-    return pedal_position;
-}
+    Accelerator accelerator;
 
-void Accelerator::set_pedal_position(const std::uint8_t value)
-{
-    this->pedal_position = value;
+    SECTION("Pedal Position Tests")
+    {
+        accelerator.set_pedal_position(0);
+        REQUIRE(accelerator.get_pedal_position() == 0);
+
+        accelerator.set_pedal_position(100);
+        REQUIRE(accelerator.get_pedal_position() == 100);
+    }
 }

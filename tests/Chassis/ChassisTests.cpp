@@ -1,73 +1,41 @@
+#include <catch2/catch_test_macros.hpp>
 #include "Chassis.hpp"
 
-const Accelerator& Chassis::get_accelerator() const
+TEST_CASE("Chassis Tests", "[chassis]")
 {
-    return accelerator;
-}
-Accelerator& Chassis::get_mutable_accelerator()
-{
-    return accelerator;
-}
-void Chassis::set_accelerator(const Accelerator& value)
-{
-    this->accelerator = value;
-}
+    Chassis chassis;
 
-const Axle& Chassis::get_axle() const
-{
-    return axle;
-}
-Axle& Chassis::get_mutable_axle()
-{
-    return axle;
-}
-void Chassis::set_axle(const Axle& value)
-{
-    this->axle = value;
-}
+    SECTION("Accelerator Tests")
+    {
+        Accelerator accelerator;
+        accelerator.set_pedal_position(45);
+        chassis.set_accelerator(accelerator);
 
-std::uint8_t Chassis::get_axle_count() const
-{
-    return axle_count;
-}
+        REQUIRE(chassis.get_accelerator().get_pedal_position() == 45);
 
-void Chassis::set_axle_count(const std::uint8_t value)
-{
-    this->axle_count = value;
-}
+        auto& mutable_accelerator = chassis.get_mutable_accelerator();
+        mutable_accelerator.set_pedal_position(75);
+        REQUIRE(chassis.get_accelerator().get_pedal_position() == 75);
+    }
 
-const Brake& Chassis::get_brake() const
-{
-    return brake;
-}
-Brake& Chassis::get_mutable_brake()
-{
-    return brake;
-}
-void Chassis::set_brake(const Brake& value)
-{
-    this->brake = value;
-}
+    SECTION("Axle Count Tests")
+    {
+        chassis.set_axle_count(2);
+        REQUIRE(chassis.get_axle_count() == 2);
+    }
 
-const ChassisSteeringWheel& Chassis::get_steering_wheel() const
-{
-    return steering_wheel;
-}
-ChassisSteeringWheel& Chassis::get_mutable_steering_wheel()
-{
-    return steering_wheel;
-}
-void Chassis::set_steering_wheel(const ChassisSteeringWheel& value)
-{
-    this->steering_wheel = value;
-}
+    SECTION("Wheelbase Tests")
+    {
+        chassis.set_wheelbase(2700);
+        REQUIRE(chassis.get_wheelbase() == 2700);
+    }
 
-std::uint16_t Chassis::get_wheelbase() const
-{
-    return wheelbase;
-}
+    SECTION("Steering Wheel Tests")
+    {
+        ChassisSteeringWheel steering;
+        steering.set_angle(30);
+        chassis.set_steering_wheel(steering);
 
-void Chassis::set_wheelbase(const std::uint16_t value)
-{
-    this->wheelbase = value;
+        REQUIRE(chassis.get_steering_wheel().get_angle() == 30);
+    }
 }
