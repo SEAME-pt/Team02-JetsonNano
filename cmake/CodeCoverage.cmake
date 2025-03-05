@@ -23,14 +23,12 @@ function(setup_target_for_coverage_gcovr_html)
         message(FATAL_ERROR "gcovr not found! Aborting...")
     endif()
 
-    set(GCOVR_EXCLUDES 
-        ".*/_deps/.*"
-        ".*catch2.*"
+    # Fixed exclude patterns
+    set(GCOVR_EXCLUDE_FLAGS
+        --exclude-directories="_deps"
+        --exclude-directories="catch2"
+        --exclude=".*test.*"
     )
-    foreach(EXCLUDE ${Coverage_EXCLUDE})
-        list(APPEND GCOVR_EXCLUDES "--exclude")
-        list(APPEND GCOVR_EXCLUDES "${EXCLUDE}")
-    endforeach()
 
     add_custom_target(${Coverage_NAME}
         # Run tests
@@ -39,9 +37,11 @@ function(setup_target_for_coverage_gcovr_html)
         # Create folder
         COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/${Coverage_NAME}
         
-        # Running gcovr
-        COMMAND ${GCOVR_PATH} --html --html-details
-            -r ${PROJECT_SOURCE_DIR} ${GCOVR_EXCLUDES}
+        # Running gcovr with correct exclude syntax
+        COMMAND ${GCOVR_PATH} 
+            --html --html-details
+            -r ${PROJECT_SOURCE_DIR}
+            ${GCOVR_EXCLUDE_FLAGS}
             --object-directory=${PROJECT_BINARY_DIR}
             -o ${PROJECT_BINARY_DIR}/${Coverage_NAME}/index.html
         
