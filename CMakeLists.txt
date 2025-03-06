@@ -174,6 +174,7 @@ set(ADAS_TEST_FILES
 set(COMMUNICATION_TEST_FILES
     ./tests/Communication/ControllerPublisherTests.cpp
     ./tests/Communication/SensoringPublisherTests.cpp
+    ./tests/Communication/VSSQueryableTests.cpp
 )
 
 add_library(vehicle_test_lib STATIC

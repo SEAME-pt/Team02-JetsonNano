@@ -1,150 +1,120 @@
-#include <VSSQueryable.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include "VSSQueryable.hpp"
+#include "Vehicle.hpp"
+#include <thread>
+#include <chrono>
 
-VSSQueryable::VSSQueryable(Vehicle& vehicle,
-                           std::shared_ptr<zenoh::Session> session)
-    : vehicle_(vehicle)
+TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
 {
-    session_ = session;
+    auto config = zenoh::Config::create_default();
 
-    throttle_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed"),
-        [this](const zenoh::Query& query)
+    std::shared_ptr<zenoh::Session> session = std::make_shared<zenoh::Session>(
+        zenoh::Session::open(std::move(config)));
+    REQUIRE(session != nullptr);
+
+    Vehicle vehicle;
+    VSSQueryable queryable(vehicle, session);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    SECTION("Vehicle Speed Querying")
+    {
+        int32_t testSpeed = 75;
+        vehicle.get_mutable_powertrain().get_mutable_electric_motor().set_speed(
+            testSpeed);
+
+        auto on_reply = [testSpeed](const zenoh::Reply& reply)
         {
-            float speed = this->vehicle_.get_powertrain()
-                              .get_electric_motor()
-                              .get_speed();
-            query.reply(query.get_keyexpr(), std::to_string(speed));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    steering_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Chassis/SteeringWheel/Angle"),
-        [this](const zenoh::Query& query)
+            auto&& sample = reply.get_ok();
+            REQUIRE(std::stoi(sample.get_payload().as_string()) == testSpeed);
+        };
+
+        auto on_done = []() { std::cout << "No more replies" << std::endl; };
+
+        session->get("Vehicle/1/Powertrain/ElectricMotor/Speed", "", on_reply,
+                     on_done);
+    }
+
+    SECTION("Steering Angle Querying")
+    {
+        float testAngle = 30.0f;
+        vehicle.get_mutable_chassis().get_mutable_steering_wheel().set_angle(
+            testAngle);
+
+        auto on_reply = [testAngle](const zenoh::Reply& reply)
         {
-            float angle =
-                this->vehicle_.get_chassis().get_steering_wheel().get_angle();
-            query.reply(query.get_keyexpr(), std::to_string(angle));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    beamLow_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/Low"),
-        [this](const zenoh::Query& query)
+            auto&& sample = reply.get_ok();
+            REQUIRE_THAT(std::stof(sample.get_payload().as_string()),
+                         Catch::Matchers::WithinRel(testAngle, 0.001f));
+        };
+
+        auto on_done = []() { std::cout << "No more replies" << std::endl; };
+
+        session->get("Vehicle/1/Chassis/SteeringWheel/Angle", "", on_reply,
+                     on_done);
+    }
+
+    SECTION("Lights Status Querying")
+    {
+        SECTION("Beam Lights")
         {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_beam_low()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    beamHigh_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/High"),
-        [this](const zenoh::Query& query)
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_beam_low()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Beam/Low", "", on_reply,
+                         on_done);
+        }
+
+        SECTION("Direction Indicators")
         {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_beam_high()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    running_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Running"),
-        [this](const zenoh::Query& query)
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_direction_indicator_left()
+                .set_is_signaling(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/DirectionIndicator/Left", "",
+                         on_reply, on_done);
+        }
+
+        SECTION("Running Lights")
         {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_running()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    parking_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Parking"),
-        [this](const zenoh::Query& query)
-        {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_parking()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    fogRear_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Rear"),
-        [this](const zenoh::Query& query)
-        {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_fog_rear()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    fogFront_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Front"),
-        [this](const zenoh::Query& query)
-        {
-            bool isOn = this->vehicle_.get_body()
-                            .get_lights()
-                            .get_fog_front()
-                            .get_is_on();
-            query.reply(query.get_keyexpr(), std::to_string(isOn));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    brake_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Brake"),
-        [this](const zenoh::Query& query)
-        {
-            bool isActive = this->vehicle_.get_body()
-                                .get_lights()
-                                .get_brake()
-                                .get_is_active();
-            query.reply(query.get_keyexpr(), std::to_string(isActive));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    hazard_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Hazard"),
-        [this](const zenoh::Query& query)
-        {
-            bool isSignaling = this->vehicle_.get_body()
-                                   .get_lights()
-                                   .get_hazard()
-                                   .get_is_signaling();
-            query.reply(query.get_keyexpr(), std::to_string(isSignaling));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    directionIndicatorLeft_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Left"),
-        [this](const zenoh::Query& query)
-        {
-            bool isSignaling = this->vehicle_.get_body()
-                                   .get_lights()
-                                   .get_direction_indicator_left()
-                                   .get_is_signaling();
-            query.reply(query.get_keyexpr(), std::to_string(isSignaling));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
-    directionIndicatorRight_queryable.emplace(session_->declare_queryable(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right"),
-        [this](const zenoh::Query& query)
-        {
-            bool isSignaling = this->vehicle_.get_body()
-                                   .get_lights()
-                                   .get_direction_indicator_right()
-                                   .get_is_signaling();
-            query.reply(query.get_keyexpr(), std::to_string(isSignaling));
-        },
-        zenoh::closures::none, // on_drop callback
-        zenoh::Session::QueryableOptions()));
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_running()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Running", "", on_reply,
+                         on_done);
+        }
+    }
 }
