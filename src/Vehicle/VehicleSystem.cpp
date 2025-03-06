@@ -64,7 +64,15 @@ VehicleSystem::VehicleSystem(const std::string& configFile)
     vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
 }
 
-// Session getters
+const Vehicle& VehicleSystem::getVehicle() const
+{
+    return vehicle_;
+}
+Vehicle& VehicleSystem::getMutableVehicle()
+{
+    return vehicle_;
+}
+
 std::shared_ptr<zenoh::Session> VehicleSystem::getSession() const
 {
     return session;
@@ -74,7 +82,6 @@ void VehicleSystem::setSession(const std::shared_ptr<zenoh::Session>& value)
     session = value;
 }
 
-// VSS Subscriber getters
 const std::unique_ptr<VSSSubscriber>& VehicleSystem::getVSSSubscriber() const
 {
     return vss_subscriber_;
@@ -88,7 +95,6 @@ void VehicleSystem::setVSSSubscriber(std::unique_ptr<VSSSubscriber> value)
     vss_subscriber_ = std::move(value);
 }
 
-// VSS Queryable getters
 const std::unique_ptr<VSSQueryable>& VehicleSystem::getVSSQueryable() const
 {
     return vss_queryable_;
@@ -102,7 +108,6 @@ void VehicleSystem::setVSSQueryable(std::unique_ptr<VSSQueryable> value)
     vss_queryable_ = std::move(value);
 }
 
-// I2C getters
 std::shared_ptr<I2C> VehicleSystem::getI2C() const
 {
     return i2c_;
@@ -122,7 +127,6 @@ void VehicleSystem::setCAN(const std::shared_ptr<CAN>& value)
     CAN_ = value;
 }
 
-// Motor Controller getters
 std::shared_ptr<MotorController> VehicleSystem::getMotorController() const
 {
     return motor_controller_;
@@ -133,7 +137,6 @@ void VehicleSystem::setMotorController(
     motor_controller_ = value;
 }
 
-// Servo Controller getters
 std::shared_ptr<ServoController> VehicleSystem::getServoController() const
 {
     return servo_controller_;
