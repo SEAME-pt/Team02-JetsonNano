@@ -41,6 +41,7 @@ include_directories(include/MiddleWare/Signals)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
+include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -79,9 +80,7 @@ add_library(vehicle_lib STATIC
 
 target_link_libraries(vehicle_lib PUBLIC
     zenohcxx::zenohc
-    I2C
-    PCA9685
-    CAN
+    Libs
 )
 
 add_executable(VehicleSystem
@@ -116,7 +115,7 @@ add_executable(MiddleWare
 target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(MiddleWare
-    INA219
+    Libs
     vehicle_lib
 )
 
@@ -129,7 +128,6 @@ if(ENABLE_COVERAGE)
     append_coverage_compiler_flags()
 endif()
 
-# Group test files by component
 set(VEHICLE_TEST_FILES
     ./tests/Vehicle/VehicleTests.cpp
     ./tests/Vehicle/VehicleSystemTests.cpp
@@ -201,7 +199,6 @@ target_link_libraries(vehicle_test_lib PUBLIC
     CAN
 )
 
-# Create test executable
 add_executable(vehicle_tests
     ${VEHICLE_TEST_FILES}
     ${MOTION_TEST_FILES}
