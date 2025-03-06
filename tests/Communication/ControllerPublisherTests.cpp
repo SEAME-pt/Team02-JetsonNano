@@ -164,7 +164,7 @@ TEST_CASE("Communication Integration Tests", "[communication]")
                         .get_is_signaling() == true);
             REQUIRE(canMessageReceived == true);
             REQUIRE(lastCanId == 0x03);
-            REQUIRE((lastCanData[0] & (1 << 0)) == 0);
+            REQUIRE((lastCanData[0] & (1 << 0)) != 0);
         }
     }
 
