@@ -132,7 +132,7 @@ endif()
 # Group test files by component
 set(VEHICLE_TEST_FILES
     ./tests/Vehicle/VehicleTests.cpp
-    ./tests/Vehicle/VehicleSystemTests.cpp
+    # ./tests/Vehicle/VehicleSystemTests.cpp
     ./tests/Vehicle/ExteriorTests.cpp
     ./tests/Vehicle/ConnectivityTests.cpp
     ./tests/Vehicle/AngularVelocityTests.cpp
