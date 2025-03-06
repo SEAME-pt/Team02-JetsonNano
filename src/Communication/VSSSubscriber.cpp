@@ -214,6 +214,15 @@ void VSSSubscriber::setupSubscriptions()
         },
         zenoh::closures::none));
 
+    speed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed = std::stof(sample.get_payload().as_string());
+            this->vehicle_.set_speed(speed);
+        },
+        zenoh::closures::none));
+
     stateOfCharge_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Powertrain/TractionBattery/StateOfCharge",
         [this](const zenoh::Sample& sample)
@@ -222,18 +231,6 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_powertrain()
                 .get_mutable_traction_battery()
                 .set_state_of_charge_displayed(stateOfCharge);
-        },
-        zenoh::closures::none));
-
-    maxVoltage_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Powertrain/TractionBattery/MaxVoltage",
-        [this](const zenoh::Sample& sample)
-        {
-            std::uint16_t maxVoltage =
-                std::stoi(sample.get_payload().as_string());
-            this->vehicle_.get_mutable_powertrain()
-                .get_mutable_traction_battery()
-                .set_max_voltage(maxVoltage);
         },
         zenoh::closures::none));
 

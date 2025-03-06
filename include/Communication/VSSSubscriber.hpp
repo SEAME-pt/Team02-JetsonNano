@@ -34,7 +34,7 @@ class VSSSubscriber
     std::optional<zenoh::Subscriber<void>> directionIndicatorLeft_subscriber;
     std::optional<zenoh::Subscriber<void>> directionIndicatorRight_subscriber;
     std::optional<zenoh::Subscriber<void>> stateOfCharge_subscriber;
-    std::optional<zenoh::Subscriber<void>> maxVoltage_subscriber;
+    std::optional<zenoh::Subscriber<void>> speed_subscriber;
     std::optional<zenoh::Subscriber<void>> currentVoltage_subscriber;
     std::optional<zenoh::Subscriber<void>> currentCurrent_subscriber;
     std::optional<zenoh::Subscriber<void>> currentPower_subscriber;

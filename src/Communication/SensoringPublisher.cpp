@@ -7,7 +7,7 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
     speed_pub.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
     current_voltage_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurentVoltage")));
+        zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentVoltage")));
     current_current_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentCurrent")));
     current_power_pub.emplace(session_->declare_publisher(
