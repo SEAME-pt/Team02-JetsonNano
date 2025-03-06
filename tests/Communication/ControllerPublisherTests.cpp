@@ -165,6 +165,17 @@ TEST_CASE("Communication Integration Tests", "[communication]")
             REQUIRE(canMessageReceived == true);
             REQUIRE(lastCanId == 0x03);
             REQUIRE((lastCanData[0] & (1 << 0)) != 0);
+
+            publisher.publishDirectionIndicatorLeft(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body()
+                        .get_lights()
+                        .get_direction_indicator_left()
+                        .get_is_signaling() == true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 1)) != 0);
         }
     }
 
