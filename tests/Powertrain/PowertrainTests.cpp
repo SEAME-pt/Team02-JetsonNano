@@ -42,6 +42,13 @@ TEST_CASE("Powertrain Integration Tests", "[powertrain]")
         powertrain.set_transmission(trans);
         REQUIRE(powertrain.get_transmission().get_current_gear() == 3);
         REQUIRE(powertrain.get_transmission().get_drive_type() == "AWD");
+
+        // Test mutable access
+        auto& mutable_trans = powertrain.get_mutable_transmission();
+        mutable_trans.set_current_gear(4);
+        mutable_trans.set_drive_type("FWD");
+        REQUIRE(powertrain.get_transmission().get_current_gear() == 4);
+        REQUIRE(powertrain.get_transmission().get_drive_type() == "FWD");
     }
 
     SECTION("Traction Battery Integration")
@@ -56,5 +63,15 @@ TEST_CASE("Powertrain Integration Tests", "[powertrain]")
             Catch::Matchers::WithinRel(85.5f, 0.001f));
         REQUIRE_THAT(powertrain.get_traction_battery().get_current_power(),
                      Catch::Matchers::WithinRel(15000.0f, 0.001f));
+
+        // Test mutable access
+        auto& mutable_battery = powertrain.get_mutable_traction_battery();
+        mutable_battery.set_state_of_charge_displayed(90.0f);
+        mutable_battery.set_current_power(16000.0f);
+        REQUIRE_THAT(
+            powertrain.get_traction_battery().get_state_of_charge_displayed(),
+            Catch::Matchers::WithinRel(90.0f, 0.001f));
+        REQUIRE_THAT(powertrain.get_traction_battery().get_current_power(),
+                     Catch::Matchers::WithinRel(16000.0f, 0.001f));
     }
 }

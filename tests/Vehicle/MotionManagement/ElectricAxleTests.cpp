@@ -40,11 +40,15 @@ TEST_CASE("ElectricAxle Tests", "[electric_axle]")
     SECTION("Row2 Tests")
     {
         ElectricAxleRow row2;
-        row2.set_rotational_speed(1700);
-        row2.set_rotational_speed_target(2100);
+        row2.set_rotational_speed(1800);
+        row2.set_rotational_speed_target(2200);
 
         axle.set_row2(row2);
-        REQUIRE(axle.get_row2().get_rotational_speed() == 1700);
-        REQUIRE(axle.get_row2().get_rotational_speed_target() == 2100);
+        REQUIRE(axle.get_row2().get_rotational_speed() == 1800);
+        REQUIRE(axle.get_row2().get_rotational_speed_target() == 2200);
+
+        auto& mutable_row1 = axle.get_mutable_row2();
+        mutable_row1.set_rotational_speed(2000);
+        REQUIRE(axle.get_row2().get_rotational_speed() == 2000);
     }
 }

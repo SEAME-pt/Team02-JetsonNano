@@ -136,6 +136,7 @@ set(VEHICLE_TEST_FILES
     ./tests/Vehicle/ExteriorTests.cpp
     ./tests/Vehicle/ConnectivityTests.cpp
     ./tests/Vehicle/AngularVelocityTests.cpp
+    ./tests/Vehicle/AccelerationTests.cpp
 )
 
 set(MOTION_TEST_FILES

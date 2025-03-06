@@ -29,6 +29,11 @@ TEST_CASE("Transmission Tests", "[transmission]")
     {
         transmission.set_gear_change_mode("AUTOMATIC");
         REQUIRE(transmission.get_gear_change_mode() == "AUTOMATIC");
+
+        // Test mutable access
+        std::string& mutable_mode = transmission.get_mutable_gear_change_mode();
+        mutable_mode              = "MANUAL";
+        REQUIRE(transmission.get_gear_change_mode() == "MANUAL");
     }
 
     SECTION("Park Lock Tests")
@@ -41,6 +46,11 @@ TEST_CASE("Transmission Tests", "[transmission]")
     {
         transmission.set_performance_mode("SPORT");
         REQUIRE(transmission.get_performance_mode() == "SPORT");
+
+        // Test mutable access
+        std::string& mutable_mode = transmission.get_mutable_performance_mode();
+        mutable_mode              = "ECO";
+        REQUIRE(transmission.get_performance_mode() == "ECO");
     }
 
     SECTION("Selected Gear Tests")

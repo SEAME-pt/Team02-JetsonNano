@@ -26,6 +26,18 @@ TEST_CASE("MotionManagement Integration Tests", "[motion_management]")
         REQUIRE(
             management.get_electric_axle().get_row1().get_rotational_speed() ==
             2000);
+
+        auto& mutable_axle = management.get_mutable_electric_axle();
+        auto& row2         = mutable_axle.get_mutable_row2();
+        row2.set_rotational_speed(1200);
+        row2.set_rotational_speed_target(1500);
+
+        REQUIRE(
+            management.get_electric_axle().get_row2().get_rotational_speed() ==
+            1200);
+        REQUIRE(management.get_electric_axle()
+                    .get_row2()
+                    .get_rotational_speed_target() == 1500);
     }
 
     SECTION("Steering Integration")
