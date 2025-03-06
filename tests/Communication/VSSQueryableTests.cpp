@@ -131,6 +131,26 @@ TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
                          on_done2);
         }
 
+        SECTION("Brake Lights")
+        {
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_brake()
+                .set_is_active(true);
+
+            auto on_reply1 = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done1 = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Brake", "", on_reply1,
+                         on_done1);
+        }
+
         SECTION("Direction Indicators")
         {
             vehicle.get_mutable_body()
@@ -218,7 +238,8 @@ TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
             auto on_done3 = []()
             { std::cout << "No more replies" << std::endl; };
 
-            session->get("Vehicle/1/Body/Lights/Hazard", "", on_reply3, on_done3);
+            session->get("Vehicle/1/Body/Lights/Hazard", "", on_reply3,
+                         on_done3);
         }
     }
 }
