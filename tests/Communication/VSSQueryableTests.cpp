@@ -75,6 +75,60 @@ TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
 
             session->get("Vehicle/1/Body/Lights/Beam/Low", "", on_reply,
                          on_done);
+
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_beam_high()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Beam/High", "", on_reply,
+                         on_done);
+        }
+
+        SECTION("Fog Lights")
+        {
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_fog_front()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Fog/Front", "", on_reply,
+                         on_done);
+
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_fog_rear()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Fog/Rear", "", on_reply,
+                         on_done);
         }
 
         SECTION("Direction Indicators")
@@ -95,10 +149,44 @@ TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
 
             session->get("Vehicle/1/Body/Lights/DirectionIndicator/Left", "",
                          on_reply, on_done);
+
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_direction_indicator_right()
+                .set_is_signaling(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/DirectionIndicator/Right", "",
+                         on_reply, on_done);
         }
 
-        SECTION("Running Lights")
+        SECTION("Other Lights")
         {
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_parking()
+                .set_is_on(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Parking", "", on_reply,
+                         on_done);
+
             vehicle.get_mutable_body()
                 .get_mutable_lights()
                 .get_mutable_running()
@@ -115,6 +203,22 @@ TEST_CASE("VSS Queryable Integration Tests", "[vss_queryable]")
 
             session->get("Vehicle/1/Body/Lights/Running", "", on_reply,
                          on_done);
+
+            vehicle.get_mutable_body()
+                .get_mutable_lights()
+                .get_mutable_hazard()
+                .set_is_signaling(true);
+
+            auto on_reply = [](const zenoh::Reply& reply)
+            {
+                auto&& sample = reply.get_ok();
+                REQUIRE(std::stoi(sample.get_payload().as_string()) == 1);
+            };
+
+            auto on_done = []()
+            { std::cout << "No more replies" << std::endl; };
+
+            session->get("Vehicle/1/Body/Lights/Hazard", "", on_reply, on_done);
         }
     }
 }
