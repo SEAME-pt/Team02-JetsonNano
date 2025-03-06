@@ -89,6 +89,44 @@ TEST_CASE("Vehicle Tests", "[vehicle]")
         REQUIRE_THAT(vehicle.get_exterior().get_humidity(),
                      Catch::Matchers::WithinRel(45.0f, 0.001f));
 
+        Chassis chassis;
+        chassis.set_axle_count(2);
+        chassis.set_wheelbase(2700);
+        auto& mutable_brake = chassis.get_mutable_brake();
+        mutable_brake.set_pedal_position(30);
+        vehicle.set_chassis(chassis);
+
+        REQUIRE(vehicle.get_chassis().get_axle_count() == 2);
+        REQUIRE(vehicle.get_chassis().get_wheelbase() == 2700);
+        REQUIRE(vehicle.get_chassis().get_brake().get_pedal_position() == 30);
+
+        // Test mutable chassis access
+        auto& mutable_chassis = vehicle.get_mutable_chassis();
+        mutable_chassis.set_axle_count(3);
+        REQUIRE(vehicle.get_chassis().get_axle_count() == 3);
+
+        // Test Powertrain integration
+        Powertrain powertrain;
+        ElectricMotor motor;
+        motor.set_max_power(300);
+        motor.set_speed(120);
+        powertrain.set_electric_motor(motor);
+        powertrain.set_range(350);
+        vehicle.set_powertrain(powertrain);
+
+        REQUIRE(vehicle.get_powertrain().get_electric_motor().get_max_power() ==
+                300);
+        REQUIRE(vehicle.get_powertrain().get_electric_motor().get_speed() ==
+                120);
+        REQUIRE(vehicle.get_powertrain().get_range() == 350);
+
+        // Test mutable powertrain access
+        auto& mutable_powertrain = vehicle.get_mutable_powertrain();
+        auto& mutable_motor = mutable_powertrain.get_mutable_electric_motor();
+        mutable_motor.set_speed(150);
+        REQUIRE(vehicle.get_powertrain().get_electric_motor().get_speed() ==
+                150);
+
         // Test MotionManagement
         MotionManagement motion;
         vehicle.set_motion_management(motion);
