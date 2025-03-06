@@ -1,99 +1,102 @@
-#include <ControllerPublisher.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include "VSSSubscriber.hpp"
+#include "ControllerPublisher.hpp"
+#include "Vehicle.hpp"
+#include <thread>
+#include <chrono>
 
-ControllerPublisher::ControllerPublisher(
-    std::shared_ptr<zenoh::Session> session)
+TEST_CASE("Communication Integration Tests", "[communication]")
 {
-    session_ = session;
+    auto config = zenoh::Config::create_default();
 
-    throttle_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed")));
-    steering_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Chassis/SteeringWheel/Angle")));
-    beamLow_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/Low")));
-    beamHigh_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Beam/High")));
-    running_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Running")));
-    parking_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Parking")));
-    fogRear_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Rear")));
-    fogFront_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Fog/Front")));
-    brake_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Brake")));
-    hazard_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/Hazard")));
-    directionIndicatorLeft_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Left")));
-    directionIndicatorRight_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right")));
-    currentGear_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/Powertrain/Transmission/CurrentGear")));
-}
+    std::shared_ptr<zenoh::Session> session = std::make_shared<zenoh::Session>(
+        zenoh::Session::open(std::move(config)));
+    REQUIRE(session != nullptr);
 
-void ControllerPublisher::publishSpeed(float speed)
-{
-    throttle_pub->put(std::to_string(speed));
-}
+    Vehicle vehicle;
+    bool canMessageReceived = false;
+    uint32_t lastCanId      = 0;
+    uint8_t lastCanData[8]  = {0};
+    size_t lastCanLength    = 0;
 
-void ControllerPublisher::publishSteering(float steering)
-{
-    steering_pub->put(std::to_string(steering));
-}
+    auto sendToCAN = [&](uint32_t id, uint8_t* data, size_t length)
+    {
+        canMessageReceived = true;
+        lastCanId          = id;
+        std::memcpy(lastCanData, data, length);
+        lastCanLength = length;
+    };
 
-void ControllerPublisher::publishBeamLow(bool isOn)
-{
-    beamLow_pub->put(std::to_string(isOn));
-}
+    VSSSubscriber subscriber(vehicle, sendToCAN, session);
+    ControllerPublisher publisher(session);
 
-void ControllerPublisher::publishBeamHigh(bool isOn)
-{
-    beamHigh_pub->put(std::to_string(isOn));
-}
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-void ControllerPublisher::publishRunning(bool isOn)
-{
-    running_pub->put(std::to_string(isOn));
-}
+    SECTION("Speed Control Integration")
+    {
+        const float testSpeed = 50.5f;
+        publisher.publishSpeed(testSpeed);
 
-void ControllerPublisher::publishParking(bool isOn)
-{
-    parking_pub->put(std::to_string(isOn));
-}
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-void ControllerPublisher::publishFogRear(bool isOn)
-{
-    fogRear_pub->put(std::to_string(isOn));
-}
+        REQUIRE_THAT(vehicle.get_powertrain().get_electric_motor().get_speed(),
+                     Catch::Matchers::WithinRel(testSpeed, 0.001f));
+    }
 
-void ControllerPublisher::publishFogFront(bool isOn)
-{
-    fogFront_pub->put(std::to_string(isOn));
-}
+    SECTION("Steering Control Integration")
+    {
+        const float testAngle = 30.0f;
+        publisher.publishSteering(testAngle);
 
-void ControllerPublisher::publishBrake(bool isActive)
-{
-    brake_pub->put(std::to_string(isActive));
-}
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-void ControllerPublisher::publishHazard(bool isSignaling)
-{
-    hazard_pub->put(std::to_string(isSignaling));
-}
+        REQUIRE_THAT(vehicle.get_chassis().get_steering_wheel().get_angle(),
+                     Catch::Matchers::WithinRel(testAngle, 0.001f));
+    }
 
-void ControllerPublisher::publishDirectionIndicatorLeft(bool isSignaling)
-{
-    directionIndicatorLeft_pub->put(std::to_string(isSignaling));
-}
+    SECTION("Lights Control Integration")
+    {
+        SECTION("Beam Lights")
+        {
+            publisher.publishBeamLow(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-void ControllerPublisher::publishDirectionIndicatorRight(bool isSignaling)
-{
-    directionIndicatorRight_pub->put(std::to_string(isSignaling));
-}
+            REQUIRE(
+                vehicle.get_body().get_lights().get_beam_low().get_is_on() ==
+                true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 2)) != 0);
+        }
 
-void ControllerPublisher::publishCurrentGear(int gear)
-{
-    currentGear_pub->put(std::to_string(gear));
+        SECTION("Direction Indicators")
+        {
+            publisher.publishDirectionIndicatorLeft(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body()
+                        .get_lights()
+                        .get_direction_indicator_left()
+                        .get_is_signaling() == true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 1)) != 0);
+        }
+    }
+
+    SECTION("Transmission Control Integration")
+    {
+        const int testGear = 3;
+        publisher.publishCurrentGear(testGear);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        REQUIRE(
+            vehicle.get_powertrain().get_transmission().get_current_gear() ==
+            testGear);
+        REQUIRE(canMessageReceived == true);
+        REQUIRE(lastCanId == 0x04);
+        REQUIRE(lastCanData[0] == testGear);
+    }
 }

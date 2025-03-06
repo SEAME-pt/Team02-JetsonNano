@@ -171,6 +171,28 @@ set(ADAS_TEST_FILES
     ./tests/ADAS/ObstacleDetectionTests.cpp
 )
 
+set(COMMUNICATION_TEST_FILES
+    ./tests/Communication/ControllerPublisherTests.cpp
+)
+
+add_library(vehicle_test_lib STATIC
+    ${SOURCES}
+    ./src/Controllers/XboxController.cpp
+    ./src/Communication/ControllerPublisher.cpp
+    ./src/Communication/SensoringPublisher.cpp
+    ./src/MiddleWare/BatterySensor/BatterySensor.cpp
+    ./src/MiddleWare/Signals/Signals.cpp
+)
+
+# target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
+
+target_link_libraries(vehicle_test_lib PUBLIC
+    zenohcxx::zenohc
+    I2C
+    PCA9685
+    CAN
+)
+
 # Create test executable
 add_executable(vehicle_tests
     ${VEHICLE_TEST_FILES}
@@ -179,11 +201,12 @@ add_executable(vehicle_tests
     ${CHASSIS_TEST_FILES}
     ${BODY_TEST_FILES}
     ${ADAS_TEST_FILES}
+    ${COMMUNICATION_TEST_FILES}
 )
 
 target_link_libraries(vehicle_tests PRIVATE
     Catch2::Catch2WithMain
-    vehicle_lib
+    vehicle_test_lib
 )
 
 # Add coverage targets if enabled
