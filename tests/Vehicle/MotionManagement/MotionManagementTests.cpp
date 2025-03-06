@@ -21,14 +21,14 @@ TEST_CASE("MotionManagement Integration Tests", "[motion_management]")
                     .get_row1()
                     .get_rotational_speed_target() == 1800);
 
-        auto& mutable_axle = management.get_mutable_electric_axle();
-        mutable_axle.get_mutable_row1().set_rotational_speed(2000);
+        auto& mutable_axle1 = management.get_mutable_electric_axle();
+        mutable_axle1.get_mutable_row1().set_rotational_speed(2000);
         REQUIRE(
             management.get_electric_axle().get_row1().get_rotational_speed() ==
             2000);
 
-        auto& mutable_axle = management.get_mutable_electric_axle();
-        auto& row2         = mutable_axle.get_mutable_row2();
+        auto& mutable_axle2 = management.get_mutable_electric_axle();
+        auto& row2          = mutable_axle2.get_mutable_row2();
         row2.set_rotational_speed(1200);
         row2.set_rotational_speed_target(1500);
 

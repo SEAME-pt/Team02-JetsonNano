@@ -70,24 +70,23 @@ TEST_CASE("Vehicle Tests", "[vehicle]")
         vehicle.set_body(body);
         auto& mutable_body   = vehicle.get_mutable_body();
         auto& mutable_lights = mutable_body.get_mutable_lights();
-        mutable_lights.set_running(
-            StaticLights()); // Changed from set_is_moving
+        mutable_lights.set_running(StaticLights());
         REQUIRE(vehicle.get_body().get_lights().get_running().get_is_on() ==
                 false);
 
         // Test Connectivity
         Connectivity conn;
-        conn.set_connection_status(true); // Changed from set_is_connected
+        conn.set_is_connectivity_available(true);
         vehicle.set_connectivity(conn);
-        REQUIRE(vehicle.get_connectivity().get_connection_status() == true);
+        REQUIRE(vehicle.get_connectivity().get_is_connectivity_available() ==
+                true);
 
         // Test Exterior
         Exterior ext;
         vehicle.set_exterior(ext);
         auto& mutable_ext = vehicle.get_mutable_exterior();
-        mutable_ext.set_trunk_angle(45.0f); // Changed from set_hood_angle
-        REQUIRE_THAT(vehicle.get_exterior()
-                         .get_trunk_angle(), // Changed from get_hood_angle
+        mutable_ext.set_humidity(45.0f);
+        REQUIRE_THAT(vehicle.get_exterior().get_humidity(),
                      Catch::Matchers::WithinRel(45.0f, 0.001f));
 
         // Test MotionManagement
@@ -130,7 +129,8 @@ TEST_CASE("Vehicle Tests", "[vehicle]")
                      Catch::Matchers::WithinRel(10.0f, 0.001f));
 
         auto& mutable_connectivity = vehicle.get_mutable_connectivity();
-        mutable_connectivity.set_is_connected(false);
-        REQUIRE(vehicle.get_connectivity().get_is_connected() == false);
+        mutable_connectivity.set_is_connectivity_available(false);
+        REQUIRE(vehicle.get_connectivity().get_is_connectivity_available() ==
+                false);
     }
 }
