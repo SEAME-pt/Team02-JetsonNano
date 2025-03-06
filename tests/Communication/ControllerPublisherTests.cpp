@@ -35,24 +35,24 @@ TEST_CASE("Communication Integration Tests", "[communication]")
 
     SECTION("Speed Control Integration")
     {
-        const float testSpeed = 50.5f;
+        int32_t testSpeed = 50;
         publisher.publishSpeed(testSpeed);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        REQUIRE_THAT(vehicle.get_powertrain().get_electric_motor().get_speed(),
-                     Catch::Matchers::WithinRel(testSpeed, 0.001f));
+        REQUIRE(vehicle.get_powertrain().get_electric_motor().get_speed() ==
+                testSpeed);
     }
 
     SECTION("Steering Control Integration")
     {
-        const float testAngle = 30.0f;
+        int16_t testAngle = 30;
         publisher.publishSteering(testAngle);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        REQUIRE_THAT(vehicle.get_chassis().get_steering_wheel().get_angle(),
-                     Catch::Matchers::WithinRel(testAngle, 0.001f));
+        REQUIRE(vehicle.get_chassis().get_steering_wheel().get_angle() ==
+                testAngle);
     }
 
     SECTION("Lights Control Integration")
@@ -68,6 +68,78 @@ TEST_CASE("Communication Integration Tests", "[communication]")
             REQUIRE(canMessageReceived == true);
             REQUIRE(lastCanId == 0x03);
             REQUIRE((lastCanData[0] & (1 << 2)) != 0);
+
+            publisher.publishBeamHigh(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(
+                vehicle.get_body().get_lights().get_beam_high().get_is_on() ==
+                true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 3)) != 0);
+        }
+
+        SECTION("Fog Lights")
+        {
+            publisher.publishFogRear(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(
+                vehicle.get_body().get_lights().get_fog_rear().get_is_on() ==
+                true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 5)) != 0);
+
+            publisher.publishFogFront(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(
+                vehicle.get_body().get_lights().get_fog_front().get_is_on() ==
+                true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 4)) != 0);
+        }
+
+        SECTION("Brake Lights")
+        {
+            publisher.publishBrake(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(
+                vehicle.get_body().get_lights().get_brake().get_is_active() ==
+                true);
+        }
+
+        SECTION("Other Lights")
+        {
+            publisher.publishRunning(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body().get_lights().get_running().get_is_on() ==
+                    true);
+
+            publisher.publishParking(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body().get_lights().get_parking().get_is_on() ==
+                    true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 7)) != 0);
+
+            publisher.publishHazard(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body()
+                        .get_lights()
+                        .get_hazard()
+                        .get_is_signaling() == true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 6)) != 0);
         }
 
         SECTION("Direction Indicators")
@@ -82,6 +154,17 @@ TEST_CASE("Communication Integration Tests", "[communication]")
             REQUIRE(canMessageReceived == true);
             REQUIRE(lastCanId == 0x03);
             REQUIRE((lastCanData[0] & (1 << 1)) != 0);
+
+            publisher.publishDirectionIndicatorRight(true);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            REQUIRE(vehicle.get_body()
+                        .get_lights()
+                        .get_direction_indicator_right()
+                        .get_is_signaling() == true);
+            REQUIRE(canMessageReceived == true);
+            REQUIRE(lastCanId == 0x03);
+            REQUIRE((lastCanData[0] & (1 << 0)) == 0);
         }
     }
 
