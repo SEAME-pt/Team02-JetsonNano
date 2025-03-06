@@ -132,7 +132,7 @@ endif()
 # Group test files by component
 set(VEHICLE_TEST_FILES
     ./tests/Vehicle/VehicleTests.cpp
-    # ./tests/Vehicle/VehicleSystemTests.cpp
+    ./tests/Vehicle/VehicleSystemTests.cpp
     ./tests/Vehicle/ExteriorTests.cpp
     ./tests/Vehicle/ConnectivityTests.cpp
     ./tests/Vehicle/AngularVelocityTests.cpp
@@ -177,6 +177,12 @@ set(COMMUNICATION_TEST_FILES
     ./tests/Communication/VSSQueryableTests.cpp
 )
 
+set(HARDWARE_TEST_FILES
+    ./tests/Hardware/MotorController.cpp
+    ./tests/Hardware/ServoController.cpp
+    ./tests/Hardware/HardwareObserver.cpp
+)
+
 add_library(vehicle_test_lib STATIC
     ${SOURCES}
     ./src/Controllers/XboxController.cpp
@@ -186,7 +192,7 @@ add_library(vehicle_test_lib STATIC
     ./src/MiddleWare/Signals/Signals.cpp
 )
 
-# target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
+target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
 
 target_link_libraries(vehicle_test_lib PUBLIC
     zenohcxx::zenohc
