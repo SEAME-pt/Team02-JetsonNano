@@ -177,6 +177,12 @@ set(COMMUNICATION_TEST_FILES
     ./tests/Communication/VSSQueryableTests.cpp
 )
 
+set(CONTROLLERS_TEST_FILES
+    ./tests/Controllers/MockFunctions.cpp
+    ./tests/Controllers/XboxControllerTests.cpp
+)
+
+
 set(HARDWARE_TEST_FILES
     ./tests/Hardware/MotorController.cpp
     ./tests/Hardware/ServoController.cpp
@@ -210,6 +216,7 @@ add_executable(vehicle_tests
     ${BODY_TEST_FILES}
     ${ADAS_TEST_FILES}
     ${COMMUNICATION_TEST_FILES}
+    ${CONTROLLERS_TEST_FILES}
 )
 
 target_link_libraries(vehicle_tests PRIVATE

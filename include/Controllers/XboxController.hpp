@@ -14,6 +14,17 @@
 #include "ControllerPublisher.hpp"
 #include "zenoh.hxx"
 
+
+#ifdef TEST_MODE
+  // Declare your custom functions
+  extern "C" int custom_xbox_open(const char* path, int flags);
+  extern "C" int custom_xbox_close(int fd);
+  extern "C" int custom_xbox_ioctl(int fd, unsigned long request, int* arg);
+  extern "C" ssize_t custom_xbox_read(int fd, void* buf, size_t count);
+  extern "C" ssize_t custom_xbox_write(int fd, const void* buf, size_t count);
+#endif
+
+
 #define JS_EVENT_BUTTON 0x01 /* button pressed/released */
 #define JS_EVENT_AXIS 0x02   /* joystick moved */
 #define JS_EVENT_INIT 0x80   /* initial state of device */

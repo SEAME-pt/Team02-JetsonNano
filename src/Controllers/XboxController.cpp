@@ -1,9 +1,28 @@
 #include "XboxController.hpp"
 
+#ifdef TEST_MODE
+  // Define custom function names for testing
+  #define device_open custom_xbox_open
+  #define device_close custom_xbox_close
+  #define device_ioctl custom_xbox_ioctl
+  #define device_read custom_xbox_read
+  #define device_write custom_xbox_write
+  #define SESSION_OPEN zenoh::Session::open
+  #define zenoh::Config::create_default() zenoh::Config::from_file(configFile)
+#else
+  #define device_open open
+  #define device_close close
+  #define device_ioctl ioctl
+  #define device_read read
+  #define device_write write
+  #define SESSION_OPEN zenoh::Session::open
+#endif
+
+
 XboxController::XboxController()
 {
     const char* device = "/dev/input/js0";
-    js                 = open(device, O_RDONLY);
+    js                 = device_open(device, O_RDONLY);
 
     if (js == -1)
         throw std::exception();
@@ -17,7 +36,7 @@ XboxController::XboxController()
 
     auto config = zenoh::Config::create_default();
     session_    = std::make_shared<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+        SESSION_OPEN(std::move(config)));
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -27,7 +46,7 @@ XboxController::XboxController()
 XboxController::XboxController(const std::string& configFile)
 {
     const char* device = "/dev/input/js0";
-    js                 = open(device, O_RDONLY);
+    js                 = device_open(device, O_RDONLY);
 
     if (js == -1)
         throw std::exception();
@@ -41,7 +60,7 @@ XboxController::XboxController(const std::string& configFile)
 
     auto config = zenoh::Config::from_file(configFile);
     session_    = std::make_shared<zenoh::Session>(
-        zenoh::Session::open(std::move(config)));
+        SESSION_OPEN(std::move(config)));
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -55,7 +74,7 @@ XboxController::~XboxController()
         delete axes[i];
     }
 
-    close(js);
+    device_close(js);
 }
 int XboxController::readEvent(void)
 {
@@ -72,7 +91,7 @@ int XboxController::readEvent(void)
 int XboxController::getButtonCount(void)
 {
     int buttons;
-    if (ioctl(js, JSIOCGBUTTONS, &buttons) == -1)
+    if (device_ioctl(js, JSIOCGBUTTONS, &buttons) == -1)
         return 0;
 
     return buttons;
@@ -81,7 +100,7 @@ int XboxController::getButtonCount(void)
 int XboxController::getAxisCount(void)
 {
     int axes;
-    if (ioctl(js, JSIOCGAXES, &axes) == -1)
+    if (device_ioctl(js, JSIOCGAXES, &axes) == -1)
         return 0;
 
     return axes;
