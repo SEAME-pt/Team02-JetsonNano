@@ -5,6 +5,25 @@
 #include "TractionBattery.hpp"
 #include <iostream>
 
+/**
+ * @brief Vehicle powertrain management system
+ *
+ * @details Manages the complete powertrain system including:
+ *          - Electric motor control
+ *          - Transmission management
+ *          - Traction battery monitoring
+ *          - Range calculations
+ *
+ * System types supported:
+ *  - COMBUSTION
+ *  - HYBRID
+ *  - ELECTRIC
+ *
+ * @note Implements VSS Powertrain branch specification
+ * @see ElectricMotor
+ * @see Transmission
+ * @see TractionBattery
+ */
 class Powertrain
 {
   public:
