@@ -2,6 +2,18 @@
 
 #include <iostream>
 
+/**
+ * @brief Vehicle angular velocity measurement system
+ *
+ * @details Monitors vehicle rotation rates:
+ *          - Roll (X axis)
+ *          - Pitch (Y axis)
+ *          - Yaw (Z axis)
+ *
+ * @note All measurements in degrees/second
+ * @note Axis definitions according to ISO 8855
+ * @note Implements VSS Vehicle.AngularVelocity branch specification
+ */
 class AngularVelocity
 {
   public:
