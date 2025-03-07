@@ -49,6 +49,41 @@ struct axis_state
     int y = 0;
 };
 
+/**
+ * @brief Xbox controller interface for vehicle control and light management
+ *
+ * @details Implements game controller interface for vehicle control including:
+ *          - Speed and steering control via analog sticks
+ *          - Light system control via buttons
+ *          - Gear selection
+ *          - State publishing via Zenoh
+ *
+ * Control mappings:
+ * Buttons:
+ * - RB: Right direction indicator
+ * - LB: Left direction indicator
+ * - A: Low beam lights
+ * - B: High beam lights
+ * - X: Rear fog lights
+ * - Y: Front fog lights
+ * - L2: Hazard lights
+ * - R2: Parking lights
+ *
+ * Analog sticks:
+ * - Left stick (Y-axis): Speed control (-100 to +100)
+ *   - Up: Forward gear
+ *   - Down: Reverse gear
+ *   - Center (±5): Neutral
+ * - Right stick (X-axis): Steering (0 to 180 degrees)
+ *   - Center: 90° (straight)
+ *   - Left: 0° (full left)
+ *   - Right: 180° (full right)
+ *
+ * @note Requires Linux joystick driver (/dev/input/js0)
+ * @note Axis values normalized from hardware range (-32767 to +32767)
+ * @see ControllerPublisher
+ * @see zenoh::Session
+ */
 class XboxController
 {
   private:
@@ -63,6 +98,7 @@ class XboxController
     XboxController();
     XboxController(const std::string& configFile);
     ~XboxController();
+
     int readEvent(void);
     int getButtonCount(void);
     int getAxisCount(void);

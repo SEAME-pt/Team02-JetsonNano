@@ -6,17 +6,48 @@
 #include <iomanip>
 #include <sstream>
 
+/**
+ * @brief Factory class for creating preconfigured vehicle instances
+ *
+ * @details Creates and initializes Vehicle objects with default configurations
+ * for:
+ *          - Basic vehicle properties (dimensions, weight)
+ *          - Powertrain settings
+ *          - Body systems
+ *          - ADAS configuration
+ *          - Chassis setup
+ *          - Exterior sensors
+ *          - Connectivity systems
+ *          - Motion management
+ *
+ * Default configurations include:
+ * - Vehicle dimensions in millimeters
+ * - Weight in kilograms
+ * - Initial systems states (off/disabled)
+ * - SAE Level 0 ADAS
+ * - Economy performance mode
+ * - Automatic transmission
+ *
+ * Usage:
+ * @code{.cpp}
+ * Vehicle vehicle = VehicleFactory::createDefaultVehicle();
+ * @endcode
+ *
+ * @note All measurements follow SI units or VSS specifications
+ * @see Vehicle
+ */
 class VehicleFactory
 {
   public:
+    /**
+     * @brief Creates a new vehicle instance with default configuration
+     * @return Vehicle Fully configured vehicle instance
+     */
     static Vehicle createDefaultVehicle()
     {
         Vehicle vehicle;
 
-        // Set basic vehicle properties
         setupBasicProperties(vehicle);
-
-        // Set all major components
         setupPowertrain(vehicle);
         setupBody(vehicle);
         setupADAS(vehicle);
@@ -29,6 +60,11 @@ class VehicleFactory
     }
 
   private:
+    /**
+     * @brief Sets basic vehicle properties
+     * @param vehicle Vehicle instance to configure
+     * @details Configures dimensions, weight, and initial movement states
+     */
     static void setupBasicProperties(Vehicle& vehicle)
     {
         vehicle.set_speed(0.0f);
@@ -46,6 +82,11 @@ class VehicleFactory
         vehicle.set_current_overall_weight(1500); // kg
     }
 
+    /**
+     * @brief Configures powertrain system
+     * @param vehicle Vehicle instance to configure
+     * @details Sets up transmission, motor, and drive modes
+     */
     static void setupPowertrain(Vehicle& vehicle)
     {
         auto& powertrain = vehicle.get_mutable_powertrain();
@@ -67,6 +108,11 @@ class VehicleFactory
         motor.set_time_in_use(0);
     }
 
+    /**
+     * @brief Configures body systems
+     * @param vehicle Vehicle instance to configure
+     * @details Initializes lights and other body components
+     */
     static void setupBody(Vehicle& vehicle)
     {
         auto& body = vehicle.get_mutable_body();
@@ -84,6 +130,11 @@ class VehicleFactory
         lights.get_mutable_direction_indicator_right().set_is_signaling(false);
     }
 
+    /**
+     * @brief Configures ADAS system
+     * @param vehicle Vehicle instance to configure
+     * @details Sets autonomy levels and obstacle detection
+     */
     static void setupADAS(Vehicle& vehicle)
     {
         auto& adas = vehicle.get_mutable_adas();
@@ -99,6 +150,11 @@ class VehicleFactory
         rear.set_is_enabled(false);
     }
 
+    /**
+     * @brief Configures chassis system
+     * @param vehicle Vehicle instance to configure
+     * @details Sets up axles, steering, brakes, and accelerator
+     */
     static void setupChassis(Vehicle& vehicle)
     {
         auto& chassis = vehicle.get_mutable_chassis();
@@ -143,6 +199,11 @@ class VehicleFactory
         brake.set_is_driver_emergency_braking_detected(false);
     }
 
+    /**
+     * @brief Configures exterior sensors
+     * @param vehicle Vehicle instance to configure
+     * @details Initializes temperature, humidity, and light sensors
+     */
     static void setupExterior(Vehicle& vehicle)
     {
         auto& exterior = vehicle.get_mutable_exterior();
@@ -151,12 +212,22 @@ class VehicleFactory
         exterior.set_light_intensity(0);
     }
 
+    /**
+     * @brief Configures connectivity systems
+     * @param vehicle Vehicle instance to configure
+     * @details Sets up communication availability
+     */
     static void setupConnectivity(Vehicle& vehicle)
     {
         auto& connectivity = vehicle.get_mutable_connectivity();
         connectivity.set_is_connectivity_available(true);
     }
 
+    /**
+     * @brief Configures motion management systems
+     * @param vehicle Vehicle instance to configure
+     * @details Sets up acceleration, angular velocity, and electric axles
+     */
     static void setupMotion(Vehicle& vehicle)
     {
         // Setup acceleration
@@ -191,6 +262,10 @@ class VehicleFactory
         steering_wheel.set_angle_target(0);
     }
 
+    /**
+     * @brief Gets current timestamp in ISO format
+     * @return std::string Formatted timestamp (YYYY-MM-DD HH:MM:SS)
+     */
     static std::string getCurrentTimestamp()
     {
         auto now  = std::chrono::system_clock::now();
