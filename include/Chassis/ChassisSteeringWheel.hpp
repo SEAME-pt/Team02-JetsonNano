@@ -5,6 +5,17 @@
 #include <memory>
 #include "IVehicleObserver.hpp"
 
+/**
+ * @brief Steering wheel control and monitoring
+ *
+ * @details Manages steering wheel position and notifications:
+ *          - Angle measurement (-180 to +180 degrees)
+ *          - Observer pattern for angle changes
+ *          - Real-time position updates
+ *
+ * @note Positive angles indicate left turn, negative indicate right turn
+ * @note Implements VSS Chassis.SteeringWheel branch specification
+ */
 class ChassisSteeringWheel
 {
   public:

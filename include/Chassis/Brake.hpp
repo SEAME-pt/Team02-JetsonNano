@@ -2,6 +2,17 @@
 
 #include <iostream>
 
+/**
+ * @brief Brake system management
+ *
+ * @details Controls brake system functionality:
+ *          - Pedal position monitoring (0-100%)
+ *          - Emergency braking detection
+ *          - Brake assist integration
+ *
+ * @note Emergency braking detection can trigger EBA
+ * @note Implements VSS Chassis.Brake branch specification
+ */
 class Brake
 {
   public:

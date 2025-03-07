@@ -2,6 +2,15 @@
 
 #include <iostream>
 
+/**
+ * @brief Signaling lights control class
+ *
+ * @details Controls lights that have a signaling function such as direction
+ * indicators and hazard lights. Manages both the signaling state and defect
+ * detection.
+ *
+ * @note Implements VSS SignalingLights specification
+ */
 class SignalingLights
 {
   public:
@@ -20,6 +29,15 @@ class SignalingLights
     void set_is_signaling(const bool value);
 };
 
+/**
+ * @brief Static lights control class
+ *
+ * @details Controls lights that have a static on/off state such as beam lights,
+ *          fog lights, parking lights and running lights. Includes defect
+ * detection.
+ *
+ * @note Implements VSS StaticLights specification
+ */
 class StaticLights
 {
   public:
@@ -38,6 +56,21 @@ class StaticLights
     void set_is_on(const bool value);
 };
 
+/**
+ * @brief Brake lights control class
+ *
+ * @details Controls brake light functionality including:
+ *          - Basic brake light activation
+ *          - Adaptive emergency brake signaling
+ *          - Defect monitoring
+ *
+ * States supported:
+ * - INACTIVE: Lights are off
+ * - ACTIVE: Lights are on
+ * - ADAPTIVE: Emergency braking indication
+ *
+ * @note Implements VSS BrakeLights specification
+ */
 class BrakeLights
 {
   public:
@@ -56,6 +89,26 @@ class BrakeLights
     void set_is_active(const bool value);
 };
 
+/**
+ * @brief Vehicle exterior lighting system management class
+ *
+ * @details Manages all exterior vehicle lights including:
+ *          - Beam lights (high/low)
+ *          - Running lights
+ *          - Parking lights
+ *          - Fog lights (front/rear)
+ *          - Brake lights
+ *          - Direction indicators
+ *          - Hazard lights
+ *
+ * This class implements the VSS Body.Lights branch specification, providing
+ * complete control over all exterior lighting functions.
+ *
+ * @note Implements VSS Body.Lights branch specification
+ * @see SignalingLights
+ * @see StaticLights
+ * @see BrakeLights
+ */
 class Lights
 {
   public:
@@ -114,5 +167,4 @@ class Lights
     const StaticLights& get_running() const;
     StaticLights& get_mutable_running();
     void set_running(const StaticLights& value);
-
 };

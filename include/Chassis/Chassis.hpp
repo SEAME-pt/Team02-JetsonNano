@@ -6,6 +6,22 @@
 #include "ChassisSteeringWheel.hpp"
 #include <iostream>
 
+/**
+ * @brief Vehicle chassis management class
+ *
+ * @details Controls and monitors all chassis-related systems including:
+ *          - Axle configuration and management
+ *          - Steering control
+ *          - Brake system
+ *          - Accelerator control
+ *          - Wheel management
+ *
+ * @note Implements VSS Chassis branch specification
+ * @see Axle
+ * @see ChassisSteeringWheel
+ * @see Brake
+ * @see Accelerator
+ */
 class Chassis
 {
   public:
