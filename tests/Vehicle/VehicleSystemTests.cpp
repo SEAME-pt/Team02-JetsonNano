@@ -18,7 +18,11 @@ TEST_CASE("VehicleSystem Tests", "[vehicle_system]")
         REQUIRE(system.getVehicle().get_is_moving() == false);
         REQUIRE(system.getVehicle().get_speed() == 0.0f);
 
-        // Test controllers
+        // Test component getters/setters
+        REQUIRE(system.getI2C() == mock_i2c);
+        REQUIRE(system.getCAN() == mock_can);
+
+        // Test controllers initialization
         REQUIRE(system.getMotorController() != nullptr);
         REQUIRE(system.getServoController() != nullptr);
     }
@@ -42,6 +46,18 @@ TEST_CASE("VehicleSystem Tests", "[vehicle_system]")
     //     remove(config_path);
     // }
 
+    SECTION("Vehicle State Modification Tests")
+    {
+        VehicleSystem system;
+
+        // Test vehicle getter/setter
+        auto& mutable_vehicle = system.getMutableVehicle();
+        mutable_vehicle.set_speed(50.0f);
+        REQUIRE(system.getVehicle().get_speed() == 50.0f);
+
+        REQUIRE(system.getSession() != nullptr);
+    }
+
     SECTION("Communication Interface Tests")
     {
         VehicleSystem system;
@@ -55,28 +71,43 @@ TEST_CASE("VehicleSystem Tests", "[vehicle_system]")
         REQUIRE(queryable != nullptr);
     }
 
-    // SECTION("Hardware Control Tests")
+    // SECTION("Communication Components Tests")
     // {
     //     VehicleSystem system;
 
-    //     // Test Motor Control
-    //     auto motor = system.getMotorController();
-    //     REQUIRE(motor != nullptr);
+    //     // Test VSS Subscriber getter/setter
+    //     auto test_subscriber = std::make_unique<VSSSubscriber>();
+    //     system.setVSSSubscriber(std::move(test_subscriber));
+    //     REQUIRE(system.getVSSSubscriber() != nullptr);
 
-    //     // Test speed control
-    //     motor->setSpeed(50);
-    //     REQUIRE(system.getVehicle().get_speed() == 50);
+    //     // Test VSS Queryable getter/setter
+    //     auto test_queryable = std::make_unique<VSSQueryable>();
+    //     system.setVSSQueryable(std::move(test_queryable));
+    //     REQUIRE(system.getVSSQueryable() != nullptr);
 
-    //     // Test Servo Control
-    //     auto servo = system.getServoController();
-    //     REQUIRE(servo != nullptr);
+    //     // Test mutable access
+    //     auto& mutable_subscriber = system.getMutableVSSSubscriber();
+    //     REQUIRE(&mutable_subscriber == system.getVSSSubscriber().get());
 
-    //     // Test steering control
-    //     servo->setAngle(30.0f);
-    //     REQUIRE_THAT(
-    //         system.getVehicle().get_chassis().get_steering_wheel().get_angle(),
-    //         Catch::Matchers::WithinRel(30.0f, 0.001f));
+    //     auto& mutable_queryable = system.getMutableVSSQueryable();
+    //     REQUIRE(&mutable_queryable == system.getVSSQueryable().get());
     // }
+
+    SECTION("Hardware Controller Tests")
+    {
+        VehicleSystem system;
+        auto mock_i2c = std::make_shared<I2C>();
+
+        // Test Motor Controller getter/setter
+        auto test_motor = std::make_shared<MotorController>(mock_i2c);
+        system.setMotorController(test_motor);
+        REQUIRE(system.getMotorController() == test_motor);
+
+        // Test Servo Controller getter/setter
+        auto test_servo = std::make_shared<ServoController>(mock_i2c);
+        system.setServoController(test_servo);
+        REQUIRE(system.getServoController() == test_servo);
+    }
 
     SECTION("Error Handling Tests")
     {
