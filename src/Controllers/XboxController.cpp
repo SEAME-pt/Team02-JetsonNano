@@ -8,7 +8,7 @@
   #define device_read custom_xbox_read
   #define device_write custom_xbox_write
   #define SESSION_OPEN zenoh::Session::open
-  #define zenoh::Config::create_default() zenoh::Config::from_file(configFile)
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
 #else
   #define device_open open
   #define device_close close
@@ -16,6 +16,7 @@
   #define device_read read
   #define device_write write
   #define SESSION_OPEN zenoh::Session::open
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
 
@@ -58,7 +59,7 @@ XboxController::XboxController(const std::string& configFile)
         axes.push_back(axis);
     }
 
-    auto config = zenoh::Config::from_file(configFile);
+    auto config = ZENOH_CONFIG_FROM_FILE;
     session_    = std::make_shared<zenoh::Session>(
         SESSION_OPEN(std::move(config)));
 
