@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
+#include <vector>
+#include <memory>
+#include "IVehicleObserver.hpp"
 
 class ChassisSteeringWheel
 {
@@ -11,17 +13,13 @@ class ChassisSteeringWheel
 
   private:
     std::int16_t angle;
-    std::string description;
-    Type type;
+    std::vector<std::shared_ptr<IVehicleObserver>> observers_;
 
   public:
     int16_t get_angle() const;
     void set_angle(const int16_t value);
+    void addObserver(std::shared_ptr<IVehicleObserver> observer);
 
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
+  private:
+    void notifyAngleChanged(float speed);
 };

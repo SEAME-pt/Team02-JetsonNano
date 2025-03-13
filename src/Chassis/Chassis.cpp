@@ -71,25 +71,3 @@ void Chassis::set_wheelbase(const std::uint16_t value)
 {
     this->wheelbase = value;
 }
-
-const std::string& Chassis::get_description() const
-{
-    return description;
-}
-std::string& Chassis::get_mutable_description()
-{
-    return description;
-}
-void Chassis::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Chassis::get_type() const
-{
-    return type;
-}
-void Chassis::set_type(Type value)
-{
-    this->type = value;
-}

@@ -30,25 +30,3 @@ void ADAS::set_obstacle_detection(const ObstacleDetection& value)
 {
     this->obstacle_detection = value;
 }
-
-const std::string& ADAS::get_description() const
-{
-    return description;
-}
-std::string& ADAS::get_mutable_description()
-{
-    return description;
-}
-void ADAS::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type ADAS::get_type() const
-{
-    return type;
-}
-void ADAS::set_type(Type value)
-{
-    this->type = value;
-}

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include "Axle.hpp"
 #include "Brake.hpp"
 #include "Accelerator.hpp"
@@ -20,8 +19,6 @@ class Chassis
     ChassisSteeringWheel steering_wheel;
     Accelerator accelerator;
     Brake brake;
-    std::string description;
-    Type type;
 
   public:
     const Accelerator& get_accelerator() const;
@@ -45,11 +42,4 @@ class Chassis
 
     std::uint16_t get_wheelbase() const;
     void set_wheelbase(const std::uint16_t value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

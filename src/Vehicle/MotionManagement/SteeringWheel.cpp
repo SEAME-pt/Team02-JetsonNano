@@ -19,13 +19,3 @@ void SteeringWheel::set_angle_target(const float value)
 {
     this->angle_target = value;
 }
-
-float SteeringWheel::get_angle_target_mode() const
-{
-    return angle_target_mode;
-}
-
-void SteeringWheel::set_angle_target_mode(const float value)
-{
-    this->angle_target_mode = value;
-}

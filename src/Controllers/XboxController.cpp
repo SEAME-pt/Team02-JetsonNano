@@ -1,9 +1,29 @@
 #include "XboxController.hpp"
 
+#ifdef TEST_MODE
+  // Define custom function names for testing
+  #define device_open custom_xbox_open
+  #define device_close custom_xbox_close
+  #define device_ioctl custom_xbox_ioctl
+  #define device_read custom_xbox_read
+  #define device_write custom_xbox_write
+  #define SESSION_OPEN zenoh::Session::open
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
+#else
+  #define device_open open
+  #define device_close close
+  #define device_ioctl ioctl
+  #define device_read read
+  #define device_write write
+  #define SESSION_OPEN zenoh::Session::open
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
+#endif
+
+
 XboxController::XboxController()
 {
     const char* device = "/dev/input/js0";
-    js                 = open(device, O_RDONLY);
+    js                 = device_open(device, O_RDONLY);
 
     if (js == -1)
         throw std::exception();
@@ -15,7 +35,35 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
-    publisher_ = std::make_unique<ControllerPublisher>();
+    auto config = zenoh::Config::create_default();
+    session_    = std::make_shared<zenoh::Session>(
+        SESSION_OPEN(std::move(config)));
+
+    publisher_ = std::make_unique<ControllerPublisher>(session_);
+
+    std::cout << "Remote controller created!" << std::endl;
+}
+
+XboxController::XboxController(const std::string& configFile)
+{
+    const char* device = "/dev/input/js0";
+    js                 = device_open(device, O_RDONLY);
+
+    if (js == -1)
+        throw std::exception();
+
+    int numAxes = this->getAxisCount();
+    for (int i = 0; i < numAxes; i++)
+    {
+        struct axis_state* axis = new struct axis_state();
+        axes.push_back(axis);
+    }
+
+    auto config = ZENOH_CONFIG_FROM_FILE;
+    session_    = std::make_shared<zenoh::Session>(
+        SESSION_OPEN(std::move(config)));
+
+    publisher_ = std::make_unique<ControllerPublisher>(session_);
 
     std::cout << "Remote controller created!" << std::endl;
 }
@@ -27,7 +75,7 @@ XboxController::~XboxController()
         delete axes[i];
     }
 
-    close(js);
+    device_close(js);
 }
 int XboxController::readEvent(void)
 {
@@ -44,7 +92,7 @@ int XboxController::readEvent(void)
 int XboxController::getButtonCount(void)
 {
     int buttons;
-    if (ioctl(js, JSIOCGBUTTONS, &buttons) == -1)
+    if (device_ioctl(js, JSIOCGBUTTONS, &buttons) == -1)
         return 0;
 
     return buttons;
@@ -53,7 +101,7 @@ int XboxController::getButtonCount(void)
 int XboxController::getAxisCount(void)
 {
     int axes;
-    if (ioctl(js, JSIOCGAXES, &axes) == -1)
+    if (device_ioctl(js, JSIOCGAXES, &axes) == -1)
         return 0;
 
     return axes;
@@ -116,13 +164,13 @@ void XboxController::run()
                         case BUTTON_X:
                         {
                             publisher_->publishFogRear(true);
-                            std::cout << "frontFogLight" << std::endl;
+                            std::cout << "rearFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_Y:
                         {
                             publisher_->publishFogFront(true);
-                            std::cout << "rearFogLight" << std::endl;
+                            std::cout << "frontFogLight" << std::endl;
                             break;
                         }
                         case BUTTON_L2:
@@ -152,24 +200,18 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
-                        // if (speed < -5)
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 1);
-                        //     this->m_pubGear.put(gear);
-                        // }
-                        // else if (speed > 5)
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 3);
-                        //     this->m_pubGear.put(gear);
-                        // }
-                        // else
-                        // {
-                        //     gear[0] = 0;;
-                        //     gear[0] ^= (1 << 2);
-                        //     this->m_pubGear.put(gear);
-                        // }
+                        if (speed < -5)
+                        {
+                            publisher_->publishCurrentGear(-1);
+                        }
+                        else if (speed > 5)
+                        {
+                            publisher_->publishCurrentGear(1);
+                        }
+                        else
+                        {
+                            publisher_->publishCurrentGear(0);
+                        }
                         publisher_->publishSpeed(speed);
                         std::cout << "Speed" << std::endl;
                         break;

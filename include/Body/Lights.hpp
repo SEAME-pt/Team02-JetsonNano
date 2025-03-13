@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class SignalingLights
@@ -72,11 +71,8 @@ class Lights
     StaticLights fog_rear;
     StaticLights fog_front;
     SignalingLights hazard;
-    std::string light_switch;
     StaticLights parking;
     StaticLights running;
-    std::string description;
-    Type type;
 
   public:
     const StaticLights& get_beam_low() const;
@@ -111,10 +107,6 @@ class Lights
     SignalingLights& get_mutable_hazard();
     void set_hazard(const SignalingLights& value);
 
-    const std::string& get_light_switch() const;
-    std::string& get_mutable_light_switch();
-    void set_light_switch(const std::string& value);
-
     const StaticLights& get_parking() const;
     StaticLights& get_mutable_parking();
     void set_parking(const StaticLights& value);
@@ -123,10 +115,4 @@ class Lights
     StaticLights& get_mutable_running();
     void set_running(const StaticLights& value);
 
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };
