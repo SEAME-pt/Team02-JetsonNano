@@ -31,8 +31,6 @@ class VehicleFactory
   private:
     static void setupBasicProperties(Vehicle& vehicle)
     {
-        vehicle.set_type(Type::BRANCH);
-        vehicle.set_description("Default Vehicle Configuration");
         vehicle.set_speed(0.0f);
         vehicle.set_is_moving(false);
         vehicle.set_average_speed(0.0f);
@@ -51,33 +49,46 @@ class VehicleFactory
     static void setupPowertrain(Vehicle& vehicle)
     {
         auto& powertrain = vehicle.get_mutable_powertrain();
-        powertrain.set_type(Type::BRANCH);
-        powertrain.set_description("");
-
-        // Setup electric motor
-        auto& motor = powertrain.get_mutable_electric_motor();
-        motor.set_type(Type::BRANCH);
-        motor.set_speed(0);
+        powertrain.set_range(0);
+        powertrain.set_time_remaining(0);
 
         auto& transmission = powertrain.get_mutable_transmission();
-        transmission.set_type(Type::BRANCH);
+        transmission.set_drive_type("REAR_WHEEL_DRIVE");
+        transmission.set_travelled_distance(0.0f);
+        transmission.set_current_gear(0);
+        transmission.set_selected_gear(0);
+        transmission.set_is_park_lock_engaged(true);
+        transmission.set_performance_mode("ECONOMY");
+        transmission.set_gear_change_mode("AUTOMATIC");
+
+        auto& motor = powertrain.get_mutable_electric_motor();
+        motor.set_max_power(100);
+        motor.set_speed(0);
+        motor.set_time_in_use(0);
     }
 
     static void setupBody(Vehicle& vehicle)
     {
         auto& body = vehicle.get_mutable_body();
-        body.set_type(Type::BRANCH);
 
-        // Setup lights
         auto& lights = body.get_mutable_lights();
-        lights.set_type(Type::BRANCH);
+        lights.get_mutable_beam_low().set_is_on(false);
+        lights.get_mutable_beam_high().set_is_on(false);
+        lights.get_mutable_running().set_is_on(false);
+        lights.get_mutable_parking().set_is_on(false);
+        lights.get_mutable_fog_rear().set_is_on(false);
+        lights.get_mutable_fog_front().set_is_on(false);
+        lights.get_mutable_brake().set_is_active(false);
+        lights.get_mutable_hazard().set_is_signaling(false);
+        lights.get_mutable_direction_indicator_left().set_is_signaling(false);
+        lights.get_mutable_direction_indicator_right().set_is_signaling(false);
     }
 
     static void setupADAS(Vehicle& vehicle)
     {
         auto& adas = vehicle.get_mutable_adas();
-        adas.set_type(Type::BRANCH);
-        adas.set_description("Advanced Driver Assistance System");
+        adas.set_active_autonomy_level("SAE_0");
+        adas.set_supported_autonomy_level("SAE_1");
 
         auto& obstacle_detection = adas.get_mutable_obstacle_detection();
 
@@ -86,53 +97,98 @@ class VehicleFactory
 
         auto& rear = obstacle_detection.get_mutable_rear();
         rear.set_is_enabled(false);
-
-        auto& left = obstacle_detection.get_mutable_left();
-        left.set_is_enabled(false);
-
-        auto& right = obstacle_detection.get_mutable_right();
-        right.set_is_enabled(false);
-
-        auto& center = obstacle_detection.get_mutable_center();
-        center.set_is_enabled(false);
     }
 
     static void setupChassis(Vehicle& vehicle)
     {
         auto& chassis = vehicle.get_mutable_chassis();
-        chassis.set_type(Type::BRANCH);
+        chassis.set_wheelbase(10); // distancia entre eixos em mm
+        chassis.set_axle_count(2);
+
+        auto& axle = chassis.get_mutable_axle();
+
+        auto& row1 = axle.get_mutable_row1();
+        row1.set_tread_width(0);
+        row1.set_track_width(0);
+        row1.set_axle_width(0);
+        row1.set_wheel_count(0);
+        row1.set_wheel_diameter(0);
+        row1.set_wheel_width(0);
+        row1.set_steering_angle(0);
+        row1.set_tire_diameter(0);
+        row1.set_tire_width(0);
+        row1.set_tire_aspect_ratio(0);
+
+        auto& row2 = axle.get_mutable_row2();
+        row2.set_tread_width(0);
+        row2.set_track_width(0);
+        row2.set_axle_width(0);
+        row2.set_wheel_count(0);
+        row2.set_wheel_diameter(0);
+        row2.set_wheel_width(0);
+        row2.set_steering_angle(0);
+        row2.set_tire_diameter(0);
+        row2.set_tire_width(0);
+        row2.set_tire_aspect_ratio(0);
 
         // Setup steering
         auto& steering = chassis.get_mutable_steering_wheel();
-        steering.set_type(Type::ACTUATOR);
         steering.set_angle(90);
+
+        auto& accelerator = chassis.get_mutable_accelerator();
+        accelerator.set_pedal_position(0);
+
+        auto& brake = chassis.get_mutable_brake();
+        brake.set_pedal_position(0);
+        brake.set_is_driver_emergency_braking_detected(false);
     }
 
     static void setupExterior(Vehicle& vehicle)
     {
         auto& exterior = vehicle.get_mutable_exterior();
-        exterior.set_type(Type::BRANCH);
+        exterior.set_air_temperature(0);
+        exterior.set_humidity(0);
+        exterior.set_light_intensity(0);
     }
 
     static void setupConnectivity(Vehicle& vehicle)
     {
         auto& connectivity = vehicle.get_mutable_connectivity();
-        connectivity.set_type(Type::BRANCH);
+        connectivity.set_is_connectivity_available(true);
     }
 
     static void setupMotion(Vehicle& vehicle)
     {
         // Setup acceleration
         auto& accel = vehicle.get_mutable_acceleration();
-        accel.set_type(Type::BRANCH);
+        accel.set_longitudinal(0);
+        accel.set_lateral(0);
+        accel.set_vertical(0);
 
         // Setup angular velocity
         auto& angular = vehicle.get_mutable_angular_velocity();
-        angular.set_type(Type::BRANCH);
+        angular.set_roll(0);
+        angular.set_pitch(0);
+        angular.set_yaw(0);
 
         // Setup motion management
         auto& motion = vehicle.get_mutable_motion_management();
-        motion.set_type(Type::BRANCH);
+
+        auto& electric_axle = motion.get_mutable_electric_axle();
+
+        auto& row1 = electric_axle.get_mutable_row1();
+        row1.set_rotational_speed(0);
+        row1.set_rotational_speed_target(0);
+
+        auto& row2 = electric_axle.get_mutable_row2();
+        row2.set_rotational_speed(0);
+        row2.set_rotational_speed_target(0);
+
+        auto& steering = motion.get_mutable_steering();
+
+        auto& steering_wheel = steering.get_mutable_steering_wheel();
+        steering_wheel.set_angle(0);
+        steering_wheel.set_angle_target(0);
     }
 
     static std::string getCurrentTimestamp()

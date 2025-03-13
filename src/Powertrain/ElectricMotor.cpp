@@ -17,7 +17,11 @@ std::int32_t ElectricMotor::get_speed() const
 
 void ElectricMotor::set_speed(const std::int32_t value)
 {
-    this->speed = value;
+    if (speed != value)
+    {
+        speed = value;
+        notifySpeedChanged(value);
+    }
 }
 
 float ElectricMotor::get_time_in_use() const
@@ -30,24 +34,15 @@ void ElectricMotor::set_time_in_use(const float value)
     this->time_in_use = value;
 }
 
-const std::string& ElectricMotor::get_description() const
+void ElectricMotor::addObserver(std::shared_ptr<IVehicleObserver> observer)
 {
-    return description;
-}
-std::string& ElectricMotor::get_mutable_description()
-{
-    return description;
-}
-void ElectricMotor::set_description(const std::string& value)
-{
-    this->description = value;
+    observers_.push_back(observer);
 }
 
-Type ElectricMotor::get_type() const
+void ElectricMotor::notifySpeedChanged(int32_t speed)
 {
-    return type;
-}
-void ElectricMotor::set_type(Type value)
-{
-    this->type = value;
+    for (auto& observer : observers_)
+    {
+        observer->onSpeedChanged(speed);
+    }
 }

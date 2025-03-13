@@ -164,19 +164,6 @@ void Lights::set_hazard(const SignalingLights& value)
     this->hazard = value;
 }
 
-const std::string& Lights::get_light_switch() const
-{
-    return light_switch;
-}
-std::string& Lights::get_mutable_light_switch()
-{
-    return light_switch;
-}
-void Lights::set_light_switch(const std::string& value)
-{
-    this->light_switch = value;
-}
-
 const StaticLights& Lights::get_parking() const
 {
     return parking;
@@ -201,26 +188,4 @@ StaticLights& Lights::get_mutable_running()
 void Lights::set_running(const StaticLights& value)
 {
     this->running = value;
-}
-
-const std::string& Lights::get_description() const
-{
-    return description;
-}
-std::string& Lights::get_mutable_description()
-{
-    return description;
-}
-void Lights::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Lights::get_type() const
-{
-    return type;
-}
-void Lights::set_type(Type value)
-{
-    this->type = value;
 }

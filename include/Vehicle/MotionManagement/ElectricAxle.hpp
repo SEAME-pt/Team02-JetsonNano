@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class ElectricAxleRow
@@ -30,8 +29,6 @@ class ElectricAxle
   private:
     ElectricAxleRow row1;
     ElectricAxleRow row2;
-    std::string description;
-    Type type;
 
   public:
     const ElectricAxleRow& get_row1() const;
@@ -41,11 +38,4 @@ class ElectricAxle
     const ElectricAxleRow& get_row2() const;
     ElectricAxleRow& get_mutable_row2();
     void set_row2(const ElectricAxleRow& value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

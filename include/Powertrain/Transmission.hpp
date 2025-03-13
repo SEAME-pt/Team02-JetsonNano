@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Type.hpp"
 #include <iostream>
 
 class Transmission
@@ -17,15 +16,13 @@ class Transmission
     std::string performance_mode;
     std::int8_t selected_gear;
     float travelled_distance;
-    std::string description;
-    Type type;
 
   public:
     std::int8_t get_current_gear() const;
     void set_current_gear(const std::int8_t value);
 
-    const std::string get_drive_type() const;
-    std::string get_mutable_drive_type();
+    const std::string& get_drive_type() const;
+    std::string& get_mutable_drive_type();
     void set_drive_type(const std::string value);
 
     const std::string& get_gear_change_mode() const;
@@ -44,11 +41,4 @@ class Transmission
 
     float get_travelled_distance() const;
     void set_travelled_distance(const float value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };

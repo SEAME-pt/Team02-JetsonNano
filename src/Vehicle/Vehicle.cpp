@@ -215,25 +215,3 @@ void Vehicle::set_turning_diameter(const std::uint16_t value)
 {
     this->turning_diameter = value;
 }
-
-const std::string& Vehicle::get_description() const
-{
-    return description;
-}
-std::string& Vehicle::get_mutable_description()
-{
-    return description;
-}
-void Vehicle::set_description(const std::string& value)
-{
-    this->description = value;
-}
-
-Type Vehicle::get_type() const
-{
-    return type;
-}
-void Vehicle::set_type(Type value)
-{
-    this->type = value;
-}

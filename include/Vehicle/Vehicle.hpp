@@ -37,8 +37,6 @@ class Vehicle
     std::uint16_t height;
     std::uint16_t turning_diameter;
     MotionManagement motion_management;
-    std::string description;
-    Type type;
 
   public:
     const ADAS& get_adas() const;
@@ -109,11 +107,4 @@ class Vehicle
 
     std::uint16_t get_turning_diameter() const;
     void set_turning_diameter(const std::uint16_t value);
-
-    const std::string& get_description() const;
-    std::string& get_mutable_description();
-    void set_description(const std::string& value);
-
-    Type get_type() const;
-    void set_type(Type value);
 };
