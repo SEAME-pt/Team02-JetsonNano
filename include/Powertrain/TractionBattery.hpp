@@ -2,6 +2,24 @@
 
 #include <iostream>
 
+/**
+ * @brief High voltage traction battery management system
+ *
+ * @details Monitors and controls the high voltage battery including:
+ *          - State of charge monitoring
+ *          - Voltage management
+ *          - Current monitoring
+ *          - Power calculations
+ *
+ * Key measurements:
+ *  - State of charge (0-100%)
+ *  - Current (A, positive=charging, negative=discharging)
+ *  - Power (W, positive=charging, negative=discharging)
+ *  - Voltage (V)
+ *
+ * @note Implements VSS Powertrain.TractionBattery branch specification
+ * @note All electrical measurements follow standard SI units
+ */
 class TractionBattery
 {
   public:
@@ -9,7 +27,6 @@ class TractionBattery
     virtual ~TractionBattery() = default;
 
   private:
-    
     float state_of_charge_displayed;
     std::uint16_t max_voltage;
     float current_voltage;

@@ -2,6 +2,30 @@
 
 #include <iostream>
 
+/**
+ * @brief Vehicle transmission system management
+ *
+ * @details Controls transmission functionality including:
+ *          - Gear selection and monitoring
+ *          - Drive type configuration
+ *          - Performance modes
+ *          - Park lock management
+ *
+ * Supported drive types:
+ *  - FORWARD_WHEEL_DRIVE
+ *  - REAR_WHEEL_DRIVE
+ *  - ALL_WHEEL_DRIVE
+ *
+ * Performance modes:
+ *  - NORMAL
+ *  - SPORT
+ *  - ECONOMY
+ *  - SNOW
+ *  - RAIN
+ *
+ * @note Gear values: 0=Neutral, +N=Forward, -N=Reverse, 126=Park, 127=Drive
+ * @note Implements VSS Powertrain.Transmission branch specification
+ */
 class Transmission
 {
   public:

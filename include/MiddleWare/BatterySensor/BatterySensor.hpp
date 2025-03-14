@@ -13,6 +13,38 @@ using namespace zenoh;
 
 extern int signalTo;
 
+/**
+ * @brief Battery monitoring system using INA219
+ *
+ * @details Monitors and processes battery parameters:
+ *          - Voltage measurement via INA219
+ *          - Voltage smoothing with EMA filter
+ *          - State of charge calculation
+ *          - CAN message transmission
+ *          - Data publishing via Zenoh
+ *
+ * Specifications:
+ * - Voltage range: 9.5V - 12.6V
+ * - Sample rate: 100ms
+ * - EMA alpha: 0.01
+ * - CAN message ID: 0x02
+ *
+ * Calculations:
+ * - State of charge = ((voltage - 9.5) / (12.6 - 9.5)) * 100%
+ * - Voltage change threshold: 0.04V
+ *
+ * Hardware interfaces:
+ * - I2C for INA219 sensor
+ * - CAN for data transmission (8 bytes)
+ * - Zenoh for state publishing
+ *
+ * @note Implements voltage spike filtering
+ * @note Clamps SoC to 0-100%
+ * @see I2C
+ * @see INA219
+ * @see CAN
+ * @see SensoringPublisher
+ */
 class BatterySensor
 {
   private:

@@ -2,6 +2,16 @@
 
 #include <iostream>
 
+/**
+ * @brief Single electric axle row control
+ *
+ * @details Manages individual axle row characteristics:
+ *          - Current rotational speed
+ *          - Target rotational speed
+ *          - Direction control
+ *
+ * @note All speeds in RPM
+ */
 class ElectricAxleRow
 {
   public:
@@ -20,6 +30,23 @@ class ElectricAxleRow
     void set_rotational_speed_target(const std::uint16_t value);
 };
 
+/**
+ * @brief Electric axle row control system
+ *
+ * @details Manages electric axle functionality for up to 2 rows:
+ *          - Speed control
+ *          - Direction management
+ *          - Torque distribution
+ *          - Regenerative braking
+ *
+ * Supports:
+ * - Row 1 (Front axle)
+ * - Row 2 (Rear axle)
+ *
+ * @note All speeds in RPM
+ * @note Implements VSS Vehicle.MotionManagement.ElectricAxle branch
+ * specification
+ */
 class ElectricAxle
 {
   public:

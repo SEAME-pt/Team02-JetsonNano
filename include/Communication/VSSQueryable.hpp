@@ -4,6 +4,26 @@
 #include <zenoh.hxx>
 #include <optional>
 
+/**
+ * @brief Vehicle Signal Specification (VSS) query handler
+ *
+ * @details Provides queryable interface for VSS vehicle states:
+ *          - Vehicle control states
+ *          - Light system states
+ *          - Direction indicators
+ *          - Brake status
+ *
+ * Supported queries:
+ * - Motion control (throttle, steering)
+ * - All exterior lights
+ * - Brake system
+ * - Direction indicators
+ *
+ * @note Implements VSS query model
+ * @see Vehicle
+ * @see zenoh::Session
+ * @see zenoh::Queryable
+ */
 class VSSQueryable
 {
   public:

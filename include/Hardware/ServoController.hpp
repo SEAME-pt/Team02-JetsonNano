@@ -6,6 +6,23 @@
 #include <memory>
 #include <cstdint>
 
+/**
+ * @brief Servo motor controller via PCA9685
+ *
+ * @details Controls steering servo motor position:
+ *          - Angle control (0° to 180°)
+ *          - PWM signal generation
+ *          - Position feedback
+ *
+ * Hardware specifications:
+ * - Operating voltage: 5V
+ * - PWM frequency: 50Hz
+ * - Angular range: 180°
+ *
+ * @note Uses PCA9685 PWM controller via I2C
+ * @see PCA9685
+ * @see I2C
+ */
 class ServoController
 {
   private:

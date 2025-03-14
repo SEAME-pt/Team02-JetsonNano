@@ -2,6 +2,16 @@
 
 #include <iostream>
 
+/**
+ * @brief Accelerator pedal management
+ *
+ * @details Controls and monitors accelerator functionality:
+ *          - Pedal position (0-100%)
+ *          - Position sensor integration
+ *
+ * @note 0% = Not depressed, 100% = Fully depressed
+ * @note Implements VSS Chassis.Accelerator branch specification
+ */
 class Accelerator
 {
   public:

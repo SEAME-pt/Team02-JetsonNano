@@ -2,6 +2,18 @@
 
 #include <iostream>
 
+/**
+ * @brief Vehicle exterior environment monitoring system
+ *
+ * @details Monitors external environmental conditions:
+ *          - Air temperature (Celsius)
+ *          - Humidity (0-100%)
+ *          - Light intensity (0-100%)
+ *
+ * @note Temperature in Celsius
+ * @note Humidity and light intensity as percentages
+ * @note Implements VSS Vehicle.Exterior branch specification
+ */
 class Exterior
 {
   public:

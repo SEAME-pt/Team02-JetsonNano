@@ -4,6 +4,27 @@
 #include <string>
 #include <optional>
 
+/**
+ * @brief Controller state publisher
+ *
+ * @details Publishes controller inputs and vehicle control states:
+ *          - Motion control (speed, steering)
+ *          - Light system controls
+ *          - Gear selection
+ *          - Warning signals
+ *
+ * Published states:
+ * - Speed control (-100 to +100)
+ * - Steering angle (0° to 180°)
+ * - Light states (on/off)
+ * - Gear selection (P,R,N,D)
+ * - Warning indicators (hazard, direction)
+ *
+ * @note All states published as VSS-compliant signals
+ * @see zenoh::Session
+ * @see zenoh::Publisher
+ * @see XboxController
+ */
 class ControllerPublisher
 {
   public:
