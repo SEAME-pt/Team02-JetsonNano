@@ -4,6 +4,31 @@
 #include <zenoh.hxx>
 #include <optional>
 
+/**
+ * @brief Vehicle Signal Specification (VSS) subscriber
+ *
+ * @details Subscribes to VSS-compliant vehicle control signals including:
+ *          - Motion control (throttle, steering)
+ *          - Light control (all exterior lights)
+ *          - Battery monitoring
+ *          - Gear selection
+ *
+ * Features:
+ * - Automatic signal routing to vehicle systems
+ * - CAN bus integration support
+ * - Real-time state updates
+ *
+ * Signal categories:
+ * - Vehicle control (speed, steering)
+ * - Lighting system control
+ * - Powertrain monitoring
+ * - Battery management
+ *
+ * @note Implements VSS data model for vehicle signals
+ * @see Vehicle
+ * @see zenoh::Session
+ * @see zenoh::Subscriber
+ */
 class VSSSubscriber
 {
   public:

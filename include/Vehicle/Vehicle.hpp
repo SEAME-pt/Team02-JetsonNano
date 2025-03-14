@@ -10,6 +10,30 @@
 #include "AngularVelocity.hpp"
 #include "MotionManagement.hpp"
 
+/**
+ * @brief Vehicle management system
+ *
+ * @details Main vehicle class that integrates all vehicle subsystems:
+ *          - Motion management
+ *          - Body systems
+ *          - Powertrain
+ *          - ADAS
+ *          - Chassis
+ *          - Exterior sensors
+ *          - Connectivity
+ *
+ * Key measurements:
+ * - Speed (km/h)
+ * - Distance (km)
+ * - Weight (kg)
+ * - Dimensions (mm)
+ *
+ * @note Implements VSS Vehicle branch specification
+ * @see MotionManagement
+ * @see Powertrain
+ * @see Body
+ * @see ADAS
+ */
 class Vehicle
 {
   public:

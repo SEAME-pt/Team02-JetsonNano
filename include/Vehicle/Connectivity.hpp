@@ -2,6 +2,17 @@
 
 #include <iostream>
 
+/**
+ * @brief Vehicle connectivity management system
+ *
+ * @details Manages vehicle-to-X (V2X) connectivity:
+ *          - Connection availability monitoring
+ *          - Cloud connectivity status
+ *          - Service availability control
+ *
+ * @note Used for feature availability decisions
+ * @note Implements VSS Vehicle.Connectivity branch specification
+ */
 class Connectivity
 {
   public:

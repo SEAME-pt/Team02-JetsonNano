@@ -2,6 +2,23 @@
 
 #include <iostream>
 
+/**
+ * @brief Individual Detection Zone class
+ *
+ * @details Represents a single detection zone with capabilities for:
+ *          - Distance measurement
+ *          - Warning generation
+ *          - Error monitoring
+ *          - Time gap calculation
+ *
+ * Warning types supported:
+ * - UNDEFINED: Basic object detection
+ * - CROSS_TRAFFIC: Objects on intercepting trajectories
+ * - BLIND_SPOT: Objects in driver's blind spots
+ *
+ * @note All distance measurements are in meters
+ * @note Time gaps are measured in milliseconds
+ */
 class Detection
 {
   public:
@@ -37,6 +54,22 @@ class Detection
     void set_warning_type(const std::string& value);
 };
 
+/**
+ * @brief Obstacle Detection System class
+ *
+ * @details Manages the vehicle's obstacle detection capabilities through
+ * multiple sensors. Provides front and rear detection zones with specific
+ * detection capabilities for each zone.
+ *
+ * The system integrates:
+ * - Front obstacle detection
+ * - Rear obstacle detection
+ * - Warning system integration
+ * - Error state monitoring
+ *
+ * @note Implements VSS ObstacleDetection branch specifications
+ * @see Detection
+ */
 class ObstacleDetection
 {
   public:

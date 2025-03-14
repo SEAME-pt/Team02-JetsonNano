@@ -3,6 +3,22 @@
 #include "SteeringWheel.hpp"
 #include <iostream>
 
+/**
+ * @brief Vehicle steering management system
+ *
+ * @details Coordinates steering functionality including:
+ *          - Steering wheel position control
+ *          - Multi-axle steering coordination
+ *          - Steering assistance management
+ *
+ * Features:
+ * - Steering wheel angle monitoring
+ * - Multiple steering rack support
+ * - Steering assistance levels
+ *
+ * @note Implements VSS Vehicle.MotionManagement.Steering branch specification
+ * @see SteeringWheel
+ */
 class Steering
 {
   public:

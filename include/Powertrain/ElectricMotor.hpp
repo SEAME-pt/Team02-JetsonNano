@@ -5,6 +5,21 @@
 #include <memory>
 #include "IVehicleObserver.hpp"
 
+/**
+ * @brief Electric motor control and monitoring system
+ *
+ * @details Manages electric motor operations including:
+ *          - Speed control and monitoring
+ *          - Power management
+ *          - Usage time tracking
+ *          - Observer pattern for speed changes
+ *
+ * @note Speed in RPM (negative values indicate reverse)
+ * @note Power in kilowatts
+ * @note Time in hours
+ * @note Implements VSS Powertrain.ElectricMotor branch specification
+ * @see IVehicleObserver
+ */
 class ElectricMotor
 {
   public:

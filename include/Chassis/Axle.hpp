@@ -2,6 +2,16 @@
 
 #include <iostream>
 
+/**
+ * @brief Wheel management class
+ *
+ * @details Manages individual wheel characteristics and measurements including:
+ *          - Linear speed (km/h)
+ *          - Angular speed (degrees/s)
+ *
+ * @note Angular speed is positive for forward motion, negative for backward
+ * motion
+ */
 class Wheel
 {
   public:
@@ -20,6 +30,20 @@ class Wheel
     void set_speed(const float value);
 };
 
+/**
+ * @brief Axle row management class
+ *
+ * @details Controls a single axle row with attributes defined by ETRTO/TRA
+ * standards:
+ *          - Track/Tread width measurements
+ *          - Wheel configurations
+ *          - Tire specifications
+ *          - Steering angle control
+ *
+ * @note All width measurements are in millimeters
+ * @note Wheel/tire measurements follow ETRTO/TRA standards
+ * @see SAE J1100-2009 for width definitions
+ */
 class AxleRow
 {
   public:
@@ -80,6 +104,15 @@ class AxleRow
     void set_wheel_width(const float value);
 };
 
+/**
+ * @brief Complete axle system management
+ *
+ * @details Manages multiple axle rows in the vehicle chassis:
+ *          - Front axle (Row 1)
+ *          - Rear axle (Row 2)
+ *
+ * @note Implements VSS Chassis.Axle branch specification
+ */
 class Axle
 {
   public:

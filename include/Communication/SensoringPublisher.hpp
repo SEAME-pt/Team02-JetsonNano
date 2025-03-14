@@ -4,6 +4,25 @@
 #include <string>
 #include <optional>
 
+/**
+ * @brief Publisher for vehicle sensor data
+ *
+ * @details Publishes vehicle sensor readings via Zenoh including:
+ *          - Vehicle speed
+ *          - Battery voltage
+ *          - Battery current
+ *          - Battery power
+ *          - Battery state of charge
+ *
+ * Each measurement is published on a dedicated Zenoh topic for:
+ * - Real-time monitoring
+ * - Data logging
+ * - External system integration
+ *
+ * @note All electrical measurements use SI units (V, A, W)
+ * @see zenoh::Session
+ * @see zenoh::Publisher
+ */
 class SensoringPublisher
 {
   public:
