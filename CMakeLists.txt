@@ -169,6 +169,11 @@ if(ENABLE_TESTING)
         ./tests/ADAS/ObstacleDetectionTests.cpp
     )
 
+set(CONTROLLERS_TEST_FILES
+    ./tests/Controllers/MockFunctions.cpp
+    ./tests/Controllers/XboxControllerTests.cpp
+)
+
     set(COMMUNICATION_TEST_FILES
         ./tests/Communication/ControllerPublisherTests.cpp
         ./tests/Communication/SensoringPublisherTests.cpp
@@ -192,21 +197,22 @@ if(ENABLE_TESTING)
 
     target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
 
+add_executable(vehicle_tests
+    ${VEHICLE_TEST_FILES}
+    ${MOTION_TEST_FILES}
+    ${POWERTRAIN_TEST_FILES}
+    ${CHASSIS_TEST_FILES}
+    ${BODY_TEST_FILES}
+    ${ADAS_TEST_FILES}
+    ${COMMUNICATION_TEST_FILES}
+    ${CONTROLLERS_TEST_FILES}
+)
+
     target_link_libraries(vehicle_test_lib PUBLIC
         zenohcxx::zenohc
         I2C
         PCA9685
         CAN
-    )
-
-    add_executable(vehicle_tests
-        ${VEHICLE_TEST_FILES}
-        ${MOTION_TEST_FILES}
-        ${POWERTRAIN_TEST_FILES}
-        ${CHASSIS_TEST_FILES}
-        ${BODY_TEST_FILES}
-        ${ADAS_TEST_FILES}
-        ${COMMUNICATION_TEST_FILES}
     )
 
     target_link_libraries(vehicle_tests PRIVATE
