@@ -71,6 +71,8 @@ TEST_CASE("VehicleSystem Tests", "[vehicle_system]")
         REQUIRE(queryable != nullptr);
     }
 
+
+
     // SECTION("Communication Components Tests")
     // {
     //     VehicleSystem system;

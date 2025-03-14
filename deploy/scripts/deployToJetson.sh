@@ -93,6 +93,7 @@ if check_ssh_connection "$IpAddress" "$UserName"; then
     
     setup_services
 
+
     echo "Restarting services on JetsonNano..."
     sshpass -p "$Pass" ssh -t "$UserName"@"$IpAddress" "echo $Pass | sudo -S systemctl start middleware.service vehiclesystem.service controller.service"
 else
