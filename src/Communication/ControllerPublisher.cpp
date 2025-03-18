@@ -31,7 +31,7 @@ ControllerPublisher::ControllerPublisher(
         zenoh::KeyExpr("Vehicle/1/Body/Lights/DirectionIndicator/Right")));
     currentGear_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/Transmission/CurrentGear")));
-    activeAutonomyLevel.emplace(session_->declare_publisher(
+    activeAutonomyLevel_pub.emplace(session_->declare_publisher(
             zenoh::KeyExpr("Vehicle/1/ADAS/ActiveAutonomyLevel")));
 }
 
@@ -100,7 +100,7 @@ void ControllerPublisher::publishCurrentGear(int gear)
     currentGear_pub->put(std::to_string(gear));
 }
 
-void ControllerPublisher::publishActiveAutonomyLevel(string level)
+void ControllerPublisher::publishActiveAutonomyLevel(std::string level)
 {
     activeAutonomyLevel_pub->put(level);
 }

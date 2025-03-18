@@ -4,7 +4,7 @@
 #include <vector>
 #include <zenoh.hxx>
 #include "PidController.hpp"
-#include "Communication/LaneDetectorPublisher.hpp"
+#include "LaneDetectorPublisher.hpp"
 
 class LaneDetectorCV
 {

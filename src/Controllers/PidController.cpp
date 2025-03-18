@@ -19,9 +19,16 @@
   #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
+double getCurrentTime() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
 PidController::PidController()
 {
     prev_error_ = 0.0f;
+    cameraError_ = 0.0f;
     integral_ = 0.0f;
     last_time_ = 0.0f;
 
@@ -83,11 +90,11 @@ PidController::PidController()
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
         {
-            std::string autonomy = sample.get_payload().as_string();
-            if (autonomy == "SAE_5" && getAutonomousDriveState() == false) {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            if (activeAutonomyLevel == "SAE_5" && getAutonomousDriveState() == false) {
                 setAutonomousDriveState(true);
             } else if (getAutonomousDriveState() == true) {
-                setAutonomousDriveState(false)
+                setAutonomousDriveState(false);
             } else {
                 //empty
             }
@@ -97,10 +104,10 @@ PidController::PidController()
     std::cout << "PID controller created!" << std::endl;
 }
 
-PidController::PidController(onst std::string& configFile)
+PidController::PidController(const std::string& configFile)
 {
     prev_error_ = 0.0f;
-    error_ = 0.0f;
+    cameraError_ = 0.0f;
     integral_ = 0.0f;
     last_time_ = 0.0f;
 
@@ -121,7 +128,11 @@ PidController::PidController(onst std::string& configFile)
 
     kp_subscriber.emplace(session_->declare_subscriber(
         "pid/kp",
-        &data_handler,
+        [this](const zenoh::Sample& sample)
+        {
+            float kp = std::stof(sample.get_payload().as_string());
+            kp_ = kp;
+        },
         zenoh::closures::none));
 
     ki_subscriber.emplace(session_->declare_subscriber(
@@ -155,8 +166,13 @@ PidController::PidController(onst std::string& configFile)
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (activeAutonomyLevel == "SAE_5")
-            setAutonomousDriveState(true)
+            if (activeAutonomyLevel == "SAE_5" && getAutonomousDriveState() == false) {
+                setAutonomousDriveState(true);
+            } else if (getAutonomousDriveState() == true) {
+                setAutonomousDriveState(false);
+            } else {
+                //empty
+            }
         },
         zenoh::closures::none));
     std::cout << "PID controller created!" << std::endl;
@@ -172,7 +188,7 @@ void PidController::init(float kp, float ki, float kd, float speed, float delta_
     constant_speed_ = speed;
     fixed_delta_time_ = delta_time;
     
-    previous_error_ = 0.0f;
+    prev_error_ = 0.0f;
     integral_ = 0.0f;
     
     std::cout << "PID Controller initialized with Kp=" << kp_ << ", Ki=" << ki_ 
@@ -208,7 +224,7 @@ void PidController::updateControl(float error, float current_time) {
     // publisher_->publishSpeed(constant_speed_);
     // publisher_->publishCurrentGear(1);
 
-    previous_error_ = error;
+    prev_error_ = error;
     last_time_ = current_time;
 
 }
@@ -221,7 +237,7 @@ void PidController::run()
         if (getAutonomousDriveState())
         {
             float current_time = getCurrentTime();
-            updateControl(error_, current_time);
+            updateControl(cameraError_, current_time);
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
@@ -231,12 +247,12 @@ void PidController::run()
     }
 }
 
-void setAutonomousDriveState(bool toggle)
+void PidController::setAutonomousDriveState(bool toggle)
 {
     autonomousDrive_ = toggle;
 }
 
-bool getAutonomousDriveState() const
+bool PidController::getAutonomousDriveState() const
 {
     return autonomousDrive_;
 }
