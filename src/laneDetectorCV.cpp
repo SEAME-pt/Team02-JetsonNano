@@ -4,7 +4,7 @@
 
 using namespace zenoh;
 
-int main(int argc, char** argv)
+int main(void)
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "

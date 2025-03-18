@@ -4,12 +4,12 @@ project(VehicleSystem VERSION 0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
+find_package(OpenCV REQUIRED)
 
 include(FetchContent)
 
@@ -31,11 +31,11 @@ include_directories(include/Vehicle)
 include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
+include_directories(include/MiddleWare/LaneDetector)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
-include_directories(include/MiddleWare/LaneDetector)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -95,36 +95,32 @@ add_executable(XboxController
 
 target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 
-target_link_libraries(CombinedController
+target_link_libraries(XboxController
     zenohcxx::zenohc)
 
-add_executable(combinedController
+add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
     ./src/Communication/ControllerPublisher.cpp
     ./src/combinedControl.cpp
 )
 
-
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(CombinedController
     zenohcxx::zenohc)
 
-add_executable(laneDetector
-    ./src/Middleware/LaneDetector/LaneDetectorCV.cpp
+add_executable(LaneDetector
+    ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
     ./src/laneDetectorCV.cpp
 )
-
 
 target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(LaneDetector
-    zenohcxx::zenohc)
-
-
-
-
+    ${OpenCV_LIBS}
+    zenohcxx::zenohc
+)
 
 add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp

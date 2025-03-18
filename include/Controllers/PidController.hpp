@@ -7,7 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-
+#include <sys/time.h>
 
 #ifdef TEST_MODE
   // Declare your custom functions
@@ -18,11 +18,16 @@
   extern "C" ssize_t custom_xbox_write(int fd, const void* buf, size_t count);
 #endif
 
-class PidController : public IVehicleController
+class PidController
 {
 private:
     std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
+    std::optional<zenoh::Subscriber<void>> kp_subscriber;
+    std::optional<zenoh::Subscriber<void>> ki_subscriber;
+    std::optional<zenoh::Subscriber<void>> kd_subscriber;
+    std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
+    std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     
     // PID constants
     float kp_; // Proportional gain

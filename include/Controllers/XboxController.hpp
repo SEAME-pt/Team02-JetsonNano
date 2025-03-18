@@ -98,7 +98,7 @@ struct axis_state
  * @see ControllerPublisher
  * @see zenoh::Session
  */
-class XboxController : public IVehicleController
+class XboxController
 {
   private:
     int js;
