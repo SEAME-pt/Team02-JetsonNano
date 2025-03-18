@@ -35,6 +35,7 @@ include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
+include_directories(include/MiddleWare/LaneDetector)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -94,8 +95,35 @@ add_executable(XboxController
 
 target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 
-target_link_libraries(XboxController
+target_link_libraries(CombinedController
     zenohcxx::zenohc)
+
+add_executable(combinedController
+    ./src/Controllers/XboxController.cpp
+    ./src/Controllers/PidController.cpp
+    ./src/Communication/ControllerPublisher.cpp
+    ./src/combinedControl.cpp
+)
+
+
+target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
+
+target_link_libraries(CombinedController
+    zenohcxx::zenohc)
+
+add_executable(laneDetector
+    ./src/Middleware/LaneDetector/LaneDetectorCV.cpp
+    ./src/laneDetectorCV.cpp
+)
+
+
+target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
+
+target_link_libraries(LaneDetector
+    zenohcxx::zenohc)
+
+
+
 
 
 add_executable(MiddleWare
@@ -169,10 +197,10 @@ if(ENABLE_TESTING)
         ./tests/ADAS/ObstacleDetectionTests.cpp
     )
 
-set(CONTROLLERS_TEST_FILES
-    ./tests/Controllers/MockFunctions.cpp
-    ./tests/Controllers/XboxControllerTests.cpp
-)
+    set(CONTROLLERS_TEST_FILES
+        ./tests/Controllers/MockFunctions.cpp
+        ./tests/Controllers/XboxControllerTests.cpp
+    )
 
     set(COMMUNICATION_TEST_FILES
         ./tests/Communication/ControllerPublisherTests.cpp
@@ -197,16 +225,16 @@ set(CONTROLLERS_TEST_FILES
 
     target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
 
-add_executable(vehicle_tests
-    ${VEHICLE_TEST_FILES}
-    ${MOTION_TEST_FILES}
-    ${POWERTRAIN_TEST_FILES}
-    ${CHASSIS_TEST_FILES}
-    ${BODY_TEST_FILES}
-    ${ADAS_TEST_FILES}
-    ${COMMUNICATION_TEST_FILES}
-    ${CONTROLLERS_TEST_FILES}
-)
+    add_executable(vehicle_tests
+        ${VEHICLE_TEST_FILES}
+        ${MOTION_TEST_FILES}
+        ${POWERTRAIN_TEST_FILES}
+        ${CHASSIS_TEST_FILES}
+        ${BODY_TEST_FILES}
+        ${ADAS_TEST_FILES}
+        ${COMMUNICATION_TEST_FILES}
+        ${CONTROLLERS_TEST_FILES}
+    )
 
     target_link_libraries(vehicle_test_lib PUBLIC
         zenohcxx::zenohc

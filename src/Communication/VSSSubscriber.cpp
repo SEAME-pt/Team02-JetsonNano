@@ -279,4 +279,14 @@ void VSSSubscriber::setupSubscriptions()
             this->sendToCAN_(0x04, gearData, sizeof(gearData));
         },
         zenoh::closures::none));
+
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            this->vehicle_.get_mutable_ADAS()
+                .set_active_autonomy_level(activeAutonomyLevel);
+        },
+        zenoh::closures::none));
 }

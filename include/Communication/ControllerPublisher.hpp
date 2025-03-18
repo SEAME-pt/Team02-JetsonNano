@@ -43,6 +43,7 @@ class ControllerPublisher
     void publishDirectionIndicatorLeft(bool isSignaling);
     void publishDirectionIndicatorRight(bool isSignaling);
     void publishCurrentGear(int gear);
+    void publishActiveAutonomyLevel(string level);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
@@ -59,4 +60,5 @@ class ControllerPublisher
     std::optional<zenoh::Publisher> directionIndicatorLeft_pub;
     std::optional<zenoh::Publisher> directionIndicatorRight_pub;
     std::optional<zenoh::Publisher> currentGear_pub;
+    std::optional<zenoh::Publisher> activeAutonomyLevel_pub;
 };

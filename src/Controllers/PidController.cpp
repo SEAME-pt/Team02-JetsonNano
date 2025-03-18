@@ -1,5 +1,24 @@
 #include "PidController.hpp"
 
+#ifdef TEST_MODE
+  // Define custom function names for testing
+  #define device_open custom_xbox_open
+  #define device_close custom_xbox_close
+  #define device_ioctl custom_xbox_ioctl
+  #define device_read custom_xbox_read
+  #define device_write custom_xbox_write
+  #define SESSION_OPEN zenoh::Session::open
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
+#else
+  #define device_open open
+  #define device_close close
+  #define device_ioctl ioctl
+  #define device_read read
+  #define device_write write
+  #define SESSION_OPEN zenoh::Session::open
+  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
+#endif
+
 PidController::PidController()
 {
     prev_error_ = 0.0f;
@@ -14,6 +33,7 @@ PidController::PidController()
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
+    autonomousDrive_ = false;
 
     auto config = zenoh::Config::create_default();
     session_    = std::make_shared<zenoh::Session>(
@@ -21,12 +41,66 @@ PidController::PidController()
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
+    kp_subscriber.emplace(session_->declare_subscriber(
+        "pid/kp",
+        [this](const zenoh::Sample& sample)
+        {
+            float kp = std::stof(sample.get_payload().as_string());
+            std::cout << "kp: " << kp << std::endl;
+            kp_ = kp;
+        },
+        zenoh::closures::none));
+
+    ki_subscriber.emplace(session_->declare_subscriber(
+        "pid/ki",
+        [this](const zenoh::Sample& sample)
+        {
+            float ki = std::stof(sample.get_payload().as_string());
+            std::cout << "ki: " << ki << std::endl;
+            ki_ = ki;
+        },
+        zenoh::closures::none));
+
+    kd_subscriber.emplace(session_->declare_subscriber(
+        "pid/kd",
+        [this](const zenoh::Sample& sample)
+        {
+            float kd = std::stof(sample.get_payload().as_string());
+            std::cout << "kd: " << kd << std::endl;
+            kd_ = kd;
+        },
+        zenoh::closures::none));
+    
+    cameraError_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/LaneDetection/CameraError",
+        [this](const zenoh::Sample& sample)
+        {
+            cameraError_ = std::stof(sample.get_payload().as_string());
+        },
+        zenoh::closures::none));
+
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string autonomy = sample.get_payload().as_string();
+            if (autonomy == "SAE_5" && getAutonomousDriveState() == false) {
+                setAutonomousDriveState(true);
+            } else if (getAutonomousDriveState() == true) {
+                setAutonomousDriveState(false)
+            } else {
+                //empty
+            }
+        },
+        zenoh::closures::none));
+
     std::cout << "PID controller created!" << std::endl;
 }
 
 PidController::PidController(onst std::string& configFile)
 {
     prev_error_ = 0.0f;
+    error_ = 0.0f;
     integral_ = 0.0f;
     last_time_ = 0.0f;
 
@@ -45,13 +119,53 @@ PidController::PidController(onst std::string& configFile)
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
+    kp_subscriber.emplace(session_->declare_subscriber(
+        "pid/kp",
+        &data_handler,
+        zenoh::closures::none));
+
+    ki_subscriber.emplace(session_->declare_subscriber(
+        "pid/ki",
+        [this](const zenoh::Sample& sample)
+        {
+            float ki = std::stof(sample.get_payload().as_string());
+            ki_ = ki;
+        },
+        zenoh::closures::none));
+
+    kd_subscriber.emplace(session_->declare_subscriber(
+        "pid/kd",
+        [this](const zenoh::Sample& sample)
+        {
+            float kd = std::stof(sample.get_payload().as_string());
+            kd_ = kd;
+        },
+        zenoh::closures::none));
+
+    cameraError_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/LaneDetection/CameraError",
+        [this](const zenoh::Sample& sample)
+        {
+            cameraError_ = std::stof(sample.get_payload().as_string());
+        },
+        zenoh::closures::none));
+        
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            if (activeAutonomyLevel == "SAE_5")
+            setAutonomousDriveState(true)
+        },
+        zenoh::closures::none));
     std::cout << "PID controller created!" << std::endl;
 }
 
 PidController::~PidController()
 {}
 
-void PidLaneController::init(float kp, float ki, float kd, float speed, float delta_time) {
+void PidController::init(float kp, float ki, float kd, float speed, float delta_time) {
     kp_ = kp;
     ki_ = ki;
     kd_ = kd;
@@ -66,7 +180,7 @@ void PidLaneController::init(float kp, float ki, float kd, float speed, float de
               << ", dt=" << fixed_delta_time_ << std::endl;
 }
 
-void PidLaneController::updateControl(float error, float current_time) {
+void PidController::updateControl(float error, float current_time) {
     
     // dt
     float dt = current_time - last_time_;
@@ -76,7 +190,7 @@ void PidLaneController::updateControl(float error, float current_time) {
     float p_term = kp_ * error;
 
     integral_ += error * dt;
-    float i_term = ki * integral_;
+    float i_term = ki_ * integral_;
     
     float d_term = kd_ * (error - prev_error_) / dt;
 
@@ -91,22 +205,38 @@ void PidLaneController::updateControl(float error, float current_time) {
     }
 
     publisher_->publishSteering(direction);
-    publisher_->publishSpeed(constant_speed_);
-    publisher_->publishCurrentGear(1);
+    // publisher_->publishSpeed(constant_speed_);
+    // publisher_->publishCurrentGear(1);
 
     previous_error_ = error;
     last_time_ = current_time;
 
 }
 
-void PidLaneController::run() {
+void PidController::run() 
+{
 
     while(true)
     {
-        //float error = getLaneError(); // Get from camera/vision system
-        float current_time = getCurrentTime();
-        updateControl(error, current_time);
-        std::this_thread::sleep_for(std::chrono::milliseconds(
-            static_cast<int>(fixed_delta_time_ * 1000)));
+        if (getAutonomousDriveState())
+        {
+            float current_time = getCurrentTime();
+            updateControl(error_, current_time);
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                static_cast<int>(fixed_delta_time_ * 1000)));
+        }
+        else {
+            //empty
+        }
     }
+}
+
+void setAutonomousDriveState(bool toggle)
+{
+    autonomousDrive_ = toggle;
+}
+
+bool getAutonomousDriveState() const
+{
+    return autonomousDrive_;
 }
