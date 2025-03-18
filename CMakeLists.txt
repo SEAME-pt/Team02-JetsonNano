@@ -10,6 +10,7 @@ set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 
@@ -108,10 +109,12 @@ add_executable(CombinedController
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(CombinedController
+    ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc)
 
 add_executable(LaneDetector
     ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
     ./src/laneDetectorCV.cpp
 )
 
@@ -132,6 +135,7 @@ add_executable(MiddleWare
 target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(MiddleWare
+    ${CMAKE_THREAD_LIBS_INIT}
     Libs
     vehicle_lib
 )
