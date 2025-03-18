@@ -140,6 +140,7 @@ void XboxController::run()
                         case BUTTON_RB:
                         {
                             publisher_->publishDirectionIndicatorRight(true);
+                            
                             std::cout << "RightBlinker" << std::endl;
                             break;
                         }
@@ -185,6 +186,12 @@ void XboxController::run()
                             std::cout << "parkingLight" << std::endl;
                             break;
                         }
+                        case BUTTON_START:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_5");
+                            std::cout << "parkingLight" << std::endl;
+                            break;
+                        }
 
                         default:
                             break;
@@ -200,6 +207,7 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
+                        publisher_->publishActiveAutonomyLevel("SAE_0");
                         if (speed < -5)
                         {
                             publisher_->publishCurrentGear(-1);
@@ -219,6 +227,7 @@ void XboxController::run()
                     case (AXIS_RIGHT_STICK):
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
+                        publisher_->publishActiveAutonomyLevel("SAE_0");
                         publisher_->publishSteering(direction);
                         std::cout << "Direction" << std::endl;
                         break;

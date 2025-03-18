@@ -3,11 +3,23 @@
 #include <memory>
 #include <zenoh.hxx>
 #include "ControllerPublisher.hpp"
+#include "IVehicleController.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-class PidController {
+
+#ifdef TEST_MODE
+  // Declare your custom functions
+  extern "C" int custom_xbox_open(const char* path, int flags);
+  extern "C" int custom_xbox_close(int fd);
+  extern "C" int custom_xbox_ioctl(int fd, unsigned long request, int* arg);
+  extern "C" ssize_t custom_xbox_read(int fd, void* buf, size_t count);
+  extern "C" ssize_t custom_xbox_write(int fd, const void* buf, size_t count);
+#endif
+
+class PidController : public IVehicleController
+{
 private:
     std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
@@ -19,6 +31,7 @@ private:
     
     // PID variables
     float prev_error_;
+    float cameraError_;
     float integral_;
     float last_time_;
     
@@ -27,7 +40,9 @@ private:
     float max_steering_angle_; // Maximum steering angle
 
     float fixed_delta_time_;
-    
+
+    bool autonomousDrive_;
+
 public:
     PidController();
     PidController(const std::string& configFile);
@@ -35,5 +50,9 @@ public:
     
     void init(float kp, float ki, float kd, float speed, float delta_time);
     void updateControl(float lane_error, float current_time);
+
+    void setAutonomousDriveState(bool toggle);
+    bool getAutonomousDriveState() const;
+
     void run(); // Main control loop
 };
