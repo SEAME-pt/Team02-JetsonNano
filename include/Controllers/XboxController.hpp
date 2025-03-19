@@ -12,6 +12,9 @@
 #include <string>
 #include <cstring>
 #include "ControllerPublisher.hpp"
+#include "ADAS.hpp"
+#include "Vehicle.hpp"
+#include "IVehicleController.hpp"
 #include "zenoh.hxx"
 
 

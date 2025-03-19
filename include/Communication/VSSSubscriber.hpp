@@ -64,6 +64,7 @@ class VSSSubscriber
     std::optional<zenoh::Subscriber<void>> currentCurrent_subscriber;
     std::optional<zenoh::Subscriber<void>> currentPower_subscriber;
     std::optional<zenoh::Subscriber<void>> currentGear_subscriber;
+    std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
 
     void setupSubscriptions();
 };
