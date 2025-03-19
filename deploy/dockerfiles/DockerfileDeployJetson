@@ -1,4 +1,4 @@
-FROM ruipires99/jetsoncrosscompile:latest
+FROM ruipires99/jetsoncrosscompile:0.0.2
 
 ARG projectDir
 
