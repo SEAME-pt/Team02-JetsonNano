@@ -2,9 +2,9 @@
 
 ControllerPublisher::ControllerPublisher(
     std::shared_ptr<zenoh::Session> session)
-    : session_(session),
-      provider_(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})))
 {
+    session_ = session;
+    provider.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     throttle_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/ElectricMotor/Speed")));
     steering_pub.emplace(session_->declare_publisher(
@@ -123,7 +123,7 @@ void ControllerPublisher::publishFogFront(bool isOn)
     fogFront_pub->put(std::move(buf));
 }
 
-void ControllerPublisher::publishBrake(bool)
+void ControllerPublisher::publishBrake(bool isActive)
 {
     std::string value_str = std::to_string(isActive);
     const auto len        = value_str.size() + 1;
@@ -180,7 +180,7 @@ void ControllerPublisher::publishCurrentGear(int gear)
 
 void ControllerPublisher::publishActiveAutonomyLevel(std::string level)
 {
-    std::string value_str = std::to_string(level);
+    std::string value_str = level;
     const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
