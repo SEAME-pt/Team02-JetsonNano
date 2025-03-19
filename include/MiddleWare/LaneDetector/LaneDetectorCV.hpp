@@ -7,6 +7,7 @@
 #include <zenoh.hxx>
 #include "PidController.hpp"
 #include "LaneDetectorPublisher.hpp"
+#include <opencv2/video/tracking.hpp>
 
 class LaneDetectorCV
 {
@@ -31,6 +32,11 @@ private:
     
     // Processing parameters
     const int FRAME_SKIP;
+
+    //Kalman filter methods to stabilize lanes
+    cv::KalmanFilter leftLaneKF;
+    cv::KalmanFilter rightLaneKF;
+    bool kfInitialized;
     
 public:
     LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session);
@@ -45,6 +51,6 @@ private:
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
     std::vector<cv::Point> extrapolatePolynomialCurve(const std::vector<cv::Vec4i>& laneLines);
-    
+    void LaneDetectorCV::initKalmanFilters(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve);
 
 };

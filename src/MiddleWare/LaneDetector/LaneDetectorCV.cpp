@@ -20,7 +20,9 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zeno
     if(!cap.isOpened()) {
         throw std::runtime_error("Error opening video stream");
     }
-    
+    //set kalman filter status to false
+    kfInitialized = false;
+
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
     
@@ -281,40 +283,104 @@ int midX = width / 2;  // Middle of the image
     vector<Point> leftCurve = extrapolatePolynomialCurve(leftLines);
     vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
     
-    vector<Point2f> leftPoints, rightPoints;
-    for (auto line : leftLines) {
-        leftPoints.push_back(Point2f(line[0], line[1]));
-        leftPoints.push_back(Point2f(line[2], line[3]));
-    }
+    // Used to store found points to then represent
+    // vector<Point2f> leftPoints, rightPoints;
+    // for (auto line : leftLines) {
+    //     leftPoints.push_back(Point2f(line[0], line[1]));
+    //     leftPoints.push_back(Point2f(line[2], line[3]));
+    // }
 
-    for (auto line : rightLines) {
-        rightPoints.push_back(Point2f(line[0], line[1]));
-        rightPoints.push_back(Point2f(line[2], line[3]));
-    }
+    // for (auto line : rightLines) {
+    //     rightPoints.push_back(Point2f(line[0], line[1]));
+    //     rightPoints.push_back(Point2f(line[2], line[3]));
+    // }
 
     // 6. Fallback: if one lane is missing, use previous data or estimate it using lane width
-    if (leftCurve.empty()) {
-        leftCurve = prevLeftCurve;
-        // If we have right curve but no left curve, estimate left curve
-        if (!rightCurve.empty() && !prevRightCurve.empty()) {
-            leftCurve.clear();
-            for (const auto& pt : rightCurve) {
-                leftCurve.push_back(Point(pt.x - laneWidthEstimate, pt.y));
+    // Initialize Kalman filter if it's the first good detection
+    if (!kfInitialized && !leftCurve.empty() && !rightCurve.empty()) {
+        initKalmanFilters(leftCurve, rightCurve);
+    }
+
+    // Use Kalman filter predictions when lanes disappear
+    if (kfInitialized) {
+        // Always predict next state
+        cv::Mat leftPredicted = leftLaneKF.predict();
+        cv::Mat rightPredicted = rightLaneKF.predict();
+        
+        // If we have actual measurements, use them to update the filter
+        if (!leftCurve.empty() && leftCurve.size() >= 3) {
+            int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
+            cv::Mat measurement = (cv::Mat_<float>(3,1) << 
+                                leftCurve[bottom_idx].x, 
+                                leftCurve[mid_idx].x, 
+                                leftCurve[top_idx].x);
+            leftLaneKF.correct(measurement);
+        }
+        else if (leftCurve.empty()) {
+            // No measurement, use the prediction to generate a curve
+            vector<Point> predictedLeftCurve;
+            int height = frame.rows;
+            float bottom_x = leftPredicted.at<float>(0);
+            float mid_x = leftPredicted.at<float>(1);
+            float top_x = leftPredicted.at<float>(2);
+            
+            // Generate curve points using quadratic interpolation through the three points
+            int bottom_y = height;
+            int mid_y = height / 2;
+            int top_y = height / 3;
+            
+            // Calculate quadratic coefficients (y = ax^2 + bx + c)
+            // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
+            Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
+            Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
+            Mat coeffs = polyfit(Y, X, 2);
+            
+            if (!coeffs.empty() && coeffs.rows >= 3) {
+                for (int y = height; y >= height/3; y -= 5) {
+                    double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+                    predictedLeftCurve.push_back(Point(round(x), y));
+                }
+                leftCurve = predictedLeftCurve;
+            }
+        }
+        
+        // Similar logic for right curve
+        if (!rightCurve.empty() && rightCurve.size() >= 3) {
+            int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
+            cv::Mat measurement = (cv::Mat_<float>(3,1) << 
+                                rightCurve[bottom_idx].x, 
+                                rightCurve[mid_idx].x, 
+                                rightCurve[top_idx].x);
+            rightLaneKF.correct(measurement);
+        }
+        else if (rightCurve.empty()) {
+            // No measurement, use the prediction to generate a curve
+            vector<Point> predictedRightCurve;
+            int height = frame.rows;
+            float bottom_x = rightPredicted.at<float>(0);
+            float mid_x = rightPredicted.at<float>(1);
+            float top_x = rightPredicted.at<float>(2);
+            
+            // Generate curve points using quadratic interpolation through the three points
+            int bottom_y = height;
+            int mid_y = height / 2;
+            int top_y = height / 3;
+            
+            // Calculate quadratic coefficients (y = ax^2 + bx + c)
+            // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
+            Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
+            Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
+            Mat coeffs = polyfit(Y, X, 2);
+            
+            if (!coeffs.empty() && coeffs.rows >= 3) {
+                for (int y = height; y >= height/3; y -= 5) {
+                    double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+                    predictedRightCurve.push_back(Point(round(x), y));
+                }
+                leftCurve = predictedRightCurve;
             }
         }
     }
-    
-    if (rightCurve.empty()) {
-        rightCurve = prevRightCurve;
-        // If we have left curve but no right curve, estimate right curve
-        if (!leftCurve.empty() && !prevLeftCurve.empty()) {
-            rightCurve.clear();
-            for (const auto& pt : leftCurve) {
-                rightCurve.push_back(Point(pt.x + laneWidthEstimate, pt.y));
-            }
-        }
-    }
-    
     // Update lane width estimate if both curves have points
     if (!leftCurve.empty() && !rightCurve.empty() && 
         leftCurve.size() > 0 && rightCurve.size() > 0) {
@@ -381,9 +447,7 @@ int midX = width / 2;  // Middle of the image
     // 9. Compute the midline reference point
     Point midPoint;
     if (!midCurve.empty()) {
-        // Look for a point about 1/3 of the way up from the bottom of the frame
-        // This gives a better "look ahead" perspective for steering
-        int targetY = height - (height / 3);  // 1/3 up from bottom
+        int targetY = height - (2 * height / 3);  // 2/3 up from bottom
         
         // Find the closest point to our target Y value
         size_t closest_idx = 0;
@@ -478,4 +542,75 @@ void LaneDetectorCV::run() {
         if(waitKey(1) == 27)
             break;
     }
+}
+
+void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vector<Point>& rightCurve) {
+    // For simplicity, we'll track the bottom, middle, and top points of each lane
+    // State: [x_bottom, x_middle, x_top, vx_bottom, vx_middle, vx_top]
+    int stateSize = 6;
+    int measSize = 3;  // We measure x positions at three points
+    int controlSize = 0;  // No control input
+    
+    leftLaneKF.init(stateSize, measSize, controlSize, CV_32F);
+    rightLaneKF.init(stateSize, measSize, controlSize, CV_32F);
+    
+    // Initialize state transition matrix (constant velocity model)
+    // [ 1 0 0 1 0 0 ]
+    // [ 0 1 0 0 1 0 ]
+    // [ 0 0 1 0 0 1 ]
+    // [ 0 0 0 1 0 0 ]
+    // [ 0 0 0 0 1 0 ]
+    // [ 0 0 0 0 0 1 ]
+    cv::setIdentity(leftLaneKF.transitionMatrix);
+    cv::setIdentity(rightLaneKF.transitionMatrix);
+    for(int i = 0; i < 3; i++) {
+        leftLaneKF.transitionMatrix.at<float>(i, i+3) = 1.0f;
+        rightLaneKF.transitionMatrix.at<float>(i, i+3) = 1.0f;
+    }
+    
+    // Initialize measurement matrix
+    // [ 1 0 0 0 0 0 ]
+    // [ 0 1 0 0 0 0 ]
+    // [ 0 0 1 0 0 0 ]
+    cv::setIdentity(leftLaneKF.measurementMatrix, cv::Scalar(1));
+    cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
+    
+    // Set process noise covariance
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    
+    // Set measurement noise covariance
+    cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
+    cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
+    
+    // Set error covariance
+    cv::setIdentity(leftLaneKF.errorCovPost, cv::Scalar(1));
+    cv::setIdentity(rightLaneKF.errorCovPost, cv::Scalar(1));
+    
+    // Initialize state with current lane positions
+    if(!leftCurve.empty() && leftCurve.size() >= 3) {
+        int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
+        
+        leftLaneKF.statePost.at<float>(0) = leftCurve[bottom_idx].x;
+        leftLaneKF.statePost.at<float>(1) = leftCurve[mid_idx].x;
+        leftLaneKF.statePost.at<float>(2) = leftCurve[top_idx].x;
+        // Initialize velocities as 0
+        leftLaneKF.statePost.at<float>(3) = 0;
+        leftLaneKF.statePost.at<float>(4) = 0;
+        leftLaneKF.statePost.at<float>(5) = 0;
+    }
+    
+    if(!rightCurve.empty() && rightCurve.size() >= 3) {
+        int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
+        
+        rightLaneKF.statePost.at<float>(0) = rightCurve[bottom_idx].x;
+        rightLaneKF.statePost.at<float>(1) = rightCurve[mid_idx].x;
+        rightLaneKF.statePost.at<float>(2) = rightCurve[top_idx].x;
+        // Initialize velocities as 0
+        rightLaneKF.statePost.at<float>(3) = 0;
+        rightLaneKF.statePost.at<float>(4) = 0;
+        rightLaneKF.statePost.at<float>(5) = 0;
+    }
+    
+    kfInitialized = true;
 }
