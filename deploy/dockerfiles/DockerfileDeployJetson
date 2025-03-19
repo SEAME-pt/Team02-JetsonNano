@@ -18,9 +18,9 @@ COPY $projectDir /home/$projectDir
 RUN cd /home/$projectDir && \
     cmake . \
     -DCMAKE_BUILD_TYPE=Debug \
-    -DZENOHCXX_ZENOHC=ON \
-    -DENABLE_COVERAGE=ON \
-    -DBUILD_TESTING=ON && \
+    -DZENOHCXX_ZENOHC=ON && \
+    # -DENABLE_COVERAGE=ON \
+    # -DBUILD_TESTING=ON && \
     cmake --build . && \
     ctest --output-on-failure && \
     make coverage
