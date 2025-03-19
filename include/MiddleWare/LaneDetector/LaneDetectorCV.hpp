@@ -44,7 +44,7 @@ private:
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
-    std::vector<cv::Point> LaneDetectorCV::extrapolatePolynomialCurve(const std::vector<cv::Vec4i>& laneLines);
+    std::vector<cv::Point> extrapolatePolynomialCurve(const std::vector<cv::Vec4i>& laneLines);
     
 
 };
