@@ -35,8 +35,8 @@ class SensoringPublisher
     void publishStateOfCharge(float state_of_charge);
 
   private:
-    zenoh::PosixShmProvider provider_;
     std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> speed_pub;
     std::optional<zenoh::Publisher> current_voltage_pub;
     std::optional<zenoh::Publisher> current_current_pub;
