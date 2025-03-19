@@ -71,6 +71,8 @@ echo "Copy the binary from tmp container"
 docker cp tmpapp:/home/$projectDir/VehicleSystem ./VehicleSystem
 docker cp tmpapp:/home/$projectDir/XboxController ./XboxController
 docker cp tmpapp:/home/$projectDir/MiddleWare ./MiddleWare
+docker cp tmpapp:/home/$projectDir/CombinedController ./CombinedController
+docker cp tmpapp:/home/$projectDir/LaneDetector ./LaneDetector
 
 
 if check_ssh_connection "$IpAddress" "$UserName"; then
@@ -84,8 +86,8 @@ if check_ssh_connection "$IpAddress" "$UserName"; then
     "
 
     echo "Send binary to jetson over scp"
-    sshpass -p "$Pass" scp VehicleSystem XboxController MiddleWare "$UserName"@"$IpAddress":"$PathBin"
-    sshpass -p "$Pass" scp ./$configDir/VehicleSystemConfig.json ./$configDir/ControllerConfig.json ./$configDir/MiddleWareConfig.json "$UserName"@"$IpAddress":"$PathEtc"
+    sshpass -p "$Pass" scp VehicleSystem XboxController MiddleWare CombinedController LaneDetector "$UserName"@"$IpAddress":"$PathBin"
+    sshpass -p "$Pass" scp ./$configDir/VehicleSystemConfig.json ./$configDir/XboxControllerConfig.json ./$configDir/PidControllerConfig.json ./$configDir/MiddleWareConfig.json ./$configDir/LaneDetectorConfig.json "$UserName"@"$IpAddress":"$PathEtc"
     sshpass -p "$Pass" scp ./$systemdDir/*.service "$UserName"@"$IpAddress":"/opt/vehicle/etc/systemd/"
 
     echo "Setting correct permissions..."
