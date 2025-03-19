@@ -413,18 +413,71 @@ int midX = width / 2;  // Middle of the image
     if (!firstFrame) {
         // Only if we have previous curves and current curves
         if (!prevLeftCurve.empty() && !leftCurve.empty() && 
-            prevLeftCurve.size() == leftCurve.size()) {
+        prevLeftCurve.size() == leftCurve.size()) {
+            // Check for curvature to adjust alpha
+            double curvature = 0;
+            if (leftCurve.size() >= 3) {
+                // Calculate approximate curvature using three points
+                int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
+                vector<Point2f> points = {
+                    Point2f(leftCurve[bottom_idx].x, leftCurve[bottom_idx].y),
+                    Point2f(leftCurve[mid_idx].x, leftCurve[mid_idx].y),
+                    Point2f(leftCurve[top_idx].x, leftCurve[top_idx].y)
+                };
+                
+                vector<float> x_vals, y_vals;
+                for (auto& pt : points) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
+                }
+                
+                Mat x_mat(x_vals), y_mat(y_vals);
+                Mat coeffs = polyfit(y_mat, x_mat, 2);
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    curvature = abs(coeffs.at<double>(0)); // Quadratic coefficient
+                }
+            }
+            
+            // Adjust alpha based on curvature - sharper curves get less smoothing
+            double dynamicAlpha = min(0.8, alpha + curvature * 5000); // Adjust multiplier as needed
+            
             for (size_t i = 0; i < leftCurve.size(); i++) {
-                leftCurve[i].x = (int)(alpha * leftCurve[i].x + (1 - alpha) * prevLeftCurve[i].x);
-                leftCurve[i].y = (int)(alpha * leftCurve[i].y + (1 - alpha) * prevLeftCurve[i].y);
+                leftCurve[i].x = (int)(dynamicAlpha * leftCurve[i].x + (1 - dynamicAlpha) * prevLeftCurve[i].x);
+                leftCurve[i].y = (int)(dynamicAlpha * leftCurve[i].y + (1 - dynamicAlpha) * prevLeftCurve[i].y);
             }
         }
-        
         if (!prevRightCurve.empty() && !rightCurve.empty() && 
-            prevRightCurve.size() == rightCurve.size()) {
+        prevRightCurve.size() == rightCurve.size()) {
+            // Check for curvature to adjust alpha
+            double curvature = 0;
+            if (rightCurve.size() >= 3) {
+                // Calculate approximate curvature using three points
+                int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
+                vector<Point2f> points = {
+                    Point2f(rightCurve[bottom_idx].x, rightCurve[bottom_idx].y),
+                    Point2f(rightCurve[mid_idx].x, rightCurve[mid_idx].y),
+                    Point2f(rightCurve[top_idx].x, rightCurve[top_idx].y)
+                };
+                
+                vector<float> x_vals, y_vals;
+                for (auto& pt : points) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
+                }
+                
+                Mat x_mat(x_vals), y_mat(y_vals);
+                Mat coeffs = polyfit(y_mat, x_mat, 2);
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    curvature = abs(coeffs.at<double>(0)); // Quadratic coefficient
+                }
+            }
+            
+            // Adjust alpha based on curvature - sharper curves get less smoothing
+            double dynamicAlpha = min(0.8, alpha + curvature * 5000); // Adjust multiplier as needed
+            
             for (size_t i = 0; i < rightCurve.size(); i++) {
-                rightCurve[i].x = (int)(alpha * rightCurve[i].x + (1 - alpha) * prevRightCurve[i].x);
-                rightCurve[i].y = (int)(alpha * rightCurve[i].y + (1 - alpha) * prevRightCurve[i].y);
+                rightCurve[i].x = (int)(dynamicAlpha * rightCurve[i].x + (1 - dynamicAlpha) * prevRightCurve[i].x);
+                rightCurve[i].y = (int)(dynamicAlpha * rightCurve[i].y + (1 - dynamicAlpha) * prevRightCurve[i].y);
             }
         }
     }
@@ -576,8 +629,8 @@ void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vec
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
     
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
     
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
