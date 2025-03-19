@@ -26,7 +26,7 @@ class LaneDetectorPublisher
     void publishCameraError(float speed);
 
   private:
-    zenoh::PosixShmProvider provider_;
     std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> cameraError_pub;
 };
