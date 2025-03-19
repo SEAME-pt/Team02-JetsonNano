@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     gcovr \
     lcov \
+    libgtk2.0-dev \
+    pkg-config \
     openssl
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -23,6 +25,16 @@ RUN echo "Building CMake from source" && \
     echo "CMake build completed"
 
 WORKDIR /tmp
+
+RUN { \
+    git clone https://github.com/opencv/opencv.git && \
+    cd opencv && \
+    mkdir -p build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install; \
+}
 
 RUN { \
     git clone https://github.com/eclipse-zenoh/zenoh-c.git && \
