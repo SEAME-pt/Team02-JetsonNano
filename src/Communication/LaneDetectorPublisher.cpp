@@ -12,7 +12,7 @@ LaneDetectorPublisher::LaneDetectorPublisher(
 void LaneDetectorPublisher::publishCameraError(float error)
 {
     std::cout << "Error send: " << error << std::endl;
-    std::string value_str = to_string(error);
+    std::string value_str = std::to_string(error);
     const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));

@@ -37,8 +37,8 @@ ControllerPublisher::ControllerPublisher(
 
 void ControllerPublisher::publishSpeed(float speed)
 {
-    std::string value_str = to_string(speed);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(speed);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -48,8 +48,8 @@ void ControllerPublisher::publishSpeed(float speed)
 
 void ControllerPublisher::publishSteering(float steering)
 {
-    std::string value_str = to_string(steering);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(steering);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -59,8 +59,8 @@ void ControllerPublisher::publishSteering(float steering)
 
 void ControllerPublisher::publishBeamLow(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -70,8 +70,8 @@ void ControllerPublisher::publishBeamLow(bool isOn)
 
 void ControllerPublisher::publishBeamHigh(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -81,8 +81,8 @@ void ControllerPublisher::publishBeamHigh(bool isOn)
 
 void ControllerPublisher::publishRunning(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -92,8 +92,8 @@ void ControllerPublisher::publishRunning(bool isOn)
 
 void ControllerPublisher::publishParking(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -103,8 +103,8 @@ void ControllerPublisher::publishParking(bool isOn)
 
 void ControllerPublisher::publishFogRear(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -114,8 +114,8 @@ void ControllerPublisher::publishFogRear(bool isOn)
 
 void ControllerPublisher::publishFogFront(bool isOn)
 {
-    std::string value_str = to_string(isOn);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isOn);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -125,8 +125,8 @@ void ControllerPublisher::publishFogFront(bool isOn)
 
 void ControllerPublisher::publishBrake(bool)
 {
-    std::string value_str = to_string(isActive);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isActive);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -136,8 +136,8 @@ void ControllerPublisher::publishBrake(bool)
 
 void ControllerPublisher::publishHazard(bool isSignaling)
 {
-    std::string value_str = to_string(isSignaling);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isSignaling);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -147,8 +147,8 @@ void ControllerPublisher::publishHazard(bool isSignaling)
 
 void ControllerPublisher::publishDirectionIndicatorLeft(bool isSignaling)
 {
-    std::string value_str = to_string(isSignaling);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isSignaling);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -158,8 +158,8 @@ void ControllerPublisher::publishDirectionIndicatorLeft(bool isSignaling)
 
 void ControllerPublisher::publishDirectionIndicatorRight(bool isSignaling)
 {
-    std::string value_str = to_string(isSignaling);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(isSignaling);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -169,8 +169,8 @@ void ControllerPublisher::publishDirectionIndicatorRight(bool isSignaling)
 
 void ControllerPublisher::publishCurrentGear(int gear)
 {
-    std::string value_str = to_string(gear);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(gear);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -180,8 +180,8 @@ void ControllerPublisher::publishCurrentGear(int gear)
 
 void ControllerPublisher::publishActiveAutonomyLevel(std::string level)
 {
-    std::string value_str = to_string(level);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(level);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));

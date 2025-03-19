@@ -18,8 +18,8 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
 
 void SensoringPublisher::publishSpeed(float speed)
 {
-    std::string value_str = to_string(speed);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::std::to_string(speed);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -29,8 +29,8 @@ void SensoringPublisher::publishSpeed(float speed)
 
 void SensoringPublisher::publishCurrentVoltage(float voltage)
 {
-    std::string value_str = to_string(voltage);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(voltage);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -40,8 +40,8 @@ void SensoringPublisher::publishCurrentVoltage(float voltage)
 
 void SensoringPublisher::publishCurrentCurrent(float current)
 {
-    std::string value_str = to_string(current);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(current);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -51,8 +51,8 @@ void SensoringPublisher::publishCurrentCurrent(float current)
 
 void SensoringPublisher::publishCurrentPower(float power)
 {
-    std::string value_str = to_string(power);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(power);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -62,8 +62,8 @@ void SensoringPublisher::publishCurrentPower(float power)
 
 void SensoringPublisher::publishStateOfCharge(float state_of_charge)
 {
-    std::string value_str = to_string(state_of_charge);
-    const auto len   = value_str.size() + 1;
+    std::string value_str = std::to_string(state_of_charge);
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_.alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
