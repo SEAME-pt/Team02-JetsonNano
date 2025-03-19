@@ -326,7 +326,7 @@ int midX = width / 2;  // Middle of the image
                 
                 // Calculate curvature of the right lane (basic approach: get a curve coefficient)
                 int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
-                double rightCurvature = 0;
+                //double rightCurvature = 0;
                 
                 // Fit polynomial to right lane to get curvature
                 vector<Point2f> rightPoints = {
@@ -408,7 +408,7 @@ int midX = width / 2;  // Middle of the image
                 
                 // Calculate curvature of the left lane (basic approach: get a curve coefficient)
                 int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
-                double leftCurvature = 0;
+                //double leftCurvature = 0;
                 
                 // Fit polynomial to left lane to get curvature
                 vector<Point2f> leftPoints = {
