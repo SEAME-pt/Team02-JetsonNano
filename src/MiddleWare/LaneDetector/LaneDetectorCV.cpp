@@ -411,19 +411,19 @@ int midX = width / 2;  // Middle of the image
     // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
     
-    // // Draw left curve
-    // if (!leftCurve.empty()) {
-    //     for (size_t i = 1; i < leftCurve.size(); i++) {
-    //         line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
-    //     }
-    // }
+    // Draw left curve
+    if (!leftCurve.empty()) {
+        for (size_t i = 1; i < leftCurve.size(); i++) {
+            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+        }
+    }
     
-    // // Draw right curve
-    // if (!rightCurve.empty()) {
-    //     for (size_t i = 1; i < rightCurve.size(); i++) {
-    //         line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
-    //     }
-    // }
+    // Draw right curve
+    if (!rightCurve.empty()) {
+        for (size_t i = 1; i < rightCurve.size(); i++) {
+            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+        }
+    }
     
     // // Draw mid curve (optional)
     // if (!midCurve.empty()) {
@@ -436,13 +436,13 @@ int midX = width / 2;  // Middle of the image
     circle(lineImage, midPoint, 8, Scalar(0, 0, 255), -1);
     
     // Draw all detected points to see what's being fitted
-    for (const auto& pt : leftPoints) {
-        circle(lineImage, pt, 4, Scalar(255, 255, 0), -1);  // Yellow for left points
-    }
+    // for (const auto& pt : leftPoints) {
+    //     circle(lineImage, pt, 4, Scalar(255, 255, 0), -1);  // Yellow for left points
+    // }
 
-    for (const auto& pt : rightPoints) {
-        circle(lineImage, pt, 4, Scalar(0, 255, 255), -1);  // Cyan for right points
-    }
+    // for (const auto& pt : rightPoints) {
+    //     circle(lineImage, pt, 4, Scalar(0, 255, 255), -1);  // Cyan for right points
+    // }
 
     // 11. Overlay the lane curves and reference point on the original frame.
     addWeighted(frame, 0.8, lineImage, 1.0, 0, frame);
