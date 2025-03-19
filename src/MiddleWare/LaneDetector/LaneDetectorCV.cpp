@@ -381,14 +381,27 @@ int midX = width / 2;  // Middle of the image
     // 9. Compute the midline reference point
     Point midPoint;
     if (!midCurve.empty()) {
-        // Use the bottom-most point of the mid curve (or average multiple points)
-        size_t bottom_idx = 0;
+        // Look for a point about 1/3 of the way up from the bottom of the frame
+        // This gives a better "look ahead" perspective for steering
+        int targetY = height - (height / 3);  // 1/3 up from bottom
+        
+        // Find the closest point to our target Y value
+        size_t closest_idx = 0;
+        int min_distance = abs(midCurve[0].y - targetY);
+        
         for (size_t i = 1; i < midCurve.size(); i++) {
-            if (midCurve[i].y > midCurve[bottom_idx].y) {
-                bottom_idx = i;
+            int distance = abs(midCurve[i].y - targetY);
+            if (distance < min_distance) {
+                min_distance = distance;
+                closest_idx = i;
             }
         }
-        midPoint = midCurve[bottom_idx];
+        
+        // Use the point at the found index
+        midPoint = midCurve[closest_idx];
+        
+        // Draw a horizontal line at the target Y for visualization
+        line(frame, Point(0, targetY), Point(width, targetY), Scalar(0, 255, 255), 1);
     } else {
         // Fallback to center of image
         midPoint = Point(width/2, height*2/3);
