@@ -45,6 +45,7 @@ class ControllerPublisher
     void publishCurrentGear(int gear);
 
   private:
+    zenoh::PosixShmProvider provider_;
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::Publisher> throttle_pub;
     std::optional<zenoh::Publisher> steering_pub;
