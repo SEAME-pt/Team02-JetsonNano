@@ -21,6 +21,7 @@ private:
     // Zenoh communication
     std::shared_ptr<zenoh::Session> session_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
+
     
     // Lane tracking state
     cv::Vec4i prevLeftLine, prevRightLine, prevMidLine;
@@ -43,7 +44,7 @@ private:
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
-    vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines);
+    std::vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const std::vector<Vec4i>& laneLines);
     
 
 };
