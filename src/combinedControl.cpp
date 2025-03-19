@@ -27,8 +27,8 @@ int main(int argc, char** argv)
         float delta_time = 100; //ms
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
-        std::thread manualThread(&XboxController::run, &manualController);
-        std::thread pidThread(&PidController::run, &pidController);
+        std::thread manualThread(XboxController::run, &manualController);
+        std::thread pidThread(PidController::run, &pidController);
         manualThread.join();
         pidThread.join();
 
