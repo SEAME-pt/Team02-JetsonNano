@@ -43,7 +43,7 @@ Mat LaneDetectorCV::regionOfInterest(const Mat &img, const vector<Point>& vertic
 }
 
 // Polynomial fitting using OpenCV
-Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
+Mat LaneDetectorCV::polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
     // Create the design matrix with appropriate dimensions
     Mat A = Mat::zeros(y_vals.rows, degree + 1, CV_64F);
     
