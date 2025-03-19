@@ -210,7 +210,11 @@ void PidController::updateControl(float error, double current_time) {
     //PID
     float p_term = kp_ * error;
 
+    // Improved implementation with anti-windup
     integral_ += error * dt;
+    // Limit integral term to prevent windup
+    const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+    integral_ = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
     float i_term = ki_ * integral_;
     
     float d_term = kd_ * (error - prev_error_) / dt;
