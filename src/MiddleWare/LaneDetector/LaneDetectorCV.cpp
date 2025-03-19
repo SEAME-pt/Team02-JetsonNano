@@ -320,27 +320,71 @@ int midX = width / 2;  // Middle of the image
             // No measurement, use the prediction to generate a curve
             vector<Point> predictedLeftCurve;
             int height = frame.rows;
-            float bottom_x = leftPredicted.at<float>(0);
-            float mid_x = leftPredicted.at<float>(1);
-            float top_x = leftPredicted.at<float>(2);
-            
-            // Generate curve points using quadratic interpolation through the three points
-            int bottom_y = height;
-            int mid_y = height / 2;
-            int top_y = height / 3;
-            
-            // Calculate quadratic coefficients (y = ax^2 + bx + c)
-            // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
-            Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
-            Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
-            Mat coeffs = polyfit(Y, X, 2);
-            
-            if (!coeffs.empty() && coeffs.rows >= 3) {
-                for (int y = height; y >= height/3; y -= 5) {
-                    double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
-                    predictedLeftCurve.push_back(Point(round(x), y));
+            if (!rightCurve.empty() && rightCurve.size() >= 3) {
+                // Use right lane with lane width offset
+                predictedLeftCurve.clear();
+                
+                // Calculate curvature of the right lane (basic approach: get a curve coefficient)
+                int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
+                double rightCurvature = 0;
+                
+                // Fit polynomial to right lane to get curvature
+                vector<Point2f> rightPoints = {
+                    Point2f(rightCurve[bottom_idx].x, rightCurve[bottom_idx].y),
+                    Point2f(rightCurve[mid_idx].x, rightCurve[mid_idx].y),
+                    Point2f(rightCurve[top_idx].x, rightCurve[top_idx].y)
+                };
+                
+                vector<float> x_vals, y_vals;
+                for (auto& pt : rightPoints) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
                 }
+                
+                Mat x_mat(x_vals), y_mat(y_vals);
+                Mat rightCoeffs = polyfit(y_mat, x_mat, 2);
+                
+                // Now use these coefficients but shifted left by lane width 
+                if (!rightCoeffs.empty() && rightCoeffs.rows >= 3) {
+                    // Generate left curve by shifting right curve left by lane width
+                    // The quadratic coefficient (curvature) stays the same
+                    // Only the constant term (x-offset) changes
+                    double a = rightCoeffs.at<double>(0); // quadratic term (curvature)
+                    double b = rightCoeffs.at<double>(1); // linear term (slope)
+                    double c = rightCoeffs.at<double>(2) - laneWidthEstimate; // constant (x-offset)
+                    
+                    for (int y = height; y >= height/3; y -= 5) {
+                        double x = a*y*y + b*y + c;
+                        predictedLeftCurve.push_back(Point(round(x), y));
+                    }
+                }
+                
+                // Use this curve-informed prediction instead of Kalman
                 leftCurve = predictedLeftCurve;
+            }
+            else {
+                float bottom_x = leftPredicted.at<float>(0);
+                float mid_x = leftPredicted.at<float>(1);
+                float top_x = leftPredicted.at<float>(2);
+                
+                // Generate curve points using quadratic interpolation through the three points
+                int bottom_y = height;
+                int mid_y = height / 2;
+                int top_y = height / 3;
+                
+                // Calculate quadratic coefficients (y = ax^2 + bx + c)
+                // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
+                Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
+                Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
+                Mat coeffs = polyfit(Y, X, 2);
+                
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    for (int y = height; y >= height/3; y -= 5) {
+                        double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+                        predictedLeftCurve.push_back(Point(round(x), y));
+                    }
+                    leftCurve = predictedLeftCurve;
+                }
             }
         }
         
@@ -357,27 +401,72 @@ int midX = width / 2;  // Middle of the image
             // No measurement, use the prediction to generate a curve
             vector<Point> predictedRightCurve;
             int height = frame.rows;
-            float bottom_x = rightPredicted.at<float>(0);
-            float mid_x = rightPredicted.at<float>(1);
-            float top_x = rightPredicted.at<float>(2);
             
-            // Generate curve points using quadratic interpolation through the three points
-            int bottom_y = height;
-            int mid_y = height / 2;
-            int top_y = height / 3;
-            
-            // Calculate quadratic coefficients (y = ax^2 + bx + c)
-            // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
-            Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
-            Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
-            Mat coeffs = polyfit(Y, X, 2);
-            
-            if (!coeffs.empty() && coeffs.rows >= 3) {
-                for (int y = height; y >= height/3; y -= 5) {
-                    double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
-                    predictedRightCurve.push_back(Point(round(x), y));
+            if (!leftCurve.empty() && leftCurve.size() >= 3) {
+                // Use left lane with lane width offset
+                predictedRightCurve.clear();
+                
+                // Calculate curvature of the left lane (basic approach: get a curve coefficient)
+                int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
+                double leftCurvature = 0;
+                
+                // Fit polynomial to left lane to get curvature
+                vector<Point2f> leftPoints = {
+                    Point2f(leftCurve[bottom_idx].x, leftCurve[bottom_idx].y),
+                    Point2f(leftCurve[mid_idx].x, leftCurve[mid_idx].y),
+                    Point2f(leftCurve[top_idx].x, leftCurve[top_idx].y)
+                };
+                
+                vector<float> x_vals, y_vals;
+                for (auto& pt : leftPoints) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
                 }
+                
+                Mat x_mat(x_vals), y_mat(y_vals);
+                Mat leftCoeffs = polyfit(y_mat, x_mat, 2);
+                
+                // Now use these coefficients but shifted right by lane width 
+                if (!leftCoeffs.empty() && leftCoeffs.rows >= 3) {
+                    // Generate right curve by shifting left curve right by lane width
+                    // The quadratic coefficient (curvature) stays the same
+                    // Only the constant term (x-offset) changes
+                    double a = leftCoeffs.at<double>(0); // quadratic term (curvature)
+                    double b = leftCoeffs.at<double>(1); // linear term (slope)
+                    double c = leftCoeffs.at<double>(2) + laneWidthEstimate; // constant (x-offset)
+                    
+                    for (int y = height; y >= height/3; y -= 5) {
+                        double x = a*y*y + b*y + c;
+                        predictedRightCurve.push_back(Point(round(x), y));
+                    }
+                }
+                
+                // Use this curve-informed prediction instead of Kalman
                 rightCurve = predictedRightCurve;
+            }
+            else {
+                float bottom_x = rightPredicted.at<float>(0);
+                float mid_x = rightPredicted.at<float>(1);
+                float top_x = rightPredicted.at<float>(2);
+                
+                // Generate curve points using quadratic interpolation through the three points
+                int bottom_y = height;
+                int mid_y = height / 2;
+                int top_y = height / 3;
+                
+                // Calculate quadratic coefficients (y = ax^2 + bx + c)
+                // Here we're actually fitting x = f(y) since lanes are more vertical than horizontal
+                Mat Y = (Mat_<double>(3,1) << bottom_y, mid_y, top_y);
+                Mat X = (Mat_<double>(3,1) << bottom_x, mid_x, top_x);
+                Mat coeffs = polyfit(Y, X, 2);
+                
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    for (int y = height; y >= height/3; y -= 5) {
+                        double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+                        predictedRightCurve.push_back(Point(round(x), y));
+                    }
+                    rightCurve = predictedRightCurve;
+                }
             }
         }
     }
