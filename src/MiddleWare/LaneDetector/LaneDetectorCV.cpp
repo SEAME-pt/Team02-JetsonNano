@@ -228,6 +228,17 @@ void LaneDetectorCV::detect(Mat& frame) {
     vector<Point> leftCurve = extrapolatePolynomialCurve(leftLines);
     vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
     
+    vector<Point2f> leftPoints, rightPoints;
+    for (auto line : leftLines) {
+        leftPoints.push_back(Point2f(line[0], line[1]));
+        leftPoints.push_back(Point2f(line[2], line[3]));
+    }
+
+    for (auto line : rightLines) {
+        rightPoints.push_back(Point2f(line[0], line[1]));
+        rightPoints.push_back(Point2f(line[2], line[3]));
+    }
+
     // 6. Fallback: if one lane is missing, use previous data or estimate it using lane width
     if (leftCurve.empty()) {
         leftCurve = prevLeftCurve;
@@ -361,16 +372,25 @@ void LaneDetectorCV::detect(Mat& frame) {
         }
     }
     
-    // Draw mid curve (optional)
-    if (!midCurve.empty()) {
-        for (size_t i = 1; i < midCurve.size(); i++) {
-            line(lineImage, midCurve[i-1], midCurve[i], Scalar(0, 0, 255), 3);
-        }
-    }
+    // // Draw mid curve (optional)
+    // if (!midCurve.empty()) {
+    //     for (size_t i = 1; i < midCurve.size(); i++) {
+    //         line(lineImage, midCurve[i-1], midCurve[i], Scalar(0, 0, 255), 3);
+    //     }
+    // }
     
     // Draw reference point
     circle(lineImage, midPoint, 8, Scalar(0, 0, 255), -1);
     
+    // Draw all detected points to see what's being fitted
+    for (const auto& pt : leftPoints) {
+        circle(lineImage, pt, 4, Scalar(255, 255, 0), -1);  // Yellow for left points
+    }
+
+    for (const auto& pt : rightPoints) {
+        circle(lineImage, pt, 4, Scalar(0, 255, 255), -1);  // Cyan for right points
+    }
+
     // 11. Overlay the lane curves and reference point on the original frame.
     addWeighted(frame, 0.8, lineImage, 1.0, 0, frame);
 }
