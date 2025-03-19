@@ -211,9 +211,9 @@ void LaneDetectorCV::detect(Mat& frame) {
     vector<Vec4i> lines;
     HoughLinesP(maskedEdges, lines, 1, CV_PI/180, 20, 20, 30);
     
-// 4. Separate lines into left and right lanes based on slope and position.
-vector<Vec4i> leftLines, rightLines;
-int midX = width / 2;  // Middle of the image
+    // 4. Separate lines into left and right lanes based on slope and position.
+    vector<Vec4i> leftLines, rightLines;
+    int midX = width / 2;  // Middle of the image
 
     for(auto line : lines) {
         int x1 = line[0], y1 = line[1], x2 = line[2], y2 = line[3];
@@ -241,18 +241,25 @@ int midX = width / 2;  // Middle of the image
 
     // Post-classification cleanup - remove outliers using RANSAC or distance thresholding
     if (leftLines.size() > 3) {
-        // Calculate average position of left lines
+        // Calculate average position and slope of left lines
         int avgLeftX = 0;
+        double avgLeftSlope = 0;
         for (auto line : leftLines) {
             avgLeftX += (line[0] + line[2]) / 2;
+            avgLeftSlope += (double)(line[3] - line[1]) / (line[2] - line[0]);
         }
         avgLeftX /= leftLines.size();
+        avgLeftSlope /= leftLines.size();
         
-        // Remove outliers that are too far to the right
+        // Remove outliers based on both position and slope
         vector<Vec4i> filteredLeftLines;
         for (auto line : leftLines) {
             int lineMidX = (line[0] + line[2]) / 2;
-            if (lineMidX < avgLeftX * 1.5) {  // Adjust threshold as needed
+            double lineSlope = (double)(line[3] - line[1]) / (line[2] - line[0]);
+            
+            // Only keep lines that are close to both the average position and slope
+            if (lineMidX < avgLeftX * 1.3 && 
+                abs(lineSlope - avgLeftSlope) < abs(avgLeftSlope * 0.5)) {
                 filteredLeftLines.push_back(line);
             }
         }
@@ -261,18 +268,25 @@ int midX = width / 2;  // Middle of the image
 
     // Similar logic for right lines
     if (rightLines.size() > 3) {
-        // Calculate average position of right lines
+        // Calculate average position and slope of right lines
         int avgRightX = 0;
+        double avgRightSlope = 0;
         for (auto line : rightLines) {
             avgRightX += (line[0] + line[2]) / 2;
+            avgRightSlope += (double)(line[3] - line[1]) / (line[2] - line[0]);
         }
         avgRightX /= rightLines.size();
+        avgRightSlope /= rightLines.size();
         
-        // Remove outliers that are too far to the left
+        // Remove outliers based on both position and slope
         vector<Vec4i> filteredRightLines;
         for (auto line : rightLines) {
             int lineMidX = (line[0] + line[2]) / 2;
-            if (lineMidX > avgRightX * 0.5) {  // Adjust threshold as needed
+            double lineSlope = (double)(line[3] - line[1]) / (line[2] - line[0]);
+            
+            // Only keep lines that are close to both the average position and slope
+            if (lineMidX > avgRightX * 0.7 && 
+                abs(lineSlope - avgRightSlope) < abs(avgRightSlope * 0.5)) {
                 filteredRightLines.push_back(line);
             }
         }
@@ -284,16 +298,16 @@ int midX = width / 2;  // Middle of the image
     vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
     
     // Used to store found points to then represent
-    // vector<Point2f> leftPoints, rightPoints;
-    // for (auto line : leftLines) {
-    //     leftPoints.push_back(Point2f(line[0], line[1]));
-    //     leftPoints.push_back(Point2f(line[2], line[3]));
-    // }
+    vector<Point2f> leftPoints, rightPoints;
+    for (auto line : leftLines) {
+        leftPoints.push_back(Point2f(line[0], line[1]));
+        leftPoints.push_back(Point2f(line[2], line[3]));
+    }
 
-    // for (auto line : rightLines) {
-    //     rightPoints.push_back(Point2f(line[0], line[1]));
-    //     rightPoints.push_back(Point2f(line[2], line[3]));
-    // }
+    for (auto line : rightLines) {
+        rightPoints.push_back(Point2f(line[0], line[1]));
+        rightPoints.push_back(Point2f(line[2], line[3]));
+    }
 
     // 6. Fallback: if one lane is missing, use previous data or estimate it using lane width
     // Initialize Kalman filter if it's the first good detection
@@ -630,19 +644,19 @@ int midX = width / 2;  // Middle of the image
     // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
     
-    // Draw left curve
-    if (!leftCurve.empty()) {
-        for (size_t i = 1; i < leftCurve.size(); i++) {
-            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
-        }
-    }
+    // // Draw left curve
+    // if (!leftCurve.empty()) {
+    //     for (size_t i = 1; i < leftCurve.size(); i++) {
+    //         line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+    //     }
+    // }
     
-    // Draw right curve
-    if (!rightCurve.empty()) {
-        for (size_t i = 1; i < rightCurve.size(); i++) {
-            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
-        }
-    }
+    // // Draw right curve
+    // if (!rightCurve.empty()) {
+    //     for (size_t i = 1; i < rightCurve.size(); i++) {
+    //         line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+    //     }
+    // }
     
     // // Draw mid curve (optional)
     // if (!midCurve.empty()) {
@@ -655,13 +669,13 @@ int midX = width / 2;  // Middle of the image
     circle(lineImage, midPoint, 8, Scalar(0, 0, 255), -1);
     
     // Draw all detected points to see what's being fitted
-    // for (const auto& pt : leftPoints) {
-    //     circle(lineImage, pt, 4, Scalar(255, 255, 0), -1);  // Yellow for left points
-    // }
+    for (const auto& pt : leftPoints) {
+        circle(lineImage, pt, 4, Scalar(255, 255, 0), -1);  // Yellow for left points
+    }
 
-    // for (const auto& pt : rightPoints) {
-    //     circle(lineImage, pt, 4, Scalar(0, 255, 255), -1);  // Cyan for right points
-    // }
+    for (const auto& pt : rightPoints) {
+        circle(lineImage, pt, 4, Scalar(0, 255, 255), -1);  // Cyan for right points
+    }
 
     // 11. Overlay the lane curves and reference point on the original frame.
     addWeighted(frame, 0.8, lineImage, 1.0, 0, frame);
