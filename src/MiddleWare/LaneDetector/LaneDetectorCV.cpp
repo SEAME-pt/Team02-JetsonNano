@@ -44,19 +44,48 @@ Mat LaneDetectorCV::regionOfInterest(const Mat &img, const vector<Point>& vertic
 
 // Polynomial fitting using OpenCV
 Mat LaneDetectorCV::polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
+    // Check if we have enough points for the requested degree
+    if (y_vals.rows < degree + 1) {
+        // Not enough points - reduce degree or return empty matrix
+        if (y_vals.rows < 2) {
+            return Mat();
+        }
+        // Adjust degree based on available points
+        degree = y_vals.rows - 1;
+    }
+    
+    // Ensure data is in the right format (CV_64F)
+    Mat y_vals_64f, x_vals_64f;
+    y_vals.convertTo(y_vals_64f, CV_64F);
+    x_vals.convertTo(x_vals_64f, CV_64F);
+    
     // Create the design matrix with appropriate dimensions
-    Mat A = Mat::zeros(y_vals.rows, degree + 1, CV_64F);
+    Mat A = Mat::zeros(y_vals_64f.rows, degree + 1, CV_64F);
     
     // Fill the design matrix
-    for (int i = 0; i < y_vals.rows; i++) {
+    for (int i = 0; i < y_vals_64f.rows; i++) {
         for (int j = 0; j <= degree; j++) {
-            A.at<double>(i, j) = pow(y_vals.at<float>(i), degree - j);
+            A.at<double>(i, j) = pow(y_vals_64f.at<double>(i), degree - j);
+        }
+    }
+    
+    // Check for invalid values (NaN, Inf)
+    for (int i = 0; i < A.rows; i++) {
+        for (int j = 0; j < A.cols; j++) {
+            if (cvIsNaN(A.at<double>(i,j)) || cvIsInf(A.at<double>(i,j))) {
+                A.at<double>(i,j) = 0;
+            }
         }
     }
     
     // Solve the system using SVD for better stability
     Mat coeffs;
-    solve(A, x_vals, coeffs, DECOMP_SVD);
+    try {
+        solve(A, x_vals_64f, coeffs, DECOMP_SVD);
+    } catch (const cv::Exception& e) {
+        std::cerr << "Error in polyfit: " << e.what() << std::endl;
+        return Mat();
+    }
     
     return coeffs;
 }
@@ -76,33 +105,48 @@ vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& la
         points.push_back(Point2f(line[0], line[1]));
         points.push_back(Point2f(line[2], line[3]));
     }
-    
-    if (points.empty())
+
+    if (points.empty() || points.size() < 3) // Need at least 3 points for quadratic
         return vector<Point>();
-    
+
     // Convert to vectors for polynomial fitting
     vector<float> x_vals, y_vals;
     for (auto& pt : points) {
         x_vals.push_back(pt.x);
         y_vals.push_back(pt.y);
     }
-    
+
     // Convert to Mat for polyfit
     Mat x_mat(x_vals), y_mat(y_vals);
-    int degree = 2; // quadratic polynomial
+    int degree = std::min(2, (int)points.size() - 1); // Adjust degree based on points available
     Mat coeffs = polyfit(y_mat, x_mat, degree);
-    
+
+    // Check if coeffs is valid
+    if (coeffs.empty() || coeffs.rows < degree + 1)
+        return vector<Point>();
+
     // Generate points along the curve
     vector<Point> curvePoints;
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);
     for (int y = height; y >= height/3; y -= 5) {
-        // Evaluate polynomial: x = a*y^2 + b*y + c
-        if (coeffs.rows >= 3) {
-            double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+        // Evaluate polynomial based on degree
+        double x = 0;
+        if (degree == 2 && coeffs.rows >= 3) {
+            // Quadratic: x = a*y^2 + b*y + c
+            x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+        } else if (degree == 1 && coeffs.rows >= 2) {
+            // Linear: x = a*y + b
+            x = coeffs.at<double>(0)*y + coeffs.at<double>(1);
+        } else {
+            continue;
+        }
+
+        // Check for valid x value before adding point
+        if (!std::isnan(x) && !std::isinf(x)) {
             curvePoints.push_back(Point(round(x), y));
         }
     }
-    
+
     return curvePoints;
 }
 
