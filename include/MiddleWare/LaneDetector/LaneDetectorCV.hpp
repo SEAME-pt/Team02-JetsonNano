@@ -42,7 +42,7 @@ private:
     cv::Mat regionOfInterest(const cv::Mat &img, const std::vector<cv::Point>& vertices);
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
-    cv::Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree) ;~
+    cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
     vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines);
     
 
