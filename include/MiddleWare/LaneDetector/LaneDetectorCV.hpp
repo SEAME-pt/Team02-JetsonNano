@@ -12,6 +12,10 @@ private:
     // Video capture
     cv::VideoCapture cap;
     
+    std::vector<cv::Point> prevLeftCurve;
+    std::vector<cv::Point> prevRightCurve;
+    std::vector<cv::Point> prevMidCurve;
+    
     // Zenoh communication
     std::shared_ptr<zenoh::Session> session_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
@@ -36,4 +40,6 @@ private:
     cv::Mat regionOfInterest(const cv::Mat &img, const std::vector<cv::Point>& vertices);
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
+    cv::Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree) ;
+
 };
