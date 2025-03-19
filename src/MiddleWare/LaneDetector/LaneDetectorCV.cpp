@@ -42,10 +42,68 @@ Mat LaneDetectorCV::regionOfInterest(const Mat &img, const vector<Point>& vertic
     return masked;
 }
 
+// Polynomial fitting using OpenCV
+Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
+    // Create the design matrix with appropriate dimensions
+    Mat A = Mat::zeros(y_vals.rows, degree + 1, CV_64F);
+    
+    // Fill the design matrix
+    for (int i = 0; i < y_vals.rows; i++) {
+        for (int j = 0; j <= degree; j++) {
+            A.at<double>(i, j) = pow(y_vals.at<float>(i), degree - j);
+        }
+    }
+    
+    // Solve the system using SVD for better stability
+    Mat coeffs;
+    solve(A, x_vals, coeffs, DECOMP_SVD);
+    
+    return coeffs;
+}
+
+
 double LaneDetectorCV::getCurrentTime() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
+// Extrapolate a polynomial curve from lane line segments
+vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines) {
+    // Extract all points from line segments
+    vector<Point2f> points;
+    for (auto line : laneLines) {
+        points.push_back(Point2f(line[0], line[1]));
+        points.push_back(Point2f(line[2], line[3]));
+    }
+    
+    if (points.empty())
+        return vector<Point>();
+    
+    // Convert to vectors for polynomial fitting
+    vector<float> x_vals, y_vals;
+    for (auto& pt : points) {
+        x_vals.push_back(pt.x);
+        y_vals.push_back(pt.y);
+    }
+    
+    // Convert to Mat for polyfit
+    Mat x_mat(x_vals), y_mat(y_vals);
+    int degree = 2; // quadratic polynomial
+    Mat coeffs = polyfit(y_mat, x_mat, degree);
+    
+    // Generate points along the curve
+    vector<Point> curvePoints;
+    int height = cap.get(CAP_PROP_FRAME_HEIGHT);
+    for (int y = height; y >= height/3; y -= 5) {
+        // Evaluate polynomial: x = a*y^2 + b*y + c
+        if (coeffs.rows >= 3) {
+            double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
+            curvePoints.push_back(Point(round(x), y));
+        }
+    }
+    
+    return curvePoints;
 }
 
 Vec4i LaneDetectorCV::extrapolateLine(const vector<Vec4i>& laneLines) {
@@ -122,75 +180,116 @@ void LaneDetectorCV::detect(Mat& frame) {
             rightLines.push_back(line);
     }
     
-    // 5. Extrapolate a single left and right lane line by averaging.
-    Vec4i leftLine = extrapolateLine(leftLines);
-    Vec4i rightLine = extrapolateLine(rightLines);
+    // 5. Extract polynomial curves for left and right lanes
+    vector<Point> leftCurve = extrapolatePolynomialCurve(leftLines);
+    vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
     
-    // 6. Fallback: if one lane is missing, use previous data or estimate it using lane width.
-    if(leftLine == Vec4i(0,0,0,0)) {
-        // If left line missing, use previous left line if available.
-        leftLine = prevLeftLine;
-        // Or estimate it from right line if that is detected.
-        if(rightLine != Vec4i(0,0,0,0)) {
-            leftLine[0] = rightLine[0] - (int)laneWidthEstimate;
-            leftLine[2] = rightLine[2] - (int)laneWidthEstimate;
-        }
-    }
-    if(rightLine == Vec4i(0,0,0,0)) {
-        // If right line missing, use previous right line if available.
-        rightLine = prevRightLine;
-        // Or estimate it from left line if that is detected.
-        if(leftLine != Vec4i(0,0,0,0)) {
-            rightLine[0] = leftLine[0] + (int)laneWidthEstimate;
-            rightLine[2] = leftLine[2] + (int)laneWidthEstimate;
+    // 6. Fallback: if one lane is missing, use previous data or estimate it using lane width
+    if (leftCurve.empty()) {
+        leftCurve = prevLeftCurve;
+        // If we have right curve but no left curve, estimate left curve
+        if (!rightCurve.empty() && !prevRightCurve.empty()) {
+            leftCurve.clear();
+            for (const auto& pt : rightCurve) {
+                leftCurve.push_back(Point(pt.x - laneWidthEstimate, pt.y));
+            }
         }
     }
     
-    // Update lane width estimate if both lines are available.
-    if(leftLine != Vec4i(0,0,0,0) && rightLine != Vec4i(0,0,0,0)) {
-        int leftXBottom = leftLine[0];
-        int rightXBottom = rightLine[0];
-        double currentWidth = rightXBottom - leftXBottom;
-        // Smooth lane width estimation
-        laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
+    if (rightCurve.empty()) {
+        rightCurve = prevRightCurve;
+        // If we have left curve but no right curve, estimate right curve
+        if (!leftCurve.empty() && !prevLeftCurve.empty()) {
+            rightCurve.clear();
+            for (const auto& pt : leftCurve) {
+                rightCurve.push_back(Point(pt.x + laneWidthEstimate, pt.y));
+            }
+        }
     }
     
-    // 7. Smooth lane lines by combining with previous frame values.
-    double alpha = 0.2;
-    if(!firstFrame){
-        leftLine[0] = (int)(alpha * leftLine[0] + (1 - alpha) * prevLeftLine[0]);
-        leftLine[1] = (int)(alpha * leftLine[1] + (1 - alpha) * prevLeftLine[1]);
-        leftLine[2] = (int)(alpha * leftLine[2] + (1 - alpha) * prevLeftLine[2]);
-        leftLine[3] = (int)(alpha * leftLine[3] + (1 - alpha) * prevLeftLine[3]);
+    // Update lane width estimate if both curves have points
+    if (!leftCurve.empty() && !rightCurve.empty() && 
+        leftCurve.size() > 0 && rightCurve.size() > 0) {
+        // Find corresponding points at the bottom of the image
+        int bottomY = height - 1;
+        int leftX = -1, rightX = -1;
         
-        rightLine[0] = (int)(alpha * rightLine[0] + (1 - alpha) * prevRightLine[0]);
-        rightLine[1] = (int)(alpha * rightLine[1] + (1 - alpha) * prevRightLine[1]);
-        rightLine[2] = (int)(alpha * rightLine[2] + (1 - alpha) * prevRightLine[2]);
-        rightLine[3] = (int)(alpha * rightLine[3] + (1 - alpha) * prevRightLine[3]);
+        for (const auto& pt : leftCurve) {
+            if (pt.y == bottomY || (leftX == -1 && pt.y > height * 0.7)) {
+                leftX = pt.x;
+                break;
+            }
+        }
+        
+        for (const auto& pt : rightCurve) {
+            if (pt.y == bottomY || (rightX == -1 && pt.y > height * 0.7)) {
+                rightX = pt.x;
+                break;
+            }
+        }
+        
+        if (leftX != -1 && rightX != -1) {
+            double currentWidth = rightX - leftX;
+            laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
+        }
     }
-    prevLeftLine = leftLine;
-    prevRightLine = rightLine;
     
-    // 8. Compute mid-lane as the average of left and right lane endpoints.
-    Vec4i midLine;
-    midLine[0] = (leftLine[0] + rightLine[0]) / 2;
-    midLine[1] = (leftLine[1] + rightLine[1]) / 2;
-    midLine[2] = (leftLine[2] + rightLine[2]) / 2;
-    midLine[3] = (leftLine[3] + rightLine[3]) / 2;
-    
-    // Further smooth the mid-line with previous midline.
-    if(!firstFrame){
-        midLine[0] = (int)(alpha * midLine[0] + (1 - alpha) * prevMidLine[0]);
-        midLine[1] = (int)(alpha * midLine[1] + (1 - alpha) * prevMidLine[1]);
-        midLine[2] = (int)(alpha * midLine[2] + (1 - alpha) * prevMidLine[2]);
-        midLine[3] = (int)(alpha * midLine[3] + (1 - alpha) * prevMidLine[3]);
+    // 7. Smooth curves by averaging with previous frames
+    double alpha = 0.2;
+    if (!firstFrame) {
+        // Only if we have previous curves and current curves
+        if (!prevLeftCurve.empty() && !leftCurve.empty() && 
+            prevLeftCurve.size() == leftCurve.size()) {
+            for (size_t i = 0; i < leftCurve.size(); i++) {
+                leftCurve[i].x = (int)(alpha * leftCurve[i].x + (1 - alpha) * prevLeftCurve[i].x);
+                leftCurve[i].y = (int)(alpha * leftCurve[i].y + (1 - alpha) * prevLeftCurve[i].y);
+            }
+        }
+        
+        if (!prevRightCurve.empty() && !rightCurve.empty() && 
+            prevRightCurve.size() == rightCurve.size()) {
+            for (size_t i = 0; i < rightCurve.size(); i++) {
+                rightCurve[i].x = (int)(alpha * rightCurve[i].x + (1 - alpha) * prevRightCurve[i].x);
+                rightCurve[i].y = (int)(alpha * rightCurve[i].y + (1 - alpha) * prevRightCurve[i].y);
+            }
+        }
     }
-    prevMidLine = midLine;
+    
+    // Save current curves for next frame
+    prevLeftCurve = leftCurve;
+    prevRightCurve = rightCurve;
+    
+    // 8. Compute mid curve points as average of left and right curves
+    vector<Point> midCurve;
+    if (!leftCurve.empty() && !rightCurve.empty() && 
+        leftCurve.size() == rightCurve.size()) {
+        for (size_t i = 0; i < leftCurve.size(); i++) {
+            int midX = (leftCurve[i].x + rightCurve[i].x) / 2;
+            int midY = (leftCurve[i].y + rightCurve[i].y) / 2;
+            midCurve.push_back(Point(midX, midY));
+        }
+    }
+    
+    // 9. Compute the midline reference point
+    Point midPoint;
+    if (!midCurve.empty()) {
+        // Use the bottom-most point of the mid curve (or average multiple points)
+        size_t bottom_idx = 0;
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            if (midCurve[i].y > midCurve[bottom_idx].y) {
+                bottom_idx = i;
+            }
+        }
+        midPoint = midCurve[bottom_idx];
+    } else {
+        // Fallback to center of image
+        midPoint = Point(width/2, height*2/3);
+    }
+    
+    prevMidCurve = midCurve;
     firstFrame = false;
     
-    // 9. Compute the midline reference point (average of the midline endpoints)
-    Point midPoint((midLine[0] + midLine[2]) / 2, (midLine[1] + midLine[3]) / 2);
-
+    // Calculate lateral error
     float centerX = width / 2;
     float lateralError = midPoint.x - centerX;
     float divider = width / 2;
@@ -201,17 +300,34 @@ void LaneDetectorCV::detect(Mat& frame) {
         publisher_->publishCameraError(lateralError);
     }
     
-    // 10. Draw the detected lane lines and the midline reference point.
+    // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
-    if(leftLine != Vec4i(0,0,0,0))
-        line(lineImage, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), Scalar(255,0,0), 5);
-    if(rightLine != Vec4i(0,0,0,0))
-        line(lineImage, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), Scalar(0,255,0), 5);
     
-    // Draw the reference point on the midline
-    circle(lineImage, midPoint, 8, Scalar(0,0,255), -1);
+    // Draw left curve
+    if (!leftCurve.empty()) {
+        for (size_t i = 1; i < leftCurve.size(); i++) {
+            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+        }
+    }
     
-    // 11. Overlay the lane lines and reference point on the original frame.
+    // Draw right curve
+    if (!rightCurve.empty()) {
+        for (size_t i = 1; i < rightCurve.size(); i++) {
+            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+        }
+    }
+    
+    // Draw mid curve (optional)
+    if (!midCurve.empty()) {
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            line(lineImage, midCurve[i-1], midCurve[i], Scalar(0, 0, 255), 3);
+        }
+    }
+    
+    // Draw reference point
+    circle(lineImage, midPoint, 8, Scalar(0, 0, 255), -1);
+    
+    // 11. Overlay the lane curves and reference point on the original frame.
     addWeighted(frame, 0.8, lineImage, 1.0, 0, frame);
 }
 
