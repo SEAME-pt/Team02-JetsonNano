@@ -358,19 +358,19 @@ void LaneDetectorCV::detect(Mat& frame) {
     // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
     
-    // Draw left curve
-    if (!leftCurve.empty()) {
-        for (size_t i = 1; i < leftCurve.size(); i++) {
-            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
-        }
-    }
+    // // Draw left curve
+    // if (!leftCurve.empty()) {
+    //     for (size_t i = 1; i < leftCurve.size(); i++) {
+    //         line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+    //     }
+    // }
     
-    // Draw right curve
-    if (!rightCurve.empty()) {
-        for (size_t i = 1; i < rightCurve.size(); i++) {
-            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
-        }
-    }
+    // // Draw right curve
+    // if (!rightCurve.empty()) {
+    //     for (size_t i = 1; i < rightCurve.size(); i++) {
+    //         line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+    //     }
+    // }
     
     // // Draw mid curve (optional)
     // if (!midCurve.empty()) {
