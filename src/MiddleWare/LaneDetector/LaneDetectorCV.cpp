@@ -209,21 +209,74 @@ void LaneDetectorCV::detect(Mat& frame) {
     vector<Vec4i> lines;
     HoughLinesP(maskedEdges, lines, 1, CV_PI/180, 20, 20, 30);
     
-    // 4. Separate lines into left and right lanes based on slope.
-    vector<Vec4i> leftLines, rightLines;
+// 4. Separate lines into left and right lanes based on slope and position.
+vector<Vec4i> leftLines, rightLines;
+int midX = width / 2;  // Middle of the image
+
     for(auto line : lines) {
         int x1 = line[0], y1 = line[1], x2 = line[2], y2 = line[3];
+        
         // Avoid division by zero and filter nearly horizontal lines.
         if (abs(x2 - x1) < 10) continue;
+        
         double slope = (double)(y2 - y1) / (x2 - x1);
-        if (abs(slope) < 0.5)
-            continue;
-        if(slope < 0)
+        if (abs(slope) < 0.5) continue;  // Filter out nearly horizontal lines
+        
+        // Calculate line midpoint
+        int lineMidX = (x1 + x2) / 2;
+        
+        // Use both slope and position for classification
+        // Left lane: negative slope OR on left half of image with steep slope
+        // Right lane: positive slope OR on right half of image with steep slope
+        if ((slope < 0 && lineMidX < midX * 1.2) || (lineMidX < midX * 0.6)) {
             leftLines.push_back(line);
-        else
+        }
+        // Right lane: positive slope OR on right half with steep slope
+        else if ((slope > 0 && lineMidX > midX * 0.8) || (lineMidX > midX * 1.4)) {
             rightLines.push_back(line);
+        }
     }
-    
+
+    // Post-classification cleanup - remove outliers using RANSAC or distance thresholding
+    if (leftLines.size() > 3) {
+        // Calculate average position of left lines
+        int avgLeftX = 0;
+        for (auto line : leftLines) {
+            avgLeftX += (line[0] + line[2]) / 2;
+        }
+        avgLeftX /= leftLines.size();
+        
+        // Remove outliers that are too far to the right
+        vector<Vec4i> filteredLeftLines;
+        for (auto line : leftLines) {
+            int lineMidX = (line[0] + line[2]) / 2;
+            if (lineMidX < avgLeftX * 1.5) {  // Adjust threshold as needed
+                filteredLeftLines.push_back(line);
+            }
+        }
+        leftLines = filteredLeftLines;
+    }
+
+    // Similar logic for right lines
+    if (rightLines.size() > 3) {
+        // Calculate average position of right lines
+        int avgRightX = 0;
+        for (auto line : rightLines) {
+            avgRightX += (line[0] + line[2]) / 2;
+        }
+        avgRightX /= rightLines.size();
+        
+        // Remove outliers that are too far to the left
+        vector<Vec4i> filteredRightLines;
+        for (auto line : rightLines) {
+            int lineMidX = (line[0] + line[2]) / 2;
+            if (lineMidX > avgRightX * 0.5) {  // Adjust threshold as needed
+                filteredRightLines.push_back(line);
+            }
+        }
+        rightLines = filteredRightLines;
+    }
+        
     // 5. Extract polynomial curves for left and right lanes
     vector<Point> leftCurve = extrapolatePolynomialCurve(leftLines);
     vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
