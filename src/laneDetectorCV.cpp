@@ -19,7 +19,7 @@ int main(int argc, char** argv)
         std::shared_ptr<zenoh::Session> session;
         if (argc == 2)
         {
-            auto config = Config::from_file(argv[1]);
+            auto config = Config::from_file(std::string(argv[1]));
             session     = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
