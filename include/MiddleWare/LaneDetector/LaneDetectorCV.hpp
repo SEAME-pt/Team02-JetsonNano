@@ -2,6 +2,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <iostream>
+#include <cmath>
 #include <zenoh.hxx>
 #include "PidController.hpp"
 #include "LaneDetectorPublisher.hpp"
