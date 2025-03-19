@@ -377,7 +377,7 @@ int midX = width / 2;  // Middle of the image
                     double x = coeffs.at<double>(0)*y*y + coeffs.at<double>(1)*y + coeffs.at<double>(2);
                     predictedRightCurve.push_back(Point(round(x), y));
                 }
-                leftCurve = predictedRightCurve;
+                rightCurve = predictedRightCurve;
             }
         }
     }
@@ -576,8 +576,8 @@ void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vec
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
     
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
     
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
