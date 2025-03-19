@@ -189,7 +189,7 @@ void XboxController::run()
                         case BUTTON_START:
                         {
                             publisher_->publishActiveAutonomyLevel("SAE_5");
-                            std::cout << "parkingLight" << std::endl;
+                            std::cout << "Autonomous Driving" << std::endl;
                             break;
                         }
 
@@ -207,7 +207,7 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
-                        publisher_->publishActiveAutonomyLevel("SAE_0");
+                        // publisher_->publishActiveAutonomyLevel("SAE_0");
                         if (speed < -5)
                         {
                             publisher_->publishCurrentGear(-1);
