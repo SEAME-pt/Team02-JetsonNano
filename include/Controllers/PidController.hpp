@@ -38,7 +38,7 @@ private:
     float prev_error_;
     float cameraError_;
     float integral_;
-    float last_time_;
+    double last_time_;
     
     // Control parameters
     float constant_speed_; // Constant speed for the car
@@ -54,7 +54,7 @@ public:
     ~PidController();
     
     void init(float kp, float ki, float kd, float speed, float delta_time);
-    void updateControl(float lane_error, float current_time);
+    void updateControl(float lane_error, double current_time);
 
     void setAutonomousDriveState(bool toggle);
     bool getAutonomousDriveState() const;

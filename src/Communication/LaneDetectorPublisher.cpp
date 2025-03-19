@@ -11,5 +11,6 @@ LaneDetectorPublisher::LaneDetectorPublisher(
 
 void LaneDetectorPublisher::publishCameraError(float error)
 {
+    std::cout << "Error send: " << error << std::endl;
     cameraError_pub->put(std::to_string(error));
 }

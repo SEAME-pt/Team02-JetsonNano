@@ -83,6 +83,7 @@ PidController::PidController()
         [this](const zenoh::Sample& sample)
         {
             cameraError_ = std::stof(sample.get_payload().as_string());
+            std::cout << "Camera error: " << cameraError_ << std::endl;
         },
         zenoh::closures::none));
 
@@ -93,7 +94,9 @@ PidController::PidController()
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             if (activeAutonomyLevel == "SAE_5" && getAutonomousDriveState() == false) {
                 setAutonomousDriveState(true);
+                std::cout << "Autonomous Sub True" << std::endl;
             } else if (getAutonomousDriveState() == true) {
+                std::cout << "Autonomous Sub False" << std::endl;
                 setAutonomousDriveState(false);
             } else {
                 //empty
@@ -168,7 +171,9 @@ PidController::PidController(const std::string& configFile)
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             if (activeAutonomyLevel == "SAE_5" && getAutonomousDriveState() == false) {
                 setAutonomousDriveState(true);
+                std::cout << "Autonomous Sub True" << std::endl;
             } else if (getAutonomousDriveState() == true) {
+                std::cout << "Autonomous Sub False" << std::endl;
                 setAutonomousDriveState(false);
             } else {
                 //empty
@@ -196,11 +201,11 @@ void PidController::init(float kp, float ki, float kd, float speed, float delta_
               << ", dt=" << fixed_delta_time_ << std::endl;
 }
 
-void PidController::updateControl(float error, float current_time) {
+void PidController::updateControl(float error, double current_time) {
     
     // dt
-    float dt = current_time - last_time_;
-
+    double dt = current_time - last_time_;
+    std::cout << "dt: " << dt << std::endl;
 
     //PID
     float p_term = kp_ * error;
@@ -221,6 +226,7 @@ void PidController::updateControl(float error, float current_time) {
     }
 
     publisher_->publishSteering(direction);
+    std::cout << direction << std::endl;
     // publisher_->publishSpeed(constant_speed_);
     // publisher_->publishCurrentGear(1);
 
@@ -236,13 +242,14 @@ void PidController::run()
     {
         if (getAutonomousDriveState())
         {
-            float current_time = getCurrentTime();
+            double current_time = getCurrentTime();
             updateControl(cameraError_, current_time);
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
         else {
-            //empty
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                static_cast<int>(fixed_delta_time_ * 1000)));
         }
     }
 }
