@@ -41,7 +41,7 @@ private:
 
     std::deque<std::vector<cv::Point>> leftLaneHistory;
     std::deque<std::vector<cv::Point>> rightLaneHistory;
-    const int historySize = 30; 
+    const size_t historySize = 30; 
     
 public:
     LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session);
