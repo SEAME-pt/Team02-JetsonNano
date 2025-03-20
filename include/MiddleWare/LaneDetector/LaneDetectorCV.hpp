@@ -39,8 +39,8 @@ private:
     cv::KalmanFilter rightLaneKF;
     bool kfInitialized;
 
-    std::deque<std::vector<Point>> leftLaneHistory;
-    std::deque<std::vector<Point>> rightLaneHistory;
+    std::deque<std::vector<cv::Point>> leftLaneHistory;
+    std::deque<std::vector<cv::Point>> rightLaneHistory;
     const int historySize = 30; 
     
 public:
