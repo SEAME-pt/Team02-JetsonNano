@@ -600,15 +600,18 @@ void LaneDetectorCV::detect(Mat& frame) {
         }
     }
     
+    // Add a member variable to the class to store the previous midPoint
+    Point prevMidPoint = Point(-1, -1); // Initialize with an invalid point
+
     // 9. Compute the midline reference point
     Point midPoint;
     if (!midCurve.empty()) {
         int targetY = height - (2 * height / 3);  // 2/3 up from bottom
-        
+
         // Find the closest point to our target Y value
         size_t closest_idx = 0;
         int min_distance = abs(midCurve[0].y - targetY);
-        
+
         for (size_t i = 1; i < midCurve.size(); i++) {
             int distance = abs(midCurve[i].y - targetY);
             if (distance < min_distance) {
@@ -616,17 +619,26 @@ void LaneDetectorCV::detect(Mat& frame) {
                 closest_idx = i;
             }
         }
-        
+
         // Use the point at the found index
         midPoint = midCurve[closest_idx];
-        
+
+        // Apply smoothing to stabilize the midPoint
+        if (prevMidPoint.x != -1 && prevMidPoint.y != -1) { // Check if prevMidPoint is valid
+            float alpha = 0.8; // Smoothing factor (adjust as needed)
+            midPoint.x = static_cast<int>(alpha * midPoint.x + (1 - alpha) * prevMidPoint.x);
+            midPoint.y = static_cast<int>(alpha * midPoint.y + (1 - alpha) * prevMidPoint.y);
+        }
+
         // Draw a horizontal line at the target Y for visualization
         line(frame, Point(0, targetY), Point(width, targetY), Scalar(0, 255, 255), 1);
     } else {
         // Fallback to center of image
-        midPoint = Point(width/2, height*2/3);
+        midPoint = Point(width / 2, height * 2 / 3);
     }
-    
+
+    // Update prevMidPoint for the next frame
+    prevMidPoint = midPoint;
     prevMidCurve = midCurve;
     firstFrame = false;
     
@@ -644,19 +656,19 @@ void LaneDetectorCV::detect(Mat& frame) {
     // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
     
-    // // Draw left curve
-    // if (!leftCurve.empty()) {
-    //     for (size_t i = 1; i < leftCurve.size(); i++) {
-    //         line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
-    //     }
-    // }
+    // Draw left curve
+    if (!leftCurve.empty()) {
+        for (size_t i = 1; i < leftCurve.size(); i++) {
+            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+        }
+    }
     
-    // // Draw right curve
-    // if (!rightCurve.empty()) {
-    //     for (size_t i = 1; i < rightCurve.size(); i++) {
-    //         line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
-    //     }
-    // }
+    // Draw right curve
+    if (!rightCurve.empty()) {
+        for (size_t i = 1; i < rightCurve.size(); i++) {
+            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+        }
+    }
     
     // // Draw mid curve (optional)
     // if (!midCurve.empty()) {
@@ -732,8 +744,8 @@ void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vec
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
     
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(5e-4));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(5e-4));
     
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
