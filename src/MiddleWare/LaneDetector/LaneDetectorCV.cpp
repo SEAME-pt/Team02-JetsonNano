@@ -512,7 +512,7 @@ void LaneDetectorCV::detect(Mat& frame) {
     }
     
     // 7. Smooth curves by averaging with previous frames
-    double alpha = 0.2;
+    double alpha = 0.5;
     if (!firstFrame) {
         // Only if we have previous curves and current curves
         if (!prevLeftCurve.empty() && !leftCurve.empty() && 
