@@ -13,9 +13,9 @@ int main(void)
         cerr << "Failed to open calibration.yml" << endl;
         return -1;
     }
-    Mat cameraMatrix, distCoeffs;
-    fs["CameraMatrix"] >> cameraMatrix;
-    fs["DistCoeffs"] >> distCoeffs;
+    Mat tempMatrix, tempCoeffs;
+    fs["CameraMatrix"] >> tempMatrix;
+    fs["DistCoeffs"] >> tempCoeffs;
     fs.release();
 
     const std::string pipeline =
@@ -32,7 +32,7 @@ int main(void)
         auto session = std::make_shared<Session>(Session::open(std::move(config)));
 
         LaneDetectorCV detector(pipeline, session);
-        detector.setCalibrationParameters(cameraMatrix, distCoeffs);
+        detector.setCalibrationParameters(tempMatrix, tempCoeffs);
         detector.run();
     }
     catch (const std::exception& e)
