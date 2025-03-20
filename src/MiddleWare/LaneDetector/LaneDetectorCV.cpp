@@ -6,6 +6,13 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
+
+void LaneDetectorCV::setCalibrationParameters(const cv::Mat& camMatrix, const cv::Mat& dCoeffs)
+{
+    this->cameraMatrix = camMatrix;
+    this->distCoeffs = dCoeffs;
+}
+
 LaneDetectorCV::LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session)
     : cap(pipeline, cv::CAP_GSTREAMER),
       session_(session),
@@ -753,13 +760,43 @@ void LaneDetectorCV::detect(Mat& frame) {
     addWeighted(frame, 0.8, lineImage, 1.0, 0, frame);
 }
 
+// void LaneDetectorCV::run() {
+//     Mat frame;
+    
+//     while(true) {
+//         cap >> frame;
+//         if(frame.empty())
+//             break;
+        
+//             undis
+
+//         if (frame_count % FRAME_SKIP == 0) {
+//             detect(frame);
+//             imshow("Lane Detection", frame);
+//         }
+        
+//         frame_count++;
+//         if(waitKey(1) == 27)
+//             break;
+//     }
+// }
+
+
 void LaneDetectorCV::run() {
     Mat frame;
     
-    while(true) {
+    while (true) {
         cap >> frame;
-        if(frame.empty())
+        if (frame.empty())
             break;
+        
+        // Undistort fram using the parameters from the calibration file
+        //calibration file paramethers loaded in the main
+        if (!cameraMatrix.empty() && !distCoeffs.empty()) {
+            Mat undistorted;
+            undistort(frame, undistorted, this->cameraMatrix, this->distCoeffs);
+            frame = undistorted;
+        }
         
         if (frame_count % FRAME_SKIP == 0) {
             detect(frame);
@@ -767,10 +804,11 @@ void LaneDetectorCV::run() {
         }
         
         frame_count++;
-        if(waitKey(1) == 27)
+        if (waitKey(1) == 27)
             break;
     }
 }
+
 
 void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vector<Point>& rightCurve) {
     // For simplicity, we'll track the bottom, middle, and top points of each lane
