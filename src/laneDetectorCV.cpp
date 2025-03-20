@@ -20,7 +20,7 @@ int main(void)
         auto session = std::make_shared<Session>(Session::open(std::move(config)));
 
         LaneDetectorCV detector(pipeline, session);
-        detector.setCalibrationParameters(tempMatrix, tempCoeffs);
+        detector.setCalibrationParameters();
         detector.run();
     }
     catch (const std::exception& e)
