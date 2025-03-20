@@ -20,8 +20,8 @@ int main(int argc, char** argv)
             manualController = new XboxController();
             pidController = new PidController();
         }
-        float kp = 200;
-        float ki = 0.000001;
+        float kp = 210;
+        float ki = 0.000005;
         float kd = 2;
         float constant_throttle = 0.25;
         float delta_time = 0.05; //ms
