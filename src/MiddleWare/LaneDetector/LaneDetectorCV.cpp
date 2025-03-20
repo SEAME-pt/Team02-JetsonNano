@@ -514,73 +514,133 @@ void LaneDetectorCV::detect(Mat& frame) {
     // 7. Smooth curves by averaging with previous frames
     double alpha = 0.3;
     if (!firstFrame) {
-        // Only if we have previous curves and current curves
-        if (!prevLeftCurve.empty() && !leftCurve.empty() && 
-        prevLeftCurve.size() == leftCurve.size()) {
-            // Check for curvature to adjust alpha
-            double curvature = 0;
-            if (leftCurve.size() >= 3) {
-                // Calculate approximate curvature using three points
-                int bottom_idx = 0, mid_idx = leftCurve.size()/2, top_idx = leftCurve.size()-1;
-                vector<Point2f> points = {
-                    Point2f(leftCurve[bottom_idx].x, leftCurve[bottom_idx].y),
-                    Point2f(leftCurve[mid_idx].x, leftCurve[mid_idx].y),
-                    Point2f(leftCurve[top_idx].x, leftCurve[top_idx].y)
-                };
-                
-                vector<float> x_vals, y_vals;
-                for (auto& pt : points) {
-                    x_vals.push_back(pt.x);
-                    y_vals.push_back(pt.y);
-                }
-                
-                Mat x_mat(x_vals), y_mat(y_vals);
-                Mat coeffs = polyfit(y_mat, x_mat, 2);
-                if (!coeffs.empty() && coeffs.rows >= 3) {
-                    curvature = abs(coeffs.at<double>(0)); // Quadratic coefficient
-                }
+        // Apply moving average to left curve if it exists
+        if (!leftCurve.empty()) {
+            // Add current curve to history
+            leftLaneHistory.push_back(leftCurve);
+            if (leftLaneHistory.size() > historySize) {
+                leftLaneHistory.pop_front();
             }
             
-            // Adjust alpha based on curvature - sharper curves get less smoothing
-            double dynamicAlpha = min(0.8, alpha + curvature * 5000); // Adjust multiplier as needed
+            // Only apply averaging if we have enough history
+            if (leftLaneHistory.size() >= 2) {
+                // Create a copy of the current curve for averaging
+                std::vector<Point> averagedLeftCurve = leftCurve;
+                
+                // For each point in the curve
+                for (size_t i = 0; i < leftCurve.size(); i++) {
+                    int sumX = 0, sumY = 0;
+                    double totalWeight = 0;
+                    
+                    // Average across history (weighted, with recent frames having more weight)
+                    for (size_t h = 0; h < leftLaneHistory.size(); h++) {
+                        if (i < leftLaneHistory[h].size()) {
+                            // More recent frames get higher weight
+                            double weight = (h + 1.0) / leftLaneHistory.size();
+                            sumX += leftLaneHistory[h][i].x * weight;
+                            sumY += leftLaneHistory[h][i].y * weight;
+                            totalWeight += weight;
+                        }
+                    }
+                    
+                    if (totalWeight > 0) {
+                        averagedLeftCurve[i].x = static_cast<int>(sumX / totalWeight);
+                        averagedLeftCurve[i].y = static_cast<int>(sumY / totalWeight);
+                    }
+                }
+                leftCurve = averagedLeftCurve;
+            }
             
-            for (size_t i = 0; i < leftCurve.size(); i++) {
-                leftCurve[i].x = (int)(dynamicAlpha * leftCurve[i].x + (1 - dynamicAlpha) * prevLeftCurve[i].x);
-                leftCurve[i].y = (int)(dynamicAlpha * leftCurve[i].y + (1 - dynamicAlpha) * prevLeftCurve[i].y);
+            // Additionally apply dynamic alpha smoothing for even more stability
+            if (!prevLeftCurve.empty() && prevLeftCurve.size() == leftCurve.size()) {
+                double curvature = 0;
+                if (leftCurve.size() >= 3) {
+                    // Calculate curvature using all points instead of just three
+                    std::vector<float> x_vals, y_vals;
+                    for (const auto& pt : leftCurve) {
+                        x_vals.push_back(pt.x);
+                        y_vals.push_back(pt.y);
+                    }
+                    
+                    Mat x_mat(x_vals), y_mat(y_vals);
+                    Mat coeffs = polyfit(y_mat, x_mat, 2);
+                    if (!coeffs.empty() && coeffs.rows >= 3) {
+                        curvature = abs(coeffs.at<double>(0));
+                    }
+                }
+                
+                // Lower multiplier for smoother transitions
+                double dynamicAlpha = min(0.5, alpha + curvature * 1000);
+                
+                for (size_t i = 0; i < leftCurve.size(); i++) {
+                    leftCurve[i].x = static_cast<int>(dynamicAlpha * leftCurve[i].x + (1 - dynamicAlpha) * prevLeftCurve[i].x);
+                    leftCurve[i].y = static_cast<int>(dynamicAlpha * leftCurve[i].y + (1 - dynamicAlpha) * prevLeftCurve[i].y);
+                }
             }
         }
-        if (!prevRightCurve.empty() && !rightCurve.empty() && 
-        prevRightCurve.size() == rightCurve.size()) {
-            // Check for curvature to adjust alpha
-            double curvature = 0;
-            if (rightCurve.size() >= 3) {
-                // Calculate approximate curvature using three points
-                int bottom_idx = 0, mid_idx = rightCurve.size()/2, top_idx = rightCurve.size()-1;
-                vector<Point2f> points = {
-                    Point2f(rightCurve[bottom_idx].x, rightCurve[bottom_idx].y),
-                    Point2f(rightCurve[mid_idx].x, rightCurve[mid_idx].y),
-                    Point2f(rightCurve[top_idx].x, rightCurve[top_idx].y)
-                };
-                
-                vector<float> x_vals, y_vals;
-                for (auto& pt : points) {
-                    x_vals.push_back(pt.x);
-                    y_vals.push_back(pt.y);
-                }
-                
-                Mat x_mat(x_vals), y_mat(y_vals);
-                Mat coeffs = polyfit(y_mat, x_mat, 2);
-                if (!coeffs.empty() && coeffs.rows >= 3) {
-                    curvature = abs(coeffs.at<double>(0)); // Quadratic coefficient
-                }
+        
+        // Apply moving average to right curve if it exists
+        if (!rightCurve.empty()) {
+            // Add current curve to history
+            rightLaneHistory.push_back(rightCurve);
+            if (rightLaneHistory.size() > historySize) {
+                rightLaneHistory.pop_front();
             }
             
-            // Adjust alpha based on curvature - sharper curves get less smoothing
-            double dynamicAlpha = min(0.6, alpha + curvature * 1000); // Adjust multiplier as needed
+            // Only apply averaging if we have enough history
+            if (rightLaneHistory.size() >= 2) {
+                // Create a copy of the current curve for averaging
+                std::vector<Point> averagedRightCurve = rightCurve;
+                
+                // For each point in the curve
+                for (size_t i = 0; i < rightCurve.size(); i++) {
+                    int sumX = 0, sumY = 0;
+                    double totalWeight = 0;
+                    
+                    // Average across history (weighted, with recent frames having more weight)
+                    for (size_t h = 0; h < rightLaneHistory.size(); h++) {
+                        if (i < rightLaneHistory[h].size()) {
+                            // More recent frames get higher weight
+                            double weight = (h + 1.0) / rightLaneHistory.size();
+                            sumX += rightLaneHistory[h][i].x * weight;
+                            sumY += rightLaneHistory[h][i].y * weight;
+                            totalWeight += weight;
+                        }
+                    }
+                    
+                    if (totalWeight > 0) {
+                        averagedRightCurve[i].x = static_cast<int>(sumX / totalWeight);
+                        averagedRightCurve[i].y = static_cast<int>(sumY / totalWeight);
+                    }
+                }
+                rightCurve = averagedRightCurve;
+            }
             
-            for (size_t i = 0; i < rightCurve.size(); i++) {
-                rightCurve[i].x = (int)(dynamicAlpha * rightCurve[i].x + (1 - dynamicAlpha) * prevRightCurve[i].x);
-                rightCurve[i].y = (int)(dynamicAlpha * rightCurve[i].y + (1 - dynamicAlpha) * prevRightCurve[i].y);
+            // Additionally apply dynamic alpha smoothing for even more stability
+            if (!prevRightCurve.empty() && prevRightCurve.size() == rightCurve.size()) {
+                double curvature = 0;
+                if (rightCurve.size() >= 3) {
+                    // Calculate curvature using all points instead of just three
+                    std::vector<float> x_vals, y_vals;
+                    for (const auto& pt : rightCurve) {
+                        x_vals.push_back(pt.x);
+                        y_vals.push_back(pt.y);
+                    }
+                    
+                    Mat x_mat(x_vals), y_mat(y_vals);
+                    Mat coeffs = polyfit(y_mat, x_mat, 2);
+                    if (!coeffs.empty() && coeffs.rows >= 3) {
+                        curvature = abs(coeffs.at<double>(0));
+                    }
+                }
+                
+                // Lower multiplier for smoother transitions
+                double dynamicAlpha = min(0.5, alpha + curvature * 500);
+                
+                for (size_t i = 0; i < rightCurve.size(); i++) {
+                    rightCurve[i].x = static_cast<int>(dynamicAlpha * rightCurve[i].x + (1 - dynamicAlpha) * prevRightCurve[i].x);
+                    rightCurve[i].y = static_cast<int>(dynamicAlpha * rightCurve[i].y + (1 - dynamicAlpha) * prevRightCurve[i].y);
+                }
             }
         }
     }
