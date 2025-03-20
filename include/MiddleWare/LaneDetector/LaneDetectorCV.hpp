@@ -37,6 +37,10 @@ private:
     cv::KalmanFilter leftLaneKF;
     cv::KalmanFilter rightLaneKF;
     bool kfInitialized;
+
+    std::deque<std::vector<Point>> leftLaneHistory;
+    std::deque<std::vector<Point>> rightLaneHistory;
+    const int historySize = 30; 
     
 public:
     LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session);
