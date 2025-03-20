@@ -625,9 +625,9 @@ void LaneDetectorCV::detect(Mat& frame) {
 
         // Apply smoothing to stabilize the midPoint
         if (prevMidPoint.x != -1 && prevMidPoint.y != -1) { // Check if prevMidPoint is valid
-            float alpha = 0.8; // Smoothing factor (adjust as needed)
-            midPoint.x = static_cast<int>(alpha * midPoint.x + (1 - alpha) * prevMidPoint.x);
-            midPoint.y = static_cast<int>(alpha * midPoint.y + (1 - alpha) * prevMidPoint.y);
+            float gama = 0.8; // Smoothing factor (adjust as needed)
+            midPoint.x = static_cast<int>(gama * midPoint.x + (1 - gama) * prevMidPoint.x);
+            midPoint.y = static_cast<int>(gama * midPoint.y + (1 - gama) * prevMidPoint.y);
         }
 
         // Draw a horizontal line at the target Y for visualization
