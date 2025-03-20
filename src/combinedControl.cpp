@@ -21,8 +21,8 @@ int main(int argc, char** argv)
             pidController = new PidController();
         }
         float kp = 210;
-        float ki = 0.000005;
-        float kd = 2;
+        float ki = 0.000001;
+        float kd = 5;
         float constant_throttle = 0.25;
         float delta_time = 0.05; //ms
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
