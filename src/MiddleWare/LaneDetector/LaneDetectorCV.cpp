@@ -512,7 +512,7 @@ void LaneDetectorCV::detect(Mat& frame) {
     }
     
     // 7. Smooth curves by averaging with previous frames
-    double alpha = 0.5;
+    double alpha = 0.3;
     if (!firstFrame) {
         // Only if we have previous curves and current curves
         if (!prevLeftCurve.empty() && !leftCurve.empty() && 
@@ -576,7 +576,7 @@ void LaneDetectorCV::detect(Mat& frame) {
             }
             
             // Adjust alpha based on curvature - sharper curves get less smoothing
-            double dynamicAlpha = min(0.8, alpha + curvature * 5000); // Adjust multiplier as needed
+            double dynamicAlpha = min(0.6, alpha + curvature * 1000); // Adjust multiplier as needed
             
             for (size_t i = 0; i < rightCurve.size(); i++) {
                 rightCurve[i].x = (int)(dynamicAlpha * rightCurve[i].x + (1 - dynamicAlpha) * prevRightCurve[i].x);
