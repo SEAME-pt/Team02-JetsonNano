@@ -6,18 +6,6 @@ using namespace zenoh;
 
 int main(void)
 {
-
-    //calibration parameters file path here this should be saved on the class to be used in RUN method (function)
-    FileStorage fs("calibration.yml", FileStorage::READ);
-    if (!fs.isOpened()) {
-        cerr << "Failed to open calibration.yml" << endl;
-        return -1;
-    }
-    Mat tempMatrix, tempCoeffs;
-    fs["CameraMatrix"] >> tempMatrix;
-    fs["DistCoeffs"] >> tempCoeffs;
-    fs.release();
-
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
         "video/x-raw(memory:NVMM), width=640, height=480, format=NV12, "
