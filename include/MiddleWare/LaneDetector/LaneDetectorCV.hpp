@@ -53,7 +53,7 @@ public:
     void detect(cv::Mat& frame);
 
 private:
-    void setCalibrationParameters(const cv::Mat& camMatrix, const cv::Mat& dCoeffs);
+    void setCalibrationParameters(void);
     cv::Mat regionOfInterest(const cv::Mat &img, const std::vector<cv::Point>& vertices);
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);
