@@ -21,7 +21,7 @@ int main(int argc, char** argv)
             pidController = new PidController();
         }
         float kp = 210;
-        float ki = 0.000003;
+        float ki = 0.000001;
         float kd = 10;
         float constant_throttle = 0.35;
         float delta_time = 0.05; //ms
