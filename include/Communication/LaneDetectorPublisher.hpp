@@ -24,8 +24,10 @@ class LaneDetectorPublisher
     LaneDetectorPublisher(std::shared_ptr<zenoh::Session> session);
 
     void publishCameraError(float speed);
+    void publishLanes(const std::vector<cv::Point>& leftLane, const std::vector<cv::Point>& rightLane);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::Publisher> cameraError_pub;
+    std::optional<zenoh::Publisher> cameraLanes_pub;
 };
