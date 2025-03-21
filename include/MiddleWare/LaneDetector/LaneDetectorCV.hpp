@@ -17,7 +17,8 @@ private:
     cv::VideoCapture cap;
     cv::Mat cameraMatrix;
     cv::Mat distCoeffs;
-    
+    cv::Mat map1, map2;
+
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
     std::vector<cv::Point> prevMidCurve;
@@ -51,9 +52,9 @@ public:
     
     void run();
     void detect(cv::Mat& frame);
+    void setCalibrationParameters(void);
 
 private:
-    void setCalibrationParameters(const cv::Mat& camMatrix, const cv::Mat& dCoeffs);
     cv::Mat regionOfInterest(const cv::Mat &img, const std::vector<cv::Point>& vertices);
     double getCurrentTime();
     cv::Vec4i extrapolateLine(const std::vector<cv::Vec4i>& laneLines);

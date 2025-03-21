@@ -755,7 +755,29 @@ void LaneDetectorCV::detect(Mat& frame) {
 
 void LaneDetectorCV::run() {
     Mat frame;
-    
+    bool mapsInitialized = false;  // Flag to ensure we compute the maps only once
+
+    while (true) {
+        cap >> frame;
+        if (frame.empty())
+            break;
+        
+        // Compute the undistortion maps once using the frame size from the first frame.
+        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty()) {
+            cv::Size imageSize = frame.size();
+            // Initialize the maps with a rectification transform of identity (no rotation)
+            initUndistortRectifyMap(cameraMatrix, distCoeffs, cv::Mat(),
+                                    cameraMatrix, imageSize, CV_16SC2, map1, map2);
+            mapsInitialized = true;
+        }
+        
+        // If the maps have been computed, use remap() to undistort the frame.
+        if (mapsInitialized) {
+            Mat undistorted;
+            remap(frame, undistorted, map1, map2, cv::INTER_LINEAR);
+            frame = undistorted;
+        }
+
     while(true) {
         cap >> frame;
         if(frame.empty())
