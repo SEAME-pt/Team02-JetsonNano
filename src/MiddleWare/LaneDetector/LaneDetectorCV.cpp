@@ -13,7 +13,7 @@ void LaneDetectorCV::setCalibrationParameters(void)
     FileStorage fs("calibration.yml", FileStorage::READ);
     if (!fs.isOpened()) {
         cerr << "Failed to open calibration.yml" << endl;
-        return -1;
+        return;
     }
     Mat tempMatrix, tempCoeffs;
     fs["CameraMatrix"] >> tempMatrix;
