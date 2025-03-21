@@ -3,6 +3,9 @@
 #include <zenoh.hxx>
 #include <string>
 #include <optional>
+#include <opencv2/opencv.hpp>
+#include <vector>
+#include <iostream>
 
 /**
  * @brief Lane detector publisher
