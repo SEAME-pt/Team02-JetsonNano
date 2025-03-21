@@ -56,5 +56,5 @@ void LaneDetectorPublisher::publishLanes(const std::vector<cv::Point>& leftLane,
     std::cout << "Publishing lanes: " << laneData << std::endl;
     
     // Publish lane data
-    lanes_pub->put(laneData);
+    cameraLanes_pub->put(laneData);
 }
