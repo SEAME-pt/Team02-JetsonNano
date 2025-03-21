@@ -251,7 +251,7 @@ void PidController::updateControl(float error, double current_time) {
     }
     
     // Ensure speed doesn't go below minimum
-    dynamic_speed = std::max(MIN_SPEED, dynamic_speed);
+    dynamic_speed = std::max(MIN_SPEED, dynamic_speed) * 100;
 
     publisher_->publishSteering(direction);
     publisher_->publishSpeed(dynamic_speed);
