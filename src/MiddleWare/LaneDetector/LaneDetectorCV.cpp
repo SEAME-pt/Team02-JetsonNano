@@ -32,7 +32,7 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zeno
       laneWidthEstimate(0.0),
       firstFrame(true),
       frame_count(0),
-      FRAME_SKIP(8)
+      FRAME_SKIP(2)
 {
     if(!cap.isOpened()) {
         throw std::runtime_error("Error opening video stream");
@@ -799,7 +799,8 @@ void LaneDetectorCV::run() {
         if (frame_count % FRAME_SKIP == 0) {
             Mat undistorted;
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
-            detect(undistorted);
+            frame = undistorted;
+            detect(frame);
         }
         imshow("Lane Detection", frame);
         
