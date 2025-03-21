@@ -229,9 +229,34 @@ void PidController::updateControl(float error, double current_time) {
         direction = 90.0f - max_steering_angle_;
     }
 
+    // Dynamic speed adjustment based on error
+    float error_magnitude = fabs(error);
+    
+    // Define speed control parameters
+    const float BASE_SPEED = constant_speed_;      // Maximum speed when error is minimal
+    const float MIN_SPEED = BASE_SPEED * 0.6f;     // Minimum speed (60% of max)
+    const float ERROR_THRESHOLD = 50.0f;           // Error threshold where speed starts decreasing
+    
+    // Calculate dynamic speed
+    float dynamic_speed;
+    if (error_magnitude < ERROR_THRESHOLD) {
+        // Linear interpolation between BASE_SPEED and slightly reduced speed
+        float reduction_factor = error_magnitude / ERROR_THRESHOLD;
+        dynamic_speed = BASE_SPEED - (reduction_factor * (BASE_SPEED * 0.2f));
+    } else {
+        // For larger errors, reduce speed more aggressively
+        float excess_error = error_magnitude - ERROR_THRESHOLD;
+        float reduction_factor = std::min(1.0f, excess_error / (ERROR_THRESHOLD * 2));
+        dynamic_speed = BASE_SPEED * 0.8f - (reduction_factor * (BASE_SPEED * 0.2f));
+    }
+    
+    // Ensure speed doesn't go below minimum
+    dynamic_speed = std::max(MIN_SPEED, dynamic_speed);
+
     publisher_->publishSteering(direction);
-    std::cout << direction << std::endl;
-    // publisher_->publishSpeed(constant_speed_);
+    publisher_->publishSpeed(dynamic_speed_);
+
+    std::cout << "Direction: " << direction << ", Speed: " << dynamic_speed << std::endl;
     // publisher_->publishCurrentGear(1);
 
     prev_error_ = error;
