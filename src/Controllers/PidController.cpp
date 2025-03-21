@@ -230,7 +230,7 @@ void PidController::updateControl(float error, double current_time) {
     }
 
     // Dynamic speed adjustment based on error
-    float error_magnitude = fabs(error);
+    float error_magnitude = std::fabs(error);
     
     // Define speed control parameters
     const float BASE_SPEED = constant_speed_;      // Maximum speed when error is minimal
@@ -254,7 +254,7 @@ void PidController::updateControl(float error, double current_time) {
     dynamic_speed = std::max(MIN_SPEED, dynamic_speed);
 
     publisher_->publishSteering(direction);
-    publisher_->publishSpeed(dynamic_speed_);
+    publisher_->publishSpeed(dynamic_speed);
 
     std::cout << "Direction: " << direction << ", Speed: " << dynamic_speed << std::endl;
     // publisher_->publishCurrentGear(1);

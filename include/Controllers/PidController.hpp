@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <cmath>
 #include <sys/time.h>
 
 #ifdef TEST_MODE
