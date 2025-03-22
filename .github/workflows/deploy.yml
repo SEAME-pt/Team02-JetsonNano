@@ -39,15 +39,15 @@ jobs:
           mkdir -p artifacts/config
           
           # Extract binaries
-          docker cp tmpapp:/home/JetsonNano/VehicleSystem ./artifacts/bin/
-          docker cp tmpapp:/home/JetsonNano/XboxController ./artifacts/bin/
-          docker cp tmpapp:/home/JetsonNano/MiddleWare ./artifacts/bin/
-          docker cp tmpapp:/home/JetsonNano/CombinedController ./artifacts/bin/
-          docker cp tmpapp:/home/JetsonNano/LaneDetector ./artifacts/bin/
+          docker cp tmpapp:/home//VehicleSystem ./artifacts/bin/
+          docker cp tmpapp:/home//XboxController ./artifacts/bin/
+          docker cp tmpapp:/home//MiddleWare ./artifacts/bin/
+          docker cp tmpapp:/home//CombinedController ./artifacts/bin/
+          docker cp tmpapp:/home//LaneDetector ./artifacts/bin/
           
           # Copy config files
-          cp -r ./JetsonNano/config/Zenoh/* ./artifacts/config/
-          cp -r ./JetsonNano/config/Systemd/* ./artifacts/config/
+          cp -r .//config/Zenoh/* ./artifacts/config/
+          cp -r .//config/Systemd/* ./artifacts/config/
           
           # Create source code archive
           git archive --format=zip HEAD -o ./artifacts/source-code.zip

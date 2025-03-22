@@ -10,7 +10,7 @@ set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(Threads REQUIRED)
+find_package(Thread REQUIRED)
 
 include(FetchContent)
 
