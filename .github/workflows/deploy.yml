@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - dev
-      - implement-zenoh-shared-memory
     tags:
       - 'v*'
 
@@ -17,7 +15,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
 
       - name: Set Up QEMU
         uses: docker/setup-qemu-action@v2
