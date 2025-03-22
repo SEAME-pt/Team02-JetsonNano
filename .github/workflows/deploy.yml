@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - dev
-      - 61-task-update-compilation-using-dockerimage
+      - implement-zenoh-shared-memory
     tags:
       - 'v*'
 
@@ -14,41 +14,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      # Set up QEMU for cross-architecture support
       - name: Set Up QEMU
         uses: docker/setup-qemu-action@v2
         with:
           platforms: linux/arm64
 
-      # Pull and run the Docker container
       - name: Build in Docker
         run: |
-          docker run --rm \
-          --platform linux/arm64 \
-          -v ${{ github.workspace }}:/workspace \
-          -w /workspace \
-          ruipires99/jetsoncrosscompile:latest \
-          bash -c "
-          apt-get update && apt-get install -y build-essential && \
-          mkdir -p /workspace/CarController/build && \
-          cd /workspace/CarController/build && \
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
-          make && \
-          mkdir -p /workspace/XboxController/build && \
-          cd /workspace/XboxController/build && \
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/workspace/path/to/aarch64-toolchain.cmake .. && \
-          make
-          "
+          docker buildx build -f ./JetsonNano/deploy/dockerfiles/DockerfileDeployJetson \
+            --platform linux/arm64 --load \
+            --build-arg projectDir=/JetsonNano \
+            -t final-app .
 
-          "
+          # Create temporary container
+          docker create --name tmpapp final-app
+          
+          # Create directories for artifacts
+          mkdir -p artifacts/bin
+          mkdir -p artifacts/config
+          
+          # Extract binaries
+          docker cp tmpapp:/home/JetsonNano/VehicleSystem ./artifacts/bin/
+          docker cp tmpapp:/home/JetsonNano/XboxController ./artifacts/bin/
+          docker cp tmpapp:/home/JetsonNano/MiddleWare ./artifacts/bin/
+          docker cp tmpapp:/home/JetsonNano/CombinedController ./artifacts/bin/
+          docker cp tmpapp:/home/JetsonNano/LaneDetector ./artifacts/bin/
+          
+          # Copy config files
+          cp -r ./JetsonNano/config/Zenoh/* ./artifacts/config/
+          cp -r ./JetsonNano/config/Systemd/* ./artifacts/config/
+          
+          # Create source code archive
+          git archive --format=zip HEAD -o ./artifacts/source-code.zip
+          
+          # Create release archive
+          cd artifacts
+          zip -r ../release-package.zip *
+          cd ..
+          
+          # Cleanup
+          docker rm tmpapp
 
-      #Version Release and Tag Update
       - name: Get latest tag and increment
         id: tag
         run: |
@@ -69,28 +80,25 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.new_tag }}
           files: |
-            CarController/build/RaceCar
-            XboxController/build/controller
+            release-package.zip
+            artifacts/source-code.zip
+            artifacts/bin/*
           name: Release ${{ steps.tag.outputs.new_tag }}
+          body: |
+            ## Release Notes
+            
+            ### Included Files
+            - Executables in `bin/`
+            - Configuration files in `config/`
+            - Complete source code in `source-code.zip`
+            - All-in-one package in `release-package.zip`
+            
+            ### Installation
+            1. Download the release package
+            2. Extract to appropriate locations on Jetson Nano
+            3. Follow setup instructions in documentation
           draft: false
           prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_LUIS }}
-
-      #Artifacts:
-      - name: Upload RaceCar binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: RaceCar
-          path: CarController/build/RaceCar
-          retention-days: 1
-          overwrite: true
-
-      - name: Upload XboxController binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: controller
-          path: XboxController/build/controller
-          retention-days: 1
-          overwrite: true
