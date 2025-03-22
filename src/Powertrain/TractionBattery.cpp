@@ -8,12 +8,12 @@ float TractionBattery::get_state_of_charge_displayed() const
 float TractionBattery::get_mutable_state_of_charge_displayed()
 {
     return state_of_charge_displayed;
-}   
+}
 
 void TractionBattery::set_state_of_charge_displayed(const float value)
 {
     this->state_of_charge_displayed = value;
-}   
+}
 
 std::uint16_t TractionBattery::get_max_voltage() const
 {
@@ -69,4 +69,3 @@ void TractionBattery::set_current_power(const float value)
 {
     this->current_power = value;
 }
-
