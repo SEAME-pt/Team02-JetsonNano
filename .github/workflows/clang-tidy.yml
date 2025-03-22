@@ -24,22 +24,22 @@ jobs:
 
       - name: Build and Run Clang-Tidy in Docker
         run: |
-          # Build the Docker image with clang-tidy added
+          # Build the Docker image (which already includes CMake build)
           docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
             --platform linux/arm64 --load \
             --build-arg projectDir=/ \
             -t analysis-image .
 
-          # Run clang-tidy analysis inside the container
+          # Run clang-tidy analysis using existing build
           docker run --rm analysis-image bash -c "
-            cd /home && \
-            cmake -B build \
-              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ && \
-            run-clang-tidy \
-              -p build \
-              -checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
-              -header-filter='.*' \
-              -quiet
+            apt-get update && \
+            apt-get install -y clang-tidy && \
+            find /home -name '*.cpp' -o -name '*.hpp' | \
+            while read file; do \
+              clang-tidy \
+                -p=/home \
+                --checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
+                --header-filter='.*' \
+                \$file; \
+            done
           "
