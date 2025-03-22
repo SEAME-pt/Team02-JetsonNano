@@ -12,28 +12,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: true
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake clang-tidy gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      - name: Set Up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
 
-      - name: Configure CMake
+      - name: Build and Run Clang-Tidy in Docker
         run: |
-          cmake -B build \
-                -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-                -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-                -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+          # Build the Docker image with clang-tidy added
+          docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
+            --platform linux/arm64 --load \
+            --build-arg projectDir=/ \
+            --target builder \
+            -t analysis-image .
 
-      - name: Run clang-tidy
-        run: |
-          run-clang-tidy \
-            -p build \
-            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
-            -header-filter='.*' \
-            -quiet
+          # Run clang-tidy analysis inside the container
+          docker run --rm analysis-image bash -c "
+            cd /home && \
+            cmake -B build \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ && \
+            run-clang-tidy \
+              -p build \
+              -checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
+              -header-filter='.*' \
+              -quiet
+          "
