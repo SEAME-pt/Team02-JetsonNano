@@ -1,0 +1,39 @@
+name: Clang Tidy Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  clang-tidy:
+    name: Clang Tidy Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake clang-tidy gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+                -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+                -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+
+      - name: Run clang-tidy
+        run: |
+          run-clang-tidy \
+            -p build \
+            -checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
+            -header-filter='.*' \
+            -quiet
