@@ -26,9 +26,9 @@ jobs:
 
       - name: Build in Docker
         run: |
-          docker buildx build -f ./JetsonNano/deploy/dockerfiles/DockerfileDeployJetson \
+          docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
             --platform linux/arm64 --load \
-            --build-arg projectDir=/JetsonNano \
+            --build-arg projectDir=/ \
             -t final-app .
 
           # Create temporary container
