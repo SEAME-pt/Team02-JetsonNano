@@ -44,7 +44,9 @@ private:
 
     std::deque<std::vector<cv::Point>> leftLaneHistory;
     std::deque<std::vector<cv::Point>> rightLaneHistory;
-    const size_t historySize = 5; 
+    const size_t historySize = 5;
+
+    CAN* canBus;
     
 public:
     LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session);
@@ -61,5 +63,5 @@ private:
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
     std::vector<cv::Point> extrapolatePolynomialCurve(const std::vector<cv::Vec4i>& laneLines);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve);
-
+    void sendCoefs(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve);
 };

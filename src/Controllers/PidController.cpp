@@ -234,8 +234,8 @@ void PidController::updateControl(float error, double current_time) {
     
     // Define speed control parameters
     const float BASE_SPEED = constant_speed_;      // Maximum speed when error is minimal
-    const float MIN_SPEED = BASE_SPEED * 0.6f;     // Minimum speed (60% of max)
-    const float ERROR_THRESHOLD = 50.0f;           // Error threshold where speed starts decreasing
+    const float MIN_SPEED = BASE_SPEED * 0.5f;     // Minimum speed (50% of max)
+    const float ERROR_THRESHOLD = 40.0f;           // Error threshold where speed starts decreasing
     
     // Calculate dynamic speed
     float dynamic_speed;

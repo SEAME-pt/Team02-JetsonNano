@@ -729,6 +729,7 @@ void LaneDetectorCV::detect(Mat& frame) {
     if (publisher_) {
         publisher_->publishCameraError(lateralError);
         publisher_->publishLanes(leftCurve, rightCurve);
+        sendCoefs(leftCurve, rightCurve); 
     }
     
     // 10. Draw the detected lane curves and midpoint
@@ -881,4 +882,96 @@ void LaneDetectorCV::initKalmanFilters(const vector<Point>& leftCurve, const vec
     }
     
     kfInitialized = true;
+}
+
+void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve) {
+    // Extract coefficients for the left curve
+    cv::Mat leftCoeffs;
+    if (!leftCurve.empty() && leftCurve.size() >= 3) {
+        std::vector<float> x_vals, y_vals;
+        for (const auto& pt : leftCurve) {
+            x_vals.push_back(pt.x);
+            y_vals.push_back(pt.y);
+        }
+        
+        cv::Mat x_mat(x_vals), y_mat(y_vals);
+        leftCoeffs = polyfit(y_mat, x_mat, 2);
+    }
+
+    // Extract coefficients for the right curve
+    cv::Mat rightCoeffs;
+    if (!rightCurve.empty() && rightCurve.size() >= 3) {
+        std::vector<float> x_vals, y_vals;
+        for (const auto& pt : rightCurve) {
+            x_vals.push_back(pt.x);
+            y_vals.push_back(pt.y);
+        }
+        
+        cv::Mat x_mat(x_vals), y_mat(y_vals);
+        rightCoeffs = polyfit(y_mat, x_mat, 2);
+    }
+    
+    // Publish the coefficients if they were successfully calculated
+    if (!leftCoeffs.empty() && !rightCoeffs.empty() && 
+    leftCoeffs.rows >= 3 && rightCoeffs.rows >= 3) {
+    
+        // Extract coefficients
+        float leftA = static_cast<float>(leftCoeffs.at<double>(0));  // quadratic coefficient
+        float leftB = static_cast<float>(leftCoeffs.at<double>(1));  // linear coefficient
+        float leftC = static_cast<float>(leftCoeffs.at<double>(2));  // constant term
+        
+        float rightA = static_cast<float>(rightCoeffs.at<double>(0));  // quadratic coefficient
+        float rightB = static_cast<float>(rightCoeffs.at<double>(1));  // linear coefficient
+        float rightC = static_cast<float>(rightCoeffs.at<double>(2));  // constant term
+        
+        // CAN message addresses
+        const uint32_t LEFT_LANE_ADDR = 0x100;
+        const uint32_t RIGHT_LANE_ADDR = 0x101;
+        
+        // Create buffer for CAN messages (8 bytes per message)
+        uint8_t buffer[8] = {0};
+        
+        // Send null message first
+        memset(buffer, 0, sizeof(buffer));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Send left lane coefficients one at a time
+        // Coefficient A
+        memcpy(buffer, &leftA, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Coefficient B
+        memcpy(buffer, &leftB, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Coefficient C
+        memcpy(buffer, &leftC, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        memset(buffer, 0, sizeof(buffer));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Send right lane coefficients one at a time
+        // Coefficient A
+        memcpy(buffer, &rightA, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Coefficient B
+        memcpy(buffer, &rightB, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Coefficient C
+        memcpy(buffer, &rightC, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Send null message at the end
+        memset(buffer, 0, sizeof(buffer));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+        
+        // Log the sent coefficients
+        std::cout << "Left lane coeffs: " << leftA << ", " << leftB << ", " << leftC << std::endl;
+        std::cout << "Right lane coeffs: " << rightA << ", " << rightB << ", " << rightC << std::endl;
+    }
 }
