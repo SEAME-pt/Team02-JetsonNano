@@ -28,7 +28,6 @@ jobs:
           docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
             --platform linux/arm64 --load \
             --build-arg projectDir=/ \
-            --target builder \
             -t analysis-image .
 
           # Run clang-tidy analysis inside the container
