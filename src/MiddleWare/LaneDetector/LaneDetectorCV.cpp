@@ -6,7 +6,6 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-
 void LaneDetectorCV::setCalibrationParameters(void)
 {
     //calibration parameters file path here this should be saved on the class to be used in RUN method (function)
@@ -33,16 +32,20 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zeno
       firstFrame(true),
       frame_count(0),
       FRAME_SKIP(2)
+
 {
-    if(!cap.isOpened()) {
+    if (!cap.isOpened())
+    {
         throw std::runtime_error("Error opening video stream");
     }
+    
     //set kalman filter status to false
     kfInitialized = false;
 
+
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-    
+
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 }
@@ -53,7 +56,9 @@ LaneDetectorCV::~LaneDetectorCV()
     destroyAllWindows();
 }
 
-Mat LaneDetectorCV::regionOfInterest(const Mat &img, const vector<Point>& vertices) {
+Mat LaneDetectorCV::regionOfInterest(const Mat& img,
+                                     const vector<Point>& vertices)
+{
     Mat mask = Mat::zeros(img.size(), img.type());
     fillPoly(mask, vector<vector<Point>>{vertices}, Scalar(255));
     Mat masked;
@@ -96,7 +101,7 @@ Mat LaneDetectorCV::polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
             }
         }
     }
-    
+
     // Solve the system using SVD for better stability
     Mat coeffs;
     try {
@@ -109,18 +114,21 @@ Mat LaneDetectorCV::polyfit(const Mat& y_vals, const Mat& x_vals, int degree) {
     return coeffs;
 }
 
-
-double LaneDetectorCV::getCurrentTime() {
+double LaneDetectorCV::getCurrentTime()
+{
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
 // Extrapolate a polynomial curve from lane line segments
-vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines) {
+vector<Point>
+LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines)
+{
     // Extract all points from line segments
     vector<Point2f> points;
-    for (auto line : laneLines) {
+    for (auto line : laneLines)
+    {
         points.push_back(Point2f(line[0], line[1]));
         points.push_back(Point2f(line[2], line[3]));
     }
@@ -130,7 +138,8 @@ vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& la
 
     // Convert to vectors for polynomial fitting
     vector<float> x_vals, y_vals;
-    for (auto& pt : points) {
+    for (auto& pt : points)
+    {
         x_vals.push_back(pt.x);
         y_vals.push_back(pt.y);
     }
@@ -169,63 +178,66 @@ vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& la
     return curvePoints;
 }
 
-Vec4i LaneDetectorCV::extrapolateLine(const vector<Vec4i>& laneLines) {
+Vec4i LaneDetectorCV::extrapolateLine(const vector<Vec4i>& laneLines)
+{
     double slopeSum = 0, interceptSum = 0;
-    int count = 0;
+    int count  = 0;
     int height = cap.get(CAP_PROP_FRAME_HEIGHT);
-    
-    for(auto line : laneLines){
+
+    for (auto line : laneLines)
+    {
         int x1 = line[0], y1 = line[1], x2 = line[2], y2 = line[3];
-        double slope = (double)(y2 - y1) / (x2 - x1);
+        double slope     = (double)(y2 - y1) / (x2 - x1);
         double intercept = y1 - slope * x1;
         slopeSum += slope;
         interceptSum += intercept;
         count++;
     }
-    
-    if(count == 0)
-        return Vec4i(0,0,0,0);
-    
-    double avgSlope = slopeSum / count;
+
+    if (count == 0)
+        return Vec4i(0, 0, 0, 0);
+
+    double avgSlope     = slopeSum / count;
     double avgIntercept = interceptSum / count;
-    
-    // Define endpoints: bottom of ROI (y = height) and top of ROI (y = height/3)
+
+    // Define endpoints: bottom of ROI (y = height) and top of ROI (y =
+    // height/3)
     int yBottom = height;
-    int yTop = height / 3;
+    int yTop    = height / 3;
     int xBottom = (int)((yBottom - avgIntercept) / avgSlope);
-    int xTop = (int)((yTop - avgIntercept) / avgSlope);
-    
+    int xTop    = (int)((yTop - avgIntercept) / avgSlope);
+
     return Vec4i(xBottom, yBottom, xTop, yTop);
 }
 
-void LaneDetectorCV::detect(Mat& frame) {
+void LaneDetectorCV::detect(Mat& frame)
+{
     int height = frame.rows;
-    int width = frame.cols;
-    
+    int width  = frame.cols;
+
     // Initialize lane width estimate on first frame.
-    if(firstFrame) {
+    if (firstFrame)
+    {
         laneWidthEstimate = width * 0.45;
     }
-    
+
     // 1. Preprocessing: convert to grayscale, blur and detect edges.
     Mat gray;
     cvtColor(frame, gray, COLOR_BGR2GRAY);
     Mat blur;
-    GaussianBlur(gray, blur, Size(5,5), 0);
+    GaussianBlur(gray, blur, Size(5, 5), 0);
     Mat edges;
     Canny(blur, edges, 50, 150);
-    
+
     // 2. Define ROI covering the lower 2/3 of the frame.
-    vector<Point> roiVertices = {
-        Point(0, height),
-        Point(width, height),
-        Point(width, height / 3),
-        Point(0, height / 3)
-    };
-    Mat maskedEdges = regionOfInterest(edges, roiVertices);
-    
+    vector<Point> roiVertices = {Point(0, height), Point(width, height),
+                                 Point(width, height / 3),
+                                 Point(0, height / 3)};
+    Mat maskedEdges           = regionOfInterest(edges, roiVertices);
+
     // 3. Use the Hough transform to detect line segments.
     vector<Vec4i> lines;
+  
     HoughLinesP(maskedEdges, lines, 1, CV_PI/180, 20, 20, 30);
     
     // 4. Separate lines into left and right lanes based on slope and position.
@@ -310,8 +322,9 @@ void LaneDetectorCV::detect(Mat& frame) {
         rightLines = filteredRightLines;
     }
         
+
     // 5. Extract polynomial curves for left and right lanes
-    vector<Point> leftCurve = extrapolatePolynomialCurve(leftLines);
+    vector<Point> leftCurve  = extrapolatePolynomialCurve(leftLines);
     vector<Point> rightCurve = extrapolatePolynomialCurve(rightLines);
     
     // Used to store found points to then represent
@@ -501,33 +514,40 @@ void LaneDetectorCV::detect(Mat& frame) {
             }
         }
     }
+
     // Update lane width estimate if both curves have points
-    if (!leftCurve.empty() && !rightCurve.empty() && 
-        leftCurve.size() > 0 && rightCurve.size() > 0) {
+    if (!leftCurve.empty() && !rightCurve.empty() && leftCurve.size() > 0 &&
+        rightCurve.size() > 0)
+    {
         // Find corresponding points at the bottom of the image
         int bottomY = height - 1;
         int leftX = -1, rightX = -1;
-        
-        for (const auto& pt : leftCurve) {
-            if (pt.y == bottomY || (leftX == -1 && pt.y > height * 0.7)) {
+
+        for (const auto& pt : leftCurve)
+        {
+            if (pt.y == bottomY || (leftX == -1 && pt.y > height * 0.7))
+            {
                 leftX = pt.x;
                 break;
             }
         }
-        
-        for (const auto& pt : rightCurve) {
-            if (pt.y == bottomY || (rightX == -1 && pt.y > height * 0.7)) {
+
+        for (const auto& pt : rightCurve)
+        {
+            if (pt.y == bottomY || (rightX == -1 && pt.y > height * 0.7))
+            {
                 rightX = pt.x;
                 break;
             }
         }
-        
-        if (leftX != -1 && rightX != -1) {
+
+        if (leftX != -1 && rightX != -1)
+        {
             double currentWidth = rightX - leftX;
-            laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
+            laneWidthEstimate   = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
         }
     }
-    
+
     // 7. Smooth curves by averaging with previous frames
     double alpha = 0.3;
     if (!firstFrame) {
@@ -661,16 +681,18 @@ void LaneDetectorCV::detect(Mat& frame) {
             }
         }
     }
-    
+
     // Save current curves for next frame
-    prevLeftCurve = leftCurve;
+    prevLeftCurve  = leftCurve;
     prevRightCurve = rightCurve;
-    
+
     // 8. Compute mid curve points as average of left and right curves
     vector<Point> midCurve;
-    if (!leftCurve.empty() && !rightCurve.empty() && 
-        leftCurve.size() == rightCurve.size()) {
-        for (size_t i = 0; i < leftCurve.size(); i++) {
+    if (!leftCurve.empty() && !rightCurve.empty() &&
+        leftCurve.size() == rightCurve.size())
+    {
+        for (size_t i = 0; i < leftCurve.size(); i++)
+        {
             int midX = (leftCurve[i].x + rightCurve[i].x) / 2;
             int midY = (leftCurve[i].y + rightCurve[i].y) / 2;
             midCurve.push_back(Point(midX, midY));
@@ -710,42 +732,51 @@ void LaneDetectorCV::detect(Mat& frame) {
         // Draw a horizontal line at the target Y for visualization
         line(frame, Point(0, targetY), Point(width, targetY), Scalar(0, 255, 255), 1);
     } else {
+
         // Fallback to center of image
         midPoint = Point(width / 2, height * 2 / 3);
     }
 
     // Update prevMidPoint for the next frame
     prevMidPoint = midPoint;
+
     prevMidCurve = midCurve;
-    firstFrame = false;
-    
+    firstFrame   = false;
+
     // Calculate lateral error
-    float centerX = width / 2;
+    float centerX      = width / 2;
     float lateralError = midPoint.x - centerX;
-    float divider = width / 2;
-    lateralError = lateralError / divider;
-    
+    float divider      = width / 2;
+    lateralError       = lateralError / divider;
+
     // Publish camera error
-    if (publisher_) {
+    if (publisher_)
+    {
         publisher_->publishCameraError(lateralError);
         publisher_->publishLanes(leftCurve, rightCurve);
         sendCoefs(leftCurve, rightCurve); 
     }
-    
+
     // 10. Draw the detected lane curves and midpoint
     Mat lineImage = Mat::zeros(frame.size(), frame.type());
-    
+
     // Draw left curve
-    if (!leftCurve.empty()) {
-        for (size_t i = 1; i < leftCurve.size(); i++) {
-            line(lineImage, leftCurve[i-1], leftCurve[i], Scalar(255, 0, 0), 5);
+    if (!leftCurve.empty())
+    {
+        for (size_t i = 1; i < leftCurve.size(); i++)
+        {
+            line(lineImage, leftCurve[i - 1], leftCurve[i], Scalar(255, 0, 0),
+                 5);
         }
     }
-    
+
     // Draw right curve
-    if (!rightCurve.empty()) {
-        for (size_t i = 1; i < rightCurve.size(); i++) {
-            line(lineImage, rightCurve[i-1], rightCurve[i], Scalar(0, 255, 0), 5);
+    if (!rightCurve.empty())
+    {
+        for (size_t i = 1; i < rightCurve.size(); i++)
+        {
+            line(lineImage, rightCurve[i - 1], rightCurve[i], Scalar(0, 255, 0),
+                 5);
         }
     }
     
@@ -805,7 +836,7 @@ void LaneDetectorCV::run() {
             detect(frame);
             imshow("Lane Detection", frame);
         }
-        
+
         frame_count++;
         if (waitKey(1) == 27)
             break;

@@ -13,18 +13,20 @@ int main(int argc, char** argv)
         if (argc == 3)
         {
             manualController = new XboxController(argv[1]);
-            pidController = new PidController(argv[2]);
+            pidController    = new PidController(argv[2]);
         }
         else
         {
             manualController = new XboxController();
-            pidController = new PidController();
+            pidController    = new PidController();
         }
+        // PID controller values 
         float kp = 180;
         float ki = 0.000001;
         float kd = 10;
         float constant_throttle = 0.35;
         float delta_time = 0.05; //ms
+      
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
         std::thread manualThread(&XboxController::run, manualController);

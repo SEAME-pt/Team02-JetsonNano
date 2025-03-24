@@ -31,6 +31,7 @@ class LaneDetectorPublisher
 
   private:
     std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> cameraError_pub;
     std::optional<zenoh::Publisher> cameraLanes_pub;
 };

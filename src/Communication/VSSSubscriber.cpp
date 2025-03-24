@@ -285,8 +285,8 @@ void VSSSubscriber::setupSubscriptions()
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            this->vehicle_.get_mutable_adas()
-                .set_active_autonomy_level(activeAutonomyLevel);
+            this->vehicle_.get_mutable_adas().set_active_autonomy_level(
+                activeAutonomyLevel);
         },
         zenoh::closures::none));
 }

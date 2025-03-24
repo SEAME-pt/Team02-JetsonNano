@@ -1,5 +1,5 @@
 [Unit]
-Description=Controller Service
+Description=Lane Detector Service
 After=network-online.target
 Wants=network-online.target
 
@@ -9,7 +9,7 @@ User=team02
 Environment=DISPLAY=:0
 WorkingDirectory=/opt/vehicle/bin
 ExecStartPre=/bin/sleep 2
-ExecStart=/opt/vehicle/bin/CombinedController /opt/vehicle/etc/zenoh/XboxControllerConfig.json /opt/vehicle/etc/zenoh/PidControllerConfig.json
+ExecStart=/opt/vehicle/bin/LaneDetector /opt/vehicle/etc/zenoh/LaneDetectorConfig.json
 Restart=always
 RestartSec=3
 StandardOutput=journal

@@ -4,6 +4,7 @@ LaneDetectorPublisher::LaneDetectorPublisher(
     std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
+    provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
     cameraError_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/LaneDetection/CameraError")));
@@ -14,7 +15,13 @@ LaneDetectorPublisher::LaneDetectorPublisher(
 void LaneDetectorPublisher::publishCameraError(float error)
 {
     std::cout << "Error send: " << error << std::endl;
-    cameraError_pub->put(std::to_string(error));
+    std::string value_str = std::to_string(error);
+    const auto len        = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    cameraError_pub->put(std::move(buf));
 }
 
 void LaneDetectorPublisher::publishLanes(const std::vector<cv::Point>& leftLane, const std::vector<cv::Point>& rightLane)
@@ -56,5 +63,11 @@ void LaneDetectorPublisher::publishLanes(const std::vector<cv::Point>& leftLane,
     std::cout << "Publishing lanes: " << laneData << std::endl;
     
     // Publish lane data
-    cameraLanes_pub->put(laneData);
+    const auto len        = laneData.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), laneData.c_str(), len);
+    cameraLanes_pub->put(std::move(buf));
+
 }
