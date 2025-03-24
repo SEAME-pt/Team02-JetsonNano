@@ -4,7 +4,7 @@
 
 using namespace zenoh;
 
-int main(void)
+int main(int argc, char** argv)
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
@@ -16,8 +16,19 @@ int main(void)
 
     try
     {
-        auto config = Config::create_default();
-        auto session = std::make_shared<Session>(Session::open(std::move(config)));
+        std::shared_ptr<zenoh::Session> session;
+        if (argc == 2)
+        {
+            auto config = Config::from_file(std::string(argv[1]));
+            session     = std::make_shared<zenoh::Session>(
+                zenoh::Session::open(std::move(config)));
+        }
+        else
+        {
+            auto config = Config::create_default();
+            session     = std::make_shared<zenoh::Session>(
+                zenoh::Session::open(std::move(config)));
+        }
 
         LaneDetectorCV detector(pipeline, session);
         detector.setCalibrationParameters();
