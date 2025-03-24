@@ -1,24 +1,23 @@
 #include "XboxController.hpp"
 
 #ifdef TEST_MODE
-  // Define custom function names for testing
-  #define device_open custom_xbox_open
-  #define device_close custom_xbox_close
-  #define device_ioctl custom_xbox_ioctl
-  #define device_read custom_xbox_read
-  #define device_write custom_xbox_write
-  #define SESSION_OPEN zenoh::Session::open
-  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
+// Define custom function names for testing
+#define device_open custom_xbox_open
+#define device_close custom_xbox_close
+#define device_ioctl custom_xbox_ioctl
+#define device_read custom_xbox_read
+#define device_write custom_xbox_write
+#define SESSION_OPEN zenoh::Session::open
+#define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
 #else
-  #define device_open open
-  #define device_close close
-  #define device_ioctl ioctl
-  #define device_read read
-  #define device_write write
-  #define SESSION_OPEN zenoh::Session::open
-  #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
+#define device_open open
+#define device_close close
+#define device_ioctl ioctl
+#define device_read read
+#define device_write write
+#define SESSION_OPEN zenoh::Session::open
+#define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
-
 
 XboxController::XboxController()
 {
@@ -36,8 +35,8 @@ XboxController::XboxController()
     }
 
     auto config = zenoh::Config::create_default();
-    session_    = std::make_shared<zenoh::Session>(
-        SESSION_OPEN(std::move(config)));
+    session_ =
+        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -60,8 +59,8 @@ XboxController::XboxController(const std::string& configFile)
     }
 
     auto config = ZENOH_CONFIG_FROM_FILE;
-    session_    = std::make_shared<zenoh::Session>(
-        SESSION_OPEN(std::move(config)));
+    session_ =
+        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -140,6 +139,7 @@ void XboxController::run()
                         case BUTTON_RB:
                         {
                             publisher_->publishDirectionIndicatorRight(true);
+
                             std::cout << "RightBlinker" << std::endl;
                             break;
                         }
@@ -185,6 +185,12 @@ void XboxController::run()
                             std::cout << "parkingLight" << std::endl;
                             break;
                         }
+                        case BUTTON_START:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_5");
+                            std::cout << "Autonomous Driving" << std::endl;
+                            break;
+                        }
 
                         default:
                             break;
@@ -200,6 +206,7 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
+                        // publisher_->publishActiveAutonomyLevel("SAE_0");
                         if (speed < -5)
                         {
                             publisher_->publishCurrentGear(-1);
@@ -219,6 +226,7 @@ void XboxController::run()
                     case (AXIS_RIGHT_STICK):
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
+                        publisher_->publishActiveAutonomyLevel("SAE_0");
                         publisher_->publishSteering(direction);
                         std::cout << "Direction" << std::endl;
                         break;

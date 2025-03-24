@@ -1,0 +1,45 @@
+name: Clang Tidy Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  clang-tidy:
+    name: Clang Tidy Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set Up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: linux/arm64
+
+      - name: Build and Run Clang-Tidy in Docker
+        run: |
+          # Build the Docker image (which already includes CMake build)
+          docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
+            --platform linux/arm64 --load \
+            --build-arg projectDir=/ \
+            -t analysis-image .
+
+          # Run clang-tidy analysis using existing build
+          docker run --rm analysis-image bash -c "
+            apt-get update && \
+            apt-get install -y clang-tidy && \
+            find /home -name '*.cpp' -o -name '*.hpp' | \
+            while read file; do \
+              clang-tidy \
+                -p=/home \
+                --checks='-*,readability-*,performance-*,modernize-*,bugprone-*,clang-analyzer-*' \
+                --header-filter='.*' \
+                \$file; \
+            done
+          "
