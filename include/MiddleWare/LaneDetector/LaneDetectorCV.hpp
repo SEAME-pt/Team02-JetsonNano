@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <deque>
+#include "CAN.hpp"
 #include <zenoh.hxx>
 #include "PidController.hpp"
 #include "LaneDetectorPublisher.hpp"
