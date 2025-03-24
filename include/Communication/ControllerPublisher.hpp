@@ -47,6 +47,7 @@ class ControllerPublisher
 
   private:
     std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> throttle_pub;
     std::optional<zenoh::Publisher> steering_pub;
     std::optional<zenoh::Publisher> beamLow_pub;

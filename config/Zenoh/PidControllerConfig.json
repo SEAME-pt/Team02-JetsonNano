@@ -1,10 +1,10 @@
 {
     "mode": "peer",
     "connect": {
-        "endpoints": ["tcp/127.0.0.1:7448","tcp/127.0.0.1:7449", "tcp/127.0.0.1:7447"]
+        "endpoints": ["tcp/127.0.0.1:7448","tcp/127.0.0.1:7449", "tcp/127.0.0.1:7450", "tcp/127.0.0.1:7452"]
     },
     "listen": {
-        "endpoints": ["tcp/127.0.0.1:7445"]
+        "endpoints": ["tcp/127.0.0.1:7451"]
     },
     "scouting": {
         "multicast": {
