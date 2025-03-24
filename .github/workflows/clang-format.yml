@@ -1,4 +1,4 @@
-name: Clang Format Check
+name: Clang Format Apply
 
 on:
   pull_request:
@@ -6,28 +6,29 @@ on:
       - main
       - dev
 
-
 jobs:
-  clang-format:
-    name: Check Code Format
+  format:
+    name: Format Code
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+    
     steps:
-      # Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
+          ref: ${{ github.head_ref }}
 
-      # Install clang-format
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      # Run clang-format check
       - name: Run clang-format
         run: |
-          # Find all C++ files and check formatting
           find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=file
-          git diff --exit-code || (
-            echo "Code is not formatted correctly. Please run clang-format." && exit 1
-          )
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style: apply clang-format changes'
+          branch: ${{ github.head_ref }}
