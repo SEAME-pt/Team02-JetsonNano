@@ -20,7 +20,6 @@ void Signals::run()
     {
         usleep(300);
         int buffer = this->canBus->checktheReceive();
-        std::cout << buffer << std::endl;
         if (buffer != -1)
         {
             uint32_t can_id = 0;
