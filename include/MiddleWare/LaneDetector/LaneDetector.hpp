@@ -52,7 +52,7 @@ class LaneDetector
     const std::vector<cv::Point>& vertices);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
     double getCurrentTime();
-    void createLanes(std::vector<cv::Point> lanes, cv::Mat frame);
+    void createLanes(std::vector<cv::Point> lanes, cv::Mat& frame);
     void LaneDetector::drawLanes(cv::Mat& frame, 
       const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);

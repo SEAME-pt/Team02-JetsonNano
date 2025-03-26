@@ -206,6 +206,7 @@ void LaneDetector::run(const std::string& pipeline)
         if (frame_count % FRAME_SKIP == 0)
         {
             detect(frame);
+            imshow("Lane Detection", output);
         }
         frame_count++;
 
@@ -281,11 +282,13 @@ void LaneDetector::postProcess(cv::Mat& frame)
         int scaledY = pt.y * y_scale;
         lanePoints.push_back(cv::Point(scaledX, scaledY));
     }
+    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
     createLanes(lanePoints, frame);
 
 }
 
-void LaneDetector::createLanes(std::vector<cv::Point> lanes, cv::Mat frame)
+void LaneDetector::createLanes(std::vector<cv::Point> lanes, cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
     if (firstFrame)
