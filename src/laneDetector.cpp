@@ -39,7 +39,7 @@ int main(int argc, char** argv)
                 zenoh::Session::open(std::move(config)));
         }
 
-        LaneDetector detector(pipeline, session);
+        LaneDetector detector("/home/team02/cam/model_segmentation.engine");
         detector.setCalibrationParameters();
         detector.run();
     }
