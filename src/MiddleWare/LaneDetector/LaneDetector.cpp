@@ -326,11 +326,11 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     //Define Left and Right lanes
     // 1. Cluster points using Mean Shift
     std::vector<cv::Point> leftPoints, rightPoints;
-    clusterLanePoints(lanePoints, leftPoints, rightPoints);
+    clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
     
     // 2. Fit polynomial curves to each set of points
-    std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints);
-    std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints);
+    std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints, frame);
+    std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints, frame);
     
     // 3. Apply Kalman filtering for temporal smoothing and prediction
     // Initialize Kalman filter if this is the first good detection
@@ -654,7 +654,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     prevRightPoints = rightPoints;
 }
 
-std::vector<cv::Point> LaneDetector::fitCurveToPoints(const std::vector<cv::Point>& points)
+std::vector<cv::Point> LaneDetector::fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame)
 {
     if (points.size() < 3) {
         return std::vector<cv::Point>();
