@@ -7,7 +7,12 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-LaneDetector::LaneDetector(const std::string& enginePath)
+LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
+    std::shared_ptr<zenoh::Session> session)
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session),
+    prevLeftLine(0, 0, 0, 0), prevRightLine(0, 0, 0, 0),
+    prevMidLine(0, 0, 0, 0), laneWidthEstimate(0.0), firstFrame(true),
+    frame_count(0), FRAME_SKIP(2)
 {
     createExecutionContext(enginePath);
 
@@ -31,6 +36,20 @@ LaneDetector::LaneDetector(const std::string& enginePath)
     size_t pitch;
     cudaMallocPitch(&inputDevice, &pitch, 256 * sizeof(float), 128 * 3);
     cudaMallocPitch(&outputDevice, &pitch, 256 * sizeof(float), 128 * 2);
+
+    if (!cap.isOpened())
+    {
+        throw std::runtime_error("Error opening video stream");
+    }
+
+    // set kalman filter status to false
+    kfInitialized = false;
+
+    // Set camera buffer size
+    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+
+    // Initialize the lane detector publisher
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 }
 
 LaneDetector::~LaneDetector()
@@ -60,7 +79,7 @@ void LaneDetector::setCalibrationParameters(void)
     this->distCoeffs   = tempCoeffs;
 }
 
-Mat LaneDetectorCV::regionOfInterest(const Mat& img,
+Mat LaneDetector::regionOfInterest(const Mat& img,
     const vector<Point>& vertices)
 {
     Mat mask = Mat::zeros(img.size(), img.type());
@@ -140,9 +159,9 @@ void LaneDetector::detect(cv::Mat& frame)
 {
     static cudaEvent_t start, stop; // Make events static
     static bool eventsCreated = false;
-    static cudaGraph_t graph;
-    static cudaGraphExec_t graphExec;
-    static bool graphCreated = false;
+    // static cudaGraph_t graph;
+    // static cudaGraphExec_t graphExec;
+    // static bool graphCreated = false;
 
     if (!eventsCreated)
     {
@@ -181,30 +200,41 @@ void LaneDetector::detect(cv::Mat& frame)
     std::cout << "Inference time: " << milliseconds << "ms\n";
 }
 
-void LaneDetector::run(const std::string& pipeline)
+void LaneDetector::run()
 {
-    cv::VideoCapture cap(pipeline, cv::CAP_GSTREAMER);
-    if (!cap.isOpened())
-    {
-        throw std::runtime_error("Failed to open camera");
-    }
+    bool mapsInitialized = false;
+    kfInitialized = false;
 
+    // Initialize the lane detector publisher
+    
     cv::Mat frame;
     int frame_count      = 0;
     const int FRAME_SKIP = 8; // Process every other frame
-
+    
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 
     while (true)
     {
-        if (!cap.read(frame))
-        {
+        cap >> frame;
+        if (frame.empty())
             break;
+        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty())
+        {
+            Size imageSize = frame.size();
+            // Initialize the maps with a rectification transform of identity
+            // (no rotation)
+            initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
+                                    cameraMatrix, imageSize, CV_16SC2, map1,
+                                    map2);
+            mapsInitialized = true;
         }
-
         if (frame_count % FRAME_SKIP == 0)
         {
+            cv::Mat undistorted;
+            remap(frame, undistorted, map1, map2, INTER_LINEAR);
+            frame = undistorted;
             detect(frame);
             imshow("Lane Detection", output);
         }

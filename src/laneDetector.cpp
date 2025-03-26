@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
         LaneDetector detector("/home/team02/cam/model_segmentation.engine");
         detector.setCalibrationParameters();
-        detector.run();
+        detector.run(pipeline);
     }
     catch (const std::exception& e)
     {
