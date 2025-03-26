@@ -1,12 +1,22 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(VehicleSystem VERSION 0.1)
+project(VehicleSystem CUDA CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -fopenmp -ffast-math")
 
+enable_language(CUDA)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_72")
+set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+
+find_package(CUDA REQUIRED)
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -37,6 +47,13 @@ include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
+
+include_directories(
+    ${CUDA_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    /usr/include/aarch64-linux-gnu
+    include/MiddleWare/LaneDetector
+)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -120,11 +137,20 @@ add_executable(LaneDetector
 
 target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
 
+find_library(CUDA_RUNTIME_LIBRARY
+    NAMES cudart
+    HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+)
+
 target_link_libraries(LaneDetector
     ${OpenCV_LIBS}
     zenohcxx::zenohc
     Libs
     vehicle_lib
+    ${CUDA_LIBRARIES}
+    ${CUDA_RUNTIME_LIBRARY}
+    nvinfer
+    nvonnxparser
 )
 
 add_executable(MiddleWare
