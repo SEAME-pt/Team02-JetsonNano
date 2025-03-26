@@ -39,6 +39,7 @@ class LaneDetector
     std::shared_ptr<zenoh::Session> session_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
+    const int FRAME_SKIP;
     cv::KalmanFilter leftLaneKF, rightLaneKF;
     bool kfInitialized = false;
     double laneWidthEstimate = 0.0;

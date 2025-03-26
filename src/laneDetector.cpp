@@ -5,8 +5,10 @@
 #include <vector>
 #include <cmath>
 #include <zenoh.hxx>
+#include "CAN.hpp"
 #include <sys/time.h>
 #include "PidController.hpp"
+#include "LaneDetectorPublisher.hpp"
 #include "LaneDetector.hpp"
 
 using namespace cv;
