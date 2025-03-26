@@ -316,7 +316,7 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
 }
 
-void LaneDetector::createLanes(std::vector<cv::Point> lanes, cv::Mat& frame)
+void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
     if (firstFrame)
