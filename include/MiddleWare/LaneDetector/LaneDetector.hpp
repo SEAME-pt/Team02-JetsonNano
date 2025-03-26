@@ -82,7 +82,7 @@ class LaneDetector
       std::vector<cv::Point>& leftPoints,
       std::vector<cv::Point>& rightPoints,
       cv::Mat& frame);
-      std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points);
+      std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
     void reassignPointsUsingPreviousFrame(std::vector<cv::Point>& leftPoints, 
       std::vector<cv::Point>& rightPoints);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, 
