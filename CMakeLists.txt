@@ -113,9 +113,9 @@ target_link_libraries(CombinedController
     zenohcxx::zenohc)
 
 add_executable(LaneDetector
-    ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
+    ./src/MiddleWare/LaneDetector/LaneDetector.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
-    ./src/laneDetectorCV.cpp
+    ./src/laneDetector.cpp
 )
 
 target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
