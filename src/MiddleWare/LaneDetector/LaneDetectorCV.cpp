@@ -130,8 +130,7 @@ double LaneDetectorCV::getCurrentTime()
 }
 
 // Extrapolate a polynomial curve from lane line segments
-vector<Point>
-LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines)
+vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines)
 {
     // Extract all points from line segments
     vector<Point2f> points;
