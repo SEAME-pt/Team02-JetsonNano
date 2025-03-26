@@ -9,9 +9,7 @@ using namespace zenoh;
 
 LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
     std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session),
-    prevLeftLine(0, 0, 0, 0), prevRightLine(0, 0, 0, 0),
-    prevMidLine(0, 0, 0, 0), laneWidthEstimate(0.0), firstFrame(true),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), laneWidthEstimate(0.0), firstFrame(true),
     frame_count(0), FRAME_SKIP(2)
 {
     createExecutionContext(enginePath);
