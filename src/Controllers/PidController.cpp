@@ -222,7 +222,11 @@ void PidController::updateControl(float error, double current_time)
     // PID
     float p_term = kp_ * error;
 
+    // Improved implementation with anti-windup
     integral_ += error * dt;
+    // Limit integral term to prevent windup
+    const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+    integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
     float i_term = ki_ * integral_;
 
     float d_term = kd_ * (error - prev_error_) / dt;
@@ -240,9 +244,42 @@ void PidController::updateControl(float error, double current_time)
         direction = 90.0f - max_steering_angle_;
     }
 
+    // Dynamic speed adjustment based on error
+    float error_magnitude = std::fabs(error);
+
+    // Define speed control parameters
+    const float BASE_SPEED =
+        constant_speed_; // Maximum speed when error is minimal
+    const float MIN_SPEED = BASE_SPEED * 0.5f; // Minimum speed (50% of max)
+    const float ERROR_THRESHOLD =
+        40.0f; // Error threshold where speed starts decreasing
+
+    // Calculate dynamic speed
+    float dynamic_speed;
+    if (error_magnitude < ERROR_THRESHOLD)
+    {
+        // Linear interpolation between BASE_SPEED and slightly reduced speed
+        float reduction_factor = error_magnitude / ERROR_THRESHOLD;
+        dynamic_speed = BASE_SPEED - (reduction_factor * (BASE_SPEED * 0.2f));
+    }
+    else
+    {
+        // For larger errors, reduce speed more aggressively
+        float excess_error = error_magnitude - ERROR_THRESHOLD;
+        float reduction_factor =
+            std::min(1.0f, excess_error / (ERROR_THRESHOLD * 2));
+        dynamic_speed =
+            BASE_SPEED * 0.8f - (reduction_factor * (BASE_SPEED * 0.2f));
+    }
+
+    // Ensure speed doesn't go below minimum
+    dynamic_speed = std::max(MIN_SPEED, dynamic_speed) * 100;
+
     publisher_->publishSteering(direction);
-    std::cout << direction << std::endl;
-    // publisher_->publishSpeed(constant_speed_);
+    publisher_->publishSpeed(dynamic_speed);
+
+    std::cout << "Direction: " << direction << ", Speed: " << dynamic_speed
+              << std::endl;
     // publisher_->publishCurrentGear(1);
 
     prev_error_ = error;

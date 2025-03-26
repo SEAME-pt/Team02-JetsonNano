@@ -31,6 +31,7 @@ int main(int argc, char** argv)
         }
 
         LaneDetectorCV detector(pipeline, session);
+        detector.setCalibrationParameters();
         detector.run();
     }
     catch (const std::exception& e)

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <cmath>
 #include <deque>
-#include "CAN.hpp"
 #include <zenoh.hxx>
 #include "PidController.hpp"
 #include "LaneDetectorPublisher.hpp"
@@ -16,10 +15,7 @@ class LaneDetectorCV
 private:
     // Video capture
     cv::VideoCapture cap;
-    cv::Mat cameraMatrix;
-    cv::Mat distCoeffs;
-    cv::Mat map1, map2;
-
+    
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
     std::vector<cv::Point> prevMidCurve;
@@ -45,9 +41,7 @@ private:
 
     std::deque<std::vector<cv::Point>> leftLaneHistory;
     std::deque<std::vector<cv::Point>> rightLaneHistory;
-    const size_t historySize = 5;
-
-    CAN* canBus;
+    const size_t historySize = 5; 
     
 public:
     LaneDetectorCV(const std::string& pipeline, std::shared_ptr<zenoh::Session> session);
@@ -55,7 +49,6 @@ public:
     
     void run();
     void detect(cv::Mat& frame);
-    void setCalibrationParameters(void);
 
 private:
     cv::Mat regionOfInterest(const cv::Mat &img, const std::vector<cv::Point>& vertices);
@@ -64,5 +57,5 @@ private:
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree) ;
     std::vector<cv::Point> extrapolatePolynomialCurve(const std::vector<cv::Vec4i>& laneLines);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve);
-    void sendCoefs(const std::vector<cv::Point>& leftCurve, const std::vector<cv::Point>& rightCurve);
+
 };

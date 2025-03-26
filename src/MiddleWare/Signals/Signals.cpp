@@ -18,12 +18,14 @@ void Signals::run()
 {
     while (1)
     {
-        usleep(300000);
+        usleep(300);
         int buffer = this->canBus->checktheReceive();
         if (buffer != -1)
         {
             uint32_t can_id = 0;
+            // int size        = 0;
             uint8_t data[8];
+            this->canBus->readMessage(buffer, can_id, data);
             if (can_id == 0x01)
             {
                 int speed;

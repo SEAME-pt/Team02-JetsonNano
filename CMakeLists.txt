@@ -123,6 +123,8 @@ target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(LaneDetector
     ${OpenCV_LIBS}
     zenohcxx::zenohc
+    Libs
+    vehicle_lib
 )
 
 add_executable(MiddleWare

@@ -3,6 +3,9 @@
 #include <zenoh.hxx>
 #include <string>
 #include <optional>
+#include <opencv2/opencv.hpp>
+#include <vector>
+#include <iostream>
 
 /**
  * @brief Lane detector publisher
@@ -24,9 +27,11 @@ class LaneDetectorPublisher
     LaneDetectorPublisher(std::shared_ptr<zenoh::Session> session);
 
     void publishCameraError(float speed);
+    void publishLanes(const std::vector<cv::Point>& leftLane, const std::vector<cv::Point>& rightLane);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> cameraError_pub;
+    std::optional<zenoh::Publisher> cameraLanes_pub;
 };
