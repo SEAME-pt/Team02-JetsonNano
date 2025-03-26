@@ -29,8 +29,8 @@ int main(int argc, char** argv)
             session     = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-
-        LaneDetector detector("/home/team02/cam/model_segmentation.engine");
+        std::string file = "/home/team02/cam/model_segmentation.engine";
+        LaneDetector detector(file, pipeline, session);
         detector.setCalibrationParameters();
         detector.run();
     }
