@@ -36,14 +36,20 @@ class LaneDetector
     std::vector<cv::Point> prevLeftPoints;
     std::vector<cv::Point> prevRightPoints;
 
+    std::shared_ptr<zenoh::Session> session_;
+    std::shared_ptr<LaneDetectorPublisher> publisher_;
+
     cv::KalmanFilter leftLaneKF, rightLaneKF;
     bool kfInitialized = false;
     double laneWidthEstimate = 0.0;
+    bool firstFrame;
+    int frame_count;
 
   public:
     LaneDetector(const std::string& enginePath, const std::string& pipeline,
       std::shared_ptr<zenoh::Session> session);
     ~LaneDetector();
+    void setCalibrationParameters(void);
 
     void detect(cv::Mat& frame);
     void run();
@@ -53,7 +59,6 @@ class LaneDetector
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
 
-    void setCalibrationParameters(void);
     cv::Mat regionOfInterest(const cv::Mat& img,
     const std::vector<cv::Point>& vertices);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
