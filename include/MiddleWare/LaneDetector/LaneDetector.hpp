@@ -80,7 +80,8 @@ class LaneDetector
       const std::vector<cv::Point>& rightCurve);
     void clusterLanePoints(const std::vector<cv::Point>& points, 
       std::vector<cv::Point>& leftPoints,
-      std::vector<cv::Point>& rightPoints);
+      std::vector<cv::Point>& rightPoints,
+      cv::Mat& frame);
       std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points);
     void reassignPointsUsingPreviousFrame(std::vector<cv::Point>& leftPoints, 
       std::vector<cv::Point>& rightPoints);

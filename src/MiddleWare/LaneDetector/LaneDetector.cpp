@@ -10,7 +10,7 @@ using namespace zenoh;
 LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
     std::shared_ptr<zenoh::Session> session)
     : cap(pipeline, cv::CAP_GSTREAMER), session_(session), laneWidthEstimate(0.0), firstFrame(true),
-    frame_count(0), FRAME_SKIP(2)
+    frame_count(0), FRAME_SKIP(8)
 {
     createExecutionContext(enginePath);
 
@@ -206,8 +206,6 @@ void LaneDetector::run()
     // Initialize the lane detector publisher
     
     cv::Mat frame;
-    int frame_count      = 0;
-    const int FRAME_SKIP = 8; // Process every other frame
     
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
@@ -234,7 +232,7 @@ void LaneDetector::run()
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
-            imshow("Lane Detection", output);
+            imshow("Lane Detection", frame);
         }
         frame_count++;
 
@@ -563,7 +561,8 @@ void LaneDetector::drawLanes(cv::Mat& frame,
 
 void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points, 
                                      std::vector<cv::Point>& leftPoints,
-                                     std::vector<cv::Point>& rightPoints)
+                                     std::vector<cv::Point>& rightPoints,
+                                    cv::Mat& frame)
 {
     if (points.empty()) {
         return;
