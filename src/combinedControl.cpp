@@ -20,11 +20,13 @@ int main(int argc, char** argv)
             manualController = new XboxController();
             pidController    = new PidController();
         }
-        float kp                = 250;
-        float ki                = 0;
-        float kd                = 2;
-        float constant_throttle = 0.25;
-        float delta_time        = 0.01; // ms
+        // PID controller values
+        float kp                = 180;
+        float ki                = 0.000001;
+        float kd                = 10;
+        float constant_throttle = 0.35;
+        float delta_time        = 0.05; // ms
+
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
         std::thread manualThread(&XboxController::run, manualController);
