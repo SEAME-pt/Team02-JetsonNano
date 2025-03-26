@@ -7,6 +7,14 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <cmath>
+#include "CAN.hpp"
+#include <sys/time.h>
+#include "PidController.hpp"
+#include "LaneDetectorPublisher.hpp"
+#include "LaneDetector.hpp"
+
 
 class Logger : public nvinfer1::ILogger
 {
