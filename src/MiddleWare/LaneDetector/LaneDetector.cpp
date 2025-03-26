@@ -588,8 +588,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     
     // Apply meanShift clustering
     cv::Mat labels, centers;
-    int clusterCount = cv::meanShift(pointsMat, labels, criteria, spatialRadius, colorRadius);
-    
+    int k = 2; // Two clusters (left and right lane)
+    cv::kmeans(pointsMat, k, labels, 
+            criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+    int clusterCount = k;
     // If only one cluster is found, use x-coordinate to separate
     if (clusterCount <= 1) {
         // Fallback to simple X-coordinate based separation
