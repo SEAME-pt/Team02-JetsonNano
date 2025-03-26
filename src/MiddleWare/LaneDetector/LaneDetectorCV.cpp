@@ -957,16 +957,6 @@ void LaneDetectorCV::run()
                                     map2);
             mapsInitialized = true;
         }
-
-        // // If the maps have been computed, use remap() to undistort the
-        // frame. if (mapsInitialized) {
-        //     Mat undistorted;
-        //     remap(frame, undistorted, map1, map2, INTER_LINEAR);
-        //     frame = undistorted;
-        // }
-        // if it is not initialized we shoudl send a warning message / throw an
-        // error
-
         if (frame_count % FRAME_SKIP == 0)
         {
             Mat undistorted;

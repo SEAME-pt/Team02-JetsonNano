@@ -2,6 +2,7 @@
 #include "cuda.h"
 #include "NvInfer.h"
 #include "NvOnnxParser.h"
+#include <zenoh.hxx>
 #include <omp.h>
 #include <fstream>
 #include <iostream>
@@ -27,6 +28,10 @@ class LaneDetector
     void* outputDevice;
     float* inputData;
     float* outputData;
+    cv::VideoCapture cap;
+    cv::Mat cameraMatrix;
+    cv::Mat distCoeffs;
+    cv::Mat map1, map2;
 
     std::vector<cv::Point> prevLeftPoints;
     std::vector<cv::Point> prevRightPoints;
@@ -36,11 +41,12 @@ class LaneDetector
     double laneWidthEstimate = 0.0;
 
   public:
-    LaneDetector(const std::string& enginePath);
+    LaneDetector(const std::string& enginePath, const std::string& pipeline,
+      std::shared_ptr<zenoh::Session> session);
     ~LaneDetector();
 
     void detect(cv::Mat& frame);
-    void run(const std::string& pipeline);
+    void run();
 
   private:
     void preProcess(const cv::Mat& frame);
@@ -48,12 +54,12 @@ class LaneDetector
     void createExecutionContext(const std::string& enginePath);
 
     void setCalibrationParameters(void);
-    cv::Mat LaneDetectorCV::regionOfInterest(const cv::Mat& img,
+    cv::Mat regionOfInterest(const cv::Mat& img,
     const std::vector<cv::Point>& vertices);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
     double getCurrentTime();
     void createLanes(std::vector<cv::Point> lanes, cv::Mat& frame);
-    void LaneDetector::drawLanes(cv::Mat& frame, 
+    void drawLanes(cv::Mat& frame, 
       const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
     void clusterLanePoints(const std::vector<cv::Point>& points, 
