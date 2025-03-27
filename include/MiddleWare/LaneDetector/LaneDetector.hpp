@@ -17,6 +17,10 @@
 #include "LaneDetectorPublisher.hpp"
 
 
+#define WIDTH 256
+#define HEIGHT 128
+
+
 class Logger : public nvinfer1::ILogger
 {
     void log(Severity severity, const char* msg) noexcept override
