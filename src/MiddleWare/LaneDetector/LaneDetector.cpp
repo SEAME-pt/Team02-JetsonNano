@@ -875,7 +875,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
 {
     if (points.empty()) {
         return;
-    }sssss
+    }
 
     int midX = frame.cols / 2;
     int height = frame.rows;
