@@ -15,7 +15,6 @@
 #include <sys/time.h>
 #include "PidController.hpp"
 #include "LaneDetectorPublisher.hpp"
-#include "LaneDetector.hpp"
 
 
 class Logger : public nvinfer1::ILogger
@@ -27,7 +26,7 @@ class Logger : public nvinfer1::ILogger
             std::cout << msg << std::endl;
         }
     }
-} 
+};
 
 extern Logger logger;
 
