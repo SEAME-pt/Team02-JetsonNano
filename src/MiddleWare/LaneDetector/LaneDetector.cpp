@@ -550,7 +550,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
         }
     }
-    double alpha = 0.15;
+    double alpha = 0.25;
     if (!firstFrame)
     {
         // Apply moving average to left curve if it exists
@@ -620,7 +620,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
                 }
 
                 // Lower alpha for smoother transitions with higher curvature
-                double dynamicAlpha = std::min(0.5, alpha + curvature * 1000);
+                double dynamicAlpha = std::min(0.4, alpha + curvature * 1000);
 
                 for (size_t i = 0; i < leftCurve.size(); i++)
                 {
@@ -700,7 +700,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
                 }
 
                 // Lower alpha for smoother transitions with higher curvature
-                double dynamicAlpha = std::min(0.3, alpha + curvature * 500);
+                double dynamicAlpha = std::min(0.4, alpha + curvature * 1000);
 
                 for (size_t i = 0; i < rightCurve.size(); i++)
                 {
@@ -714,31 +714,31 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         
     }
 
-    // 4. Add explicit rate limiting to both left and right curves to prevent abrupt changes
-    if (!prevLeftCurve.empty() && leftCurve.size() == prevLeftCurve.size()) {
-        // Limit maximum movement per frame
-        const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01; // 1% of frame width
+    // // 4. Add explicit rate limiting to both left and right curves to prevent abrupt changes
+    // if (!prevLeftCurve.empty() && leftCurve.size() == prevLeftCurve.size()) {
+    //     // Limit maximum movement per frame
+    //     const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01; // 1% of frame width
         
-        for (size_t i = 0; i < leftCurve.size(); i++) {
-            double delta = leftCurve[i].x - prevLeftCurve[i].x;
-            if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
-                // Limit the movement
-                leftCurve[i].x = prevLeftCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
-            }
-        }
-    }
+    //     for (size_t i = 0; i < leftCurve.size(); i++) {
+    //         double delta = leftCurve[i].x - prevLeftCurve[i].x;
+    //         if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
+    //             // Limit the movement
+    //             leftCurve[i].x = prevLeftCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
+    //         }
+    //     }
+    // }
 
-    // Similar code for right curve
-    if (!prevRightCurve.empty() && rightCurve.size() == prevRightCurve.size()) {
-        const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01;
+    // // Similar code for right curve
+    // if (!prevRightCurve.empty() && rightCurve.size() == prevRightCurve.size()) {
+    //     const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01;
         
-        for (size_t i = 0; i < rightCurve.size(); i++) {
-            double delta = rightCurve[i].x - prevRightCurve[i].x;
-            if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
-                rightCurve[i].x = prevRightCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
-            }
-        }
-    }
+    //     for (size_t i = 0; i < rightCurve.size(); i++) {
+    //         double delta = rightCurve[i].x - prevRightCurve[i].x;
+    //         if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
+    //             rightCurve[i].x = prevRightCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
+    //         }
+    //     }
+    // }
 
     // Save current curves for next frame
     prevLeftCurve = leftCurve;
@@ -768,7 +768,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     
     if (!midCurve.empty())
     {
-        int targetY = height - (2 * height / 3); // 2/3 up from bottom
+        int targetY = height - (2 * height / 5); // 2/5 up from bottom
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -875,7 +875,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
 {
     if (points.empty()) {
         return;
-    }
+    }sssss
 
     int midX = frame.cols / 2;
     int height = frame.rows;
@@ -887,7 +887,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Filter out points that are likely not lane markers based on position
     for (const auto& pt : points) {
         // Keep points in the lower 3/4 of the image
-        if (pt.y > height * 0.25) {
+        if (pt.y > height * 0.4) {
             // Remove points in the very center (likely not lane markers)
             if (abs(pt.x - midX) > midX * 0.1) {
                 filteredPoints.push_back(pt);
