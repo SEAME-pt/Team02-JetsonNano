@@ -29,7 +29,7 @@ class Logger : public nvinfer1::ILogger
     }
 } 
 
-inline Logger logger;
+extern Logger logger;
 
 class LaneDetector
 {
