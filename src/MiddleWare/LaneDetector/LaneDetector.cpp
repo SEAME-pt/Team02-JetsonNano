@@ -11,7 +11,7 @@ Logger logger;
 
 LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
     std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(8), laneWidthEstimate(0.0), firstFrame(true),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(6), laneWidthEstimate(0.0), firstFrame(true),
     frame_count(0)
 {
     createExecutionContext(enginePath);
