@@ -717,7 +717,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     if (rightLabel >= 0) rightPoints = clusters[rightLabel];
     
     // 2. Slope-based filtering (inspired by your OpenCV approach)
-    int midX = frame.cols / 2;
+    //int midX = frame.cols / 2;
     
     // Calculate virtual lines for slope calculation
     auto calculateVirtualLines = [](const std::vector<cv::Point>& pts) -> std::vector<std::pair<double, cv::Point>> {
