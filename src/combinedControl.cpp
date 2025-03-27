@@ -5,19 +5,19 @@ int main(int argc, char** argv)
 {
     try
     {
-        XboxController* manualController;
+        //XboxController* manualController;
         PidController* pidController;
 
         /*both cointrollers need to run with config files,
          otherwise no config file will be considered */
         if (argc == 3)
         {
-            manualController = new XboxController(argv[1]);
+            //manualController = new XboxController(argv[1]);
             pidController    = new PidController(argv[2]);
         }
         else
         {
-            manualController = new XboxController();
+            //manualController = new XboxController();
             pidController    = new PidController();
         }
         // PID controller values
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
         //manualThread.join();
         pidThread.join();
 
-        delete manualController;
+        //delete manualController;
         delete pidController;
     }
     catch (const std::exception& e)
