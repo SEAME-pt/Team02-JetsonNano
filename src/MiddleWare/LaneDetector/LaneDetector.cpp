@@ -582,8 +582,8 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
     
     // Set meanShift parameters
-    const float spatialRadius = frame.cols * 0.2; // 20% of image width
-    const float colorRadius = 1.0; // Not used for spatial-only clustering
+    //const float spatialRadius = frame.cols * 0.2; // 20% of image width
+    //const float colorRadius = 1.0; // Not used for spatial-only clustering
     const cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
     
     // Apply meanShift clustering
