@@ -25,17 +25,17 @@ LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pip
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, 3 * 128 * 256 * sizeof(float),
+    cudaHostAlloc(&input_ptr, 3 * 256 * 512 * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, 2 * 128 * 256 * sizeof(float),
+    cudaHostAlloc(&output_ptr, 2 * 256 * 512 * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
 
     // Allocate GPU memory
     size_t pitch;
-    cudaMallocPitch(&inputDevice, &pitch, 256 * sizeof(float), 128 * 3);
-    cudaMallocPitch(&outputDevice, &pitch, 256 * sizeof(float), 128 * 2);
+    cudaMallocPitch(&inputDevice, &pitch, 512 * sizeof(float), 256 * 3);
+    cudaMallocPitch(&outputDevice, &pitch, 512 * sizeof(float), 256 * 2);
 
     if (!cap.isOpened())
     {
@@ -176,7 +176,7 @@ void LaneDetector::detect(cv::Mat& frame)
     preProcess(frame);
 
     // Copy to GPU
-    cudaMemcpyAsync(inputDevice, inputData, 3 * 128 * 256 * sizeof(float),
+    cudaMemcpyAsync(inputDevice, inputData, 3 * 256 * 512 * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
 
     // Run inference with optimization flags
@@ -184,7 +184,7 @@ void LaneDetector::detect(cv::Mat& frame)
     context->enqueueV2(bindings, stream, nullptr);
 
     // Copy back to CPU
-    cudaMemcpyAsync(outputData, outputDevice, 2 * 128 * 256 * sizeof(float),
+    cudaMemcpyAsync(outputData, outputDevice, 2 * 256 * 512 * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
@@ -247,14 +247,14 @@ void LaneDetector::run()
 
 void LaneDetector::preProcess(const cv::Mat& frame)
 {
-    static cv::Mat resized(128, 256, CV_8UC3);
-    static cv::Mat float_mat(128, 256, CV_32FC3);
+    static cv::Mat resized(256, 512, CV_8UC3);
+    static cv::Mat float_mat(256, 512, CV_32FC3);
 
     // Use INTER_NEAREST for faster resizing
-    cv::resize(frame, resized, cv::Size(256, 128), 0, 0, cv::INTER_NEAREST);
+    cv::resize(frame, resized, cv::Size(512, 256), 0, 0, cv::INTER_NEAREST);
 
     // Optimize memory access pattern
-    const int plane_size      = 128 * 256;
+    const int plane_size      = 256 * 512;
     const uint8_t* frame_data = resized.data;
 
     // Set number of threads for OpenMP
@@ -274,12 +274,12 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat mask(128, 256, CV_8UC1);
+    static cv::Mat mask(256, 512, CV_8UC1);
     static cv::Mat resized_mask;
     static cv::Mat colored_mask;
 
     uchar* mask_data       = mask.data;
-    const int total_pixels = 128 * 256;
+    const int total_pixels = 256 * 512;
 
 #pragma omp parallel for
     for (int i = 0; i < total_pixels; i++)
@@ -673,10 +673,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
     
     // 1. Initial clustering using k-means
-    cv::Mat pointsMat(points.size(), 2, CV_32F);
-    for (size_t i = 0; i < points.size(); i++) {
-        pointsMat.at<float>(i, 0) = points[i].x;
-        pointsMat.at<float>(i, 1) = points[i].y;
+    cv::Mat pointsMat(inlierPoints.size(), 2, CV_32F);
+    for (size_t i = 0; i < inlierPoints.size(); i++) {
+        pointsMat.at<float>(i, 0) = inlierPoints[i].x;
+        pointsMat.at<float>(i, 1) = inlierPoints[i].y;
     }
     
     const cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
