@@ -928,7 +928,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     
     for (const auto& [point, slope] : pointsWithSlope) {
         // Calculate position relative to center
-        bool isLeftSide = point.x < midX;
+        //bool isLeftSide = point.x < midX;
         
         // Use both slope and position for classification
         // Left lane: negative slope OR on far left
