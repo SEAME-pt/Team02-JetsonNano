@@ -68,7 +68,7 @@ class LaneDetector
     std::vector<cv::Point> prevRightCurve;
     std::vector<cv::Point> prevMidCurve;
     cv::Point prevMidPoint = cv::Point(-1, -1);
-    const int historySize = 5;
+    const size_t historySize = 5;
 
   public:
     LaneDetector(const std::string& enginePath, const std::string& pipeline,
