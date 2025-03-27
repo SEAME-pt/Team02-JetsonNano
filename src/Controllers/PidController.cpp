@@ -41,7 +41,7 @@ PidController::PidController()
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
-    autonomousDrive_  = false;
+    autonomousDrive_  = true;
 
     auto config = zenoh::Config::create_default();
     session_ =
