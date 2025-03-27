@@ -330,9 +330,9 @@ void LaneDetector::postProcess(cv::Mat& frame)
 void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
-    for (const auto& pt : lanePoints) {
-        cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
-    }
+    // for (const auto& pt : lanePoints) {
+    //     cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
+    // }
 
     if (firstFrame)
     {
