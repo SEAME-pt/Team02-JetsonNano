@@ -593,6 +593,84 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     if (points.empty()) {
         return;
     }
+
+    int midX = frame.cols / 2;
+    int height = frame.rows;
+    
+    // 1. Pre-filtering based on geometric constraints
+    std::vector<cv::Point> filteredPoints;
+    filteredPoints.reserve(points.size());
+    
+    // Filter out points that are likely not lane markers based on position
+    for (const auto& pt : points) {
+        // Keep points in the lower 3/4 of the image
+        if (pt.y > height * 0.25) {
+            // Remove points in the very center (likely not lane markers)
+            if (abs(pt.x - midX) > midX * 0.1) {
+                filteredPoints.push_back(pt);
+            }
+        }
+    }
+    
+    if (filteredPoints.size() < 10) {
+        // Not enough points after filtering
+        return;
+    }
+    
+    // 2. RANSAC-like outlier removal (simplified)
+    // By splitting the image into vertical bands and keeping only points with neighbors
+    const int numBands = 10;
+    const int bandHeight = height / numBands;
+    
+    std::vector<cv::Point> inlierPoints;
+    inlierPoints.reserve(filteredPoints.size());
+    
+    std::vector<std::vector<cv::Point>> bandPoints(numBands);
+    
+    // Group points by vertical bands
+    for (const auto& pt : filteredPoints) {
+        int bandIdx = std::min(pt.y / bandHeight, numBands - 1);
+        bandPoints[bandIdx].push_back(pt);
+    }
+    
+    // For each band, keep points that are near other points horizontally
+    for (const auto& band : bandPoints) {
+        if (band.size() < 2) continue;
+        
+        // Sort by x coordinate
+        std::vector<cv::Point> sortedBand = band;
+        std::sort(sortedBand.begin(), sortedBand.end(), 
+                 [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+        
+        // Find clusters of points with similar x values
+        std::vector<std::vector<cv::Point>> clusters;
+        std::vector<cv::Point> currentCluster = {sortedBand[0]};
+        
+        for (size_t i = 1; i < sortedBand.size(); i++) {
+            if (sortedBand[i].x - sortedBand[i-1].x < 20) { // Points close horizontally
+                currentCluster.push_back(sortedBand[i]);
+            } else {
+                if (currentCluster.size() >= 2) {
+                    clusters.push_back(currentCluster);
+                }
+                currentCluster = {sortedBand[i]};
+            }
+        }
+        
+        if (currentCluster.size() >= 2) {
+            clusters.push_back(currentCluster);
+        }
+        
+        // Add all points from valid clusters
+        for (const auto& cluster : clusters) {
+            inlierPoints.insert(inlierPoints.end(), cluster.begin(), cluster.end());
+        }
+    }
+    
+    if (inlierPoints.size() < 10) {
+        // Not enough inliers after spatial filtering
+        return;
+    }
     
     // 1. Initial clustering using k-means
     cv::Mat pointsMat(points.size(), 2, CV_32F);
