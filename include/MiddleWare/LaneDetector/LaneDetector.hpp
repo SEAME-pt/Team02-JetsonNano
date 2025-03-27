@@ -27,7 +27,9 @@ class Logger : public nvinfer1::ILogger
             std::cout << msg << std::endl;
         }
     }
-} logger;
+} 
+
+inline Logger logger;
 
 class LaneDetector
 {
