@@ -334,20 +334,20 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
     }
 
-        // if (firstFrame)
-        // {
-        //     laneWidthEstimate = frame.cols * 0.45;
-        //     firstFrame = false;
-        // }
+    if (firstFrame)
+    {
+        laneWidthEstimate = frame.cols * 0.45;
+        firstFrame = false;
+    }
 
-        // //Define Left and Right lanes
-        // // 1. Cluster points using Mean Shift
-        // std::vector<cv::Point> leftPoints, rightPoints;
-        // clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
-        
-        // // 2. Fit polynomial curves to each set of points
-        // std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints, frame);
-        // std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints, frame);
+    //Define Left and Right lanes
+    // 1. Cluster points using Mean Shift
+    std::vector<cv::Point> leftPoints, rightPoints;
+    clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
+    
+    // 2. Fit polynomial curves to each set of points
+    std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints, frame);
+    std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints, frame);
     
     // // 3. Apply Kalman filtering for temporal smoothing and prediction
     // // Initialize Kalman filter if this is the first good detection
@@ -524,36 +524,36 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     //     }
     // }
     
-    // // Update lane width estimate when both curves are detected
-    // if (!leftCurve.empty() && !rightCurve.empty()) {
-    //     int bottomY = frame.rows - 1;
-    //     int leftX = -1, rightX = -1;
+    // Update lane width estimate when both curves are detected
+    if (!leftCurve.empty() && !rightCurve.empty()) {
+        int bottomY = frame.rows - 1;
+        int leftX = -1, rightX = -1;
         
-    //     // Find points near the bottom of the image
-    //     for (const auto& pt : leftCurve) {
-    //         if (pt.y == bottomY || (leftX == -1 && pt.y > frame.rows * 0.7)) {
-    //             leftX = pt.x;
-    //             break;
-    //         }
-    //     }
+        // Find points near the bottom of the image
+        for (const auto& pt : leftCurve) {
+            if (pt.y == bottomY || (leftX == -1 && pt.y > frame.rows * 0.7)) {
+                leftX = pt.x;
+                break;
+            }
+        }
         
-    //     for (const auto& pt : rightCurve) {
-    //         if (pt.y == bottomY || (rightX == -1 && pt.y > frame.rows * 0.7)) {
-    //             rightX = pt.x;
-    //             break;
-    //         }
-    //     }
+        for (const auto& pt : rightCurve) {
+            if (pt.y == bottomY || (rightX == -1 && pt.y > frame.rows * 0.7)) {
+                rightX = pt.x;
+                break;
+            }
+        }
         
-    //     if (leftX != -1 && rightX != -1) {
-    //         double currentWidth = rightX - leftX;
-    //         // Exponential moving average to smooth lane width estimate
-    //         laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
-    //     }
-    // }
+        if (leftX != -1 && rightX != -1) {
+            double currentWidth = rightX - leftX;
+            // Exponential moving average to smooth lane width estimate
+            laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
+        }
+    }
 
 
     // 4. Draw the detected lanes
-    //drawLanes(frame, leftCurve, rightCurve);
+    drawLanes(frame, leftCurve, rightCurve);
 
 }
 
