@@ -817,7 +817,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     // Publish error to control system if needed
     if (publisher_) {
         publisher_->publishCameraError(lateralError);
-        publisher_->publishLanes(leftCurve, rightCurve);
+        //publisher_->publishLanes(leftCurve, rightCurve);
     }
 
     // Draw the final lane visualization
