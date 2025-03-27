@@ -330,9 +330,9 @@ void LaneDetector::postProcess(cv::Mat& frame)
 void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
-    // for (const auto& pt : lanePoints) {
-    //     cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
-    // }
+    for (const auto& pt : lanePoints) {
+        cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
+    }
 
     if (firstFrame)
     {
@@ -889,9 +889,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         // Keep points in the lower 3/4 of the image
         if (pt.y > height * 0.4) {
             // Remove points in the very center (likely not lane markers)
-            if (abs(pt.x - midX) > midX * 0.1) {
-                filteredPoints.push_back(pt);
-            }
+            filteredPoints.push_back(pt);
         }
     }
     
@@ -1130,7 +1128,7 @@ std::vector<cv::Point> LaneDetector::fitCurveToPoints(const std::vector<cv::Poin
     // Generate smooth curve
     std::vector<cv::Point> curve;
     if (!coeffs.empty() && coeffs.rows >= 3) {
-        for (int y = frame.rows; y >= frame.rows * 0.2; y -= 5) {
+        for (int y = frame.rows; y >= frame.rows * 0.35; y -= 5) {
             double x = coeffs.at<double>(0) * y * y + 
                       coeffs.at<double>(1) * y + 
                       coeffs.at<double>(2);
