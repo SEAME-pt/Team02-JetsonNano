@@ -289,7 +289,18 @@ void LaneDetector::postProcess(cv::Mat& frame)
         mask_data[i] = (p1 > p0) ? 255 : 0;
     }
 
-    // Collect points in mask coordinates
+    // Resize the mask to match frame size
+    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    
+    // Create a color overlay - convert mask to a colored version
+    cv::Mat overlay = cv::Mat::zeros(frame.size(), frame.type());
+    // Make the mask areas blue with some transparency
+    overlay.setTo(cv::Scalar(120, 0, 0), resized_mask);
+    
+    // Blend with original image using weighted addition
+    cv::addWeighted(frame, 1.0, overlay, 0.5, 0, frame);
+    
+    // Collect lane points for further processing
     std::vector<cv::Point> maskPoints;
     for (int y = 0; y < mask.rows; y++) {
         for (int x = 0; x < mask.cols; x++) {
@@ -299,20 +310,29 @@ void LaneDetector::postProcess(cv::Mat& frame)
         }
     }
     
-    // Scale all points to frame coordinates
-    std::vector<cv::Point> lanePoints;
-    lanePoints.reserve(maskPoints.size()); // Pre-allocate for performance
-    float x_scale = static_cast<float>(frame.cols) / mask.cols;
-    float y_scale = static_cast<float>(frame.rows) / mask.rows;
+    // // Collect points in mask coordinates
+    // std::vector<cv::Point> maskPoints;
+    // for (int y = 0; y < mask.rows; y++) {
+    //     for (int x = 0; x < mask.cols; x++) {
+    //         if (mask.at<uchar>(y, x) == 255) {
+    //             maskPoints.push_back(cv::Point(x, y));
+    //         }
+    //     }
+    // }
+    // // Scale all points to frame coordinates
+    // std::vector<cv::Point> lanePoints;
+    // lanePoints.reserve(maskPoints.size()); // Pre-allocate for performance
+    // float x_scale = static_cast<float>(frame.cols) / mask.cols;
+    // float y_scale = static_cast<float>(frame.rows) / mask.rows;
     
-    for (const auto& pt : maskPoints) {
-        int scaledX = pt.x * x_scale;
-        int scaledY = pt.y * y_scale;
-        lanePoints.push_back(cv::Point(scaledX, scaledY));
-    }
-    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
-    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
-    createLanes(lanePoints, frame);
+    // for (const auto& pt : maskPoints) {
+    //     int scaledX = pt.x * x_scale;
+    //     int scaledY = pt.y * y_scale;
+    //     lanePoints.push_back(cv::Point(scaledX, scaledY));
+    // }
+    // cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    // cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
+    // createLanes(lanePoints, frame);
 
 }
 
@@ -322,21 +342,21 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     for (const auto& pt : lanePoints) {
         cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
     }
-    
-    if (firstFrame)
-    {
-        laneWidthEstimate = frame.cols * 0.45;
-        firstFrame = false;
-    }
 
-    //Define Left and Right lanes
-    // 1. Cluster points using Mean Shift
-    std::vector<cv::Point> leftPoints, rightPoints;
-    clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
-    
-    // 2. Fit polynomial curves to each set of points
-    std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints, frame);
-    std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints, frame);
+        // if (firstFrame)
+        // {
+        //     laneWidthEstimate = frame.cols * 0.45;
+        //     firstFrame = false;
+        // }
+
+        // //Define Left and Right lanes
+        // // 1. Cluster points using Mean Shift
+        // std::vector<cv::Point> leftPoints, rightPoints;
+        // clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
+        
+        // // 2. Fit polynomial curves to each set of points
+        // std::vector<cv::Point> leftCurve = fitCurveToPoints(leftPoints, frame);
+        // std::vector<cv::Point> rightCurve = fitCurveToPoints(rightPoints, frame);
     
     // // 3. Apply Kalman filtering for temporal smoothing and prediction
     // // Initialize Kalman filter if this is the first good detection
@@ -542,7 +562,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
 
 
     // 4. Draw the detected lanes
-    drawLanes(frame, leftCurve, rightCurve);
+    //drawLanes(frame, leftCurve, rightCurve);
 
 }
 
