@@ -896,136 +896,180 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         return;
     }
     
-    // Convert points to virtual lines for slope calculation
-    std::vector<std::pair<cv::Point, double>> pointsWithSlope;
+    // If we have history, use it to project expected lane positions
+    bool useHistory = !prevLeftCurve.empty() && !prevRightCurve.empty();
+    std::vector<cv::Point> projectedLeftLane, projectedRightLane;
+    
+    if (useHistory) {
+        // Create projection of previous lanes
+        for (int y = height; y >= height * 0.4; y -= 20) {
+            // Find points in previous curves closest to this y-value
+            int leftX = -1, rightX = -1;
+            
+            for (const auto& pt : prevLeftCurve) {
+                if (abs(pt.y - y) < 20) {
+                    leftX = pt.x;
+                    break;
+                }
+            }
+            
+            for (const auto& pt : prevRightCurve) {
+                if (abs(pt.y - y) < 20) {
+                    rightX = pt.x;
+                    break;
+                }
+            }
+            
+            if (leftX != -1) {
+                projectedLeftLane.push_back(cv::Point(leftX, y));
+            }
+            
+            if (rightX != -1) {
+                projectedRightLane.push_back(cv::Point(rightX, y));
+            }
+        }
+    }
     
     // Sort points by y-coordinate (bottom to top)
     std::sort(filteredPoints.begin(), filteredPoints.end(), 
              [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
     
-    // Calculate slope for each point (using next point as reference)
-    for (size_t i = 0; i < filteredPoints.size()-1; i++) {
-        // Avoid division by zero and nearly vertical lines
-        if (abs(filteredPoints[i+1].x - filteredPoints[i].x) > 5) {
-            double slope = (double)(filteredPoints[i+1].y - filteredPoints[i].y) / 
-                         (filteredPoints[i+1].x - filteredPoints[i].x);
+    // APPROACH FOR SHARP CURVES:
+    // Instead of using fixed left/right sides of the image, use the history
+    // to determine where lanes should be, and assign points based on distance
+    
+    if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
+        // For each point, calculate distance to projected lanes
+        for (const auto& pt : filteredPoints) {
+            double minDistLeft = std::numeric_limits<double>::max();
+            double minDistRight = std::numeric_limits<double>::max();
             
-            // Filter out nearly horizontal slopes
-            if (abs(slope) > 0.3) {
-                pointsWithSlope.push_back({filteredPoints[i], slope});
+            // Find distance to projected left lane
+            for (const auto& projPt : projectedLeftLane) {
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+                                        std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+                minDistLeft = std::min(minDistLeft, dist);
             }
-        }
-    }
-    
-    // Add the last point with its previous slope if available
-    if (!pointsWithSlope.empty()) {
-        pointsWithSlope.push_back({filteredPoints.back(), pointsWithSlope.back().second});
-    }
-    
-    // 4. Separate points into left and right lanes based on slope and position
-    std::vector<cv::Point> leftCandidates, rightCandidates;
-    float leftMeanX = 0, rightMeanX = 0;
-    
-    for (const auto& [point, slope] : pointsWithSlope) {
-        // Calculate position relative to center
-        //bool isLeftSide = point.x < midX;
-        
-        // Use both slope and position for classification
-        // Left lane: negative slope OR on far left
-        if ((slope < 0 && point.x < midX * 1.2) || point.x < midX * 0.6) {
-            leftCandidates.push_back(point);
-            leftMeanX += point.x;
-        }
-        // Right lane: positive slope OR on far right
-        else if ((slope > 0 && point.x > midX * 0.8) || point.x > midX * 1.4) {
-            rightCandidates.push_back(point);
-            rightMeanX += point.x;
-        }
-    }
-    
-    // Calculate means for filtering
-    if (!leftCandidates.empty()) {
-        leftMeanX /= leftCandidates.size();
-    }
-    
-    if (!rightCandidates.empty()) {
-        rightMeanX /= rightCandidates.size();
-    }
-    
-    // Post-filtering: remove statistical outliers
-    if (leftCandidates.size() >= 3) {
-        // Calculate average slope for left candidates
-        double avgLeftSlope = 0;
-        int slopeCount = 0;
-        
-        for (size_t i = 0; i < leftCandidates.size()-1; i++) {
-            if (abs(leftCandidates[i+1].x - leftCandidates[i].x) > 5) {
-                double slope = (double)(leftCandidates[i+1].y - leftCandidates[i].y) / 
-                              (leftCandidates[i+1].x - leftCandidates[i].x);
-                avgLeftSlope += slope;
-                slopeCount++;
-            }
-        }
-        
-        if (slopeCount > 0) {
-            avgLeftSlope /= slopeCount;
             
-            // Filter points by position and slope consistency
-            for (const auto& pt : leftCandidates) {
-                if (pt.x < leftMeanX * 1.3 && pt.x < midX * 1.1) {
-                    leftPoints.push_back(pt);
+            // Find distance to projected right lane
+            for (const auto& projPt : projectedRightLane) {
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+                                        std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+                minDistRight = std::min(minDistRight, dist);
+            }
+            
+            // Assign to closest lane, but with a bias based on expected lane positioning
+            // This prevents lanes from crossing in ambiguous situations
+            double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
+            
+            // If we're in a clear zone (not ambiguous)
+            if (distanceRatio < 0.4) {
+                leftPoints.push_back(pt);
+            } 
+            else if (distanceRatio > 0.6) {
+                rightPoints.push_back(pt);
+            }
+            // In ambiguous zones, check relative positioning
+            else {
+                // Get expected lane positions at this y-coordinate
+                int expectedLeftX = -1, expectedRightX = -1;
+                
+                for (const auto& projPt : projectedLeftLane) {
+                    if (abs(projPt.y - pt.y) < 20) {
+                        expectedLeftX = projPt.x;
+                        break;
+                    }
+                }
+                
+                for (const auto& projPt : projectedRightLane) {
+                    if (abs(projPt.y - pt.y) < 20) {
+                        expectedRightX = projPt.x;
+                        break;
+                    }
+                }
+                
+                // Ensure left is actually to the left of right
+                if (expectedLeftX != -1 && expectedRightX != -1) {
+                    // Left should be left of right - if not, we're in a trouble zone
+                    if (expectedLeftX < expectedRightX) {
+                        // Normal case - assign based on which side of midpoint between lanes
+                        int midBetweenLanes = (expectedLeftX + expectedRightX) / 2;
+                        if (pt.x < midBetweenLanes) {
+                            leftPoints.push_back(pt);
+                        } else {
+                            rightPoints.push_back(pt);
+                        }
+                    } 
+                    else {
+                        // Lanes crossed! Be very cautious
+                        if (pt.x < midX) {
+                            leftPoints.push_back(pt);
+                        } else {
+                            rightPoints.push_back(pt);
+                        }
+                    }
+                } 
+                else {
+                    // Fallback to simple left/right of center
+                    if (pt.x < midX) {
+                        leftPoints.push_back(pt);
+                    } else {
+                        rightPoints.push_back(pt);
+                    }
                 }
             }
-        } else {
-            // If we can't calculate slope, just use position
-            for (const auto& pt : leftCandidates) {
-                if (pt.x < leftMeanX * 1.3) {
-                    leftPoints.push_back(pt);
-                }
+        }
+    } 
+    else {
+        // No history - use simple left/right division with buffer
+        for (const auto& pt : filteredPoints) {
+            if (pt.x < midX - midX * 0.1) {  // Left 40% of screen
+                leftPoints.push_back(pt);
+            } 
+            else if (pt.x > midX + midX * 0.1) {  // Right 40% of screen
+                rightPoints.push_back(pt);
             }
+            // Middle 20% is ignored as it's often ambiguous
         }
     }
     
-    // Similar for right lane
-    if (rightCandidates.size() >= 3) {
-        // Calculate average slope for right candidates
-        double avgRightSlope = 0;
-        int slopeCount = 0;
+    // Sanity check: ensure lanes don't cross
+    if (leftPoints.size() >= 3 && rightPoints.size() >= 3) {
+        double leftMeanX = 0, rightMeanX = 0;
         
-        for (size_t i = 0; i < rightCandidates.size()-1; i++) {
-            if (abs(rightCandidates[i+1].x - rightCandidates[i].x) > 5) {
-                double slope = (double)(rightCandidates[i+1].y - rightCandidates[i].y) / 
-                              (rightCandidates[i+1].x - rightCandidates[i].x);
-                avgRightSlope += slope;
-                slopeCount++;
-            }
+        for (const auto& pt : leftPoints) {
+            leftMeanX += pt.x;
         }
+        leftMeanX /= leftPoints.size();
         
-        if (slopeCount > 0) {
-            avgRightSlope /= slopeCount;
+        for (const auto& pt : rightPoints) {
+            rightMeanX += pt.x;
+        }
+        rightMeanX /= rightPoints.size();
+        
+        // If left is to the right of right, something is wrong
+        if (leftMeanX > rightMeanX) {
+            // In extreme curves, we might need to start over with simple position
+            leftPoints.clear();
+            rightPoints.clear();
             
-            // Filter points by position and slope consistency
-            for (const auto& pt : rightCandidates) {
-                if (pt.x > rightMeanX * 0.7 && pt.x > midX * 0.9) {
+            for (const auto& pt : filteredPoints) {
+                if (pt.x < midX) {
+                    leftPoints.push_back(pt);
+                } else {
                     rightPoints.push_back(pt);
                 }
             }
-        } else {
-            // If we can't calculate slope, just use position
-            for (const auto& pt : rightCandidates) {
-                if (pt.x > rightMeanX * 0.7) {
-                    rightPoints.push_back(pt);
-                }
-            }
         }
     }
     
-    // 5. Maintain temporal consistency
-    if (!prevLeftPoints.empty() && !prevRightPoints.empty() && 
-        (leftPoints.size() < 3 || rightPoints.size() < 3 || 
-         abs(rightMeanX - leftMeanX) < laneWidthEstimate * 0.5)) {
-        
-        reassignPointsUsingPreviousFrame(leftPoints, rightPoints);
+    // Fallback to previous points if needed
+    if (leftPoints.size() < 3 && !prevLeftPoints.empty()) {
+        leftPoints = prevLeftPoints;
+    }
+    
+    if (rightPoints.size() < 3 && !prevRightPoints.empty()) {
+        rightPoints = prevRightPoints;
     }
     
     // Save for next frame
