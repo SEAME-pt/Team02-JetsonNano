@@ -550,7 +550,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
         }
     }
-    double alpha = 0.3;
+    double alpha = 0.15;
     if (!firstFrame)
     {
         // Apply moving average to left curve if it exists
@@ -700,7 +700,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
                 }
 
                 // Lower alpha for smoother transitions with higher curvature
-                double dynamicAlpha = std::min(0.5, alpha + curvature * 1000);
+                double dynamicAlpha = std::min(0.3, alpha + curvature * 500);
 
                 for (size_t i = 0; i < rightCurve.size(); i++)
                 {
@@ -712,6 +712,32 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             }
         }
         
+    }
+
+    // 4. Add explicit rate limiting to both left and right curves to prevent abrupt changes
+    if (!prevLeftCurve.empty() && leftCurve.size() == prevLeftCurve.size()) {
+        // Limit maximum movement per frame
+        const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01; // 1% of frame width
+        
+        for (size_t i = 0; i < leftCurve.size(); i++) {
+            double delta = leftCurve[i].x - prevLeftCurve[i].x;
+            if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
+                // Limit the movement
+                leftCurve[i].x = prevLeftCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
+            }
+        }
+    }
+
+    // Similar code for right curve
+    if (!prevRightCurve.empty() && rightCurve.size() == prevRightCurve.size()) {
+        const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01;
+        
+        for (size_t i = 0; i < rightCurve.size(); i++) {
+            double delta = rightCurve[i].x - prevRightCurve[i].x;
+            if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
+                rightCurve[i].x = prevRightCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
+            }
+        }
     }
 
     // Save current curves for next frame
