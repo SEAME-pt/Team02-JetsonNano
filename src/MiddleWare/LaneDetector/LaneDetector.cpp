@@ -286,19 +286,19 @@ void LaneDetector::postProcess(cv::Mat& frame)
     {
         float p0     = outputData[i];
         float p1     = outputData[total_pixels + i];
-        mask_data[i] = (p1 > p0) ? 255 : 0;
+        mask_data[i] = (p0 > p1) ? 255 : 0;
     }
 
-    // Resize the mask to match frame size
-    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    // // Resize the mask to match frame size
+    // cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
     
-    // Create a color overlay - convert mask to a colored version
-    cv::Mat overlay = cv::Mat::zeros(frame.size(), frame.type());
-    // Make the mask areas blue with some transparency
-    overlay.setTo(cv::Scalar(120, 0, 0), resized_mask);
+    // // Create a color overlay - convert mask to a colored version
+    // cv::Mat overlay = cv::Mat::zeros(frame.size(), frame.type());
+    // // Make the mask areas blue with some transparency
+    // overlay.setTo(cv::Scalar(120, 0, 0), resized_mask);
     
-    // Blend with original image using weighted addition
-    cv::addWeighted(frame, 1.0, overlay, 0.5, 0, frame);
+    // // Blend with original image using weighted addition
+    // cv::addWeighted(frame, 1.0, overlay, 0.5, 0, frame);
     
     // Collect lane points for further processing
     std::vector<cv::Point> maskPoints;
@@ -310,29 +310,29 @@ void LaneDetector::postProcess(cv::Mat& frame)
         }
     }
     
-    // // Collect points in mask coordinates
-    // std::vector<cv::Point> maskPoints;
-    // for (int y = 0; y < mask.rows; y++) {
-    //     for (int x = 0; x < mask.cols; x++) {
-    //         if (mask.at<uchar>(y, x) == 255) {
-    //             maskPoints.push_back(cv::Point(x, y));
-    //         }
-    //     }
-    // }
-    // // Scale all points to frame coordinates
-    // std::vector<cv::Point> lanePoints;
-    // lanePoints.reserve(maskPoints.size()); // Pre-allocate for performance
-    // float x_scale = static_cast<float>(frame.cols) / mask.cols;
-    // float y_scale = static_cast<float>(frame.rows) / mask.rows;
+    // Collect points in mask coordinates
+    std::vector<cv::Point> maskPoints;
+    for (int y = 0; y < mask.rows; y++) {
+        for (int x = 0; x < mask.cols; x++) {
+            if (mask.at<uchar>(y, x) == 255) {
+                maskPoints.push_back(cv::Point(x, y));
+            }
+        }
+    }
+    // Scale all points to frame coordinates
+    std::vector<cv::Point> lanePoints;
+    lanePoints.reserve(maskPoints.size()); // Pre-allocate for performance
+    float x_scale = static_cast<float>(frame.cols) / mask.cols;
+    float y_scale = static_cast<float>(frame.rows) / mask.rows;
     
-    // for (const auto& pt : maskPoints) {
-    //     int scaledX = pt.x * x_scale;
-    //     int scaledY = pt.y * y_scale;
-    //     lanePoints.push_back(cv::Point(scaledX, scaledY));
-    // }
-    // cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
-    // cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
-    // createLanes(lanePoints, frame);
+    for (const auto& pt : maskPoints) {
+        int scaledX = pt.x * x_scale;
+        int scaledY = pt.y * y_scale;
+        lanePoints.push_back(cv::Point(scaledX, scaledY));
+    }
+    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
+    createLanes(lanePoints, frame);
 
 }
 
