@@ -299,16 +299,7 @@ void LaneDetector::postProcess(cv::Mat& frame)
     
     // // Blend with original image using weighted addition
     // cv::addWeighted(frame, 1.0, overlay, 0.5, 0, frame);
-    
-    // Collect lane points for further processing
-    std::vector<cv::Point> maskPoints;
-    for (int y = 0; y < mask.rows; y++) {
-        for (int x = 0; x < mask.cols; x++) {
-            if (mask.at<uchar>(y, x) == 255) {
-                maskPoints.push_back(cv::Point(x, y));
-            }
-        }
-    }
+
     
     // Collect points in mask coordinates
     std::vector<cv::Point> maskPoints;
