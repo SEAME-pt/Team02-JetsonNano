@@ -10,6 +10,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <deque>
 #include <cmath>
 #include "CAN.hpp"
 #include <sys/time.h>
@@ -60,6 +61,14 @@ class LaneDetector
     double laneWidthEstimate = 0.0;
     bool firstFrame;
     int frame_count;
+
+    std::deque<std::vector<cv::Point>> leftLaneHistory;
+    std::deque<std::vector<cv::Point>> rightLaneHistory;
+    std::vector<cv::Point> prevLeftCurve;
+    std::vector<cv::Point> prevRightCurve;
+    std::vector<cv::Point> prevMidCurve;
+    cv::Point prevMidPoint = cv::Point(-1, -1);
+    const int historySize = 5;
 
   public:
     LaneDetector(const std::string& enginePath, const std::string& pipeline,

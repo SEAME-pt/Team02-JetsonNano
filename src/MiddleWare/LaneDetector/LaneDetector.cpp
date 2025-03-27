@@ -550,12 +550,269 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
         }
     }
+    double alpha = 0.3;
+    if (!firstFrame)
+    {
+        // Apply moving average to left curve if it exists
+        if (!leftCurve.empty())
+        {
+            // Add current curve to history
+            leftLaneHistory.push_back(leftCurve);
+            if (leftLaneHistory.size() > historySize)
+            {
+                leftLaneHistory.pop_front();
+            }
 
+            // Only apply averaging if we have enough history
+            if (leftLaneHistory.size() >= 2)
+            {
+                // Create a copy of the current curve for averaging
+                std::vector<cv::Point> averagedLeftCurve = leftCurve;
 
-    // 4. Draw the detected lanes
-    // drawLanes(frame, leftCurve, rightCurve);
+                // For each point in the curve
+                for (size_t i = 0; i < leftCurve.size(); i++)
+                {
+                    int sumX = 0, sumY = 0;
+                    double totalWeight = 0;
 
+                    // Average across history (weighted, with recent frames having more weight)
+                    for (size_t h = 0; h < leftLaneHistory.size(); h++)
+                    {
+                        if (i < leftLaneHistory[h].size())
+                        {
+                            // More recent frames get higher weight
+                            double weight = (h + 1.0) / leftLaneHistory.size();
+                            sumX += leftLaneHistory[h][i].x * weight;
+                            sumY += leftLaneHistory[h][i].y * weight;
+                            totalWeight += weight;
+                        }
+                    }
+
+                    if (totalWeight > 0)
+                    {
+                        averagedLeftCurve[i].x = static_cast<int>(sumX / totalWeight);
+                        averagedLeftCurve[i].y = static_cast<int>(sumY / totalWeight);
+                    }
+                }
+                leftCurve = averagedLeftCurve;
+            }
+
+            // Dynamic alpha smoothing based on curvature
+            if (!prevLeftCurve.empty() && prevLeftCurve.size() == leftCurve.size())
+            {
+                double curvature = 0;
+                if (leftCurve.size() >= 3)
+                {
+                    // Calculate curvature using all points
+                    std::vector<float> x_vals, y_vals;
+                    for (const auto& pt : leftCurve)
+                    {
+                        x_vals.push_back(pt.x);
+                        y_vals.push_back(pt.y);
+                    }
+
+                    cv::Mat x_mat(x_vals), y_mat(y_vals);
+                    cv::Mat coeffs = polyfit(y_mat, x_mat, 2);
+                    if (!coeffs.empty() && coeffs.rows >= 3)
+                    {
+                        curvature = std::abs(coeffs.at<double>(0));
+                    }
+                }
+
+                // Lower alpha for smoother transitions with higher curvature
+                double dynamicAlpha = std::min(0.5, alpha + curvature * 1000);
+
+                for (size_t i = 0; i < leftCurve.size(); i++)
+                {
+                    leftCurve[i].x = static_cast<int>(dynamicAlpha * leftCurve[i].x + 
+                                                      (1 - dynamicAlpha) * prevLeftCurve[i].x);
+                    leftCurve[i].y = static_cast<int>(dynamicAlpha * leftCurve[i].y + 
+                                                      (1 - dynamicAlpha) * prevLeftCurve[i].y);
+                }
+            }
+        }
+        // Replace the "Similar code for right curve" comment with this code:
+
+        // Apply moving average to right curve if it exists
+        if (!rightCurve.empty())
+        {
+            // Add current curve to history
+            rightLaneHistory.push_back(rightCurve);
+            if (rightLaneHistory.size() > historySize)
+            {
+                rightLaneHistory.pop_front();
+            }
+
+            // Only apply averaging if we have enough history
+            if (rightLaneHistory.size() >= 2)
+            {
+                // Create a copy of the current curve for averaging
+                std::vector<cv::Point> averagedRightCurve = rightCurve;
+
+                // For each point in the curve
+                for (size_t i = 0; i < rightCurve.size(); i++)
+                {
+                    int sumX = 0, sumY = 0;
+                    double totalWeight = 0;
+
+                    // Average across history (weighted, with recent frames having more weight)
+                    for (size_t h = 0; h < rightLaneHistory.size(); h++)
+                    {
+                        if (i < rightLaneHistory[h].size())
+                        {
+                            // More recent frames get higher weight
+                            double weight = (h + 1.0) / rightLaneHistory.size();
+                            sumX += rightLaneHistory[h][i].x * weight;
+                            sumY += rightLaneHistory[h][i].y * weight;
+                            totalWeight += weight;
+                        }
+                    }
+
+                    if (totalWeight > 0)
+                    {
+                        averagedRightCurve[i].x = static_cast<int>(sumX / totalWeight);
+                        averagedRightCurve[i].y = static_cast<int>(sumY / totalWeight);
+                    }
+                }
+                rightCurve = averagedRightCurve;
+            }
+
+            // Dynamic alpha smoothing based on curvature
+            if (!prevRightCurve.empty() && prevRightCurve.size() == rightCurve.size())
+            {
+                double curvature = 0;
+                if (rightCurve.size() >= 3)
+                {
+                    // Calculate curvature using all points
+                    std::vector<float> x_vals, y_vals;
+                    for (const auto& pt : rightCurve)
+                    {
+                        x_vals.push_back(pt.x);
+                        y_vals.push_back(pt.y);
+                    }
+
+                    cv::Mat x_mat(x_vals), y_mat(y_vals);
+                    cv::Mat coeffs = polyfit(y_mat, x_mat, 2);
+                    if (!coeffs.empty() && coeffs.rows >= 3)
+                    {
+                        curvature = std::abs(coeffs.at<double>(0));
+                    }
+                }
+
+                // Lower alpha for smoother transitions with higher curvature
+                double dynamicAlpha = std::min(0.5, alpha + curvature * 1000);
+
+                for (size_t i = 0; i < rightCurve.size(); i++)
+                {
+                    rightCurve[i].x = static_cast<int>(dynamicAlpha * rightCurve[i].x + 
+                                                    (1 - dynamicAlpha) * prevRightCurve[i].x);
+                    rightCurve[i].y = static_cast<int>(dynamicAlpha * rightCurve[i].y + 
+                                                    (1 - dynamicAlpha) * prevRightCurve[i].y);
+                }
+            }
+        }
+        
+    }
+
+    // Save current curves for next frame
+    prevLeftCurve = leftCurve;
+    prevRightCurve = rightCurve;
+
+    // 8. Compute center lane as average of left and right lanes
+    std::vector<cv::Point> midCurve;
+    if (!leftCurve.empty() && !rightCurve.empty())
+    {
+        // Make sure we have equal length curves by resampling if needed
+        int numPoints = std::min(leftCurve.size(), rightCurve.size());
+        for (int i = 0; i < numPoints; i++)
+        {
+            size_t leftIdx = i * leftCurve.size() / numPoints;
+            size_t rightIdx = i * rightCurve.size() / numPoints;
+            
+            int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
+            int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
+            midCurve.push_back(cv::Point(midX, midY));
+        }
+    }
+
+    // 9. Calculate reference point for lateral error
+    cv::Point midPoint;
+    int height = frame.rows;
+    int width = frame.cols;
+    
+    if (!midCurve.empty())
+    {
+        int targetY = height - (2 * height / 3); // 2/3 up from bottom
+
+        // Find closest point to target Y
+        size_t closestIdx = 0;
+        int minDistance = std::abs(midCurve[0].y - targetY);
+
+        for (size_t i = 1; i < midCurve.size(); i++)
+        {
+            int distance = std::abs(midCurve[i].y - targetY);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestIdx = i;
+            }
+        }
+
+        // Use the point at found index
+        midPoint = midCurve[closestIdx];
+
+        // Apply temporal smoothing to midPoint
+        if (prevMidPoint.x != -1 && prevMidPoint.y != -1)
+        {
+            float gamma = 0.8; // Smoothing factor
+            midPoint.x = static_cast<int>(gamma * midPoint.x + (1 - gamma) * prevMidPoint.x);
+            midPoint.y = static_cast<int>(gamma * midPoint.y + (1 - gamma) * prevMidPoint.y);
+        }
+
+        // Visual indicator of target Y
+        cv::line(frame, cv::Point(0, targetY), cv::Point(width, targetY), 
+                 cv::Scalar(0, 255, 255), 1);
+    }
+    else
+    {
+        // Fallback to center of image
+        midPoint = cv::Point(width / 2, height * 2 / 3);
+    }
+
+    // Update midPoint for next frame
+    prevMidPoint = midPoint;
+    prevMidCurve = midCurve;
+    firstFrame = false;
+
+    // Calculate normalized lateral error (-1.0 to 1.0)
+    float centerX = width / 2;
+    float lateralError = (midPoint.x - centerX) / (width / 2.0f);
+    
+    // Publish error to control system if needed
+    if (publisher_) {
+        publisher_->publishCameraError(lateralError);
+        publisher_->publishLanes(leftCurve, rightCurve);
+    }
+
+    // Draw the final lane visualization
+    drawLanes(frame, leftCurve, rightCurve);
+    
+    // Draw center lane and reference point
+    if (!midCurve.empty()) {
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(frame, midCurve[i-1], midCurve[i], cv::Scalar(0, 0, 255), 2);
+        }
+    }
+    
+    // Draw the reference point
+    cv::circle(frame, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+    
+    // Display lateral error as text
+    std::string errorText = "Error: " + std::to_string(lateralError);
+    cv::putText(frame, errorText, cv::Point(20, 90), cv::FONT_HERSHEY_SIMPLEX, 
+                0.7, cv::Scalar(255, 255, 255), 2);
 }
+
 
 void LaneDetector::drawLanes(cv::Mat& frame, 
                             const std::vector<cv::Point>& leftCurve, 
