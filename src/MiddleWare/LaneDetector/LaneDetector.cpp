@@ -561,6 +561,15 @@ void LaneDetector::drawLanes(cv::Mat& frame,
                             const std::vector<cv::Point>& leftCurve, 
                             const std::vector<cv::Point>& rightCurve)
 {
+
+    // Draw original points (that were used to calculate the lanes)
+    for (const auto& pt : prevLeftPoints) {
+        cv::circle(frame, pt, 3, cv::Scalar(125, 0, 0), -1); // Dark blue for left points
+    }
+    
+    for (const auto& pt : prevRightPoints) {
+        cv::circle(frame, pt, 3, cv::Scalar(0, 125, 0), -1); // Dark green for right points
+    }
     // Draw left lane in blue
     if (!leftCurve.empty() && leftCurve.size() >= 2) {
         for (size_t i = 1; i < leftCurve.size(); i++) {
@@ -585,45 +594,19 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         return;
     }
     
-    // Convert points to the format expected by meanShift
-    std::vector<cv::Point2f> samples;
-    for (const auto& pt : points) {
-        samples.push_back(cv::Point2f(pt.x, pt.y));
+    // 1. Initial clustering using k-means
+    cv::Mat pointsMat(points.size(), 2, CV_32F);
+    for (size_t i = 0; i < points.size(); i++) {
+        pointsMat.at<float>(i, 0) = points[i].x;
+        pointsMat.at<float>(i, 1) = points[i].y;
     }
     
-    // Convert to Mat format (required for clustering algorithms)
-    cv::Mat pointsMat(samples.size(), 2, CV_32F);
-    for (size_t i = 0; i < samples.size(); i++) {
-        pointsMat.at<float>(i, 0) = samples[i].x;
-        pointsMat.at<float>(i, 1) = samples[i].y;
-    }
-    
-    // Set meanShift parameters
-    //const float spatialRadius = frame.cols * 0.2; // 20% of image width
-    //const float colorRadius = 1.0; // Not used for spatial-only clustering
     const cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
-    
-    // Apply meanShift clustering
     cv::Mat labels, centers;
-    int k = 2; // Two clusters (left and right lane)
-    cv::kmeans(pointsMat, k, labels, 
-            criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    int clusterCount = k;
-    // If only one cluster is found, use x-coordinate to separate
-    if (clusterCount <= 1) {
-        // Fallback to simple X-coordinate based separation
-        int midX = frame.cols / 2;
-        for (const auto& pt : points) {
-            if (pt.x < midX) {
-                leftPoints.push_back(pt);
-            } else {
-                rightPoints.push_back(pt);
-            }
-        }
-        return;
-    }
+    int k = 2; // Two clusters
+    cv::kmeans(pointsMat, k, labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     
-    // Group points by their cluster labels
+    // Group points by cluster labels
     std::map<int, std::vector<cv::Point>> clusters;
     for (int i = 0; i < labels.rows; i++) {
         int label = labels.at<int>(i, 0);
@@ -635,14 +618,12 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     float leftMeanX = frame.cols, rightMeanX = 0;
     
     for (const auto& pair : clusters) {
-        // Calculate mean X position for this cluster
         float sumX = 0;
         for (const auto& pt : pair.second) {
             sumX += pt.x;
         }
         float meanX = sumX / pair.second.size();
         
-        // Update leftmost and rightmost clusters
         if (meanX < leftMeanX) {
             leftMeanX = meanX;
             leftLabel = pair.first;
@@ -653,24 +634,118 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
     
-    // Assign points to left and right
-    if (leftLabel >= 0) {
-        leftPoints = clusters[leftLabel];
-    }
-    if (rightLabel >= 0) {
-        rightPoints = clusters[rightLabel];
+    // Initial assignment
+    if (leftLabel >= 0) leftPoints = clusters[leftLabel];
+    if (rightLabel >= 0) rightPoints = clusters[rightLabel];
+    
+    // 2. Slope-based filtering (inspired by your OpenCV approach)
+    int midX = frame.cols / 2;
+    
+    // Calculate virtual lines for slope calculation
+    auto calculateVirtualLines = [](const std::vector<cv::Point>& pts) -> std::vector<std::pair<double, cv::Point>> {
+        if (pts.size() < 5) return {};
+        
+        // Sort points by y-coordinate (bottom to top)
+        std::vector<cv::Point> sortedPoints = pts;
+        std::sort(sortedPoints.begin(), sortedPoints.end(), 
+                 [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
+        
+        // Calculate slopes between consecutive points
+        std::vector<std::pair<double, cv::Point>> pointsWithSlopes;
+        for (size_t i = 1; i < sortedPoints.size(); i++) {
+            if (std::abs(sortedPoints[i].x - sortedPoints[i-1].x) > 5) {
+                double slope = (double)(sortedPoints[i].y - sortedPoints[i-1].y) / 
+                               (sortedPoints[i].x - sortedPoints[i-1].x);
+                
+                // Store slope with the current point
+                pointsWithSlopes.push_back({slope, sortedPoints[i]});
+            }
+        }
+        return pointsWithSlopes;
+    };
+    
+    // Get slopes for left and right points
+    auto leftPointsWithSlopes = calculateVirtualLines(leftPoints);
+    auto rightPointsWithSlopes = calculateVirtualLines(rightPoints);
+    
+    // 3. Filter points based on expected slopes
+    std::vector<cv::Point> filteredLeft, filteredRight;
+    
+    // Left lane points should have negative slopes near the left side
+    for (const auto& [slope, point] : leftPointsWithSlopes) {
+        // Left lane: negative slope OR on far left
+        if ((slope < 0 && point.x < midX * 1.2) || point.x < midX * 0.6) {
+            filteredLeft.push_back(point);
+        } else {
+            // This might be a misclassified right lane point
+            rightPoints.push_back(point);
+        }
     }
     
-    // If the clusters are suspiciously close, verify using time-based consistency
-    float clusterDistance = rightMeanX - leftMeanX;
-    if (clusterDistance < laneWidthEstimate * 0.5 && !prevLeftPoints.empty() && !prevRightPoints.empty()) {
-        // Use previous frame's classification to help resolve ambiguity
+    // Right lane points should have positive slopes near the right side
+    for (const auto& [slope, point] : rightPointsWithSlopes) {
+        // Right lane: positive slope OR on far right
+        if ((slope > 0 && point.x > midX * 0.8) || point.x > midX * 1.4) {
+            filteredRight.push_back(point);
+        } else {
+            // This might be a misclassified left lane point
+            leftPoints.push_back(point);
+        }
+    }
+    
+    // 4. Statistical outlier removal
+    if (filteredLeft.size() > 3) {
+        // Calculate average x-position of filtered left points
+        int avgLeftX = 0;
+        for (const auto& pt : filteredLeft) {
+            avgLeftX += pt.x;
+        }
+        avgLeftX /= filteredLeft.size();
+        
+        // Remove points too far from average x-position
+        std::vector<cv::Point> finalLeftPoints;
+        for (const auto& pt : filteredLeft) {
+            if (std::abs(pt.x - avgLeftX) < frame.cols * 0.15) { // 15% tolerance
+                finalLeftPoints.push_back(pt);
+            }
+        }
+        
+        if (finalLeftPoints.size() >= 3) {
+            leftPoints = finalLeftPoints;
+        }
+    }
+    
+    // Same for right points
+    if (filteredRight.size() > 3) {
+        int avgRightX = 0;
+        for (const auto& pt : filteredRight) {
+            avgRightX += pt.x;
+        }
+        avgRightX /= filteredRight.size();
+        
+        std::vector<cv::Point> finalRightPoints;
+        for (const auto& pt : filteredRight) {
+            if (std::abs(pt.x - avgRightX) < frame.cols * 0.15) {
+                finalRightPoints.push_back(pt);
+            }
+        }
+        
+        if (finalRightPoints.size() >= 3) {
+            rightPoints = finalRightPoints;
+        }
+    }
+    
+    // 5. Maintain temporal consistency
+    if (!prevLeftPoints.empty() && !prevRightPoints.empty() && 
+        (leftPoints.size() < 3 || rightPoints.size() < 3 || 
+         std::abs(rightMeanX - leftMeanX) < laneWidthEstimate * 0.5)) {
+        
         reassignPointsUsingPreviousFrame(leftPoints, rightPoints);
     }
     
     // Save for next frame
-    prevLeftPoints = leftPoints;
-    prevRightPoints = rightPoints;
+    if (leftPoints.size() >= 3) prevLeftPoints = leftPoints;
+    if (rightPoints.size() >= 3) prevRightPoints = rightPoints;
 }
 
 std::vector<cv::Point> LaneDetector::fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame)
