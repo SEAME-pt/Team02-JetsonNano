@@ -330,9 +330,9 @@ void LaneDetector::postProcess(cv::Mat& frame)
 void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
-    for (const auto& pt : lanePoints) {
-        cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
-    }
+    // for (const auto& pt : lanePoints) {
+    //     cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for all points
+    // }
 
     if (firstFrame)
     {
@@ -351,178 +351,178 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     
     // // 3. Apply Kalman filtering for temporal smoothing and prediction
     // // Initialize Kalman filter if this is the first good detection
-    // if (!kfInitialized && !leftCurve.empty() && !rightCurve.empty()) {
-    //     initKalmanFilters(leftCurve, rightCurve);
-    // }
+    if (!kfInitialized && !leftCurve.empty() && !rightCurve.empty()) {
+        initKalmanFilters(leftCurve, rightCurve);
+    }
     
-    // // Use Kalman filter predictions when lanes disappear or are unstable
-    // if (kfInitialized) {
-    //     // Always predict next state
-    //     cv::Mat leftPredicted = leftLaneKF.predict();
-    //     cv::Mat rightPredicted = rightLaneKF.predict();
+    // Use Kalman filter predictions when lanes disappear or are unstable
+    if (kfInitialized) {
+        // Always predict next state
+        cv::Mat leftPredicted = leftLaneKF.predict();
+        cv::Mat rightPredicted = rightLaneKF.predict();
         
-    //     // If we have actual measurements, use them to update the filter
-    //     if (!leftCurve.empty() && leftCurve.size() >= 3) {
-    //         int bottom_idx = 0;
-    //         int mid_idx = leftCurve.size() / 2;
-    //         int top_idx = leftCurve.size() - 1;
+        // If we have actual measurements, use them to update the filter
+        if (!leftCurve.empty() && leftCurve.size() >= 3) {
+            int bottom_idx = 0;
+            int mid_idx = leftCurve.size() / 2;
+            int top_idx = leftCurve.size() - 1;
             
-    //         cv::Mat measurement = (cv::Mat_<float>(3, 1) << 
-    //             leftCurve[bottom_idx].x,
-    //             leftCurve[mid_idx].x, 
-    //             leftCurve[top_idx].x);
+            cv::Mat measurement = (cv::Mat_<float>(3, 1) << 
+                leftCurve[bottom_idx].x,
+                leftCurve[mid_idx].x, 
+                leftCurve[top_idx].x);
                 
-    //         leftLaneKF.correct(measurement);
-    //     } 
-    //     else if (leftCurve.empty() || leftCurve.size() < 3) {
-    //         // No valid left lane detected - use prediction
-    //         std::vector<cv::Point> predictedLeftCurve;
-    //         int height = frame.rows;
+            leftLaneKF.correct(measurement);
+        } 
+        else if (leftCurve.empty() || leftCurve.size() < 3) {
+            // No valid left lane detected - use prediction
+            std::vector<cv::Point> predictedLeftCurve;
+            int height = frame.rows;
             
-    //         if (!rightCurve.empty() && rightCurve.size() >= 3) {
-    //             // Use right lane with lane width offset (more accurate)
-    //             int bottom_idx = 0;
-    //             int mid_idx = rightCurve.size() / 2;
-    //             int top_idx = rightCurve.size() - 1;
+            if (!rightCurve.empty() && rightCurve.size() >= 3) {
+                // Use right lane with lane width offset (more accurate)
+                int bottom_idx = 0;
+                int mid_idx = rightCurve.size() / 2;
+                int top_idx = rightCurve.size() - 1;
                 
-    //             // Fit polynomial to right lane to get curvature
-    //             std::vector<cv::Point2f> rightPoints = {
-    //                 cv::Point2f(rightCurve[bottom_idx].x, rightCurve[bottom_idx].y),
-    //                 cv::Point2f(rightCurve[mid_idx].x, rightCurve[mid_idx].y),
-    //                 cv::Point2f(rightCurve[top_idx].x, rightCurve[top_idx].y)
-    //             };
+                // Fit polynomial to right lane to get curvature
+                std::vector<cv::Point2f> rightPoints = {
+                    cv::Point2f(rightCurve[bottom_idx].x, rightCurve[bottom_idx].y),
+                    cv::Point2f(rightCurve[mid_idx].x, rightCurve[mid_idx].y),
+                    cv::Point2f(rightCurve[top_idx].x, rightCurve[top_idx].y)
+                };
                 
-    //             std::vector<float> x_vals, y_vals;
-    //             for (auto& pt : rightPoints) {
-    //                 x_vals.push_back(pt.x);
-    //                 y_vals.push_back(pt.y);
-    //             }
+                std::vector<float> x_vals, y_vals;
+                for (auto& pt : rightPoints) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
+                }
                 
-    //             cv::Mat x_mat(x_vals), y_mat(y_vals);
-    //             cv::Mat rightCoeffs = polyfit(y_mat, x_mat, 2);
+                cv::Mat x_mat(x_vals), y_mat(y_vals);
+                cv::Mat rightCoeffs = polyfit(y_mat, x_mat, 2);
                 
-    //             // Generate left curve by shifting right curve left by lane width
-    //             if (!rightCoeffs.empty() && rightCoeffs.rows >= 3) {
-    //                 double a = rightCoeffs.at<double>(0); // quadratic term (curvature)
-    //                 double b = rightCoeffs.at<double>(1); // linear term (slope)
-    //                 double c = rightCoeffs.at<double>(2) - laneWidthEstimate; // constant (x-offset)
+                // Generate left curve by shifting right curve left by lane width
+                if (!rightCoeffs.empty() && rightCoeffs.rows >= 3) {
+                    double a = rightCoeffs.at<double>(0); // quadratic term (curvature)
+                    double b = rightCoeffs.at<double>(1); // linear term (slope)
+                    double c = rightCoeffs.at<double>(2) - laneWidthEstimate; // constant (x-offset)
                     
-    //                 for (int y = height; y >= height / 3; y -= 5) {
-    //                     double x = a * y * y + b * y + c;
-    //                     predictedLeftCurve.push_back(cv::Point(round(x), y));
-    //                 }
+                    for (int y = height; y >= height / 3; y -= 5) {
+                        double x = a * y * y + b * y + c;
+                        predictedLeftCurve.push_back(cv::Point(round(x), y));
+                    }
                     
-    //                 leftCurve = predictedLeftCurve;
-    //             }
-    //         }
-    //         else {
-    //             // No right lane either - use pure Kalman prediction
-    //             float bottom_x = leftPredicted.at<float>(0);
-    //             float mid_x = leftPredicted.at<float>(1);
-    //             float top_x = leftPredicted.at<float>(2);
+                    leftCurve = predictedLeftCurve;
+                }
+            }
+            else {
+                // No right lane either - use pure Kalman prediction
+                float bottom_x = leftPredicted.at<float>(0);
+                float mid_x = leftPredicted.at<float>(1);
+                float top_x = leftPredicted.at<float>(2);
                 
-    //             // Generate curve points using quadratic interpolation
-    //             int bottom_y = height;
-    //             int mid_y = height / 2;
-    //             int top_y = height / 3;
+                // Generate curve points using quadratic interpolation
+                int bottom_y = height;
+                int mid_y = height / 2;
+                int top_y = height / 3;
                 
-    //             cv::Mat Y = (cv::Mat_<double>(3, 1) << bottom_y, mid_y, top_y);
-    //             cv::Mat X = (cv::Mat_<double>(3, 1) << bottom_x, mid_x, top_x);
-    //             cv::Mat coeffs = polyfit(Y, X, 2);
+                cv::Mat Y = (cv::Mat_<double>(3, 1) << bottom_y, mid_y, top_y);
+                cv::Mat X = (cv::Mat_<double>(3, 1) << bottom_x, mid_x, top_x);
+                cv::Mat coeffs = polyfit(Y, X, 2);
                 
-    //             if (!coeffs.empty() && coeffs.rows >= 3) {
-    //                 for (int y = height; y >= height / 3; y -= 5) {
-    //                     double x = coeffs.at<double>(0) * y * y + 
-    //                               coeffs.at<double>(1) * y + 
-    //                               coeffs.at<double>(2);
-    //                     predictedLeftCurve.push_back(cv::Point(round(x), y));
-    //                 }
-    //                 leftCurve = predictedLeftCurve;
-    //             }
-    //         }
-    //     }
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    for (int y = height; y >= height / 3; y -= 5) {
+                        double x = coeffs.at<double>(0) * y * y + 
+                                  coeffs.at<double>(1) * y + 
+                                  coeffs.at<double>(2);
+                        predictedLeftCurve.push_back(cv::Point(round(x), y));
+                    }
+                    leftCurve = predictedLeftCurve;
+                }
+            }
+        }
         
-    //     // Similar logic for right curve
-    //     if (!rightCurve.empty() && rightCurve.size() >= 3) {
-    //         int bottom_idx = 0;
-    //         int mid_idx = rightCurve.size() / 2;
-    //         int top_idx = rightCurve.size() - 1;
+        // Similar logic for right curve
+        if (!rightCurve.empty() && rightCurve.size() >= 3) {
+            int bottom_idx = 0;
+            int mid_idx = rightCurve.size() / 2;
+            int top_idx = rightCurve.size() - 1;
             
-    //         cv::Mat measurement = (cv::Mat_<float>(3, 1) << 
-    //             rightCurve[bottom_idx].x,
-    //             rightCurve[mid_idx].x, 
-    //             rightCurve[top_idx].x);
+            cv::Mat measurement = (cv::Mat_<float>(3, 1) << 
+                rightCurve[bottom_idx].x,
+                rightCurve[mid_idx].x, 
+                rightCurve[top_idx].x);
                 
-    //         rightLaneKF.correct(measurement);
-    //     }
-    //     else if (rightCurve.empty() || rightCurve.size() < 3) {
-    //         // No valid right lane detected - use prediction
-    //         std::vector<cv::Point> predictedRightCurve;
-    //         int height = frame.rows;
+            rightLaneKF.correct(measurement);
+        }
+        else if (rightCurve.empty() || rightCurve.size() < 3) {
+            // No valid right lane detected - use prediction
+            std::vector<cv::Point> predictedRightCurve;
+            int height = frame.rows;
             
-    //         if (!leftCurve.empty() && leftCurve.size() >= 3) {
-    //             // Use left lane with lane width offset (more accurate)
-    //             int bottom_idx = 0;
-    //             int mid_idx = leftCurve.size() / 2;
-    //             int top_idx = leftCurve.size() - 1;
+            if (!leftCurve.empty() && leftCurve.size() >= 3) {
+                // Use left lane with lane width offset (more accurate)
+                int bottom_idx = 0;
+                int mid_idx = leftCurve.size() / 2;
+                int top_idx = leftCurve.size() - 1;
                 
-    //             // Fit polynomial to left lane to get curvature
-    //             std::vector<cv::Point2f> leftPoints = {
-    //                 cv::Point2f(leftCurve[bottom_idx].x, leftCurve[bottom_idx].y),
-    //                 cv::Point2f(leftCurve[mid_idx].x, leftCurve[mid_idx].y),
-    //                 cv::Point2f(leftCurve[top_idx].x, leftCurve[top_idx].y)
-    //             };
+                // Fit polynomial to left lane to get curvature
+                std::vector<cv::Point2f> leftPoints = {
+                    cv::Point2f(leftCurve[bottom_idx].x, leftCurve[bottom_idx].y),
+                    cv::Point2f(leftCurve[mid_idx].x, leftCurve[mid_idx].y),
+                    cv::Point2f(leftCurve[top_idx].x, leftCurve[top_idx].y)
+                };
                 
-    //             std::vector<float> x_vals, y_vals;
-    //             for (auto& pt : leftPoints) {
-    //                 x_vals.push_back(pt.x);
-    //                 y_vals.push_back(pt.y);
-    //             }
+                std::vector<float> x_vals, y_vals;
+                for (auto& pt : leftPoints) {
+                    x_vals.push_back(pt.x);
+                    y_vals.push_back(pt.y);
+                }
                 
-    //             cv::Mat x_mat(x_vals), y_mat(y_vals);
-    //             cv::Mat leftCoeffs = polyfit(y_mat, x_mat, 2);
+                cv::Mat x_mat(x_vals), y_mat(y_vals);
+                cv::Mat leftCoeffs = polyfit(y_mat, x_mat, 2);
                 
-    //             // Generate right curve by shifting left curve right by lane width
-    //             if (!leftCoeffs.empty() && leftCoeffs.rows >= 3) {
-    //                 double a = leftCoeffs.at<double>(0); // quadratic term (curvature)
-    //                 double b = leftCoeffs.at<double>(1); // linear term (slope)
-    //                 double c = leftCoeffs.at<double>(2) + laneWidthEstimate; // constant (x-offset)
+                // Generate right curve by shifting left curve right by lane width
+                if (!leftCoeffs.empty() && leftCoeffs.rows >= 3) {
+                    double a = leftCoeffs.at<double>(0); // quadratic term (curvature)
+                    double b = leftCoeffs.at<double>(1); // linear term (slope)
+                    double c = leftCoeffs.at<double>(2) + laneWidthEstimate; // constant (x-offset)
                     
-    //                 for (int y = height; y >= height / 3; y -= 5) {
-    //                     double x = a * y * y + b * y + c;
-    //                     predictedRightCurve.push_back(cv::Point(round(x), y));
-    //                 }
+                    for (int y = height; y >= height / 3; y -= 5) {
+                        double x = a * y * y + b * y + c;
+                        predictedRightCurve.push_back(cv::Point(round(x), y));
+                    }
                     
-    //                 rightCurve = predictedRightCurve;
-    //             }
-    //         }
-    //         else {
-    //             // No left lane either - use pure Kalman prediction
-    //             float bottom_x = rightPredicted.at<float>(0);
-    //             float mid_x = rightPredicted.at<float>(1);
-    //             float top_x = rightPredicted.at<float>(2);
+                    rightCurve = predictedRightCurve;
+                }
+            }
+            else {
+                // No left lane either - use pure Kalman prediction
+                float bottom_x = rightPredicted.at<float>(0);
+                float mid_x = rightPredicted.at<float>(1);
+                float top_x = rightPredicted.at<float>(2);
                 
-    //             // Generate curve points using quadratic interpolation
-    //             int bottom_y = height;
-    //             int mid_y = height / 2;
-    //             int top_y = height / 3;
+                // Generate curve points using quadratic interpolation
+                int bottom_y = height;
+                int mid_y = height / 2;
+                int top_y = height / 3;
                 
-    //             cv::Mat Y = (cv::Mat_<double>(3, 1) << bottom_y, mid_y, top_y);
-    //             cv::Mat X = (cv::Mat_<double>(3, 1) << bottom_x, mid_x, top_x);
-    //             cv::Mat coeffs = polyfit(Y, X, 2);
+                cv::Mat Y = (cv::Mat_<double>(3, 1) << bottom_y, mid_y, top_y);
+                cv::Mat X = (cv::Mat_<double>(3, 1) << bottom_x, mid_x, top_x);
+                cv::Mat coeffs = polyfit(Y, X, 2);
                 
-    //             if (!coeffs.empty() && coeffs.rows >= 3) {
-    //                 for (int y = height; y >= height / 3; y -= 5) {
-    //                     double x = coeffs.at<double>(0) * y * y + 
-    //                               coeffs.at<double>(1) * y + 
-    //                               coeffs.at<double>(2);
-    //                     predictedRightCurve.push_back(cv::Point(round(x), y));
-    //                 }
-    //                 rightCurve = predictedRightCurve;
-    //             }
-    //         }
-    //     }
-    // }
+                if (!coeffs.empty() && coeffs.rows >= 3) {
+                    for (int y = height; y >= height / 3; y -= 5) {
+                        double x = coeffs.at<double>(0) * y * y + 
+                                  coeffs.at<double>(1) * y + 
+                                  coeffs.at<double>(2);
+                        predictedRightCurve.push_back(cv::Point(round(x), y));
+                    }
+                    rightCurve = predictedRightCurve;
+                }
+            }
+        }
+    }
     
     // Update lane width estimate when both curves are detected
     if (!leftCurve.empty() && !rightCurve.empty()) {
@@ -694,7 +694,7 @@ std::vector<cv::Point> LaneDetector::fitCurveToPoints(const std::vector<cv::Poin
     // Generate smooth curve
     std::vector<cv::Point> curve;
     if (!coeffs.empty() && coeffs.rows >= 3) {
-        for (int y = frame.rows; y >= frame.rows/2; y -= 5) {
+        for (int y = frame.rows; y >= frame.rows * 0.2; y -= 5) {
             double x = coeffs.at<double>(0) * y * y + 
                       coeffs.at<double>(1) * y + 
                       coeffs.at<double>(2);
