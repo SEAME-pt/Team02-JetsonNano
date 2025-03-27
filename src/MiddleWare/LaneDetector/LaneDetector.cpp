@@ -871,233 +871,159 @@ void LaneDetector::drawLanes(cv::Mat& frame,
 void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points, 
                                      std::vector<cv::Point>& leftPoints,
                                      std::vector<cv::Point>& rightPoints,
-                                    cv::Mat& frame)
+                                     cv::Mat& frame)
 {
     if (points.empty()) {
         return;
     }
 
+    // Clear output vectors
+    leftPoints.clear();
+    rightPoints.clear();
+    
     int midX = frame.cols / 2;
     int height = frame.rows;
     
-    // 1. Pre-filtering based on geometric constraints
+    // Pre-filtering - focus on lower part of the image
     std::vector<cv::Point> filteredPoints;
-    filteredPoints.reserve(points.size());
-    
-    // Filter out points that are likely not lane markers based on position
     for (const auto& pt : points) {
-        // Keep points in the lower 3/4 of the image
-        if (pt.y > height * 0.4) {
-            // Remove points in the very center (likely not lane markers)
+        if (pt.y > height * 0.4) { // Keep points in lower 60% of image
             filteredPoints.push_back(pt);
         }
     }
     
     if (filteredPoints.size() < 10) {
-        // Not enough points after filtering
         return;
     }
     
-    // 2. RANSAC-like outlier removal (simplified)
-    // By splitting the image into vertical bands and keeping only points with neighbors
-    const int numBands = 10;
-    const int bandHeight = height / numBands;
+    // Convert points to virtual lines for slope calculation
+    std::vector<std::pair<cv::Point, double>> pointsWithSlope;
     
-    std::vector<cv::Point> inlierPoints;
-    inlierPoints.reserve(filteredPoints.size());
+    // Sort points by y-coordinate (bottom to top)
+    std::sort(filteredPoints.begin(), filteredPoints.end(), 
+             [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
     
-    std::vector<std::vector<cv::Point>> bandPoints(numBands);
-    
-    // Group points by vertical bands
-    for (const auto& pt : filteredPoints) {
-        int bandIdx = std::min(pt.y / bandHeight, numBands - 1);
-        bandPoints[bandIdx].push_back(pt);
-    }
-    
-    // For each band, keep points that are near other points horizontally
-    for (const auto& band : bandPoints) {
-        if (band.size() < 2) continue;
-        
-        // Sort by x coordinate
-        std::vector<cv::Point> sortedBand = band;
-        std::sort(sortedBand.begin(), sortedBand.end(), 
-                 [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
-        
-        // Find clusters of points with similar x values
-        std::vector<std::vector<cv::Point>> clusters;
-        std::vector<cv::Point> currentCluster = {sortedBand[0]};
-        
-        for (size_t i = 1; i < sortedBand.size(); i++) {
-            if (sortedBand[i].x - sortedBand[i-1].x < 20) { // Points close horizontally
-                currentCluster.push_back(sortedBand[i]);
-            } else {
-                if (currentCluster.size() >= 2) {
-                    clusters.push_back(currentCluster);
-                }
-                currentCluster = {sortedBand[i]};
+    // Calculate slope for each point (using next point as reference)
+    for (size_t i = 0; i < filteredPoints.size()-1; i++) {
+        // Avoid division by zero and nearly vertical lines
+        if (abs(filteredPoints[i+1].x - filteredPoints[i].x) > 5) {
+            double slope = (double)(filteredPoints[i+1].y - filteredPoints[i].y) / 
+                         (filteredPoints[i+1].x - filteredPoints[i].x);
+            
+            // Filter out nearly horizontal slopes
+            if (abs(slope) > 0.3) {
+                pointsWithSlope.push_back({filteredPoints[i], slope});
             }
         }
-        
-        if (currentCluster.size() >= 2) {
-            clusters.push_back(currentCluster);
-        }
-        
-        // Add all points from valid clusters
-        for (const auto& cluster : clusters) {
-            inlierPoints.insert(inlierPoints.end(), cluster.begin(), cluster.end());
-        }
     }
     
-    if (inlierPoints.size() < 10) {
-        // Not enough inliers after spatial filtering
-        return;
+    // Add the last point with its previous slope if available
+    if (!pointsWithSlope.empty()) {
+        pointsWithSlope.push_back({filteredPoints.back(), pointsWithSlope.back().second});
     }
     
-    // 1. Initial clustering using k-means
-    cv::Mat pointsMat(inlierPoints.size(), 2, CV_32F);
-    for (size_t i = 0; i < inlierPoints.size(); i++) {
-        pointsMat.at<float>(i, 0) = inlierPoints[i].x;
-        pointsMat.at<float>(i, 1) = inlierPoints[i].y;
-    }
+    // 4. Separate points into left and right lanes based on slope and position
+    std::vector<cv::Point> leftCandidates, rightCandidates;
+    float leftMeanX = 0, rightMeanX = 0;
     
-    const cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
-    cv::Mat labels, centers;
-    int k = 2; // Two clusters
-    cv::kmeans(pointsMat, k, labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    
-    // Group points by cluster labels
-    std::map<int, std::vector<cv::Point>> clusters;
-    for (int i = 0; i < labels.rows; i++) {
-        int label = labels.at<int>(i, 0);
-        clusters[label].push_back(points[i]);
-    }
-    
-    // Find the leftmost and rightmost clusters
-    int leftLabel = -1, rightLabel = -1;
-    float leftMeanX = frame.cols, rightMeanX = 0;
-    
-    for (const auto& pair : clusters) {
-        float sumX = 0;
-        for (const auto& pt : pair.second) {
-            sumX += pt.x;
-        }
-        float meanX = sumX / pair.second.size();
+    for (const auto& [point, slope] : pointsWithSlope) {
+        // Calculate position relative to center
+        bool isLeftSide = point.x < midX;
         
-        if (meanX < leftMeanX) {
-            leftMeanX = meanX;
-            leftLabel = pair.first;
-        }
-        if (meanX > rightMeanX) {
-            rightMeanX = meanX;
-            rightLabel = pair.first;
-        }
-    }
-    
-    // Initial assignment
-    if (leftLabel >= 0) leftPoints = clusters[leftLabel];
-    if (rightLabel >= 0) rightPoints = clusters[rightLabel];
-    
-    // 2. Slope-based filtering (inspired by your OpenCV approach)
-    //int midX = frame.cols / 2;
-    
-    // Calculate virtual lines for slope calculation
-    auto calculateVirtualLines = [](const std::vector<cv::Point>& pts) -> std::vector<std::pair<double, cv::Point>> {
-        if (pts.size() < 5) return {};
-        
-        // Sort points by y-coordinate (bottom to top)
-        std::vector<cv::Point> sortedPoints = pts;
-        std::sort(sortedPoints.begin(), sortedPoints.end(), 
-                 [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
-        
-        // Calculate slopes between consecutive points
-        std::vector<std::pair<double, cv::Point>> pointsWithSlopes;
-        for (size_t i = 1; i < sortedPoints.size(); i++) {
-            if (std::abs(sortedPoints[i].x - sortedPoints[i-1].x) > 5) {
-                double slope = (double)(sortedPoints[i].y - sortedPoints[i-1].y) / 
-                               (sortedPoints[i].x - sortedPoints[i-1].x);
-                
-                // Store slope with the current point
-                pointsWithSlopes.push_back({slope, sortedPoints[i]});
-            }
-        }
-        return pointsWithSlopes;
-    };
-    
-    // Get slopes for left and right points
-    auto leftPointsWithSlopes = calculateVirtualLines(leftPoints);
-    auto rightPointsWithSlopes = calculateVirtualLines(rightPoints);
-    
-    // 3. Filter points based on expected slopes
-    std::vector<cv::Point> filteredLeft, filteredRight;
-    
-    // Left lane points should have negative slopes near the left side
-    for (const auto& [slope, point] : leftPointsWithSlopes) {
+        // Use both slope and position for classification
         // Left lane: negative slope OR on far left
         if ((slope < 0 && point.x < midX * 1.2) || point.x < midX * 0.6) {
-            filteredLeft.push_back(point);
-        } else {
-            // This might be a misclassified right lane point
-            rightPoints.push_back(point);
+            leftCandidates.push_back(point);
+            leftMeanX += point.x;
         }
-    }
-    
-    // Right lane points should have positive slopes near the right side
-    for (const auto& [slope, point] : rightPointsWithSlopes) {
         // Right lane: positive slope OR on far right
-        if ((slope > 0 && point.x > midX * 0.8) || point.x > midX * 1.4) {
-            filteredRight.push_back(point);
+        else if ((slope > 0 && point.x > midX * 0.8) || point.x > midX * 1.4) {
+            rightCandidates.push_back(point);
+            rightMeanX += point.x;
+        }
+    }
+    
+    // Calculate means for filtering
+    if (!leftCandidates.empty()) {
+        leftMeanX /= leftCandidates.size();
+    }
+    
+    if (!rightCandidates.empty()) {
+        rightMeanX /= rightCandidates.size();
+    }
+    
+    // Post-filtering: remove statistical outliers
+    if (leftCandidates.size() >= 3) {
+        // Calculate average slope for left candidates
+        double avgLeftSlope = 0;
+        int slopeCount = 0;
+        
+        for (size_t i = 0; i < leftCandidates.size()-1; i++) {
+            if (abs(leftCandidates[i+1].x - leftCandidates[i].x) > 5) {
+                double slope = (double)(leftCandidates[i+1].y - leftCandidates[i].y) / 
+                              (leftCandidates[i+1].x - leftCandidates[i].x);
+                avgLeftSlope += slope;
+                slopeCount++;
+            }
+        }
+        
+        if (slopeCount > 0) {
+            avgLeftSlope /= slopeCount;
+            
+            // Filter points by position and slope consistency
+            for (const auto& pt : leftCandidates) {
+                if (pt.x < leftMeanX * 1.3 && pt.x < midX * 1.1) {
+                    leftPoints.push_back(pt);
+                }
+            }
         } else {
-            // This might be a misclassified left lane point
-            leftPoints.push_back(point);
+            // If we can't calculate slope, just use position
+            for (const auto& pt : leftCandidates) {
+                if (pt.x < leftMeanX * 1.3) {
+                    leftPoints.push_back(pt);
+                }
+            }
         }
     }
     
-    // 4. Statistical outlier removal
-    if (filteredLeft.size() > 3) {
-        // Calculate average x-position of filtered left points
-        int avgLeftX = 0;
-        for (const auto& pt : filteredLeft) {
-            avgLeftX += pt.x;
-        }
-        avgLeftX /= filteredLeft.size();
+    // Similar for right lane
+    if (rightCandidates.size() >= 3) {
+        // Calculate average slope for right candidates
+        double avgRightSlope = 0;
+        int slopeCount = 0;
         
-        // Remove points too far from average x-position
-        std::vector<cv::Point> finalLeftPoints;
-        for (const auto& pt : filteredLeft) {
-            if (std::abs(pt.x - avgLeftX) < frame.cols * 0.15) { // 15% tolerance
-                finalLeftPoints.push_back(pt);
+        for (size_t i = 0; i < rightCandidates.size()-1; i++) {
+            if (abs(rightCandidates[i+1].x - rightCandidates[i].x) > 5) {
+                double slope = (double)(rightCandidates[i+1].y - rightCandidates[i].y) / 
+                              (rightCandidates[i+1].x - rightCandidates[i].x);
+                avgRightSlope += slope;
+                slopeCount++;
             }
         }
         
-        if (finalLeftPoints.size() >= 3) {
-            leftPoints = finalLeftPoints;
-        }
-    }
-    
-    // Same for right points
-    if (filteredRight.size() > 3) {
-        int avgRightX = 0;
-        for (const auto& pt : filteredRight) {
-            avgRightX += pt.x;
-        }
-        avgRightX /= filteredRight.size();
-        
-        std::vector<cv::Point> finalRightPoints;
-        for (const auto& pt : filteredRight) {
-            if (std::abs(pt.x - avgRightX) < frame.cols * 0.15) {
-                finalRightPoints.push_back(pt);
+        if (slopeCount > 0) {
+            avgRightSlope /= slopeCount;
+            
+            // Filter points by position and slope consistency
+            for (const auto& pt : rightCandidates) {
+                if (pt.x > rightMeanX * 0.7 && pt.x > midX * 0.9) {
+                    rightPoints.push_back(pt);
+                }
             }
-        }
-        
-        if (finalRightPoints.size() >= 3) {
-            rightPoints = finalRightPoints;
+        } else {
+            // If we can't calculate slope, just use position
+            for (const auto& pt : rightCandidates) {
+                if (pt.x > rightMeanX * 0.7) {
+                    rightPoints.push_back(pt);
+                }
+            }
         }
     }
     
     // 5. Maintain temporal consistency
     if (!prevLeftPoints.empty() && !prevRightPoints.empty() && 
         (leftPoints.size() < 3 || rightPoints.size() < 3 || 
-         std::abs(rightMeanX - leftMeanX) < laneWidthEstimate * 0.5)) {
+         abs(rightMeanX - leftMeanX) < laneWidthEstimate * 0.5)) {
         
         reassignPointsUsingPreviousFrame(leftPoints, rightPoints);
     }
