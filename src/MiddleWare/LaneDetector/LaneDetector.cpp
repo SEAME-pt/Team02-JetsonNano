@@ -1127,13 +1127,46 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 minDistRight = std::min(minDistRight, dist);
             }
             
-            double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
+            bool assignedToGroup = false;
+
+            if (!potentialLeftPoints.empty()) {
+                for (const auto& leftPt : potentialLeftPoints) {
+                    double pointDist = std::sqrt(std::pow(pt.x - leftPt.x, 2) + 
+                                               std::pow(pt.y - leftPt.y, 2));
+                    
+                    // If very close to an existing left point, assign to left
+                    if (pointDist < frame.cols * 0.06) { // 6% of frame width
+                        potentialLeftPoints.push_back(pt);
+                        assignedToGroup = true;
+                        break;
+                    }
+                }
+            }
             
-            // Use wider thresholds initially
-            if (distanceRatio < 0.5) {
-                potentialLeftPoints.push_back(pt);
-            } else {
-                potentialRightPoints.push_back(pt);
+            if (!assignedToGroup && !potentialRightPoints.empty()) {
+                for (const auto& rightPt : potentialRightPoints) {
+                    double pointDist = std::sqrt(std::pow(pt.x - rightPt.x, 2) + 
+                                               std::pow(pt.y - rightPt.y, 2));
+                    
+                    // If very close to an existing right point, assign to right
+                    if (pointDist < frame.cols * 0.06) { // 6% of frame width
+                        potentialRightPoints.push_back(pt);
+                        assignedToGroup = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Only if not already assigned based on proximity to other points
+            if (!assignedToGroup) {
+                // Original distance ratio assignment
+                double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
+                
+                if (distanceRatio < 0.5) {
+                    potentialLeftPoints.push_back(pt);
+                } else {
+                    potentialRightPoints.push_back(pt);
+                }
             }
         }
         
@@ -1162,7 +1195,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                     }
                     
                     // Count points that are within a reasonable distance
-                    if (minDist < frame.cols * 0.2) { // Increased from 0.15 to be more tolerant
+                    if (minDist < frame.cols * 0.2) {
                         pointsNearRightLane++;
                     }
                 }
