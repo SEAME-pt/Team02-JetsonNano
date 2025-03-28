@@ -93,6 +93,8 @@ PidController::PidController()
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
+            std::cout << "Active Autonomy Level: "
+                      << sample.get_payload().as_string() << std::endl;
             if (activeAutonomyLevel == "SAE_5" &&
                 getAutonomousDriveState() == false)
             {
@@ -174,6 +176,8 @@ PidController::PidController(const std::string& configFile)
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
         {
+            std::cout << "Active Autonomy Level: "
+                      << sample.get_payload().as_string() << std::endl;
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             if (activeAutonomyLevel == "SAE_5" &&
                 getAutonomousDriveState() == false)
