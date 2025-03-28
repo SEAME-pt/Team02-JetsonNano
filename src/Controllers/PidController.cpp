@@ -104,6 +104,7 @@ PidController::PidController()
             {
                 std::cout << "Autonomous Sub False" << std::endl;
                 setAutonomousDriveState(false);
+                publisher_->publishSpeed(0);
             }
             else
             {
