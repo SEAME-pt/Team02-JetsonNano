@@ -1135,8 +1135,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             
             // Find distance to projected left lane
             for (const auto& projPt : projectedLeftLane) {
-                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-                                        std::pow(pt.y - projPt.y, 2) * 0.2);
+                // Focus on CONTINUITY rather than position
+                // Weight y-distance less and x-distance more
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 + 
+                                       std::pow(pt.y - projPt.y, 2) * 0.2);
                 if (dist < minDistLeft) {
                     minDistLeft = dist;
                 }
@@ -1144,53 +1146,36 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             
             // Find distance to projected right lane
             for (const auto& projPt : projectedRightLane) {
-                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-                                        std::pow(pt.y - projPt.y, 2) * 0.2);
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 + 
+                                       std::pow(pt.y - projPt.y, 2) * 0.2);
                 if (dist < minDistRight) {
                     minDistRight = dist;
                 }
             }
             
-            // THIS IS THE KEY CHANGE: Add absolute position constraints
-            // Even if a point is closer to one lane, ensure it's in the expected region
-            bool isInLeftRegion = pt.x < frame.cols/2 - frame.cols*0.05; // Left 45% of screen
-            bool isInRightRegion = pt.x > frame.cols/2 + frame.cols*0.05; // Right 45% of screen
+            // REMOVE the absolute position constraints - they break in tight curves
+            // Instead, rely entirely on distance and curve continuity
             
-            // If point is clearly in left region, force it to left lane
-            if (isInLeftRegion) {
-                leftPoints.push_back(pt);
-                continue;
-            }
-            
-            // If point is clearly in right region, force it to right lane
-            if (isInRightRegion) {
-                rightPoints.push_back(pt);
-                continue;
-            }
-            
-            // For points in the middle zone, use relative distance with stricter thresholds
+            // Calculate distance ratio
             double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
             
-            // Stricter boundaries (0.35/0.65 instead of 0.4/0.6)
-            if (distanceRatio < 0.35) {
+            // Use adaptive thresholds based on distance
+            // If one lane is much closer than the other, assign to that lane
+            if (distanceRatio < 0.4) {
                 leftPoints.push_back(pt);
             } 
-            else if (distanceRatio > 0.65) {
+            else if (distanceRatio > 0.6) {
                 rightPoints.push_back(pt);
             }
-            // Points in the 0.35-0.65 range are ignored as truly ambiguous
-        }
-    } 
-    else {
-        // No history - use simple left/right division with buffer
-        for (const auto& pt : filteredPoints) {
-            if (pt.x < midX - midX * 0.1) {  // Left 40% of screen
-                leftPoints.push_back(pt);
-            } 
-            else if (pt.x > midX + midX * 0.1) {  // Right 40% of screen
-                rightPoints.push_back(pt);
+            // For truly ambiguous points, look at relative distances
+            else {
+                // Find whether the point is closer in absolute terms to left or right
+                if (minDistLeft < minDistRight) {
+                    leftPoints.push_back(pt);
+                } else {
+                    rightPoints.push_back(pt);
+                }
             }
-            // Middle 20% is ignored as it's often ambiguous
         }
     }
     
