@@ -130,7 +130,13 @@ add_executable(LaneDetector
     ./src/laneDetector.cpp
 )
 
-target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
+target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
 
 find_library(CUDA_RUNTIME_LIBRARY
     NAMES cudart
