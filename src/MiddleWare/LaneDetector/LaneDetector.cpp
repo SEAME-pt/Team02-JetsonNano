@@ -795,7 +795,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         if (prevMidPoint.x != -1 && prevMidPoint.y != -1)
         {
             // Use higher smoothing (more history weight) when there are issues
-            float gamma = lanesConvergedIncorrectly ? 0.8 : 0.6; // Increased from 0.8
+            float gamma = lanesConvergedIncorrectly ? 0.9 : 0.8; // Increased from 0.8
             
             // If detected lanes are bad, rely more on history and bias toward center
             if (lanesConvergedIncorrectly) {
