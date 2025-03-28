@@ -993,7 +993,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                                         std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
                 if (dist < minDistLeft) {
                     minDistLeft = dist;
-                    closestLeftY = projPt.y;
+                    // closestLeftY = projPt.y;
                 }
             }
             
@@ -1003,7 +1003,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                                         std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
                 if (dist < minDistRight) {
                     minDistRight = dist;
-                    closestRightY = projPt.y;
+                    // closestRightY = projPt.y;
                 }
             }
             
