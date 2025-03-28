@@ -742,7 +742,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     
     if (!midCurve.empty())
     {
-        int targetY = height - (2 * height / 5); // 2/5 up from bottom
+        int targetY = height - (2 * height / 3); // 2/3 up from bottom
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -921,34 +921,42 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Pre-filtering - focus on lower part of the image
     std::vector<cv::Point> filteredPoints;
     for (const auto& pt : points) {
-        if (pt.y > height * 0.4) { // Keep points in lower 60% of image
+        if (pt.y > height * 0.25) { // Keep points in lower 75% of image
             filteredPoints.push_back(pt);
         }
+        // Duplicate points in bottom third for stronger influence
+        // if (pt.y > height * 0.66) {
+        //     filteredPoints.push_back(pt); // Add a second copy
+        // }
+        
     }
     
     if (filteredPoints.size() < 10) {
+        if (!prevLeftPoints.empty() && !prevRightPoints.empty()) {
+            leftPoints = prevLeftPoints;
+            rightPoints = prevRightPoints;
+        }
         return;
     }
     
-    // If we have history, use it to project expected lane positions
+    // 2. CURVE-ORIENTED HISTORY PROJECTION
     bool useHistory = !prevLeftCurve.empty() && !prevRightCurve.empty();
     std::vector<cv::Point> projectedLeftLane, projectedRightLane;
     
     if (useHistory) {
-        // Create projection of previous lanes
-        for (int y = height; y >= height * 0.4; y -= 20) {
-            // Find points in previous curves closest to this y-value
+        // Create projection of previous lanes with denser sampling
+        for (int y = height; y >= height * 0.33; y -= 10) { // Changed from 20 to 10 for denser points
             int leftX = -1, rightX = -1;
             
             for (const auto& pt : prevLeftCurve) {
-                if (abs(pt.y - y) < 20) {
+                if (abs(pt.y - y) < 10) { // Reduced from 20 to 10
                     leftX = pt.x;
                     break;
                 }
             }
             
             for (const auto& pt : prevRightCurve) {
-                if (abs(pt.y - y) < 20) {
+                if (abs(pt.y - y) < 10) { // Reduced from 20 to 10
                     rightX = pt.x;
                     break;
                 }
@@ -977,19 +985,26 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         for (const auto& pt : filteredPoints) {
             double minDistLeft = std::numeric_limits<double>::max();
             double minDistRight = std::numeric_limits<double>::max();
+            int closestLeftY = -1, closestRightY = -1;
             
             // Find distance to projected left lane
             for (const auto& projPt : projectedLeftLane) {
                 double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
                                         std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
-                minDistLeft = std::min(minDistLeft, dist);
+                if (dist < minDistLeft) {
+                    minDistLeft = dist;
+                    closestLeftY = projPt.y;
+                }
             }
             
             // Find distance to projected right lane
             for (const auto& projPt : projectedRightLane) {
                 double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
                                         std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
-                minDistRight = std::min(minDistRight, dist);
+                if (dist < minDistRight) {
+                    minDistRight = dist;
+                    closestRightY = projPt.y;
+                }
             }
             
             // Assign to closest lane, but with a bias based on expected lane positioning+
