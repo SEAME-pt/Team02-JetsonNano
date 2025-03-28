@@ -1126,7 +1126,82 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     //             }
     //         }
     //     }
-    // } 
+    // }
+    // First pass: Check if all points might be the same lane based on proximity
+    bool allPointsPotentiallySameLane = false;
+
+    if (filteredPoints.size() >= 10) {
+        // Calculate average distance between points
+        double totalDistance = 0;
+        int numPairs = 0;
+        
+        // Sample pairs of points
+        for (size_t i = 0; i < filteredPoints.size(); i += 2) {
+            for (size_t j = i + 1; j < std::min(i + 5, filteredPoints.size()); j++) {
+                totalDistance += std::sqrt(std::pow(filteredPoints[i].x - filteredPoints[j].x, 2) + 
+                                        std::pow(filteredPoints[i].y - filteredPoints[j].y, 2));
+                numPairs++;
+            }
+        }
+        
+        // If average distance is small, points are likely from same lane
+        if (numPairs > 0) {
+            double avgDistance = totalDistance / numPairs;
+            if (avgDistance < frame.cols * 0.15) { // Points are close to each other
+                allPointsPotentiallySameLane = true;
+            }
+        }
+    }
+
+    // If points appear to be from the same lane, identify which lane
+    if (allPointsPotentiallySameLane) {
+        // Calculate distances to previous left and right lanes
+        double avgDistToLeft = 0, avgDistToRight = 0;
+        int leftCount = 0, rightCount = 0;
+        
+        for (const auto& pt : filteredPoints) {
+            double minDistLeft = std::numeric_limits<double>::max();
+            double minDistRight = std::numeric_limits<double>::max();
+            
+            if (!prevLeftCurve.empty()) {
+                for (const auto& prevPt : prevLeftCurve) {
+                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 + 
+                                        std::pow(pt.y - prevPt.y, 2) * 0.4);
+                    minDistLeft = std::min(minDistLeft, dist);
+                }
+                avgDistToLeft += minDistLeft;
+                leftCount++;
+            }
+            
+            if (!prevRightCurve.empty()) {
+                for (const auto& prevPt : prevRightCurve) {
+                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 + 
+                                        std::pow(pt.y - prevPt.y, 2) * 0.4);
+                    minDistRight = std::min(minDistRight, dist);
+                }
+                avgDistToRight += minDistRight;
+                rightCount++;
+            }
+        }
+        
+        // Determine which lane they likely belong to
+        if (leftCount > 0) avgDistToLeft /= leftCount;
+        if (rightCount > 0) avgDistToRight /= rightCount;
+        
+        if (avgDistToLeft < avgDistToRight && avgDistToLeft < frame.cols * 0.25) {
+            // All points are likely from left lane
+            leftPoints = filteredPoints;
+            rightPoints.clear();
+            return; // Skip remaining processing
+        } 
+        else if (avgDistToRight < avgDistToLeft && avgDistToRight < frame.cols * 0.25) {
+            // All points are likely from right lane
+            rightPoints = filteredPoints;
+            leftPoints.clear();
+            return; // Skip remaining processing
+        }
+    }
+
     if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
         // First pass: just group the points using distance ratio like before
         std::vector<cv::Point> potentialLeftPoints, potentialRightPoints;
