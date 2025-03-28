@@ -1127,7 +1127,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     //         }
     //     }
     // } 
-    f (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
+    if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
         // For each point, calculate distance to projected lanes
         for (const auto& pt : filteredPoints) {
             double minDistLeft = std::numeric_limits<double>::max();
