@@ -1169,9 +1169,9 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             bool probablyAllRightLane = true;
             
             if (!prevRightCurve.empty() && prevRightCurve.size() >= 3) {
-                // Calculate average distance from points to previous right lane
-                double avgDistToRightLane = 0;
+                // Track how many points are close to the previous right lane
                 int pointsNearRightLane = 0;
+                int totalPoints = potentialRightPoints.size();
                 
                 for (const auto& pt : potentialRightPoints) {
                     double minDist = std::numeric_limits<double>::max();
@@ -1181,24 +1181,21 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                         minDist = std::min(minDist, dist);
                     }
                     
-                    if (minDist < frame.cols * 0.15) { // Within 15% of screen width
-                        avgDistToRightLane += minDist;
+                    // Count points that are within a reasonable distance
+                    if (minDist < frame.cols * 0.2) { // Increased from 0.15 to be more tolerant
                         pointsNearRightLane++;
                     }
                 }
                 
-                if (pointsNearRightLane > 0) {
-                    avgDistToRightLane /= pointsNearRightLane;
-                    
-                    // If average distance is low, these are likely all right lane points
-                    if (avgDistToRightLane < frame.cols * 0.1) {
-                        rightPoints = potentialRightPoints;
-                        // Left lane is actually missing - don't force assignment
-                        leftPoints.clear();
-                        probablyAllRightLane = true;
-                    } else {
-                        probablyAllRightLane = false;
-                    }
+                // If a significant percentage of points are near the right lane, they're all right lane
+                double percentNearRightLane = (double)pointsNearRightLane / totalPoints;
+                if (percentNearRightLane > 0.7) { // If 70% or more points are near the right lane
+                    rightPoints = potentialRightPoints;
+                    // Left lane is actually missing - don't force assignment
+                    leftPoints.clear();
+                    probablyAllRightLane = true;
+                } else {
+                    probablyAllRightLane = false;
                 }
             }
             
@@ -1217,13 +1214,11 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
         // Similarly for the other case
         else if (potentialRightPoints.size() <= 3 && potentialLeftPoints.size() > 10) {
-            // Check if these are truly left lane points by looking at lane continuity
             bool probablyAllLeftLane = true;
             
             if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3) {
-                // Calculate average distance from points to previous left lane
-                double avgDistToLeftLane = 0;
                 int pointsNearLeftLane = 0;
+                int totalPoints = potentialLeftPoints.size();
                 
                 for (const auto& pt : potentialLeftPoints) {
                     double minDist = std::numeric_limits<double>::max();
@@ -1233,24 +1228,18 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                         minDist = std::min(minDist, dist);
                     }
                     
-                    if (minDist < frame.cols * 0.15) { // Within 15% of screen width
-                        avgDistToLeftLane += minDist;
+                    if (minDist < frame.cols * 0.2) { // More tolerant threshold
                         pointsNearLeftLane++;
                     }
                 }
                 
-                if (pointsNearLeftLane > 0) {
-                    avgDistToLeftLane /= pointsNearLeftLane;
-                    
-                    // If average distance is low, these are likely all left lane points
-                    if (avgDistToLeftLane < frame.cols * 0.1) {
-                        leftPoints = potentialLeftPoints;
-                        // Right lane is actually missing - don't force assignment
-                        rightPoints.clear();
-                        probablyAllLeftLane = true;
-                    } else {
-                        probablyAllLeftLane = false;
-                    }
+                double percentNearLeftLane = (double)pointsNearLeftLane / totalPoints;
+                if (percentNearLeftLane > 0.7) { // 70% threshold
+                    leftPoints = potentialLeftPoints;
+                    rightPoints.clear();
+                    probablyAllLeftLane = true;
+                } else {
+                    probablyAllLeftLane = false;
                 }
             }
             
