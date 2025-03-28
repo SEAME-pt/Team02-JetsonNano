@@ -129,6 +129,7 @@ PidController::PidController(const std::string& configFile)
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
+    autonomousDrive_  = false;
 
     auto config = zenoh::Config::from_file(configFile);
     session_ =
