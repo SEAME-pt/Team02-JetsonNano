@@ -11,7 +11,7 @@ Logger logger;
 
 LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
     std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(4), laneWidthEstimate(0.0), firstFrame(true),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(3), laneWidthEstimate(0.0), firstFrame(true),
     frame_count(0)
 {
     createExecutionContext(enginePath);
@@ -228,14 +228,14 @@ void LaneDetector::run()
                                     map2);
             mapsInitialized = true;
         }
-        // if (frame_count % FRAME_SKIP == 0)
-        // {
+        if (frame_count % FRAME_SKIP == 0)
+        {
             cv::Mat undistorted;
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
             imshow("Lane Detection", frame);
-        // }
+        }
         frame_count++;
 
         if (cv::waitKey(1) == 'q')
