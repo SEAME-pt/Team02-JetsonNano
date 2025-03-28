@@ -1163,32 +1163,111 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             rightPoints = potentialRightPoints;
         }
         // Handle case where too many points went to one side
+        // Handle case where too many points went to one side
         else if (potentialLeftPoints.size() <= 3 && potentialRightPoints.size() > 10) {
-            // Too many right points, too few left - split them differently
-            std::sort(filteredPoints.begin(), filteredPoints.end(),
-                    [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+            // Check if these are truly right lane points by looking at lane continuity
+            bool probablyAllRightLane = true;
             
-            // Take the leftmost 40% of points for left lane
-            int leftCount = filteredPoints.size() * 0.4;
-            if (leftCount < 3) leftCount = 3;
+            if (!prevRightCurve.empty() && prevRightCurve.size() >= 3) {
+                // Calculate average distance from points to previous right lane
+                double avgDistToRightLane = 0;
+                int pointsNearRightLane = 0;
+                
+                for (const auto& pt : potentialRightPoints) {
+                    double minDist = std::numeric_limits<double>::max();
+                    for (const auto& prevPt : prevRightCurve) {
+                        double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 + 
+                                            std::pow(pt.y - prevPt.y, 2) * 0.3);
+                        minDist = std::min(minDist, dist);
+                    }
+                    
+                    if (minDist < frame.cols * 0.15) { // Within 15% of screen width
+                        avgDistToRightLane += minDist;
+                        pointsNearRightLane++;
+                    }
+                }
+                
+                if (pointsNearRightLane > 0) {
+                    avgDistToRightLane /= pointsNearRightLane;
+                    
+                    // If average distance is low, these are likely all right lane points
+                    if (avgDistToRightLane < frame.cols * 0.1) {
+                        rightPoints = potentialRightPoints;
+                        // Left lane is actually missing - don't force assignment
+                        leftPoints.clear();
+                        probablyAllRightLane = true;
+                    } else {
+                        probablyAllRightLane = false;
+                    }
+                }
+            }
             
-            leftPoints.assign(filteredPoints.begin(), filteredPoints.begin() + leftCount);
-            rightPoints.assign(filteredPoints.begin() + leftCount, filteredPoints.end());
+            // Only use the forced split if we're not confident they're all right lane
+            if (!probablyAllRightLane) {
+                std::sort(filteredPoints.begin(), filteredPoints.end(),
+                        [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+                
+                // Take the leftmost 40% of points for left lane
+                int leftCount = filteredPoints.size() * 0.4;
+                if (leftCount < 3) leftCount = 3;
+                
+                leftPoints.assign(filteredPoints.begin(), filteredPoints.begin() + leftCount);
+                rightPoints.assign(filteredPoints.begin() + leftCount, filteredPoints.end());
+            }
         }
-        // Handle case where too many points went to the left
+        // Similarly for the other case
         else if (potentialRightPoints.size() <= 3 && potentialLeftPoints.size() > 10) {
-            // Too many left points, too few right - split them differently
-            std::sort(filteredPoints.begin(), filteredPoints.end(),
-                    [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+            // Check if these are truly left lane points by looking at lane continuity
+            bool probablyAllLeftLane = true;
             
-            // Take the rightmost 40% of points for right lane
-            int rightCount = filteredPoints.size() * 0.4;
-            if (rightCount < 3) rightCount = 3;
+            if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3) {
+                // Calculate average distance from points to previous left lane
+                double avgDistToLeftLane = 0;
+                int pointsNearLeftLane = 0;
+                
+                for (const auto& pt : potentialLeftPoints) {
+                    double minDist = std::numeric_limits<double>::max();
+                    for (const auto& prevPt : prevLeftCurve) {
+                        double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 + 
+                                            std::pow(pt.y - prevPt.y, 2) * 0.3);
+                        minDist = std::min(minDist, dist);
+                    }
+                    
+                    if (minDist < frame.cols * 0.15) { // Within 15% of screen width
+                        avgDistToLeftLane += minDist;
+                        pointsNearLeftLane++;
+                    }
+                }
+                
+                if (pointsNearLeftLane > 0) {
+                    avgDistToLeftLane /= pointsNearLeftLane;
+                    
+                    // If average distance is low, these are likely all left lane points
+                    if (avgDistToLeftLane < frame.cols * 0.1) {
+                        leftPoints = potentialLeftPoints;
+                        // Right lane is actually missing - don't force assignment
+                        rightPoints.clear();
+                        probablyAllLeftLane = true;
+                    } else {
+                        probablyAllLeftLane = false;
+                    }
+                }
+            }
             
-            leftPoints.assign(filteredPoints.begin(), 
-                             filteredPoints.end() - rightCount);
-            rightPoints.assign(filteredPoints.end() - rightCount, 
-                              filteredPoints.end());
+            // Only use the forced split if we're not confident they're all left lane
+            if (!probablyAllLeftLane) {
+                std::sort(filteredPoints.begin(), filteredPoints.end(),
+                        [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+                
+                // Take the rightmost 40% of points for right lane
+                int rightCount = filteredPoints.size() * 0.4;
+                if (rightCount < 3) rightCount = 3;
+                
+                leftPoints.assign(filteredPoints.begin(), 
+                                filteredPoints.end() - rightCount);
+                rightPoints.assign(filteredPoints.end() - rightCount, 
+                                filteredPoints.end());
+            }
         }
         else {
             // Fall back to position-based clustering
