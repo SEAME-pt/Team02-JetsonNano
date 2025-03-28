@@ -761,7 +761,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         }
     }
 
-    // 9. Calculate reference point for lateral error
+ // 9. Calculate reference point for lateral error - IMPROVED HANDLING
     cv::Point midPoint;
     int height = frame.rows;
     int width = frame.cols;
@@ -787,12 +787,52 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         // Use the point at found index
         midPoint = midCurve[closestIdx];
 
-        // Apply temporal smoothing to midPoint
+        // Sanity check against convergence - verify lane separation at this height
+        bool lanesConvergedIncorrectly = false;
+        
+        if (!leftCurve.empty() && !rightCurve.empty()) {
+            // Get left and right lane positions at the same height
+            cv::Point leftPos, rightPos;
+            for (const auto& pt : leftCurve) {
+                if (abs(pt.y - targetY) < 20) {
+                    leftPos = pt;
+                    break;
+                }
+            }
+            
+            for (const auto& pt : rightCurve) {
+                if (abs(pt.y - targetY) < 20) {
+                    rightPos = pt;
+                    break;
+                }
+            }
+            
+            // Check if lanes are too close together
+            if (leftPos.x != 0 && rightPos.x != 0) {
+                float laneDistance = rightPos.x - leftPos.x;
+                // If lanes are too close or crossed, something is wrong
+                if (laneDistance < laneWidthEstimate * 0.7 || leftPos.x > rightPos.x) {
+                    lanesConvergedIncorrectly = true;
+                }
+            }
+        }
+
+        // Apply temporal smoothing to midPoint with fallback
         if (prevMidPoint.x != -1 && prevMidPoint.y != -1)
         {
-            float gamma = 0.8; // Smoothing factor
-            midPoint.x = static_cast<int>(gamma * midPoint.x + (1 - gamma) * prevMidPoint.x);
-            midPoint.y = static_cast<int>(gamma * midPoint.y + (1 - gamma) * prevMidPoint.y);
+            // Use higher smoothing (more history weight) when there are issues
+            float gamma = lanesConvergedIncorrectly ? 0.95 : 0.85; // Increased from 0.8
+            
+            // If detected lanes are bad, rely more on history and bias toward center
+            if (lanesConvergedIncorrectly) {
+                // Bias toward center on lane convergence issues
+                float centerBias = 0.2;
+                midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * 
+                           ((1-centerBias) * midPoint.x + centerBias * (width/2)));
+            } else {
+                midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * midPoint.x);
+            }
+            midPoint.y = static_cast<int>(gamma * prevMidPoint.y + (1 - gamma) * midPoint.y);
         }
 
         // Visual indicator of target Y
@@ -801,8 +841,16 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     }
     else
     {
-        // Fallback to center of image
-        midPoint = cv::Point(width / 2, height * 2 / 3);
+        // Fallback when no midCurve - maintain previous direction but reduce error magnitude
+        if (prevMidPoint.x != -1 && prevMidPoint.y != -1) {
+            // Use previous point but gradually move toward center (reduce error)
+            float decayFactor = 0.9; // How quickly to reduce error
+            int errorReducedX = width/2 + (prevMidPoint.x - width/2) * decayFactor;
+            midPoint = cv::Point(errorReducedX, height * 2 / 3);
+        } else {
+            // No previous point - use center
+            midPoint = cv::Point(width / 2, height * 2 / 3);
+        }
     }
 
     // Update midPoint for next frame
@@ -810,9 +858,21 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     prevMidCurve = midCurve;
     firstFrame = false;
 
-    // Calculate normalized lateral error (-1.0 to 1.0)
+    // Calculate normalized lateral error (-1.0 to 1.0) with improved dampening
     float centerX = width / 2;
-    float lateralError = (midPoint.x - centerX) / (width / 2.0f);
+    float rawError = (midPoint.x - centerX) / (width / 2.0f);
+    
+    // Apply rate limiting to error changes
+    static float prevError = 0.0f;
+    const float MAX_ERROR_CHANGE = 0.05f; // Maximum allowed change per frame
+    
+    float errorChange = rawError - prevError;
+    if (std::abs(errorChange) > MAX_ERROR_CHANGE) {
+        errorChange = (errorChange > 0) ? MAX_ERROR_CHANGE : -MAX_ERROR_CHANGE;
+    }
+    
+    float lateralError = prevError + errorChange;
+    prevError = lateralError;
     
     // Publish error to control system if needed
     if (publisher_) {
@@ -958,7 +1018,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 minDistRight = std::min(minDistRight, dist);
             }
             
-            // Assign to closest lane, but with a bias based on expected lane positioning
+            // Assign to closest lane, but with a bias based on expected lane positioning+
             // This prevents lanes from crossing in ambiguous situations
             double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
             
