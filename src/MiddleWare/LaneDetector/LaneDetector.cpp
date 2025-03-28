@@ -257,11 +257,6 @@ void LaneDetector::preProcess(const cv::Mat& frame)
     const int plane_size      = HEIGHT * WIDTH;
     const uint8_t* frame_data = resized.data;
 
-    // Set number of threads for OpenMP
-    omp_set_num_threads(4);
-
-// Use collapse(2) to better parallelize nested loops
-    #pragma omp parallel for collapse(2) schedule(static)
     for (int c = 0; c < 3; c++)
     {
         for (int i = 0; i < plane_size; i++)
@@ -281,7 +276,6 @@ void LaneDetector::postProcess(cv::Mat& frame)
     uchar* mask_data       = mask.data;
     const int total_pixels = HEIGHT * WIDTH;
 
-#pragma omp parallel for
     for (int i = 0; i < total_pixels; i++)
     {
         float p0     = outputData[i];
