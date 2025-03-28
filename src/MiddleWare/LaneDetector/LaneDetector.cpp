@@ -228,15 +228,15 @@ void LaneDetector::run()
                                     map2);
             mapsInitialized = true;
         }
-        if (frame_count % FRAME_SKIP == 0)
-        {
+        // if (frame_count % FRAME_SKIP == 0)
+        // {
             cv::Mat undistorted;
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
-        }
+            imshow("Lane Detection", frame);
+        // }
         frame_count++;
-        imshow("Lane Detection", frame);
 
         if (cv::waitKey(1) == 'q')
             break;
