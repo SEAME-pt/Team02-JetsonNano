@@ -95,7 +95,6 @@ PidController::PidController()
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             std::cout << "Active Autonomy Level: "
                       << sample.get_payload().as_string() << std::endl;
-            std::cout << "Bool: " << getAutonomousDriveState() << std::endl;
             if (getAutonomousDriveState() == false)
             {
                 setAutonomousDriveState(true);
@@ -179,8 +178,7 @@ PidController::PidController(const std::string& configFile)
             std::cout << "Active Autonomy Level: "
                       << sample.get_payload().as_string() << std::endl;
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (activeAutonomyLevel == "SAE_5" &&
-                getAutonomousDriveState() == false)
+            if (getAutonomousDriveState() == false)
             {
                 setAutonomousDriveState(true);
                 std::cout << "Autonomous Sub True" << std::endl;
