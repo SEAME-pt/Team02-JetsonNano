@@ -785,18 +785,33 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             }
         }
 
-        // Apply temporal smoothing to midPoint with fallback
+        // // Apply temporal smoothing to midPoint with fallback
+        // if (prevMidPoint.x != -1 && prevMidPoint.y != -1)
+        // {
+        //     // Use higher smoothing (more history weight) when there are issues
+        //     float gamma = lanesConvergedIncorrectly ? 0.9 : 0.8; // Increased from 0.8
+            
+        //     // If detected lanes are bad, rely more on history and bias toward center
+        //     if (lanesConvergedIncorrectly) {
+        //         // Bias toward center on lane convergence issues
+        //         float centerBias = 0.2;
+        //         midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * 
+        //                    ((1-centerBias) * midPoint.x + centerBias * (width/2)));
+        //     } else {
+        //         midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * midPoint.x);
+        //     }
+        //     midPoint.y = static_cast<int>(gamma * prevMidPoint.y + (1 - gamma) * midPoint.y);
+        // }
+
         if (prevMidPoint.x != -1 && prevMidPoint.y != -1)
         {
-            // Use higher smoothing (more history weight) when there are issues
-            float gamma = lanesConvergedIncorrectly ? 0.9 : 0.8; // Increased from 0.8
+            // Use LOWER smoothing values for faster response
+            float gamma = lanesConvergedIncorrectly ? 0.7 : 0.5; // Reduced from 0.9/0.8
             
-            // If detected lanes are bad, rely more on history and bias toward center
             if (lanesConvergedIncorrectly) {
-                // Bias toward center on lane convergence issues
-                float centerBias = 0.2;
+                float centerBias = 0.3; // Increased center bias when lanes converge
                 midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * 
-                           ((1-centerBias) * midPoint.x + centerBias * (width/2)));
+                        ((1-centerBias) * midPoint.x + centerBias * (width/2)));
             } else {
                 midPoint.x = static_cast<int>(gamma * prevMidPoint.x + (1 - gamma) * midPoint.x);
             }
@@ -809,12 +824,61 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
     }
     else
     {
-        // Fallback when no midCurve - maintain previous direction but reduce error magnitude
+        // IMPROVED FALLBACK: smarter handling when no midCurve is detected
         if (prevMidPoint.x != -1 && prevMidPoint.y != -1) {
-            // Use previous point but gradually move toward center (reduce error)
-            float decayFactor = 0.9; // How quickly to reduce error
-            int errorReducedX = width/2 + (prevMidPoint.x - width/2) * decayFactor;
-            midPoint = cv::Point(errorReducedX, height * 2 / 3);
+            // Check if we're likely in a curve by examining previous lane curves
+            bool inCurve = false;
+            float curveDirection = 0.0f; // -1 = left curve, +1 = right curve
+            
+            // Use previous lane curves to determine if we're in a curve
+            if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3) {
+                // Sample 3 points from the curve to estimate curvature
+                cv::Point top = prevLeftCurve[prevLeftCurve.size()-1];
+                cv::Point middle = prevLeftCurve[prevLeftCurve.size()/2];
+                cv::Point bottom = prevLeftCurve[0];
+                
+                // Calculate basic curvature
+                float dx1 = middle.x - bottom.x;
+                float dx2 = top.x - middle.x;
+                
+                // If there's a significant change in direction, we're in a curve
+                if (abs(dx2 - dx1) > width * 0.03) {
+                    inCurve = true;
+                    curveDirection = (dx2 > dx1) ? 1.0f : -1.0f;
+                }
+            }
+            
+            // Use right curve as backup if left doesn't show a curve
+            if (!inCurve && !prevRightCurve.empty() && prevRightCurve.size() >= 3) {
+                cv::Point top = prevRightCurve[prevRightCurve.size()-1];
+                cv::Point middle = prevRightCurve[prevRightCurve.size()/2];
+                cv::Point bottom = prevRightCurve[0];
+                
+                float dx1 = middle.x - bottom.x;
+                float dx2 = top.x - middle.x;
+                
+                if (abs(dx2 - dx1) > width * 0.03) {
+                    inCurve = true;
+                    curveDirection = (dx2 > dx1) ? 1.0f : -1.0f;
+                }
+            }
+            
+            // Different handling for curves vs. straight sections
+            if (inCurve) {
+                // In a curve: maintain curve trajectory with slower decay
+                float curveDecay = 0.85f; // Slow decay in curves
+                int errorReducedX = width/2 + (prevMidPoint.x - width/2) * curveDecay;
+                
+                // Add a slight bias in the direction of the curve
+                errorReducedX += curveDirection * width * 0.01;
+                
+                midPoint = cv::Point(errorReducedX, height * 2 / 3);
+            } else {
+                // Straight section: faster return to center
+                float straightDecay = 0.7f; // Faster decay when straight
+                int errorReducedX = width/2 + (prevMidPoint.x - width/2) * straightDecay;
+                midPoint = cv::Point(errorReducedX, height * 2 / 3);
+            }
         } else {
             // No previous point - use center
             midPoint = cv::Point(width / 2, height * 2 / 3);
@@ -974,93 +1038,147 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Instead of using fixed left/right sides of the image, use the history
     // to determine where lanes should be, and assign points based on distance
     
-    if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
+    // if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
+    //     // For each point, calculate distance to projected lanes
+    //     for (const auto& pt : filteredPoints) {
+    //         double minDistLeft = std::numeric_limits<double>::max();
+    //         double minDistRight = std::numeric_limits<double>::max();
+    //         // int closestLeftY = -1, closestRightY = -1;
+            
+    //         // Find distance to projected left lane
+    //         for (const auto& projPt : projectedLeftLane) {
+    //             double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+    //                                     std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+    //             if (dist < minDistLeft) {
+    //                 minDistLeft = dist;
+    //                 // closestLeftY = projPt.y;
+    //             }
+    //         }
+            
+    //         // Find distance to projected right lane
+    //         for (const auto& projPt : projectedRightLane) {
+    //             double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+    //                                     std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+    //             if (dist < minDistRight) {
+    //                 minDistRight = dist;
+    //                 // closestRightY = projPt.y;
+    //             }
+    //         }
+            
+    //         // Assign to closest lane, but with a bias based on expected lane positioning+
+    //         // This prevents lanes from crossing in ambiguous situations
+    //         double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
+            
+    //         // If we're in a clear zone (not ambiguous)
+    //         if (distanceRatio < 0.4) {
+    //             leftPoints.push_back(pt);
+    //         } 
+    //         else if (distanceRatio > 0.6) {
+    //             rightPoints.push_back(pt);
+    //         }
+    //         // In ambiguous zones, check relative positioning
+    //         else {
+    //             // Get expected lane positions at this y-coordinate
+    //             int expectedLeftX = -1, expectedRightX = -1;
+                
+    //             for (const auto& projPt : projectedLeftLane) {
+    //                 if (abs(projPt.y - pt.y) < 20) {
+    //                     expectedLeftX = projPt.x;
+    //                     break;
+    //                 }
+    //             }
+                
+    //             for (const auto& projPt : projectedRightLane) {
+    //                 if (abs(projPt.y - pt.y) < 20) {
+    //                     expectedRightX = projPt.x;
+    //                     break;
+    //                 }
+    //             }
+                
+    //             // Ensure left is actually to the left of right
+    //             if (expectedLeftX != -1 && expectedRightX != -1) {
+    //                 // Left should be left of right - if not, we're in a trouble zone
+    //                 if (expectedLeftX < expectedRightX) {
+    //                     // Normal case - assign based on which side of midpoint between lanes
+    //                     int midBetweenLanes = (expectedLeftX + expectedRightX) / 2;
+    //                     if (pt.x < midBetweenLanes) {
+    //                         leftPoints.push_back(pt);
+    //                     } else {
+    //                         rightPoints.push_back(pt);
+    //                     }
+    //                 } 
+    //                 else {
+    //                     // Lanes crossed! Be very cautious
+    //                     if (pt.x < midX) {
+    //                         leftPoints.push_back(pt);
+    //                     } else {
+    //                         rightPoints.push_back(pt);
+    //                     }
+    //                 }
+    //             } 
+    //             else {
+    //                 // Fallback to simple left/right of center
+    //                 if (pt.x < midX) {
+    //                     leftPoints.push_back(pt);
+    //                 } else {
+    //                     rightPoints.push_back(pt);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // } 
+    f (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
         // For each point, calculate distance to projected lanes
         for (const auto& pt : filteredPoints) {
             double minDistLeft = std::numeric_limits<double>::max();
             double minDistRight = std::numeric_limits<double>::max();
-            // int closestLeftY = -1, closestRightY = -1;
             
             // Find distance to projected left lane
             for (const auto& projPt : projectedLeftLane) {
                 double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-                                        std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+                                        std::pow(pt.y - projPt.y, 2) * 0.2);
                 if (dist < minDistLeft) {
                     minDistLeft = dist;
-                    // closestLeftY = projPt.y;
                 }
             }
             
             // Find distance to projected right lane
             for (const auto& projPt : projectedRightLane) {
                 double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-                                        std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
+                                        std::pow(pt.y - projPt.y, 2) * 0.2);
                 if (dist < minDistRight) {
                     minDistRight = dist;
-                    // closestRightY = projPt.y;
                 }
             }
             
-            // Assign to closest lane, but with a bias based on expected lane positioning+
-            // This prevents lanes from crossing in ambiguous situations
+            // THIS IS THE KEY CHANGE: Add absolute position constraints
+            // Even if a point is closer to one lane, ensure it's in the expected region
+            bool isInLeftRegion = pt.x < frame.cols/2 - frame.cols*0.05; // Left 45% of screen
+            bool isInRightRegion = pt.x > frame.cols/2 + frame.cols*0.05; // Right 45% of screen
+            
+            // If point is clearly in left region, force it to left lane
+            if (isInLeftRegion) {
+                leftPoints.push_back(pt);
+                continue;
+            }
+            
+            // If point is clearly in right region, force it to right lane
+            if (isInRightRegion) {
+                rightPoints.push_back(pt);
+                continue;
+            }
+            
+            // For points in the middle zone, use relative distance with stricter thresholds
             double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
             
-            // If we're in a clear zone (not ambiguous)
-            if (distanceRatio < 0.4) {
+            // Stricter boundaries (0.35/0.65 instead of 0.4/0.6)
+            if (distanceRatio < 0.35) {
                 leftPoints.push_back(pt);
             } 
-            else if (distanceRatio > 0.6) {
+            else if (distanceRatio > 0.65) {
                 rightPoints.push_back(pt);
             }
-            // In ambiguous zones, check relative positioning
-            else {
-                // Get expected lane positions at this y-coordinate
-                int expectedLeftX = -1, expectedRightX = -1;
-                
-                for (const auto& projPt : projectedLeftLane) {
-                    if (abs(projPt.y - pt.y) < 20) {
-                        expectedLeftX = projPt.x;
-                        break;
-                    }
-                }
-                
-                for (const auto& projPt : projectedRightLane) {
-                    if (abs(projPt.y - pt.y) < 20) {
-                        expectedRightX = projPt.x;
-                        break;
-                    }
-                }
-                
-                // Ensure left is actually to the left of right
-                if (expectedLeftX != -1 && expectedRightX != -1) {
-                    // Left should be left of right - if not, we're in a trouble zone
-                    if (expectedLeftX < expectedRightX) {
-                        // Normal case - assign based on which side of midpoint between lanes
-                        int midBetweenLanes = (expectedLeftX + expectedRightX) / 2;
-                        if (pt.x < midBetweenLanes) {
-                            leftPoints.push_back(pt);
-                        } else {
-                            rightPoints.push_back(pt);
-                        }
-                    } 
-                    else {
-                        // Lanes crossed! Be very cautious
-                        if (pt.x < midX) {
-                            leftPoints.push_back(pt);
-                        } else {
-                            rightPoints.push_back(pt);
-                        }
-                    }
-                } 
-                else {
-                    // Fallback to simple left/right of center
-                    if (pt.x < midX) {
-                        leftPoints.push_back(pt);
-                    } else {
-                        rightPoints.push_back(pt);
-                    }
-                }
-            }
+            // Points in the 0.35-0.65 range are ignored as truly ambiguous
         }
     } 
     else {
