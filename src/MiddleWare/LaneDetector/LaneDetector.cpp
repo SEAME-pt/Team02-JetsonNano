@@ -1178,7 +1178,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                     probablyAllRightLane = false;
                 }
             }
-            (void) probablyAllLeftLane;
+            (void) probablyAllRightLane;
             // // Only use the forced split if we're not confident they're all right lane
             // if (!probablyAllRightLane) {
             //     std::sort(filteredPoints.begin(), filteredPoints.end(),
