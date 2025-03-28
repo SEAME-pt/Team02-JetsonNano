@@ -1188,17 +1188,15 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         if (leftCount > 0) avgDistToLeft /= leftCount;
         if (rightCount > 0) avgDistToRight /= rightCount;
         
-        if (avgDistToLeft < avgDistToRight && avgDistToLeft < frame.cols * 0.25) {
+        if (avgDistToLeft < avgDistToRight && avgDistToLeft < frame.cols * 0.15) {
             // All points are likely from left lane
             leftPoints = filteredPoints;
             rightPoints.clear();
-            return; // Skip remaining processing
         } 
-        else if (avgDistToRight < avgDistToLeft && avgDistToRight < frame.cols * 0.25) {
+        else if (avgDistToRight < avgDistToLeft && avgDistToRight < frame.cols * 0.15) {
             // All points are likely from right lane
             rightPoints = filteredPoints;
             leftPoints.clear();
-            return; // Skip remaining processing
         }
     }
 
