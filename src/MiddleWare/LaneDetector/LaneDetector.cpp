@@ -1033,100 +1033,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Sort points by y-coordinate (bottom to top)
     std::sort(filteredPoints.begin(), filteredPoints.end(), 
              [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
-    
-    // APPROACH FOR SHARP CURVES:
-    // Instead of using fixed left/right sides of the image, use the history
-    // to determine where lanes should be, and assign points based on distance
-    
-    // if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty()) {
-    //     // For each point, calculate distance to projected lanes
-    //     for (const auto& pt : filteredPoints) {
-    //         double minDistLeft = std::numeric_limits<double>::max();
-    //         double minDistRight = std::numeric_limits<double>::max();
-    //         // int closestLeftY = -1, closestRightY = -1;
-            
-    //         // Find distance to projected left lane
-    //         for (const auto& projPt : projectedLeftLane) {
-    //             double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-    //                                     std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
-    //             if (dist < minDistLeft) {
-    //                 minDistLeft = dist;
-    //                 // closestLeftY = projPt.y;
-    //             }
-    //         }
-            
-    //         // Find distance to projected right lane
-    //         for (const auto& projPt : projectedRightLane) {
-    //             double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
-    //                                     std::pow(pt.y - projPt.y, 2) * 0.2); // Weight y less
-    //             if (dist < minDistRight) {
-    //                 minDistRight = dist;
-    //                 // closestRightY = projPt.y;
-    //             }
-    //         }
-            
-    //         // Assign to closest lane, but with a bias based on expected lane positioning+
-    //         // This prevents lanes from crossing in ambiguous situations
-    //         double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
-            
-    //         // If we're in a clear zone (not ambiguous)
-    //         if (distanceRatio < 0.4) {
-    //             leftPoints.push_back(pt);
-    //         } 
-    //         else if (distanceRatio > 0.6) {
-    //             rightPoints.push_back(pt);
-    //         }
-    //         // In ambiguous zones, check relative positioning
-    //         else {
-    //             // Get expected lane positions at this y-coordinate
-    //             int expectedLeftX = -1, expectedRightX = -1;
-                
-    //             for (const auto& projPt : projectedLeftLane) {
-    //                 if (abs(projPt.y - pt.y) < 20) {
-    //                     expectedLeftX = projPt.x;
-    //                     break;
-    //                 }
-    //             }
-                
-    //             for (const auto& projPt : projectedRightLane) {
-    //                 if (abs(projPt.y - pt.y) < 20) {
-    //                     expectedRightX = projPt.x;
-    //                     break;
-    //                 }
-    //             }
-                
-    //             // Ensure left is actually to the left of right
-    //             if (expectedLeftX != -1 && expectedRightX != -1) {
-    //                 // Left should be left of right - if not, we're in a trouble zone
-    //                 if (expectedLeftX < expectedRightX) {
-    //                     // Normal case - assign based on which side of midpoint between lanes
-    //                     int midBetweenLanes = (expectedLeftX + expectedRightX) / 2;
-    //                     if (pt.x < midBetweenLanes) {
-    //                         leftPoints.push_back(pt);
-    //                     } else {
-    //                         rightPoints.push_back(pt);
-    //                     }
-    //                 } 
-    //                 else {
-    //                     // Lanes crossed! Be very cautious
-    //                     if (pt.x < midX) {
-    //                         leftPoints.push_back(pt);
-    //                     } else {
-    //                         rightPoints.push_back(pt);
-    //                     }
-    //                 }
-    //             } 
-    //             else {
-    //                 // Fallback to simple left/right of center
-    //                 if (pt.x < midX) {
-    //                     leftPoints.push_back(pt);
-    //                 } else {
-    //                     rightPoints.push_back(pt);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+
     // First pass: Check if all points might be the same lane based on proximity
     bool allPointsPotentiallySameLane = false;
 
@@ -1272,18 +1179,18 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 }
             }
             
-            // Only use the forced split if we're not confident they're all right lane
-            if (!probablyAllRightLane) {
-                std::sort(filteredPoints.begin(), filteredPoints.end(),
-                        [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+            // // Only use the forced split if we're not confident they're all right lane
+            // if (!probablyAllRightLane) {
+            //     std::sort(filteredPoints.begin(), filteredPoints.end(),
+            //             [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
                 
-                // Take the leftmost 40% of points for left lane
-                int leftCount = filteredPoints.size() * 0.4;
-                if (leftCount < 3) leftCount = 3;
+            //     // Take the leftmost 40% of points for left lane
+            //     int leftCount = filteredPoints.size() * 0.4;
+            //     if (leftCount < 3) leftCount = 3;
                 
-                leftPoints.assign(filteredPoints.begin(), filteredPoints.begin() + leftCount);
-                rightPoints.assign(filteredPoints.begin() + leftCount, filteredPoints.end());
-            }
+            //     leftPoints.assign(filteredPoints.begin(), filteredPoints.begin() + leftCount);
+            //     rightPoints.assign(filteredPoints.begin() + leftCount, filteredPoints.end());
+            // }
         }
         // Similarly for the other case
         else if (potentialRightPoints.size() <= 3 && potentialLeftPoints.size() > 10) {
@@ -1316,20 +1223,20 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 }
             }
             
-            // Only use the forced split if we're not confident they're all left lane
-            if (!probablyAllLeftLane) {
-                std::sort(filteredPoints.begin(), filteredPoints.end(),
-                        [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
+            // // Only use the forced split if we're not confident they're all left lane
+            // if (!probablyAllLeftLane) {
+            //     std::sort(filteredPoints.begin(), filteredPoints.end(),
+            //             [](const cv::Point& a, const cv::Point& b) { return a.x < b.x; });
                 
-                // Take the rightmost 40% of points for right lane
-                int rightCount = filteredPoints.size() * 0.4;
-                if (rightCount < 3) rightCount = 3;
+            //     // Take the rightmost 40% of points for right lane
+            //     int rightCount = filteredPoints.size() * 0.4;
+            //     if (rightCount < 3) rightCount = 3;
                 
-                leftPoints.assign(filteredPoints.begin(), 
-                                filteredPoints.end() - rightCount);
-                rightPoints.assign(filteredPoints.end() - rightCount, 
-                                filteredPoints.end());
-            }
+            //     leftPoints.assign(filteredPoints.begin(), 
+            //                     filteredPoints.end() - rightCount);
+            //     rightPoints.assign(filteredPoints.end() - rightCount, 
+            //                     filteredPoints.end());
+            // }
         }
         else {
             // Fall back to position-based clustering
