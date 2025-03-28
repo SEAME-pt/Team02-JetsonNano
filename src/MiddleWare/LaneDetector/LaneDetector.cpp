@@ -981,12 +981,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     for (const auto& pt : points) {
         if (pt.y > height * 0.25) { // Keep points in lower 75% of image
             filteredPoints.push_back(pt);
-        }
-        // Duplicate points in bottom third for stronger influence
-        // if (pt.y > height * 0.66) {
-        //     filteredPoints.push_back(pt); // Add a second copy
-        // }
-        
+        }    
     }
     
     if (filteredPoints.size() < 10) {
