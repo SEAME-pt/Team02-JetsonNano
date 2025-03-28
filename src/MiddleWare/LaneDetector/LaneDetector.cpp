@@ -11,7 +11,7 @@ Logger logger;
 
 LaneDetector::LaneDetector(const std::string& enginePath, const std::string& pipeline,
     std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(6), laneWidthEstimate(0.0), firstFrame(true),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(8), laneWidthEstimate(0.0), firstFrame(true),
     frame_count(0)
 {
     createExecutionContext(enginePath);
@@ -550,7 +550,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
             laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
         }
     }
-    double alpha = 0.25;
+    double alpha = 0.3;
     if (!firstFrame)
     {
         // Apply moving average to left curve if it exists
@@ -713,32 +713,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         }
         
     }
-
-    // // 4. Add explicit rate limiting to both left and right curves to prevent abrupt changes
-    // if (!prevLeftCurve.empty() && leftCurve.size() == prevLeftCurve.size()) {
-    //     // Limit maximum movement per frame
-    //     const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01; // 1% of frame width
-        
-    //     for (size_t i = 0; i < leftCurve.size(); i++) {
-    //         double delta = leftCurve[i].x - prevLeftCurve[i].x;
-    //         if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
-    //             // Limit the movement
-    //             leftCurve[i].x = prevLeftCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
-    //         }
-    //     }
-    // }
-
-    // // Similar code for right curve
-    // if (!prevRightCurve.empty() && rightCurve.size() == prevRightCurve.size()) {
-    //     const double MAX_SHIFT_PER_FRAME = frame.cols * 0.01;
-        
-    //     for (size_t i = 0; i < rightCurve.size(); i++) {
-    //         double delta = rightCurve[i].x - prevRightCurve[i].x;
-    //         if (std::abs(delta) > MAX_SHIFT_PER_FRAME) {
-    //             rightCurve[i].x = prevRightCurve[i].x + (delta > 0 ? MAX_SHIFT_PER_FRAME : -MAX_SHIFT_PER_FRAME);
-    //         }
-    //     }
-    // }
 
     // Save current curves for next frame
     prevLeftCurve = leftCurve;
@@ -1263,8 +1237,8 @@ void LaneDetector::initKalmanFilters(const std::vector<cv::Point>& leftCurve,
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
     
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(5e-4));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(5e-4));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
     
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
