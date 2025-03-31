@@ -62,7 +62,7 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     std::vector<uint8_t> payload(metadata.begin(), metadata.end());
     payload.push_back(':'); // Separator
     payload.insert(payload.end(), buffer.begin(), buffer.end());
-    cameraError_pub->put(payload);
+    cameraFrame_pub->put(payload);
 }
 
 void LaneDetectorPublisher::publishLanes(
