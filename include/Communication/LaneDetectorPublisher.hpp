@@ -6,6 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
+#include <ctime>
 
 /**
  * @brief Lane detector publisher
@@ -37,4 +38,8 @@ class LaneDetectorPublisher
     std::optional<zenoh::Publisher> cameraError_pub;
     std::optional<zenoh::Publisher> cameraLanes_pub;
     std::optional<zenoh::Publisher> cameraFrame_pub;
+
+    int frame_count_ = 0;
+    double last_frame_time_ = 0.0;
+    const double target_fps_ = 15.0;
 };
