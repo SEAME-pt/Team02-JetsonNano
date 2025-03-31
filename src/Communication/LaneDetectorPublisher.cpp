@@ -63,12 +63,29 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     payload.push_back(':'); // Separator
     payload.insert(payload.end(), buffer.begin(), buffer.end());
     //std::cout << payload << std::endl;
+
+    std::string metadata_portion(payload.begin(), 
+                                payload.begin() + metadata.length() + 1); // +1 for separator
+    std::cout << "Metadata: " << metadata_portion << std::endl;
+    
+    // Print payload size info
+    std::cout << "Payload total size: " << payload.size() << " bytes" << std::endl;
+    std::cout << "JPEG image size: " << buffer.size() << " bytes" << std::endl;
+    
+    // Print first few bytes of JPEG data in hex
+    std::cout << "JPEG header bytes: ";
+    for (int i = 0; i < std::min(16, (int)buffer.size()); i++) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') 
+                  << (int)buffer[i] << " ";
+    }
+    std::cout << std::dec << std::endl;
+
     cameraFrame_pub->put(payload);
 }
 
 void LaneDetectorPublisher::publishLanes(
     const std::vector<cv::Point>& leftLane,
-    const std::vector<cv::Point>& rightLane)
+    const std::vector<cv::Point>& rightLane)3
 {
     std::stringstream ss;
 
