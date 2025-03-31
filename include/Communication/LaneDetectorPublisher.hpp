@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <iostream>
-#include <sys/time.h
+#include <sys/time.h>
 
 /**
  * @brief Lane detector publisher
