@@ -28,10 +28,13 @@ class LaneDetectorPublisher
 
     void publishCameraError(float speed);
     void publishLanes(const std::vector<cv::Point>& leftLane, const std::vector<cv::Point>& rightLane);
+    void publishCameraFrame(cv::Mat frame);
+    double getCurrentTime();
 
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> cameraError_pub;
     std::optional<zenoh::Publisher> cameraLanes_pub;
+    std::optional<zenoh::Publisher> cameraFrame_pub;
 };
