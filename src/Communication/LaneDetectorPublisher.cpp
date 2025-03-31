@@ -61,7 +61,7 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     
      
     // Create Zenoh payload with metadata prefix
-    auto options = zenoh::PutOptions::create_default();
+    auto options = zenoh::Publisher::PutOptions::create_default();
     options.encoding = zenoh::Encoding::Predefined::image_jpeg();
     //std::cout << payload << std::endl;
 
