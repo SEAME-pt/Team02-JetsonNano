@@ -1,0 +1,31 @@
+in the deploy folder there is a script go thru it to cross compile your executable for jetson
+
+In the terminal at the root do:
+Change the $projectDir with your folder name
+
+
+    docker buildx build -f ./deploy/dockerfiles/DockerfileDeployJetson \
+        --platform linux/arm64 --load \
+        --build-arg projectDir=/$projectDir \
+        -t final-app .
+
+
+this to remove previous iteations skip if doing this for the first time:
+
+docker rm -f tmpapp
+
+
+This to create the new:
+
+docker create --name tmpapp final-app
+
+
+this to copy the executable back to you (named acording to you cmakelists.txt)
+docker cp tmpapp:/home/test_shared/system_monitor ./system_monitor
+
+
+EXTRA:
+
+The zenoh.json5 file is thwe example how the config file for the router should be.
+
+Our executable should be run with the monitor_config.json so it runs as it is suposed and can integrate fully.
