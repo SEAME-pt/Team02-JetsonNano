@@ -53,34 +53,19 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80}; // 80% quality
     cv::imencode(".jpg", resized_frame, buffer, params);
     
+    
     // Create timestamp and metadata
     frame_count_++;
     std::string metadata = "frame_" + std::to_string(frame_count_) + 
                            "_time_" + std::to_string(current_time);
     
+     
     // Create Zenoh payload with metadata prefix
-    std::vector<uint8_t> payload(metadata.begin(), metadata.end());
-    payload.push_back(':'); // Separator
-    payload.insert(payload.end(), buffer.begin(), buffer.end());
+    auto encoding = zenoh::Encoding::Predefined::image_jpeg()
     //std::cout << payload << std::endl;
 
-    std::string metadata_portion(payload.begin(), 
-                                payload.begin() + metadata.length() + 1); // +1 for separator
-    std::cout << "Metadata: " << metadata_portion << std::endl;
-    
-    // Print payload size info
-    std::cout << "Payload total size: " << payload.size() << " bytes" << std::endl;
-    std::cout << "JPEG image size: " << buffer.size() << " bytes" << std::endl;
-    
-    // Print first few bytes of JPEG data in hex
-    std::cout << "JPEG header bytes: ";
-    for (int i = 0; i < std::min(16, (int)buffer.size()); i++) {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') 
-                  << (int)buffer[i] << " ";
-    }
-    std::cout << std::dec << std::endl;
 
-    cameraFrame_pub->put(payload);
+    cameraFrame_pub->put(buffer, encoding);
 }
 
 void LaneDetectorPublisher::publishLanes(

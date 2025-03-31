@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <sys/time.h>
+#include <iomanip>
 
 /**
  * @brief Lane detector publisher
