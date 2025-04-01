@@ -823,7 +823,7 @@ void LaneDetectorCV::detect(Mat& frame)
     Point midPoint;
     if (!midCurve.empty())
     {
-        int targetY = height - (2 * height / 3); // 2/3 up from bottom
+        int targetY = height - (height / 3); // 2/3 up from bottom
 
         // Find the closest point to our target Y value
         size_t closest_idx = 0;
