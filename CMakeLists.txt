@@ -170,7 +170,7 @@ target_compile_options(LaneDetectorCV PRIVATE -Wall -Werror -Wextra -O3 # Maximu
 )
 
 
-target_link_libraries(LaneDetector
+target_link_libraries(LaneDetectorCV
     ${OpenCV_LIBS}
     zenohcxx::zenohc
     Libs
