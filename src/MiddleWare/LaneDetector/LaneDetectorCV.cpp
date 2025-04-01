@@ -1115,7 +1115,7 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
 
         // Send null message first
         memset(buffer, 0, sizeof(buffer));
-        canBus->writeMessage(0x05, buffer, sizeof(buffer));
+        canBus->writeMessage(0x02, buffer, sizeof(buffer));
         canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
 
         // Send left lane coefficients one at a time
