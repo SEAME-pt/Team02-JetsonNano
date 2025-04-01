@@ -156,7 +156,7 @@ target_link_libraries(LaneDetector
 )
 
 add_executable(LaneDetectorCV
-    ./src/MiddleWare/LaneDetector/LaneDetector.cpp
+    ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/laneDetectorCV.cpp
 )
