@@ -879,7 +879,7 @@ void LaneDetectorCV::detect(Mat& frame)
     {
         publisher_->publishCameraError(lateralError);
         publisher_->publishLanes(leftCurve, rightCurve);
-        //sendCoefs(leftCurve, rightCurve);
+        sendCoefs(leftCurve, rightCurve);
     }
 
     // 10. Draw the detected lane curves and midpoint

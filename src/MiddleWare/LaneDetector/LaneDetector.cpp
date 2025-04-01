@@ -336,7 +336,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
         firstFrame = false;
     }
 
-    //Define Left and Right lanes
+    // Define Left and Right lanes
     // 1. Cluster points using Mean Shift
     std::vector<cv::Point> leftPoints, rightPoints;
     clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
@@ -627,7 +627,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints, cv::Mat& frame
                 }
             }
         }
-        // Replace the "Similar code for right curve" comment with this code:
 
         // Apply moving average to right curve if it exists
         if (!rightCurve.empty())
