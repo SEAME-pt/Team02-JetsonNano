@@ -1095,14 +1095,16 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
             static_cast<float>(leftCoeffs.at<double>(1)); // linear coefficient
         float leftC =
             static_cast<float>(leftCoeffs.at<double>(2)); // constant term
-
+        std::cout << "Left lane polynomial: " << leftA << "y² + " 
+            << leftB << "y + " << leftC << std::endl;
         float rightA = static_cast<float>(
             rightCoeffs.at<double>(0)); // quadratic coefficient
         float rightB =
             static_cast<float>(rightCoeffs.at<double>(1)); // linear coefficient
         float rightC =
             static_cast<float>(rightCoeffs.at<double>(2)); // constant term
-
+        std::cout << "Right lane polynomial: " << rightA << "y² + " 
+                << rightB << "y + " << rightC << std::endl;
         // CAN message addresses
         const uint32_t LEFT_LANE_ADDR  = 0x100;
         const uint32_t RIGHT_LANE_ADDR = 0x101;
