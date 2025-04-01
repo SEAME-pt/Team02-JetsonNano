@@ -1111,10 +1111,10 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         const uint32_t RIGHT_LANE_ADDR = 0x101;
 
         // Create buffer for CAN messages (8 bytes per message)
-        uint8_t buffer[8];
+        uint8_t buffer[8] = {0};
 
         // Send null message first
-        memset(buffer, 0, sizeof(buffer));
+        //memset(buffer, 0, sizeof(buffer));
         canBus->writeMessage(0x10, buffer, sizeof(buffer));
         canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
 
