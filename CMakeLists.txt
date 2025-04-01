@@ -155,7 +155,7 @@ target_link_libraries(LaneDetector
     nvonnxparser
 )
 
-add_executable(LaneDetector
+add_executable(LaneDetectorCV
     ./src/MiddleWare/LaneDetector/LaneDetector.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/laneDetectorCV.cpp
@@ -170,7 +170,7 @@ target_compile_options(LaneDetectorCV PRIVATE -Wall -Werror -Wextra -O3 # Maximu
 )
 
 
-target_link_libraries(LaneDetectorCV
+target_link_libraries(LaneDetector
     ${OpenCV_LIBS}
     zenohcxx::zenohc
     Libs
