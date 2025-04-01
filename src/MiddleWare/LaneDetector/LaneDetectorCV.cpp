@@ -964,6 +964,7 @@ void LaneDetectorCV::run()
             frame = undistorted;
             detect(frame);
             imshow("Lane Detection", frame);
+            publisher_->publishCameraFrame(frame);
         }
 
         frame_count++;
