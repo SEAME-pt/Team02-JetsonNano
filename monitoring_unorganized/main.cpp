@@ -74,8 +74,8 @@ float getTemperature() {
 }
 
 float getJetsonGpuUsage() {
-    // Run tegrastats for a single snapshot.
-    FILE* pipe = popen("tegrastats -n 1", "r");
+    // Run tegrastats for 2 seconds to capture a snapshot.
+    FILE* pipe = popen("timeout 2 tegrastats", "r");
     if (!pipe) {
         std::cerr << "Failed to run tegrastats command" << std::endl;
         return -1.0f;
@@ -83,15 +83,14 @@ float getJetsonGpuUsage() {
 
     char buffer[256];
     std::string output;
+    // Read all output from the pipe.
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
         output += buffer;
     }
     pclose(pipe);
 
-    // Example tegrastats output might include:
-    // "... | GPU 0%@0 | EMC 0%@0 |"
-    // Use regex to find the GPU percentage value.
-    std::regex gpuRegex("GPU\\s+([0-9]+)%@");
+    // Adjust the regex to match the new GPU usage format: "GR3D_FREQ 16%"
+    std::regex gpuRegex("GR3D_FREQ\\s+([0-9]+)%");
     std::smatch match;
     if (std::regex_search(output, match, gpuRegex)) {
         int gpuUsage = std::stoi(match[1].str());
@@ -99,6 +98,7 @@ float getJetsonGpuUsage() {
     }
     return -1.0f;
 }
+
 
 
 
@@ -131,7 +131,8 @@ int main(int argc, char **argv) {
         
         std::cout << "Publishing stats: CPU Load: " << cpuLoad 
                   << ", CPU Usage: " << cpuUsage 
-                  << ", Memory Usage: " << memoryUsage 
+                  << ", Memory Usage: " << memoryUsage
+                  << ", GPU: " << gpuUsage 
                   << ", Temperature: " << temperature << std::endl;
 
         //publish shit
