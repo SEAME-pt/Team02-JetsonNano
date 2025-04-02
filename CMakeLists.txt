@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(VehicleSystem VERSION 0.1)
+project(VehicleSystem CUDA CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 
+enable_language(CUDA)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_72")
+set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+
+find_package(CUDA REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -37,6 +42,13 @@ include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
+
+include_directories(
+    ${CUDA_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    /usr/include/aarch64-linux-gnu
+    include/MiddleWare/LaneDetector
+)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -112,15 +124,53 @@ target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc)
 
+    
 add_executable(LaneDetector
+    ./src/MiddleWare/LaneDetector/LaneDetector.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
+    ./src/laneDetector.cpp
+)
+
+target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
+
+find_library(CUDA_RUNTIME_LIBRARY
+    NAMES cudart
+    HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+)
+
+target_link_libraries(LaneDetector
+    ${OpenCV_LIBS}
+    zenohcxx::zenohc
+    Libs
+    vehicle_lib
+    ${CUDA_LIBRARIES}
+    ${CUDA_RUNTIME_LIBRARY}
+    nvinfer
+    nvonnxparser
+)
+
+add_executable(LaneDetectorCV
     ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/laneDetectorCV.cpp
 )
 
-target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra)
+target_compile_options(LaneDetectorCV PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
 
-target_link_libraries(LaneDetector
+
+target_link_libraries(LaneDetectorCV
     ${OpenCV_LIBS}
     zenohcxx::zenohc
     Libs

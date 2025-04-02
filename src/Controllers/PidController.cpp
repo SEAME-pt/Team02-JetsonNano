@@ -93,8 +93,9 @@ PidController::PidController()
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (activeAutonomyLevel == "SAE_5" &&
-                getAutonomousDriveState() == false)
+            std::cout << "Active Autonomy Level: "
+                      << sample.get_payload().as_string() << std::endl;
+            if (getAutonomousDriveState() == false)
             {
                 setAutonomousDriveState(true);
                 std::cout << "Autonomous Sub True" << std::endl;
@@ -103,6 +104,7 @@ PidController::PidController()
             {
                 std::cout << "Autonomous Sub False" << std::endl;
                 setAutonomousDriveState(false);
+                publisher_->publishSpeed(0);
             }
             else
             {
@@ -129,6 +131,7 @@ PidController::PidController(const std::string& configFile)
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
+    autonomousDrive_  = false;
 
     auto config = zenoh::Config::from_file(configFile);
     session_ =
@@ -173,9 +176,10 @@ PidController::PidController(const std::string& configFile)
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
         {
+            std::cout << "Active Autonomy Level: "
+                      << sample.get_payload().as_string() << std::endl;
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (activeAutonomyLevel == "SAE_5" &&
-                getAutonomousDriveState() == false)
+            if (getAutonomousDriveState() == false)
             {
                 setAutonomousDriveState(true);
                 std::cout << "Autonomous Sub True" << std::endl;
