@@ -45,6 +45,7 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
 
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+    this->canBus     = new CAN();
 }
 
 LaneDetectorCV::~LaneDetectorCV()
