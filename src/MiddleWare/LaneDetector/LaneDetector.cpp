@@ -234,7 +234,7 @@ void LaneDetector::run()
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
-            imshow("Lane Detection", frame);
+            //imshow("Lane Detection", frame);
             publisher_->publishCameraFrame(frame);
 
         }
