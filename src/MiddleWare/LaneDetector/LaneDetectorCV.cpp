@@ -45,7 +45,9 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
 
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+    const std::string canDevice = "/dev/spidev0.0";
     this->canBus     = new CAN();
+    this->canBus->init(canDevice);
 }
 
 LaneDetectorCV::~LaneDetectorCV()
