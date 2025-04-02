@@ -46,7 +46,7 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
     const std::string canDevice = "/dev/spidev0.0";
-    this->canBus     = new CAN();
+    this->canBus                = new CAN();
     this->canBus->init(canDevice);
 }
 
@@ -133,7 +133,8 @@ double LaneDetectorCV::getCurrentTime()
 }
 
 // Extrapolate a polynomial curve from lane line segments
-vector<Point> LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines)
+vector<Point>
+LaneDetectorCV::extrapolatePolynomialCurve(const vector<Vec4i>& laneLines)
 {
     // Extract all points from line segments
     vector<Point2f> points;
@@ -881,7 +882,7 @@ void LaneDetectorCV::detect(Mat& frame)
     if (publisher_)
     {
         publisher_->publishCameraError(lateralError);
-        //publisher_->publishLanes(leftCurve, rightCurve);
+        // publisher_->publishLanes(leftCurve, rightCurve);
         if (!leftCurve.empty() && !rightCurve.empty())
             sendCoefs(leftCurve, rightCurve);
     }
@@ -1099,16 +1100,16 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
             static_cast<float>(leftCoeffs.at<double>(1)); // linear coefficient
         float leftC =
             static_cast<float>(leftCoeffs.at<double>(2)); // constant term
-        std::cout << "Left lane polynomial: " << leftA << "y² + " 
-            << leftB << "y + " << leftC << std::endl;
+        std::cout << "Left lane polynomial: " << leftA << "y² + " << leftB
+                  << "y + " << leftC << std::endl;
         float rightA = static_cast<float>(
             rightCoeffs.at<double>(0)); // quadratic coefficient
         float rightB =
             static_cast<float>(rightCoeffs.at<double>(1)); // linear coefficient
         float rightC =
             static_cast<float>(rightCoeffs.at<double>(2)); // constant term
-        std::cout << "Right lane polynomial: " << rightA << "y² + " 
-                << rightB << "y + " << rightC << std::endl;
+        std::cout << "Right lane polynomial: " << rightA << "y² + " << rightB
+                  << "y + " << rightC << std::endl;
         // CAN message addresses
         const uint32_t LEFT_LANE_ADDR  = 0x100;
         const uint32_t RIGHT_LANE_ADDR = 0x101;
@@ -1121,21 +1122,21 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         int32_t coefA = 0;
         int32_t coefB = 1;
         int32_t coefC = 2;
-        
+
         // Send left lane coefficients one at a time
         // Coefficient A
         memcpy(buffer, &coefA, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &leftA, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &leftA, sizeof(float));
         canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
         // Coefficient B
         memcpy(buffer, &coefB, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &leftB, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &leftB, sizeof(float));
         canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
         // Coefficient C
         memcpy(buffer, &coefC, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &leftC, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &leftC, sizeof(float));
         canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
         memset(buffer, 0, sizeof(buffer));
@@ -1143,19 +1144,18 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         // Send right lane coefficients one at a time
         // Coefficient A
         memcpy(buffer, &coefA, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &rightA, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &rightA, sizeof(float));
         canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
 
         // Coefficient B
         memcpy(buffer, &coefB, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &rightB, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &rightB, sizeof(float));
         canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
 
         // Coefficient C
         memcpy(buffer, &coefC, sizeof(int32_t));
-        memcpy(buffer +  sizeof(int32_t), &rightC, sizeof(float));
+        memcpy(buffer + sizeof(int32_t), &rightC, sizeof(float));
         canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
-
 
         // Log the sent coefficients
         std::cout << "Left lane coeffs: " << leftA << ", " << leftB << ", "
