@@ -1026,7 +1026,7 @@ void LaneDetector::drawLanes(cv::Mat& frame,
                              const std::vector<cv::Point>& leftCurve,
                              const std::vector<cv::Point>& rightCurve)
 {
-    Draw original points (that were used to calculate the lanes)
+    //Draw original points (that were used to calculate the lanes)
     for (const auto& pt : prevLeftPoints) {
         cv::circle(frame, pt, 3, cv::Scalar(125, 0, 0), -1); // Dark blue for
         left points
