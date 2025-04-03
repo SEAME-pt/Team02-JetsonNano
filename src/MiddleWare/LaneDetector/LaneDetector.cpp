@@ -336,7 +336,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     //     all points
     // }
 
-
     if (firstFrame)
     {
         laneWidthEstimate = frame.cols * 0.45;
@@ -344,7 +343,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     }
 
     // Define Left and Right lanes
-  
+
     // 1. Cluster points using Mean Shift
     std::vector<cv::Point> leftPoints, rightPoints;
     clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
