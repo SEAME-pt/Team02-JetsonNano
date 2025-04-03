@@ -54,16 +54,17 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     cv::imencode(".jpg", resized_frame, buffer, params);
 
     // Create timestamp and metadata
-    frame_count_++;
-    std::string metadata = "frame_" + std::to_string(frame_count_) + "_time_" +
-                           std::to_string(current_time);
+
+    // frame_count_++;
+    // std::string metadata = "frame_" + std::to_string(frame_count_) +
+    //                        "_time_" + std::to_string(current_time);
 
     // Create Zenoh payload with metadata prefix
-    std::vector<uint8_t> payload(metadata.begin(), metadata.end());
-    payload.push_back(':'); // Separator
-    payload.insert(payload.end(), buffer.begin(), buffer.end());
+    // auto options = zenoh::Publisher::PutOptions::create_default();
+    // options.encoding = zenoh::Encoding::Predefined::image_jpeg();
     // std::cout << payload << std::endl;
-    cameraFrame_pub->put(payload);
+
+    cameraFrame_pub->put(buffer);
 }
 
 void LaneDetectorPublisher::publishLanes(

@@ -331,11 +331,11 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
                                cv::Mat& frame)
 {
     // Initialize lane width estimate on first frame.
-    for (const auto& pt : lanePoints)
-    {
-        cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255),
-                   -1); // White for all points
-    }
+    // for (const auto& pt : lanePoints) {
+    //     cv::circle(frame, pt, 2, cv::Scalar(255, 255, 255), -1); // White for
+    //     all points
+    // }
+
 
     if (firstFrame)
     {
@@ -344,7 +344,8 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     }
 
     // Define Left and Right lanes
-    //  1. Cluster points using Mean Shift
+  
+    // 1. Cluster points using Mean Shift
     std::vector<cv::Point> leftPoints, rightPoints;
     clusterLanePoints(lanePoints, leftPoints, rightPoints, frame);
 
@@ -670,7 +671,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
                 }
             }
         }
-        // Replace the "Similar code for right curve" comment with this code:
 
         // Apply moving average to right curve if it exists
         if (!rightCurve.empty())
@@ -1029,17 +1029,16 @@ void LaneDetector::drawLanes(cv::Mat& frame,
                              const std::vector<cv::Point>& rightCurve)
 {
     // Draw original points (that were used to calculate the lanes)
-    for (const auto& pt : prevLeftPoints)
-    {
-        cv::circle(frame, pt, 3, cv::Scalar(125, 0, 0),
-                   -1); // Dark blue for left points
-    }
+    // for (const auto& pt : prevLeftPoints) {
+    //     cv::circle(frame, pt, 3, cv::Scalar(125, 0, 0), -1); // Dark blue for
+    //     left points
+    // }
 
-    for (const auto& pt : prevRightPoints)
-    {
-        cv::circle(frame, pt, 3, cv::Scalar(0, 125, 0),
-                   -1); // Dark green for right points
-    }
+    // for (const auto& pt : prevRightPoints) {
+    //     cv::circle(frame, pt, 3, cv::Scalar(0, 125, 0), -1); // Dark green
+    //     for right points
+    // }
+
     // Draw left lane in blue
     if (!leftCurve.empty() && leftCurve.size() >= 2)
     {
