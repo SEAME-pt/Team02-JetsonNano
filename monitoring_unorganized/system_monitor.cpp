@@ -5,16 +5,20 @@ SystemMonitor::SystemMonitor(std::shared_ptr<zenoh::Session> session)
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
-    cpuLoad_pub.emplace(session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/SystemMonitor/cpuLoad")));
+    cpuLoad_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/SystemMonitor/cpuLoad")));
 
-    cpuUsage_pub.emplace(session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/SystemMonitor/cpuUsage")));
+    cpuUsage_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/SystemMonitor/cpuUsage")));
 
-    memory_pub.emplace(session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/SystemMonitor/memory")));
+    memory_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/SystemMonitor/memory")));
 
-    temperature_pub.emplace(session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/SystemMonitor/temperature")));
+    temperature_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/SystemMonitor/temperature")));
 
-    gpuUsage_pub.emplace(session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/SystemMonitor/gpuUsage")));
-  
+    gpuUsage_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/SystemMonitor/gpuUsage")));
 }
 
 void SystemMonitor::publishCpuLoad(float cpuLoad)
@@ -27,7 +31,6 @@ void SystemMonitor::publishCpuLoad(float cpuLoad)
     memcpy(buf.data(), value_str.c_str(), len);
     cpuLoad_pub->put(std::move(buf));
 }
-
 
 void SystemMonitor::publishCpuUsage(float cpuUsage)
 {
@@ -72,4 +75,3 @@ void SystemMonitor::publishGpuUsage(float gpuUsage)
     memcpy(buf.data(), value_str.c_str(), len);
     gpuUsage_pub->put(std::move(buf));
 }
-

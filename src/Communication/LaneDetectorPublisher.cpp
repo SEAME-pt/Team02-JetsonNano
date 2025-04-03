@@ -19,8 +19,7 @@ LaneDetectorPublisher::LaneDetectorPublisher(
     cameraLanes_pub.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/LaneData")));
     cameraFrame_pub.emplace(
-            session_->declare_publisher(zenoh::KeyExpr("video/stream")));
-    
+        session_->declare_publisher(zenoh::KeyExpr("video/stream")));
 }
 
 void LaneDetectorPublisher::publishCameraError(float error)
@@ -39,30 +38,31 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
 {
     // Throttle FPS to avoid network congestion
     double current_time = getCurrentTime(); // Use your existing time function
-    if (current_time - last_frame_time_ < 1.0/target_fps_) {
+    if (current_time - last_frame_time_ < 1.0 / target_fps_)
+    {
         return;
     }
     last_frame_time_ = current_time;
-    
+
     // Resize and compress frame for network transmission
     cv::Mat resized_frame;
     cv::resize(frame, resized_frame, cv::Size(640, 360)); // Smaller resolution
-    
+
     // JPEG compression (adjust quality as needed)
     std::vector<uchar> buffer;
     std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80}; // 80% quality
     cv::imencode(".jpg", resized_frame, buffer, params);
-    
+
     // Create timestamp and metadata
     frame_count_++;
-    std::string metadata = "frame_" + std::to_string(frame_count_) + 
-                           "_time_" + std::to_string(current_time);
-    
+    std::string metadata = "frame_" + std::to_string(frame_count_) + "_time_" +
+                           std::to_string(current_time);
+
     // Create Zenoh payload with metadata prefix
     std::vector<uint8_t> payload(metadata.begin(), metadata.end());
     payload.push_back(':'); // Separator
     payload.insert(payload.end(), buffer.begin(), buffer.end());
-    //std::cout << payload << std::endl;
+    // std::cout << payload << std::endl;
     cameraFrame_pub->put(payload);
 }
 
