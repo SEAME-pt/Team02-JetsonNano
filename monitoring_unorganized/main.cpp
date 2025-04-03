@@ -13,6 +13,13 @@
 #include <zenoh.hxx>
 #include "system_monitor.hpp"
 
+/*
+this should be runing with the zenoh router runing (with the prpoper config file) - monitor_config.yml
+and the zenoh-router should be runing with the updated config file - zenoh.json5
+we should look int tegrastats results in the car terminal to compare them with the ones we get from this program
+we should be adding more of them maybe.
+*/
+
 using namespace zenoh;
 
 
@@ -127,7 +134,7 @@ int main(int argc, char **argv) {
         float gpuUsage    = getJetsonGpuUsage();
 
 
-        //print thisshit
+        //print
         
         std::cout << "Publishing stats: CPU Load: " << cpuLoad 
                   << ", CPU Usage: " << cpuUsage 
@@ -135,7 +142,7 @@ int main(int argc, char **argv) {
                   << ", GPU: " << gpuUsage 
                   << ", Temperature: " << temperature << std::endl;
 
-        //publish shit
+        //publish
         monitor.publishCpuLoad(cpuLoad);
         monitor.publishCpuUsage(cpuUsage);
         monitor.publishMemory(memoryUsage);
@@ -143,7 +150,7 @@ int main(int argc, char **argv) {
         monitor.publishGpuUsage(gpuUsage);
 
         //delay seconds bfr looping again
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
     return 0;

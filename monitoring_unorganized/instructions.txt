@@ -1,3 +1,13 @@
+
+Notes/improvements:
+this system_monitor executable should be runing with the zenoh router runing (with the prpoper config file) - monitor_config.yml
+and the zenoh-router should be runing with the updated config file - zenoh.json5
+we should look int tegrastats results in the car terminal to compare them with the ones we get from this program
+we should be adding more of them maybe.
+
+
+* Deployment and compilation Instructions:
+
 in the deploy folder there is a script go thru it to cross compile your executable for jetson
 
 In the terminal at the root do:
