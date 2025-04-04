@@ -12,13 +12,13 @@ int main(int argc, char** argv)
          otherwise no config file will be considered */
         if (argc == 3)
         {
-            auto manualController = std::make_unique<XboxController>(argv[1]);
-            auto pidController = std::make_unique<PidController>(argv[2], manualController);
+            manualController = new XboxController(argv[1]);
+            pidController    = new PidController(argv[2], manualController);
         }
         else
         {
             manualController = new XboxController();
-            pidController    = new PidController();
+            pidController    = new PidController(manualController);
         }
         // PID controller values
         float kp                = 250;
