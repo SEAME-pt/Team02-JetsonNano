@@ -187,7 +187,7 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
-                            publisher_->publishActiveAutonomyLevel("SAE_5");
+                            publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
                             std::cout << "Autonomous Driving" << std::endl;
                             break;
                         }
@@ -219,7 +219,8 @@ void XboxController::run()
                         {
                             publisher_->publishCurrentGear(0);
                         }
-                        publisher_->publishSpeed(speed);
+                        //publisher_->publishSpeed(speed);
+                        manual_speed_.store(speed);
                         std::cout << "Speed" << std::endl;
                         break;
                     }
@@ -227,7 +228,8 @@ void XboxController::run()
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
-                        publisher_->publishSteering(direction);
+                        //publisher_->publishSteering(direction);
+                        manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
                         break;
                     }
@@ -248,4 +250,15 @@ void XboxController::run()
         }
         fflush(stdout);
     }
+}
+
+
+float XboxController::getManualSteering() const
+{
+    return manual_steering_.load();
+}
+
+float XboxController::getManualSpeed() const
+{
+    return manual_speed_.load();
 }

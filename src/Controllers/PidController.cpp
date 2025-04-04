@@ -26,7 +26,7 @@ double getCurrentTime()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-PidController::PidController()
+PidController::PidController(XboxController* xbox_controller)
 {
     prev_error_  = 0.0f;
     cameraError_ = 0.0f;
@@ -41,7 +41,8 @@ PidController::PidController()
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
-    autonomousDrive_  = false;
+    autonomousDrive_  = "SAE_0";
+    xboxController_ = xbox_controller;
 
     auto config = zenoh::Config::create_default();
     session_ =
@@ -116,7 +117,7 @@ PidController::PidController()
     std::cout << "PID controller created!" << std::endl;
 }
 
-PidController::PidController(const std::string& configFile)
+PidController::PidController(const std::string& configFile, XboxController* xbox_controller)
 {
     prev_error_  = 0.0f;
     cameraError_ = 0.0f;
@@ -131,7 +132,8 @@ PidController::PidController(const std::string& configFile)
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
-    autonomousDrive_  = false;
+    autonomousDrive_  = "SAE_0";
+    xboxController_ = xbox_controller;
 
     auto config = zenoh::Config::from_file(configFile);
     session_ =
@@ -176,23 +178,10 @@ PidController::PidController(const std::string& configFile)
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
         {
-            std::cout << "Active Autonomy Level: "
-                      << sample.get_payload().as_string() << std::endl;
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (getAutonomousDriveState() == false)
-            {
-                setAutonomousDriveState(true);
-                std::cout << "Autonomous Sub True" << std::endl;
-            }
-            else if (getAutonomousDriveState() == true)
-            {
-                std::cout << "Autonomous Sub False" << std::endl;
-                setAutonomousDriveState(false);
-            }
-            else
-            {
-                // empty
-            }
+            std::cout << "Active Autonomy Level: "
+                      << activeAutonomyLevel << std::endl;
+            setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));
     std::cout << "PID controller created!" << std::endl;
@@ -215,10 +204,12 @@ void PidController::init(float kp, float ki, float kd, float speed,
     std::cout << "PID Controller initialized with Kp=" << kp_ << ", Ki=" << ki_
               << ", Kd=" << kd_ << ", speed=" << constant_speed_
               << ", dt=" << fixed_delta_time_ << std::endl;
+
+    autonomousDrive_ = "SAE_0";
 }
 
-void PidController::updateControl(float error, double current_time)
-{
+
+float PidController::steeringPID(float error, double current_time) {
     // dt
     double dt = current_time - last_time_;
     std::cout << "dt: " << dt << std::endl;
@@ -248,6 +239,12 @@ void PidController::updateControl(float error, double current_time)
         direction = 90.0f - max_steering_angle_;
     }
 
+    prev_error_ = error;
+    last_time_  = current_time;
+    return direction;
+}
+
+float PidController::speedAdjustment(float error) {
     // Dynamic speed adjustment based on error
     float error_magnitude = std::fabs(error);
 
@@ -278,43 +275,107 @@ void PidController::updateControl(float error, double current_time)
 
     // Ensure speed doesn't go below minimum
     dynamic_speed = std::max(MIN_SPEED, dynamic_speed) * 100;
+}
+
+//SAE_1
+void PidController::LKASControl(float lane_error, double current_time, float manual_steering, float manual_speed)
+{
+    //Above threshold, the assistant adjusts slightly the direction
+    if (std::abs(error) > lane_departure_threshold_ && std::abs(error) < (lane_departure_threshold_ * 1.5f)) {
+        float direction = manual_steering + (steeringPID(error, current_time) - manual_steering) * 0.25f;
+        //publisher_->publishAlert("Lane Departure");
+        publisher_->publishSteering(direction);
+    } else {
+        publisher_->publishSteering(manual_steering);
+    }
+    publisher_->publishSpeed(manual_speed);
+
+    std::cout << "Direction: " << direction << ", Speed: " << dynamicSpeed
+    << std::endl;
+}
+
+void PidController::adaptiveCruiseControl(float lane_error, double current_time, float manual_steering, float manual_speed)
+{
+    (void) lane_error;
+    (void) current_time;
+    (void) manual_steering;
+    (void) manual_speed;
+
+    return;
+}
+    
+//SAE_2
+void PidController::partialControl(float lane_error, double current_time)
+{
+    (void) lane_error;
+    (void) current_time;
+
+    return;
+}
+
+//SAE_3
+void PidController::conditionalAutomation(float lane_error, double current_time)
+{
+    (void) lane_error;
+    (void) current_time;
+
+    return;
+}
+
+void PidController::updateControl(float error, double current_time)
+{
+    float direction = steeringPID(error, current_time);\
+    float dynamicSpeed = speedAdjustment(error);
 
     publisher_->publishSteering(direction);
-    publisher_->publishSpeed(dynamic_speed);
+    publisher_->publishSpeed(dynamicSpeed);
 
-    std::cout << "Direction: " << direction << ", Speed: " << dynamic_speed
+    std::cout << "Direction: " << direction << ", Speed: " << dynamicSpeed
               << std::endl;
     // publisher_->publishCurrentGear(1);
+}
 
-    prev_error_ = error;
-    last_time_  = current_time;
+
+
+void PidController::setAutonomousDriveState(std::string current_state)
+{
+    autonomousDrive_ = current_state;
+}
+
+std::string PidController::getAutonomousDriveState() const
+{
+    return autonomousDrive_;
 }
 
 void PidController::run()
 {
     while (true)
     {
-        if (getAutonomousDriveState())
+        double current_time = getCurrentTime();
+        std::string sae_level = getAutonomousDriveState();
+        if (sae_level == "SAE_5" || sae_level == "SAE_4")
         {
-            double current_time = getCurrentTime();
             updateControl(cameraError_, current_time);
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                static_cast<int>(fixed_delta_time_ * 1000)));
+            float manual_steering = xboxController_->getManualSteering();
+            float manual_speed = xboxController_->getManualSpeed();
+            if (sae_level == "SAE_1_LKAS") {
+                LKASControl(cameraError_, current_time, manual_steering, manual_speed);
+            } else if (sae_level == "SAE_1_ACC") {
+                adaptiveCruiseControl(cameraError_, current_time, manual_steering, manual_speed);
+            } else if (sae_level == "SAE_2") {
+                partialControl(cameraError_, current_time);
+            } else if (sae_level == "SAE_3") {
+                conditionalAutomation(cameraError_, current_time);
+            } else {
+                publisher_->publishSteering(manual_steering);
+                publisher_->publishSpeed(manual_speed);
+            }
+            
         }
     }
-}
-
-void PidController::setAutonomousDriveState(bool toggle)
-{
-    autonomousDrive_ = toggle;
-}
-
-bool PidController::getAutonomousDriveState() const
-{
-    return autonomousDrive_;
 }
