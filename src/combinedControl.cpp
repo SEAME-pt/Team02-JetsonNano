@@ -7,6 +7,9 @@ int main(int argc, char** argv)
     {
         /*both cointrollers need to run with config files,
          otherwise no config file will be considered */
+        std::unique_ptr<XboxController> manualController;
+        std::unique_ptr<PidController> pidController;
+        
         if (argc == 3)
         {
             auto manualController = std::make_unique<XboxController>(argv[1]);

@@ -261,6 +261,7 @@ float PidController::speedAdjustment(float error) {
 
     // Ensure speed doesn't go below minimum
     dynamic_speed = std::max(MIN_SPEED, dynamic_speed) * 100;
+    return dynamic_speed;
 }
 
 //SAE_1
