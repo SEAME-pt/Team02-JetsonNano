@@ -352,7 +352,7 @@ void PidController::run()
         {
             float manual_steering = xboxController_->getManualSteering();
             float manual_speed = xboxController_->getManualSpeed();
-            if (sae_level == "SAE_1_LKAS") {
+            if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
                 LKASControl(cameraError_, current_time, manual_steering, manual_speed);
             } else if (sae_level == "SAE_1_ACC") {
                 adaptiveCruiseControl(cameraError_, current_time, manual_steering, manual_speed);
