@@ -281,8 +281,8 @@ float PidController::speedAdjustment(float error) {
 void PidController::LKASControl(float lane_error, double current_time, float manual_steering, float manual_speed)
 {
     //Above threshold, the assistant adjusts slightly the direction
-    if (std::abs(error) > lane_departure_threshold_ && std::abs(error) < (lane_departure_threshold_ * 1.5f)) {
-        float direction = manual_steering + (steeringPID(error, current_time) - manual_steering) * 0.25f;
+    if (std::abs(lane_error) > lane_departure_threshold_ && std::abs(lane_error) < (lane_departure_threshold_ * 1.5f)) {
+        float direction = manual_steering + (steeringPID(lane_error, current_time) - manual_steering) * 0.25f;
         //publisher_->publishAlert("Lane Departure");
         publisher_->publishSteering(direction);
     } else {
@@ -290,7 +290,7 @@ void PidController::LKASControl(float lane_error, double current_time, float man
     }
     publisher_->publishSpeed(manual_speed);
 
-    std::cout << "Direction: " << direction << ", Speed: " << dynamicSpeed
+    std::cout << "Direction: " << direction << ", Speed: " << manual_speed
     << std::endl;
 }
 
