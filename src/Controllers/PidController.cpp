@@ -85,7 +85,7 @@ PidController::PidController(XboxController* xbox_controller)
         [this](const zenoh::Sample& sample)
         {
             cameraError_ = std::stof(sample.get_payload().as_string());
-            std::cout << "Camera error: " << cameraError_ << std::endl;
+            //std::cout << "Camera error: " << cameraError_ << std::endl;
         },
         zenoh::closures::none));
 
@@ -268,6 +268,7 @@ float PidController::speedAdjustment(float error) {
 void PidController::LKASControl(float lane_error, double current_time, float manual_steering, float manual_speed)
 {
     //Above threshold, the assistant adjusts slightly the direction
+    std::cout << "ESTOU AQUI" << std::endl;
     if (std::abs(lane_error) > lane_departure_threshold_ && std::abs(lane_error) < (lane_departure_threshold_ * 1.5f)) {
         float direction = manual_steering + (steeringPID(lane_error, current_time) - manual_steering) * 0.25f;
         //publisher_->publishAlert("Lane Departure");
