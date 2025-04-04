@@ -5,20 +5,20 @@ int main(int argc, char** argv)
 {
     try
     {
+        XboxController* manualController;
+        PidController* pidController;
+
         /*both cointrollers need to run with config files,
          otherwise no config file will be considered */
-        std::unique_ptr<XboxController> manualController;
-        std::unique_ptr<PidController> pidController;
-        
         if (argc == 3)
         {
             auto manualController = std::make_unique<XboxController>(argv[1]);
-            auto pidController = std::make_unique<PidController>(argv[2], manualController.get());
+            auto pidController = std::make_unique<PidController>(argv[2], manualController);
         }
         else
         {
-            auto manualController = std::make_unique<XboxController>();
-            auto pidController = std::make_unique<PidController> (manualController.get());
+            manualController = new XboxController();
+            pidController    = new PidController();
         }
         // PID controller values
         float kp                = 250;
@@ -29,13 +29,13 @@ int main(int argc, char** argv)
 
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
-        std::thread manualThread(&XboxController::run, manualController.get());
-        std::thread pidThread(&PidController::run, pidController.get());
+        std::thread manualThread(&XboxController::run, manualController);
+        std::thread pidThread(&PidController::run, pidController);
         manualThread.join();
         pidThread.join();
 
-        // delete manualController;
-        // delete pidController;
+        delete manualController;
+        delete pidController;
     }
     catch (const std::exception& e)
     {
