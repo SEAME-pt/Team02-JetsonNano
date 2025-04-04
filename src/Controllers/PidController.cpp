@@ -95,22 +95,8 @@ PidController::PidController(XboxController* xbox_controller)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             std::cout << "Active Autonomy Level: "
-                      << sample.get_payload().as_string() << std::endl;
-            if (getAutonomousDriveState() == false)
-            {
-                setAutonomousDriveState(true);
-                std::cout << "Autonomous Sub True" << std::endl;
-            }
-            else if (getAutonomousDriveState() == true)
-            {
-                std::cout << "Autonomous Sub False" << std::endl;
-                setAutonomousDriveState(false);
-                publisher_->publishSpeed(0);
-            }
-            else
-            {
-                // empty
-            }
+                      << activeAutonomyLevel << std::endl;
+            setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));
 
@@ -290,7 +276,7 @@ void PidController::LKASControl(float lane_error, double current_time, float man
     }
     publisher_->publishSpeed(manual_speed);
 
-    std::cout << "Direction: " << direction << ", Speed: " << manual_speed
+    std::cout << "Direction: " << manual_steering << ", Speed: " << manual_speed
     << std::endl;
 }
 
