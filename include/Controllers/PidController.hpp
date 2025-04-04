@@ -4,6 +4,7 @@
 #include <zenoh.hxx>
 #include "ControllerPublisher.hpp"
 #include "IVehicleController.hpp"
+#include "XboxController.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -47,18 +48,40 @@ private:
 
     float fixed_delta_time_;
 
-    bool autonomousDrive_;
+    std::string autonomousDrive_;
+    XboxController* xboxController_;
+
+    //SAE Levels
+    //SAE1
+      //For LKAS, if the error is above a value, PID will take control
+    float lane_departure_threshold_ = 0.4f;
+
 
 public:
-    PidController();
-    PidController(const std::string& configFile);
+    PidController(XboxController* xbox_controller);
+    PidController(const std::string& configFile, XboxController* xbox_controller);
     ~PidController();
     
     void init(float kp, float ki, float kd, float speed, float delta_time);
+    
+    float steeringPID(float error, double current_time);
+    float speedAdjustment(float error);
+
+    //SAE_1
+    void LKASControl(float lane_error, double current_time, float manual_steering, float manual_speed);
+    void adaptiveCruiseControl(float lane_error, double current_time, float manual_steering, float manual_speed);
+    
+    //SAE_2
+    void partialControl(float lane_error, double current_time);
+
+    //SAE_3
+    void conditionalAutomation(float lane_error, double current_time);
+
+    //SAE_4
     void updateControl(float lane_error, double current_time);
 
-    void setAutonomousDriveState(bool toggle);
-    bool getAutonomousDriveState() const;
+    void setAutonomousDriveState(std::string current_state);
+    std::string getAutonomousDriveState() const;
 
     void run(); // Main control loop
 };

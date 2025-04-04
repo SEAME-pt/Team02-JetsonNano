@@ -16,6 +16,7 @@
 #include "Vehicle.hpp"
 #include "IVehicleController.hpp"
 #include "zenoh.hxx"
+#include <atomic>
 
 
 #ifdef TEST_MODE
@@ -105,6 +106,9 @@ class XboxController
     std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
 
+    std::atomic<float> manual_steering_{90.0f};
+    std::atomic<float> manual_speed_{0.0f};
+
   public:
     std::vector<struct axis_state*> axes;
     struct js_event event;
@@ -118,4 +122,7 @@ class XboxController
     int getAxisCount(void);
     int getAxisState(void);
     void run();
+
+    float getManualSteering() const;
+    float getManualSpeed() const;
 };

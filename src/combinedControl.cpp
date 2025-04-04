@@ -5,20 +5,17 @@ int main(int argc, char** argv)
 {
     try
     {
-        XboxController* manualController;
-        PidController* pidController;
-
         /*both cointrollers need to run with config files,
          otherwise no config file will be considered */
         if (argc == 3)
         {
-            manualController = new XboxController(argv[1]);
-            pidController    = new PidController(argv[2]);
+            auto manualController = std::make_unique<XboxController>(argv[1]);
+            auto pidController = std::make_unique<PidController>(argv[2], manualController.get());
         }
         else
         {
-            manualController = new XboxController();
-            pidController    = new PidController();
+            auto manualController = std::make_unique<XboxController>();
+            auto pidController = std::make_unique<PidController> (manualController.get());
         }
         // PID controller values
         float kp                = 250;
@@ -34,8 +31,8 @@ int main(int argc, char** argv)
         manualThread.join();
         pidThread.join();
 
-        delete manualController;
-        delete pidController;
+        // delete manualController;
+        // delete pidController;
     }
     catch (const std::exception& e)
     {
