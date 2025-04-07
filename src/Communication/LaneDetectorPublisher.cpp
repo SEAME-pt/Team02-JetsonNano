@@ -63,6 +63,7 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     // options.encoding = zenoh::Encoding::Predefined::image_jpeg();
     // std::cout << payload << std::endl;
 
+    std::cout << "frame ready" << std::endl;
     cameraFrame_pub->put(buffer);
 }
 
