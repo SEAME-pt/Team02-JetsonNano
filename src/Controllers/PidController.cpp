@@ -340,7 +340,6 @@ void PidController::run()
     {
         double current_time = getCurrentTime();
         std::string sae_level = getAutonomousDriveState();
-        std::cout << sae_level << std::endl;
         if (sae_level == "SAE_5" || sae_level == "SAE_4")
         {
             updateControl(cameraError_, current_time);
