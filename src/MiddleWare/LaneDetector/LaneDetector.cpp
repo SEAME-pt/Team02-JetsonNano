@@ -271,7 +271,7 @@ void LaneDetector::preProcess(const cv::Mat& frame)
     // }
     // 1. Resize image using INTER_NEAREST for faster processing
     cv::Mat resized;
-    cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0, cv::INTER_NEAREST);
+    cv::resize(frame, resized, cv::Size(HEIGHT, WIDTH), 0, 0, cv::INTER_NEAREST);
 
     // 2. Convert color space from BGR to RGB
     cv::Mat rgb_image;
