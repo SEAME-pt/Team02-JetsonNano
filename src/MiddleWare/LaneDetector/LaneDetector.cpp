@@ -171,11 +171,11 @@ void LaneDetector::detect(cv::Mat& frame)
         eventsCreated = true;
     }
 
-    cudaEventRecord(start, stream);
-
+    
     // Preprocess
     preProcess(frame);
-
+    
+    cudaEventRecord(start, stream);
     // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData, 3 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
@@ -191,10 +191,10 @@ void LaneDetector::detect(cv::Mat& frame)
 
     cudaStreamSynchronize(stream);
 
+    cudaEventRecord(stop, stream);
     // Postprocess
     postProcess(frame);
 
-    cudaEventRecord(stop, stream);
     cudaEventSynchronize(stop);
 
     float milliseconds = 0;
