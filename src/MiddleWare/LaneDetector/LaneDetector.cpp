@@ -250,25 +250,65 @@ void LaneDetector::run()
 
 void LaneDetector::preProcess(const cv::Mat& frame)
 {
-    static cv::Mat resized(HEIGHT, WIDTH, CV_8UC3);
-    static cv::Mat float_mat(HEIGHT, WIDTH, CV_32FC3);
+    // static cv::Mat resized(HEIGHT, WIDTH, CV_8UC3);
+    // static cv::Mat float_mat(HEIGHT, WIDTH, CV_32FC3);
 
-    // Use INTER_NEAREST for faster resizing
-    cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0,
-               cv::INTER_NEAREST);
+    // // Use INTER_NEAREST for faster resizing
+    // cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0,
+    //            cv::INTER_NEAREST);
 
-    // Optimize memory access pattern
-    const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* frame_data = resized.data;
+    // // Optimize memory access pattern
+    // const int plane_size      = HEIGHT * WIDTH;
+    // const uint8_t* frame_data = resized.data;
 
+    // for (int c = 0; c < 3; c++)
+    // {
+    //     for (int i = 0; i < plane_size; i++)
+    //     {
+    //         // Direct memory access optimization
+    //         inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
+    //     }
+    // }
+    // 1. Resize image using INTER_NEAREST for faster processing
+    cv::Mat resized;
+    cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0, cv::INTER_NEAREST);
+
+    // 2. Convert color space from BGR to RGB
+    cv::Mat rgb_image;
+    cv::cvtColor(resized, rgb_image, cv::COLOR_BGR2RGB);
+
+    // 3. Apply region of interest mask
+    cv::Mat roi_mask = cv::Mat::zeros(rgb_image.size(), rgb_image.type());
+
+    std::vector<cv::Point> roi_vertices;
+    roi_vertices.push_back(cv::Point(0, HEIGHT));
+    roi_vertices.push_back(cv::Point(0, HEIGHT * 0.6));
+    roi_vertices.push_back(cv::Point(WIDTH * 0.4, HEIGHT * 0.4));
+    roi_vertices.push_back(cv::Point(WIDTH * 0.6, HEIGHT * 0.4));
+    roi_vertices.push_back(cv::Point(WIDTH, HEIGHT * 0.6));
+    roi_vertices.push_back(cv::Point(WIDTH, HEIGHT));
+
+    std::vector<std::vector<cv::Point>> roi_contours;
+    roi_contours.push_back(roi_vertices);
+
+    cv::fillPoly(roi_mask, roi_contours, cv::Scalar(255, 255, 255));
+    cv::Mat masked_image;
+    cv::bitwise_and(rgb_image, roi_mask, masked_image);
+
+    // 4. Normalize pixel values to [0,1] range and reorder to CHW format
+    const int plane_size = HEIGHT * WIDTH;
+    const uint8_t* image_data = masked_image.data;
+
+    // Reorganize from HWC to CHW format (channels first) with normalization
     for (int c = 0; c < 3; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            // Direct memory access optimization
-            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
+            // Scale pixels to [0,1] range and store in CHW format
+            inputData[c * plane_size + i] = image_data[i * 3 + c] / 255.0f;
         }
     }
+        
 }
 
 void LaneDetector::postProcess(cv::Mat& frame)
