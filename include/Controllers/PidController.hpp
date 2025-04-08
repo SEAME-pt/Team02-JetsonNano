@@ -54,7 +54,7 @@ private:
     //SAE Levels
     //SAE1
       //For LKAS, if the error is above a value, PID will take control
-    float lane_departure_threshold_ = 0.4f;
+    float lane_departure_threshold_ = 0.1f;
 
 
 public:
