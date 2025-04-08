@@ -256,11 +256,13 @@ void LaneDetector::preProcess(const cv::Mat& frame)
     // Use INTER_NEAREST for faster resizing
     cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0,
     cv::INTER_NEAREST);
+    cv::Mat rgb_image;
     cv::cvtColor(resized, rgb_image, cv::COLOR_BGR2RGB);
+
 
     // Optimize memory access pattern
     const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* frame_data = resized.data;
+    const uint8_t* frame_data = rgb_image.data;
 
     for (int c = 0; c < 3; c++)
     {
