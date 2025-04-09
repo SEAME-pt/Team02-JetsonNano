@@ -32,7 +32,7 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
       frame_count(0), FRAME_SKIP(2)
 
 {
-    (void) pipeline;
+    //(void) pipeline;
 
     if (!cap.isOpened())
     {
