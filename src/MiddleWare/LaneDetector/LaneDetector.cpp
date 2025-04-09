@@ -1293,7 +1293,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             }
             
             // Only keep points with at least 2 neighbors
-            if (neighborCount >= 2) {
+            if (neighborCount >= 8) {
                 densityFilteredPoints.push_back(pt);
             }
         }
@@ -1303,17 +1303,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             filteredPoints = densityFilteredPoints;
         }
     }
-
-
-    // if (filteredPoints.size() < 10)
-    // {
-    //     if (!prevLeftPoints.empty() && !prevRightPoints.empty())
-    //     {
-    //         leftPoints  = prevLeftPoints;
-    //         rightPoints = prevRightPoints;
-    //     }
-    //     return;
-    // }
 
     // 1. HISTORY PROJECTION USING POLYNOMIAL FITTING
     bool useHistory = !prevLeftCurve.empty() && !prevRightCurve.empty();
