@@ -98,7 +98,8 @@ class LaneDetector
       const std::vector<cv::Point>& prevLeftCurve,
       const std::vector<cv::Point>& prevRightCurve,
       std::vector<cv::Point>& projectedLeftLane,
-      std::vector<cv::Point>& projectedRightLane);
+      std::vector<cv::Point>& projectedRightLane,
+      const cv::Mat& frame);
     
     bool checkAndAssignSingleLane(
       const std::vector<cv::Point>& filteredPoints,
@@ -110,7 +111,7 @@ class LaneDetector
       std::vector<cv::Point>& leftPoints,
       std::vector<cv::Point>& rightPoints,
       cv::Mat& frame);
-      
+
     std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
     void reassignPointsUsingPreviousFrame(std::vector<cv::Point>& leftPoints, 
       std::vector<cv::Point>& rightPoints);
