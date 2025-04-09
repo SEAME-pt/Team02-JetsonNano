@@ -43,9 +43,9 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
     kfInitialized = false;
 
     // Set camera buffer size
-    // cap.set(cv::CAP_PROP_FRAME_WIDTH, 512);
-    // cap.set(cv::CAP_PROP_FRAME_HEIGHT, 256);
-    // cap.set(cv::CAP_PROP_FPS, 30);
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 512);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 256);
+    cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     // Initialize the lane detector publisher
