@@ -26,7 +26,7 @@ void LaneDetectorCV::setCalibrationParameters(void)
 
 LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
                                std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session),
+    : cap(1), session_(session),
       prevLeftLine(0, 0, 0, 0), prevRightLine(0, 0, 0, 0),
       prevMidLine(0, 0, 0, 0), laneWidthEstimate(0.0), firstFrame(true),
       frame_count(0), FRAME_SKIP(2)
@@ -41,7 +41,11 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
     kfInitialized = false;
 
     // Set camera buffer size
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 216);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 128);
+    cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+    cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M','J','P','G'));
 
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
