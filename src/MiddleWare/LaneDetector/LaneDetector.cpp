@@ -545,6 +545,72 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         }
     }
 
+
+    // After the Kalman predictions, add a separation enforcement
+    if (!leftCurve.empty() && !rightCurve.empty())
+    {
+        // Check if left and right curves are too close or crossed
+        bool curvesOverlap = false;
+        double leftMeanX = 0, rightMeanX = 0;
+        
+        for (const auto& pt : leftCurve) {
+            leftMeanX += pt.x;
+        }
+        leftMeanX /= leftCurve.size();
+        
+        for (const auto& pt : rightCurve) {
+            rightMeanX += pt.x;
+        }
+        rightMeanX /= rightCurve.size();
+        
+        // If curves are crossed or too close
+        if (leftMeanX >= rightMeanX || (rightMeanX - leftMeanX) < laneWidthEstimate * 0.7)
+        {
+            // Determine which curve is more reliable based on original points
+            bool leftMoreReliable = leftPoints.size() > rightPoints.size() * 1.5;
+            bool rightMoreReliable = rightPoints.size() > leftPoints.size() * 1.5;
+            
+            if (leftMoreReliable && !rightMoreReliable)
+            {
+                // Keep left curve, regenerate right curve with lane width offset
+                std::vector<cv::Point> fixedRightCurve;
+                for (size_t i = 0; i < leftCurve.size(); i++)
+                {
+                    int newX = leftCurve[i].x + laneWidthEstimate;
+                    fixedRightCurve.push_back(cv::Point(newX, leftCurve[i].y));
+                }
+                rightCurve = fixedRightCurve;
+            }
+            else if (!leftMoreReliable && rightMoreReliable)
+            {
+                // Keep right curve, regenerate left curve with lane width offset
+                std::vector<cv::Point> fixedLeftCurve;
+                for (size_t i = 0; i < rightCurve.size(); i++)
+                {
+                    int newX = rightCurve[i].x - laneWidthEstimate;
+                    fixedLeftCurve.push_back(cv::Point(newX, rightCurve[i].y));
+                }
+                leftCurve = fixedLeftCurve;
+            }
+            else
+            {
+                // Neither is clearly more reliable, force separation
+                double adjustment = (laneWidthEstimate - (rightMeanX - leftMeanX)) / 2.0;
+                if (adjustment > 0)
+                {
+                    // Move each curve outward by half the required adjustment
+                    for (auto& pt : leftCurve) {
+                        pt.x -= adjustment;
+                    }
+                    for (auto& pt : rightCurve) {
+                        pt.x += adjustment;
+                    }
+                }
+            }
+        }
+    }
+
+
     // Update lane width estimate when both curves are detected
     if (!leftCurve.empty() && !rightCurve.empty())
     {
@@ -1254,7 +1320,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 minDistOtherGroups.push_back(minDistGroup);
             }
 
-
             bool assignedToGroup = false;
             if (!potentialLeftPoints.empty())
             {
@@ -1511,20 +1576,75 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             rightMeanX += pt.x;
         }
         rightMeanX /= rightPoints.size();
-        if (leftMeanX > rightMeanX)
+        
+        // If the lanes cross or are too close together (less than 50% of expected lane width)
+        if (leftMeanX > rightMeanX || (rightMeanX - leftMeanX) < laneWidthEstimate * 0.5)
         {
-            leftPoints.clear();
-            rightPoints.clear();
-            for (const auto& pt : filteredPoints)
-            {
-                if (pt.x < midX)
+            // Instead of simply dividing by the midline, try to preserve one valid lane if possible
+            bool leftLaneValid = !prevLeftCurve.empty() && leftPoints.size() >= 5;
+            bool rightLaneValid = !prevRightCurve.empty() && rightPoints.size() >= 5;
+            
+            if (leftLaneValid && !rightLaneValid) {
+                // Keep left lane, clear right lane for prediction
+                rightPoints.clear();
+            }
+            else if (!leftLaneValid && rightLaneValid) {
+                // Keep right lane, clear left lane for prediction
+                leftPoints.clear();
+            }
+            else {
+                // Neither lane is clearly valid, use position-based division
+                leftPoints.clear();
+                rightPoints.clear();
+                for (const auto& pt : filteredPoints)
                 {
-                    leftPoints.push_back(pt);
+                    if (pt.x < midX)
+                    {
+                        leftPoints.push_back(pt);
+                    }
+                    else
+                    {
+                        rightPoints.push_back(pt);
+                    }
                 }
-                else
-                {
-                    rightPoints.push_back(pt);
-                }
+            }
+        }
+    }
+
+    // Add a new check specifically for the case where only one lane has points
+    // and we need to enforce separation
+    if ((leftPoints.size() >= 3 && rightPoints.empty()) || 
+        (rightPoints.size() >= 3 && leftPoints.empty()))
+    {
+        // Only one lane has been detected
+        if (leftPoints.size() >= 3 && rightPoints.empty()) {
+            // Calculate mean X of left points
+            double leftMeanX = 0;
+            for (const auto& pt : leftPoints) {
+                leftMeanX += pt.x;
+            }
+            leftMeanX /= leftPoints.size();
+            
+            // Check if this "left lane" is actually in the right side of the frame
+            if (leftMeanX > midX) {
+                // These points are likely from the right lane, not left
+                rightPoints = leftPoints;
+                leftPoints.clear();
+            }
+        }
+        else if (rightPoints.size() >= 3 && leftPoints.empty()) {
+            // Calculate mean X of right points
+            double rightMeanX = 0;
+            for (const auto& pt : rightPoints) {
+                rightMeanX += pt.x;
+            }
+            rightMeanX /= rightPoints.size();
+            
+            // Check if this "right lane" is actually in the left side of the frame
+            if (rightMeanX < midX) {
+                // These points are likely from the left lane, not right
+                leftPoints = rightPoints;
+                rightPoints.clear();
             }
         }
     }
@@ -1583,7 +1703,6 @@ LaneDetector::fitCurveToPoints(const std::vector<cv::Point>& points,
             }
         }
     }
-
     return curve;
 }
 
