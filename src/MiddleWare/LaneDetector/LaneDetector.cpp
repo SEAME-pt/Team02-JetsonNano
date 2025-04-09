@@ -1241,130 +1241,228 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 minDistRight = std::min(minDistRight, dist);
             }
 
+                    // Calculate distances to other lane groups
+            for (const auto& group : otherLaneGroups)
+            {
+                double minDistGroup = std::numeric_limits<double>::max();
+                for (const auto& groupPt : group)
+                {
+                    double dist = std::sqrt(std::pow(pt.x - groupPt.x, 2) +
+                                            std::pow(pt.y - groupPt.y, 2));
+                    minDistGroup = std::min(minDistGroup, dist);
+                }
+                minDistOtherGroups.push_back(minDistGroup);
+            }
+
+
             bool assignedToGroup = false;
             if (!potentialLeftPoints.empty())
             {
+                double minDistToLeftGroup = std::numeric_limits<double>::max();
                 for (const auto& leftPt : potentialLeftPoints)
                 {
                     double pointDist = std::sqrt(std::pow(pt.x - leftPt.x, 2) +
-                                                 std::pow(pt.y - leftPt.y, 2));
-                    if (pointDist < frame.cols * 0.06)
-                    {
-                        potentialLeftPoints.push_back(pt);
-                        assignedToGroup = true;
-                        break;
-                    }
+                                                std::pow(pt.y - leftPt.y, 2));
+                    minDistToLeftGroup = std::min(minDistToLeftGroup, pointDist);
+                }
+                
+                // If point is close to left group and close to projected left lane
+                if (minDistToLeftGroup < frame.cols * 0.06 && 
+                    minDistLeft < frame.cols * 0.12)
+                {
+                    potentialLeftPoints.push_back(pt);
+                    assignedToGroup = true;
                 }
             }
             if (!assignedToGroup && !potentialRightPoints.empty())
             {
+                double minDistToRightGroup = std::numeric_limits<double>::max();
                 for (const auto& rightPt : potentialRightPoints)
                 {
                     double pointDist = std::sqrt(std::pow(pt.x - rightPt.x, 2) +
-                                                 std::pow(pt.y - rightPt.y, 2));
-                    if (pointDist < frame.cols * 0.06)
+                                                std::pow(pt.y - rightPt.y, 2));
+                    minDistToRightGroup = std::min(minDistToRightGroup, pointDist);
+                }
+                
+                // If point is close to right group and close to projected right lane
+                if (minDistToRightGroup < frame.cols * 0.06 && 
+                    minDistRight < frame.cols * 0.12)
+                {
+                    potentialRightPoints.push_back(pt);
+                    assignedToGroup = true;
+                }
+            }
+
+            if (!assignedToGroup && !otherLaneGroups.empty())
+            {
+                for (size_t i = 0; i < otherLaneGroups.size(); i++)
+                {
+                    if (minDistOtherGroups[i] < frame.cols * 0.06)
                     {
-                        potentialRightPoints.push_back(pt);
+                        otherLaneGroups[i].push_back(pt);
                         assignedToGroup = true;
                         break;
                     }
                 }
             }
+
             if (!assignedToGroup)
             {
-                double distanceRatio =
-                    minDistLeft / (minDistLeft + minDistRight);
-                if (distanceRatio < 0.5)
+                // Determine which group this point should belong to
+                double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
+                double minThreshold = frame.cols * 0.15;  // Reasonable distance for lane points
+                
+                // If point is close to projected left lane
+                if (distanceRatio < 0.45 && minDistLeft < minThreshold)
                 {
                     potentialLeftPoints.push_back(pt);
                 }
-                else
+                // If point is close to projected right lane
+                else if (distanceRatio > 0.55 && minDistRight < minThreshold)
                 {
                     potentialRightPoints.push_back(pt);
                 }
+                // If point is not close to our main lanes, create a new group
+                else if (minDistLeft > minThreshold && minDistRight > minThreshold)
+                {
+                    // Start a new lane group
+                    std::vector<cv::Point> newGroup;
+                    newGroup.push_back(pt);
+                    otherLaneGroups.push_back(newGroup);
+                }
+                // Points in the middle (0.45-0.55) are ambiguous and ignored
             }
         }
 
-        if (potentialLeftPoints.size() > 3 && potentialRightPoints.size() > 3)
+        // Select the most appropriate lanes for steering
+        std::vector<std::pair<std::vector<cv::Point>, double>> allGroups;
+        
+        // Add all potential lane groups with at least 3 points
+        if (potentialLeftPoints.size() > 3)
+            allGroups.push_back({potentialLeftPoints, 0.0});
+            
+        if (potentialRightPoints.size() > 3)
+            allGroups.push_back({potentialRightPoints, 0.0});
+            
+        for (const auto& group : otherLaneGroups)
         {
-            leftPoints  = potentialLeftPoints;
+            if (group.size() > 3)
+                allGroups.push_back({group, 0.0});
+        }
+        
+        // If we have more than one lane group, score them to find the best ones for steering
+        if (allGroups.size() > 1) 
+        {
+            // Score each group based on position and alignment with previous lanes
+            for (auto& groupPair : allGroups)
+            {
+                auto& group = groupPair.first;
+                double& score = groupPair.second;
+                
+                // Calculate average x position
+                double avgX = 0;
+                for (const auto& pt : group)
+                    avgX += pt.x;
+                avgX /= group.size();
+                
+                // Calculate minimum distance to previous lanes
+                double distToPrevLeft = std::numeric_limits<double>::max();
+                double distToPrevRight = std::numeric_limits<double>::max();
+                
+                if (!prevLeftCurve.empty())
+                {
+                    for (const auto& pt : group)
+                    {
+                        for (const auto& prevPt : prevLeftCurve)
+                        {
+                            double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 +
+                                                  std::pow(pt.y - prevPt.y, 2) * 0.3);
+                            distToPrevLeft = std::min(distToPrevLeft, dist);
+                        }
+                    }
+                }
+                
+                if (!prevRightCurve.empty())
+                {
+                    for (const auto& pt : group)
+                    {
+                        for (const auto& prevPt : prevRightCurve)
+                        {
+                            double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 +
+                                                  std::pow(pt.y - prevPt.y, 2) * 0.3);
+                            distToPrevRight = std::min(distToPrevRight, dist);
+                        }
+                    }
+                }
+                
+                // Calculate position score (preference for outermost lanes)
+                double positionScore = 0;
+                if (avgX < midX)
+                    positionScore = 1.0 - (avgX / midX);  // Higher for leftmost
+                else
+                    positionScore = (avgX - midX) / (frame.cols - midX);  // Higher for rightmost
+                
+                // Calculate history score (preference for lanes that match previous frames)
+                double historyScore = 0;
+                if (distToPrevLeft < frame.cols * 0.1)
+                    historyScore += 1.0;
+                if (distToPrevRight < frame.cols * 0.1)
+                    historyScore += 1.0;
+                
+                // Calculate group quality score (preference for larger groups)
+                double sizeScore = std::min(1.0, group.size() / 30.0);
+                
+                // Combine scores with appropriate weights
+                score = historyScore * 0.5 + positionScore * 0.3 + sizeScore * 0.2;
+            }
+            
+            // Sort groups by score (highest first)
+            std::sort(allGroups.begin(), allGroups.end(), 
+                     [](const auto& a, const auto& b) { return a.second > b.second; });
+            
+            // Select the top two groups
+            if (allGroups.size() >= 2)
+            {
+                // Determine which is left and which is right
+                double avg1 = 0, avg2 = 0;
+                for (const auto& pt : allGroups[0].first)
+                    avg1 += pt.x;
+                avg1 /= allGroups[0].first.size();
+                
+                for (const auto& pt : allGroups[1].first)
+                    avg2 += pt.x;
+                avg2 /= allGroups[1].first.size();
+                
+                if (avg1 < avg2)
+                {
+                    leftPoints = allGroups[0].first;
+                    rightPoints = allGroups[1].first;
+                }
+                else
+                {
+                    leftPoints = allGroups[1].first;
+                    rightPoints = allGroups[0].first;
+                }
+            }
+            else if (allGroups.size() == 1)
+            {
+                // Only one good group - determine if it's left or right
+                double avgX = 0;
+                for (const auto& pt : allGroups[0].first)
+                    avgX += pt.x;
+                avgX /= allGroups[0].first.size();
+                
+                if (avgX < midX)
+                    leftPoints = allGroups[0].first;
+                else
+                    rightPoints = allGroups[0].first;
+            }
+        }
+        else if (potentialLeftPoints.size() > 3 && potentialRightPoints.size() > 3)
+        {
+            // Simple case - we already have good left and right candidates
+            leftPoints = potentialLeftPoints;
             rightPoints = potentialRightPoints;
-        }
-        else if (potentialLeftPoints.size() <= 3 &&
-                 potentialRightPoints.size() > 10)
-        {
-            bool probablyAllRightLane = true;
-            if (!prevRightCurve.empty() && prevRightCurve.size() >= 3)
-            {
-                int pointsNearRightLane = 0;
-                int totalPoints         = potentialRightPoints.size();
-                for (const auto& pt : potentialRightPoints)
-                {
-                    double minDist = std::numeric_limits<double>::max();
-                    for (const auto& prevPt : prevRightCurve)
-                    {
-                        double dist =
-                            std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 +
-                                      std::pow(pt.y - prevPt.y, 2) * 0.3);
-                        minDist = std::min(minDist, dist);
-                    }
-                    if (minDist < frame.cols * 0.2)
-                    {
-                        pointsNearRightLane++;
-                    }
-                }
-                double percentNearRightLane =
-                    (double)pointsNearRightLane / totalPoints;
-                if (percentNearRightLane > 0.7)
-                {
-                    rightPoints = potentialRightPoints;
-                    leftPoints.clear();
-                    probablyAllRightLane = true;
-                }
-                else
-                {
-                    probablyAllRightLane = false;
-                }
-            }
-            (void)probablyAllRightLane;
-        }
-        else if (potentialRightPoints.size() <= 3 &&
-                 potentialLeftPoints.size() > 10)
-        {
-            bool probablyAllLeftLane = true;
-            if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3)
-            {
-                int pointsNearLeftLane = 0;
-                int totalPoints        = potentialLeftPoints.size();
-                for (const auto& pt : potentialLeftPoints)
-                {
-                    double minDist = std::numeric_limits<double>::max();
-                    for (const auto& prevPt : prevLeftCurve)
-                    {
-                        double dist =
-                            std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.7 +
-                                      std::pow(pt.y - prevPt.y, 2) * 0.3);
-                        minDist = std::min(minDist, dist);
-                    }
-                    if (minDist < frame.cols * 0.2)
-                    {
-                        pointsNearLeftLane++;
-                    }
-                }
-                double percentNearLeftLane =
-                    (double)pointsNearLeftLane / totalPoints;
-                if (percentNearLeftLane > 0.7)
-                {
-                    leftPoints = potentialLeftPoints;
-                    rightPoints.clear();
-                    probablyAllLeftLane = true;
-                }
-                else
-                {
-                    probablyAllLeftLane = false;
-                }
-            }
-            (void)probablyAllLeftLane;
         }
         else
         {
