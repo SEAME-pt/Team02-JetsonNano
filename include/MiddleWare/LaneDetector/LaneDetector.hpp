@@ -89,14 +89,29 @@ class LaneDetector
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
     double getCurrentTime();
     void createLanes(std::vector<cv::Point> lanes, cv::Mat& frame);
+
     void drawLanes(cv::Mat& frame, 
       const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
+
+    void pureHistoricDefinition(
+      const std::vector<cv::Point>& prevLeftCurve,
+      const std::vector<cv::Point>& prevRightCurve,
+      std::vector<cv::Point>& projectedLeftLane,
+      std::vector<cv::Point>& projectedRightLane);
+    
+    bool checkAndAssignSingleLane(
+      const std::vector<cv::Point>& filteredPoints,
+      std::vector<cv::Point>& leftPoints,
+      std::vector<cv::Point>& rightPoints,
+      const cv::Mat& frame);
+
     void clusterLanePoints(const std::vector<cv::Point>& points, 
       std::vector<cv::Point>& leftPoints,
       std::vector<cv::Point>& rightPoints,
       cv::Mat& frame);
-      std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
+      
+    std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
     void reassignPointsUsingPreviousFrame(std::vector<cv::Point>& leftPoints, 
       std::vector<cv::Point>& rightPoints);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, 

@@ -1096,6 +1096,147 @@ void LaneDetector::drawLanes(cv::Mat& frame,
     }
 }
 
+void LaneDetector::pureHistoricDefinition(
+    const std::vector<cv::Point>& prevLeftCurve,
+    const std::vector<cv::Point>& prevRightCurve,
+    std::vector<cv::Point>& projectedLeftLane,
+    std::vector<cv::Point>& projectedRightLane)
+{
+    // Extract y and x coordinates from previous left lane points to perform curve fitting
+    std::vector<double> leftYs, leftXs;
+    for (const auto& pt : prevLeftCurve)
+    {
+        leftYs.push_back(pt.y);
+        leftXs.push_back(pt.x);
+    }
+    // Convert vectors to cv::Mat (as column matrices)
+    cv::Mat leftYMat(leftYs), leftXMat(leftXs);
+    cv::Mat coeffsLeft = polyfit(leftYMat, leftXMat, 2);
+
+    if (!coeffsLeft.empty() && coeffsLeft.rows >= 3)
+    {
+        for (int y = height; y >= int(height * 0.33); y -= 10)
+        {
+            double x = coeffsLeft.at<double>(0) * y * y +
+                       coeffsLeft.at<double>(1) * y +
+                       coeffsLeft.at<double>(2);
+            projectedLeftLane.push_back(cv::Point(round(x), y));
+        }
+    }
+
+    // Do the same for right lane
+    std::vector<double> rightYs, rightXs;
+    for (const auto& pt : prevRightCurve)
+    {
+        rightYs.push_back(pt.y);
+        rightXs.push_back(pt.x);
+    }
+    cv::Mat rightYMat(rightYs), rightXMat(rightXs);
+    cv::Mat coeffsRight = polyfit(rightYMat, rightXMat, 2);
+
+    if (!coeffsRight.empty() && coeffsRight.rows >= 3)
+    {
+        for (int y = height; y >= int(height * 0.33); y -= 10)
+        {
+            double x = coeffsRight.at<double>(0) * y * y +
+                       coeffsRight.at<double>(1) * y +
+                       coeffsRight.at<double>(2);
+            projectedRightLane.push_back(cv::Point(round(x), y));
+        }
+    }
+}
+
+bool LaneDetector::checkAndAssignSingleLane(
+    const std::vector<cv::Point>& filteredPoints,
+    std::vector<cv::Point>& leftPoints,
+    std::vector<cv::Point>& rightPoints,
+    const cv::Mat& frame)
+{
+    // First pass: Check if all points might be from the same lane based on proximity
+    bool allPointsPotentiallySameLane = false;
+    if (filteredPoints.size() >= 10)
+    {
+        double totalDistance = 0;
+        int numPairs = 0;
+        for (size_t i = 0; i < filteredPoints.size(); i += 2)
+        {
+            for (size_t j = i + 1; j < std::min(i + 5, filteredPoints.size()); j++)
+            {
+                totalDistance += std::sqrt(
+                    std::pow(filteredPoints[i].x - filteredPoints[j].x, 2) +
+                    std::pow(filteredPoints[i].y - filteredPoints[j].y, 2));
+                numPairs++;
+            }
+        }
+        if (numPairs > 0)
+        {
+            double avgDistance = totalDistance / numPairs;
+            if (avgDistance < frame.cols * 0.15)
+            {
+                allPointsPotentiallySameLane = true;
+            }
+        }
+    }
+
+    // If points seem to come from one lane, decide based on distances to previous curves
+    if (allPointsPotentiallySameLane)
+    {
+        double avgDistToLeft = 0, avgDistToRight = 0;
+        int leftCount = 0, rightCount = 0;
+
+        for (const auto& pt : filteredPoints)
+        {
+            double minDistLeft = std::numeric_limits<double>::max();
+            double minDistRight = std::numeric_limits<double>::max();
+
+            if (!prevLeftCurve.empty())
+            {
+                for (const auto& prevPt : prevLeftCurve)
+                {
+                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 +
+                                          std::pow(pt.y - prevPt.y, 2) * 0.4);
+                    minDistLeft = std::min(minDistLeft, dist);
+                }
+                avgDistToLeft += minDistLeft;
+                leftCount++;
+            }
+
+            if (!prevRightCurve.empty())
+            {
+                for (const auto& prevPt : prevRightCurve)
+                {
+                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 +
+                                          std::pow(pt.y - prevPt.y, 2) * 0.4);
+                    minDistRight = std::min(minDistRight, dist);
+                }
+                avgDistToRight += minDistRight;
+                rightCount++;
+            }
+        }
+
+        if (leftCount > 0)
+            avgDistToLeft /= leftCount;
+        if (rightCount > 0)
+            avgDistToRight /= rightCount;
+
+        if (avgDistToLeft < avgDistToRight && avgDistToLeft < frame.cols * 0.15)
+        {
+            leftPoints = filteredPoints;
+            rightPoints.clear();
+            return true;
+        }
+        else if (avgDistToRight < avgDistToLeft && avgDistToRight < frame.cols * 0.15)
+        {
+            rightPoints = filteredPoints;
+            leftPoints.clear();
+            return true;
+        }
+    }
+    
+    return false; // Points don't appear to be from a single lane
+}
+
+
 void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                                      std::vector<cv::Point>& leftPoints,
                                      std::vector<cv::Point>& rightPoints,
@@ -1136,51 +1277,9 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // 1. HISTORY PROJECTION USING POLYNOMIAL FITTING
     bool useHistory = !prevLeftCurve.empty() && !prevRightCurve.empty();
     std::vector<cv::Point> projectedLeftLane, projectedRightLane;
-
     if (useHistory)
     {
-        // Prepare vectors for polynomial fitting for left lane
-        std::vector<double> leftYs, leftXs;
-        for (const auto& pt : prevLeftCurve)
-        {
-            leftYs.push_back(pt.y);
-            leftXs.push_back(pt.x);
-        }
-        // Convert vectors to cv::Mat (as column matrices)
-        cv::Mat leftYMat(leftYs), leftXMat(leftXs);
-        cv::Mat coeffsLeft = polyfit(leftYMat, leftXMat, 2);
-
-        if (!coeffsLeft.empty() && coeffsLeft.rows >= 3)
-        {
-            for (int y = height; y >= int(height * 0.33); y -= 10)
-            {
-                double x = coeffsLeft.at<double>(0) * y * y +
-                           coeffsLeft.at<double>(1) * y +
-                           coeffsLeft.at<double>(2);
-                projectedLeftLane.push_back(cv::Point(round(x), y));
-            }
-        }
-
-        // Do the same for right lane
-        std::vector<double> rightYs, rightXs;
-        for (const auto& pt : prevRightCurve)
-        {
-            rightYs.push_back(pt.y);
-            rightXs.push_back(pt.x);
-        }
-        cv::Mat rightYMat(rightYs), rightXMat(rightXs);
-        cv::Mat coeffsRight = polyfit(rightYMat, rightXMat, 2);
-
-        if (!coeffsRight.empty() && coeffsRight.rows >= 3)
-        {
-            for (int y = height; y >= int(height * 0.33); y -= 10)
-            {
-                double x = coeffsRight.at<double>(0) * y * y +
-                           coeffsRight.at<double>(1) * y +
-                           coeffsRight.at<double>(2);
-                projectedRightLane.push_back(cv::Point(round(x), y));
-            }
-        }
+        pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane);
     }
 
     // Compute adaptive midline based on history projection if available
@@ -1192,93 +1291,17 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         int rightXProj = projectedRightLane.front().x;
         adaptiveMidX   = (leftXProj + rightXProj) / 2;
     }
-
     // Sort filtered points by y-coordinate (bottom to top)
     std::sort(filteredPoints.begin(), filteredPoints.end(),
               [](const cv::Point& a, const cv::Point& b) { return a.y > b.y; });
 
-    // First pass: Check if all points might be from the same lane based on
-    // proximity
-    bool allPointsPotentiallySameLane = false;
-    if (filteredPoints.size() >= 10)
+    // Check if all points might be from the same lane
+    bool singleLaneDetected = checkAndAssignSingleLane(filteredPoints, leftPoints, rightPoints, frame);
+    if (singleLaneDetected)
     {
-        double totalDistance = 0;
-        int numPairs         = 0;
-        for (size_t i = 0; i < filteredPoints.size(); i += 2)
-        {
-            for (size_t j = i + 1; j < std::min(i + 5, filteredPoints.size());
-                 j++)
-            {
-                totalDistance += std::sqrt(
-                    std::pow(filteredPoints[i].x - filteredPoints[j].x, 2) +
-                    std::pow(filteredPoints[i].y - filteredPoints[j].y, 2));
-                numPairs++;
-            }
-        }
-        if (numPairs > 0)
-        {
-            double avgDistance = totalDistance / numPairs;
-            if (avgDistance < frame.cols * 0.15)
-            {
-                allPointsPotentiallySameLane = true;
-            }
-        }
+        return; // Already assigned points to appropriate lane
     }
 
-    // If points seem to come from one lane, decide based on distances to
-    // previous curves
-    if (allPointsPotentiallySameLane)
-    {
-        double avgDistToLeft = 0, avgDistToRight = 0;
-        int leftCount = 0, rightCount = 0;
-
-        for (const auto& pt : filteredPoints)
-        {
-            double minDistLeft  = std::numeric_limits<double>::max();
-            double minDistRight = std::numeric_limits<double>::max();
-
-            if (!prevLeftCurve.empty())
-            {
-                for (const auto& prevPt : prevLeftCurve)
-                {
-                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 +
-                                            std::pow(pt.y - prevPt.y, 2) * 0.4);
-                    minDistLeft = std::min(minDistLeft, dist);
-                }
-                avgDistToLeft += minDistLeft;
-                leftCount++;
-            }
-
-            if (!prevRightCurve.empty())
-            {
-                for (const auto& prevPt : prevRightCurve)
-                {
-                    double dist = std::sqrt(std::pow(pt.x - prevPt.x, 2) * 0.6 +
-                                            std::pow(pt.y - prevPt.y, 2) * 0.4);
-                    minDistRight = std::min(minDistRight, dist);
-                }
-                avgDistToRight += minDistRight;
-                rightCount++;
-            }
-        }
-
-        if (leftCount > 0)
-            avgDistToLeft /= leftCount;
-        if (rightCount > 0)
-            avgDistToRight /= rightCount;
-
-        if (avgDistToLeft < avgDistToRight && avgDistToLeft < frame.cols * 0.15)
-        {
-            leftPoints = filteredPoints;
-            rightPoints.clear();
-        }
-        else if (avgDistToRight < avgDistToLeft &&
-                 avgDistToRight < frame.cols * 0.15)
-        {
-            rightPoints = filteredPoints;
-            leftPoints.clear();
-        }
-    }
 
     // 2. POINT GROUPING USING HISTORY PROJECTION
     if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty())
