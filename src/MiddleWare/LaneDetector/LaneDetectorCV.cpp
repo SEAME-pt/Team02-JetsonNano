@@ -26,14 +26,14 @@ void LaneDetectorCV::setCalibrationParameters(void)
 
 LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
                                std::shared_ptr<zenoh::Session> session)
-    : cap(1), session_(session),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session),
       prevLeftLine(0, 0, 0, 0), prevRightLine(0, 0, 0, 0),
       prevMidLine(0, 0, 0, 0), laneWidthEstimate(0.0), firstFrame(true),
       frame_count(0), FRAME_SKIP(2)
 
 {
     (void) pipeline;
-    
+
     if (!cap.isOpened())
     {
         throw std::runtime_error("Error opening video stream");
