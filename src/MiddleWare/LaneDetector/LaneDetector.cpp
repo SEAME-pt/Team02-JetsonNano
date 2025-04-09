@@ -550,7 +550,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     if (!leftCurve.empty() && !rightCurve.empty())
     {
         // Check if left and right curves are too close or crossed
-        bool curvesOverlap = false;
         double leftMeanX = 0, rightMeanX = 0;
         
         for (const auto& pt : leftCurve) {
