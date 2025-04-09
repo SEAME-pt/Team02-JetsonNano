@@ -32,6 +32,8 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
       frame_count(0), FRAME_SKIP(2)
 
 {
+    (void) pipeline;
+    
     if (!cap.isOpened())
     {
         throw std::runtime_error("Error opening video stream");
