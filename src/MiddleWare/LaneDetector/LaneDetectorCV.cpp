@@ -43,11 +43,10 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
     kfInitialized = false;
 
     // Set camera buffer size
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 216);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 128);
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 512);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 256);
     cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-    cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M','J','P','G'));
 
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
@@ -974,7 +973,7 @@ void LaneDetectorCV::run()
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
-            // imshow("Lane Detection", frame);
+            imshow("Lane Detection", frame);
             publisher_->publishCameraFrame(frame);
         }
 
