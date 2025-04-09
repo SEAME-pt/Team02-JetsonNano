@@ -1107,7 +1107,6 @@ void LaneDetector::pureHistoricDefinition(
     // Extract y and x coordinates from previous left lane points to perform curve fitting
     std::vector<double> leftYs, leftXs;
     
-    int midX   = frame.cols / 2;
     int height = frame.rows;
 
     for (const auto& pt : prevLeftCurve)
