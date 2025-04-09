@@ -1219,11 +1219,13 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     if (useHistory && !projectedLeftLane.empty() && !projectedRightLane.empty())
     {
         std::vector<cv::Point> potentialLeftPoints, potentialRightPoints;
+        std::vector<std::vector<cv::Point>> otherLaneGroups;
 
         for (const auto& pt : filteredPoints)
         {
             double minDistLeft  = std::numeric_limits<double>::max();
             double minDistRight = std::numeric_limits<double>::max();
+            std::vector<double> minDistOtherGroups;
 
             for (const auto& projPt : projectedLeftLane)
             {

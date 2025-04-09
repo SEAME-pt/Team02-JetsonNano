@@ -1128,22 +1128,24 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         int32_t coefB = 1;
         int32_t coefC = 2;
 
+        
         // Send left lane coefficients one at a time
         // Coefficient A
-        memcpy(buffer, &coefA, sizeof(int32_t));
-        memcpy(buffer + sizeof(int32_t), &leftA, sizeof(float));
-        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        // memcpy(buffer, &coefA, sizeof(int32_t));
+        // memcpy(buffer + sizeof(int32_t), &leftA, sizeof(float));
+        // canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
-        // Coefficient B
-        memcpy(buffer, &coefB, sizeof(int32_t));
-        memcpy(buffer + sizeof(int32_t), &leftB, sizeof(float));
-        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        // // Coefficient B
+        // memcpy(buffer, &coefB, sizeof(int32_t));
+        // memcpy(buffer + sizeof(int32_t), &leftB, sizeof(float));
+        // canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
-        // Coefficient C
-        memcpy(buffer, &coefC, sizeof(int32_t));
-        memcpy(buffer + sizeof(int32_t), &leftC, sizeof(float));
-        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+        // // Coefficient C
+        // memcpy(buffer, &coefC, sizeof(int32_t));
+        // memcpy(buffer + sizeof(int32_t), &leftC, sizeof(float));
+        // canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
 
+        
         memset(buffer, 0, sizeof(buffer));
 
         // Send right lane coefficients one at a time
