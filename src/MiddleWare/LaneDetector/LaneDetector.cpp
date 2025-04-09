@@ -1261,15 +1261,49 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     int midX   = frame.cols / 2;
     int height = frame.rows;
 
-    // Pre-filtering - focus on lower part of the image
+    // STEP 1: PRE-FILTERING - Reject obvious outliers early
     std::vector<cv::Point> filteredPoints;
-    for (const auto& pt : points)
-    {
-        if (pt.y > height * 0.25)
-        { // Keep points in lower 75% of image
-            filteredPoints.push_back(pt);
+        
+    // Get only points in bottom part of image
+    for (const auto& pt : points) {
+        if (pt.y > height * 0.25) { // Keep points in lower 75% of image
+            // Only add points within reasonable horizontal bounds
+            if (pt.x > frame.cols * 0.05 && pt.x < frame.cols * 0.95) {
+                filteredPoints.push_back(pt);
+            }
         }
     }
+    
+    // STEP 2: DENSITY-BASED FILTERING - Reject isolated points
+    if (filteredPoints.size() > 10) {
+        std::vector<cv::Point> densityFilteredPoints;
+        float neighborRadius = frame.cols * 0.025f; // 2.5% of frame width
+        
+        for (const auto& pt : filteredPoints) {
+            // Count how many neighbors this point has
+            int neighborCount = 0;
+            for (const auto& otherPt : filteredPoints) {
+                if (&pt != &otherPt) {
+                    float dist = std::sqrt(std::pow(pt.x - otherPt.x, 2) + 
+                                        std::pow(pt.y - otherPt.y, 2));
+                    if (dist < neighborRadius) {
+                        neighborCount++;
+                    }
+                }
+            }
+            
+            // Only keep points with at least 2 neighbors
+            if (neighborCount >= 2) {
+                densityFilteredPoints.push_back(pt);
+            }
+        }
+        
+        // Only use density filtering if it doesn't remove too many points
+        if (densityFilteredPoints.size() > filteredPoints.size() * 0.5) {
+            filteredPoints = densityFilteredPoints;
+        }
+    }
+
 
     // if (filteredPoints.size() < 10)
     // {
@@ -1286,7 +1320,56 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     std::vector<cv::Point> projectedLeftLane, projectedRightLane;
     if (useHistory)
     {
+        std::vector<cv::Point> statFilteredPoints;
+        
+        // Project lanes from history
+        std::vector<cv::Point> projectedLeftLane, projectedRightLane;
         pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane, frame);
+        
+        // Compute lane width estimate from history
+        double laneWidth = 0;
+        if (!projectedLeftLane.empty() && !projectedRightLane.empty()) {
+            double leftX = projectedLeftLane[projectedLeftLane.size()/2].x;
+            double rightX = projectedRightLane[projectedRightLane.size()/2].x;
+            laneWidth = rightX - leftX;
+        } else {
+            laneWidth = frame.cols * 0.45; // Default
+        }
+        
+        // Compute reasonable lane bounds
+        double leftLaneBound = midX - laneWidth * 0.75;
+        double rightLaneBound = midX + laneWidth * 0.75;
+        
+        // Keep points that make sense based on the lane model
+        for (const auto& pt : filteredPoints) {
+            // Check if point is within reasonable distance of projected lanes
+            double minDistLeft = std::numeric_limits<double>::max();
+            double minDistRight = std::numeric_limits<double>::max();
+            
+            for (const auto& projPt : projectedLeftLane) {
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+                                       std::pow(pt.y - projPt.y, 2));
+                minDistLeft = std::min(minDistLeft, dist);
+            }
+            
+            for (const auto& projPt : projectedRightLane) {
+                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) + 
+                                       std::pow(pt.y - projPt.y, 2));
+                minDistRight = std::min(minDistRight, dist);
+            }
+            
+            // Keep point if it's near a projected lane or within lane bounds
+            if (minDistLeft < frame.cols * 0.12 || 
+                minDistRight < frame.cols * 0.12 ||
+                (pt.x > leftLaneBound && pt.x < rightLaneBound)) {
+                statFilteredPoints.push_back(pt);
+            }
+        }
+        
+        // Only use statistical filtering if enough points remain
+        if (statFilteredPoints.size() >= 10) {
+            filteredPoints = statFilteredPoints;
+        }
     }
 
     // Compute adaptive midline based on history projection if available
