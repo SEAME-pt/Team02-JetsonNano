@@ -46,6 +46,9 @@ LaneDetector::LaneDetector(const std::string& enginePath,
     // set kalman filter status to false
     kfInitialized = false;
 
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
+    cap.set(cv::CAP_PROP_FPS, 30);
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
