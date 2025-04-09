@@ -1100,10 +1100,16 @@ void LaneDetector::pureHistoricDefinition(
     const std::vector<cv::Point>& prevLeftCurve,
     const std::vector<cv::Point>& prevRightCurve,
     std::vector<cv::Point>& projectedLeftLane,
-    std::vector<cv::Point>& projectedRightLane)
+    std::vector<cv::Point>& projectedRightLane,
+    const cv::Mat& frame
+    )
 {
     // Extract y and x coordinates from previous left lane points to perform curve fitting
     std::vector<double> leftYs, leftXs;
+    
+    int midX   = frame.cols / 2;
+    int height = frame.rows;
+
     for (const auto& pt : prevLeftCurve)
     {
         leftYs.push_back(pt.y);
@@ -1246,7 +1252,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     {
         return;
     }
-
     // Clear output vectors
     leftPoints.clear();
     rightPoints.clear();
@@ -1279,7 +1284,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     std::vector<cv::Point> projectedLeftLane, projectedRightLane;
     if (useHistory)
     {
-        pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane);
+        pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane, height);
     }
 
     // Compute adaptive midline based on history projection if available
