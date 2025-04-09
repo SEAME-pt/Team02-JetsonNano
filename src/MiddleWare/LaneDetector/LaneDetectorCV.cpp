@@ -1116,7 +1116,7 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         std::cout << "Right lane polynomial: " << rightA << "y² + " << rightB
                   << "y + " << rightC << std::endl;
         // CAN message addresses
-        const uint32_t LEFT_LANE_ADDR  = 0x100;
+        //const uint32_t LEFT_LANE_ADDR  = 0x100;
         const uint32_t RIGHT_LANE_ADDR = 0x101;
 
         // Create buffer for CAN messages (8 bytes per message)
