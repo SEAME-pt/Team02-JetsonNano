@@ -6,24 +6,6 @@ using namespace zenoh;
 
 int main(int argc, char** argv)
 {
-
-    // Make the pipeline object with the streamer
-    OpencvGStreamerPipeline opencvGSpipeline("nvarguscamerasrc");
-    opencvGSpipeline.setStreamerSettings(streamerSourceParams);
-
-    // Add a sink and a source to process the sink
-    opencvGSpipeline.addSink("nvvidconv");
-    opencvGSpipeline.addSource("video/x-raw, format=(string)BGRx");
-
-    // Add a sink and source together
-    std::string secondSink = "videoconvert";
-    std::string secondSource = "video/x-raw, format=(string)BGR";
-    opencvGSpipeline.addElement(secondSink, secondSource);
-
-    // Get the pipeline string to pass to opencv
-    std::string GSpipeline = opencvGSpipeline.getPipelineString();
-    std::cout << "G-Streamer pipeline is: " << GSpipeline << std::endl;
-
     const std::string pipeline =
         "nvarguscamerasrc !
          sensor-id=0 !
