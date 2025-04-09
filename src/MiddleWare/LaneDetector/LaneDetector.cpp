@@ -1284,7 +1284,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     std::vector<cv::Point> projectedLeftLane, projectedRightLane;
     if (useHistory)
     {
-        pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane, height);
+        pureHistoricDefinition(prevLeftCurve, prevRightCurve, projectedLeftLane, projectedRightLane, frame);
     }
 
     // Compute adaptive midline based on history projection if available
