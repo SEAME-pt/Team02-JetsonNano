@@ -1387,37 +1387,37 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         std::vector<cv::Point> potentialLeftPoints, potentialRightPoints;
         std::vector<std::vector<cv::Point>> otherLaneGroups;
     
-        // IMPROVEMENT 1: First pass - identify strong seed points for each lane
-        // These are points very close to the projected lanes
-        for (const auto& pt : filteredPoints)
-        {
-            double minDistLeft = std::numeric_limits<double>::max();
-            double minDistRight = std::numeric_limits<double>::max();
+        // // IMPROVEMENT 1: First pass - identify strong seed points for each lane
+        // // These are points very close to the projected lanes
+        // for (const auto& pt : filteredPoints)
+        // {
+        //     double minDistLeft = std::numeric_limits<double>::max();
+        //     double minDistRight = std::numeric_limits<double>::max();
     
-            for (const auto& projPt : projectedLeftLane)
-            {
-                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 +
-                                       std::pow(pt.y - projPt.y, 2) * 0.2);
-                minDistLeft = std::min(minDistLeft, dist);
-            }
+        //     for (const auto& projPt : projectedLeftLane)
+        //     {
+        //         double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 +
+        //                                std::pow(pt.y - projPt.y, 2) * 0.2);
+        //         minDistLeft = std::min(minDistLeft, dist);
+        //     }
     
-            for (const auto& projPt : projectedRightLane)
-            {
-                double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 +
-                                       std::pow(pt.y - projPt.y, 2) * 0.2);
-                minDistRight = std::min(minDistRight, dist);
-            }
+        //     for (const auto& projPt : projectedRightLane)
+        //     {
+        //         double dist = std::sqrt(std::pow(pt.x - projPt.x, 2) * 0.8 +
+        //                                std::pow(pt.y - projPt.y, 2) * 0.2);
+        //         minDistRight = std::min(minDistRight, dist);
+        //     }
     
-            // Use much stricter threshold for seed points - 4% of frame width
-            double seedThreshold = frame.cols * 0.04;
+        //     // Use much stricter threshold for seed points - 4% of frame width
+        //     double seedThreshold = frame.cols * 0.04;
             
-            if (minDistLeft < seedThreshold && minDistLeft < minDistRight * 0.7) {
-                potentialLeftPoints.push_back(pt);
-            }
-            else if (minDistRight < seedThreshold && minDistRight < minDistLeft * 0.7) {
-                potentialRightPoints.push_back(pt);
-            }
-        }
+        //     if (minDistLeft < seedThreshold && minDistLeft < minDistRight * 0.7) {
+        //         potentialLeftPoints.push_back(pt);
+        //     }
+        //     else if (minDistRight < seedThreshold && minDistRight < minDistLeft * 0.7) {
+        //         potentialRightPoints.push_back(pt);
+        //     }
+        // }
     
         // IMPROVEMENT 2: Second pass - grow regions from seed points
         // This will help ensure spatial continuity
