@@ -1450,23 +1450,103 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 double distanceRatio = minDistLeft / (minDistLeft + minDistRight);
                 double minThreshold = frame.cols * 0.15;  // Reasonable distance for lane points
                 
+                // IMPROVED: Add stricter requirements for point assignment
+                
                 // If point is close to projected left lane
                 if (distanceRatio < 0.45 && minDistLeft < minThreshold)
                 {
-                    potentialLeftPoints.push_back(pt);
+                    // Only add if it's not an outlier position-wise
+                    if (potentialLeftPoints.empty() || 
+                        std::abs(pt.x - adaptiveMidX + laneWidthEstimate/2) < frame.cols * 0.2)
+                    {
+                        potentialLeftPoints.push_back(pt);
+                    }
                 }
                 // If point is close to projected right lane
                 else if (distanceRatio > 0.55 && minDistRight < minThreshold)
                 {
-                    potentialRightPoints.push_back(pt);
+                    // Only add if it's not an outlier position-wise
+                    if (potentialRightPoints.empty() || 
+                        std::abs(pt.x - adaptiveMidX - laneWidthEstimate/2) < frame.cols * 0.2)
+                    {
+                        potentialRightPoints.push_back(pt);
+                    }
                 }
-                // If point is not close to our main lanes, create a new group
+                // IMPROVED: Make creating new groups much more strict
                 else if (minDistLeft > minThreshold && minDistRight > minThreshold)
                 {
-                    // Start a new lane group
-                    std::vector<cv::Point> newGroup;
-                    newGroup.push_back(pt);
-                    otherLaneGroups.push_back(newGroup);
+                    // Only create a new group if:
+                    // 1. We don't have too many groups already (limit to 4 total lane groups max)
+                    // 2. The point isn't too far from where a lane would reasonably be
+                    bool pointInReasonablePosition = false;
+                    
+                    // Check if point is in a reasonable lane position
+                    int maxLanePosition = frame.cols * 0.95;
+                    int minLanePosition = frame.cols * 0.05;
+                    
+                    // Only consider points in reasonable horizontal positions
+                    if (pt.x > minLanePosition && pt.x < maxLanePosition)
+                    {
+                        // Check if this could be a additional left or right lane
+                        bool couldBeExtraLeftLane = false;
+                        bool couldBeExtraRightLane = false;
+                        
+                        if (!potentialLeftPoints.empty())
+                        {
+                            double avgLeftX = 0;
+                            for (const auto& leftPt : potentialLeftPoints)
+                                avgLeftX += leftPt.x;
+                            avgLeftX /= potentialLeftPoints.size();
+                            
+                            // Could be an additional left lane if it's further left with similar spacing
+                            couldBeExtraLeftLane = 
+                                (pt.x < avgLeftX - laneWidthEstimate * 0.8) && 
+                                (pt.x > avgLeftX - laneWidthEstimate * 1.5);
+                        }
+                        
+                        if (!potentialRightPoints.empty())
+                        {
+                            double avgRightX = 0;
+                            for (const auto& rightPt : potentialRightPoints)
+                                avgRightX += rightPt.x;
+                            avgRightX /= potentialRightPoints.size();
+                            
+                            // Could be an additional right lane if it's further right with similar spacing
+                            couldBeExtraRightLane = 
+                                (pt.x > avgRightX + laneWidthEstimate * 0.8) && 
+                                (pt.x < avgRightX + laneWidthEstimate * 1.5);
+                        }
+                        
+                        // If point could form a valid additional lane or initial lane group is empty
+                        if (couldBeExtraLeftLane || couldBeExtraRightLane || 
+                            (potentialLeftPoints.empty() && potentialRightPoints.empty()))
+                        {
+                            pointInReasonablePosition = true;
+                        }
+                    }
+                    
+                    if (pointInReasonablePosition && otherLaneGroups.size() < 2)
+                    {
+                        // Start a new lane group - but only if there are nearby points that would join it
+                        int nearbyCount = 0;
+                        for (const auto& otherPt : filteredPoints)
+                        {
+                            if (&otherPt != &pt) { // Don't compare with self
+                                double dist = std::sqrt(std::pow(pt.x - otherPt.x, 2) + 
+                                                    std::pow(pt.y - otherPt.y, 2));
+                                if (dist < frame.cols * 0.05)
+                                    nearbyCount++;
+                            }
+                        }
+                        
+                        // Only create new group if there are likely other points that would join it
+                        if (nearbyCount >= 2)
+                        {
+                            std::vector<cv::Point> newGroup;
+                            newGroup.push_back(pt);
+                            otherLaneGroups.push_back(newGroup);
+                        }
+                    }
                 }
                 // Points in the middle (0.45-0.55) are ambiguous and ignored
             }
@@ -1475,12 +1555,76 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         // Select the most appropriate lanes for steering
         std::vector<std::pair<std::vector<cv::Point>, double>> allGroups;
         
-        // Add all potential lane groups with at least 3 points
-        if (potentialLeftPoints.size() > 3)
-            allGroups.push_back({potentialLeftPoints, 0.0});
+        // Clean up outliers from potential lane groups
+        if (potentialLeftPoints.size() > 5)
+        {
+            std::vector<cv::Point> cleanedLeftPoints;
             
-        if (potentialRightPoints.size() > 3)
-            allGroups.push_back({potentialRightPoints, 0.0});
+            // First calculate mean and standard deviation of x coordinates
+            double sumX = 0, sumX2 = 0;
+            for (const auto& pt : potentialLeftPoints) {
+                sumX += pt.x;
+                sumX2 += pt.x * pt.x;
+            }
+            double meanX = sumX / potentialLeftPoints.size();
+            double stdX = std::sqrt(sumX2 / potentialLeftPoints.size() - meanX * meanX);
+            
+            // Keep points that are within 2 standard deviations of the mean X
+            for (const auto& pt : potentialLeftPoints) {
+                if (std::abs(pt.x - meanX) <= 2.0 * stdX) {
+                    cleanedLeftPoints.push_back(pt);
+                }
+            }
+            
+            potentialLeftPoints = cleanedLeftPoints;
+        }
+
+        // Same for right points
+        if (potentialRightPoints.size() > 5)
+        {
+            std::vector<cv::Point> cleanedRightPoints;
+            
+            // First calculate mean and standard deviation of x coordinates
+            double sumX = 0, sumX2 = 0;
+            for (const auto& pt : potentialRightPoints) {
+                sumX += pt.x;
+                sumX2 += pt.x * pt.x;
+            }
+            double meanX = sumX / potentialRightPoints.size();
+            double stdX = std::sqrt(sumX2 / potentialRightPoints.size() - meanX * meanX);
+            
+            // Keep points that are within 2 standard deviations of the mean X
+            for (const auto& pt : potentialRightPoints) {
+                if (std::abs(pt.x - meanX) <= 2.0 * stdX) {
+                    cleanedRightPoints.push_back(pt);
+                }
+            }
+            
+            potentialRightPoints = cleanedRightPoints;
+        }
+
+        // Also clean other lane groups the same way
+        for (auto& group : otherLaneGroups) {
+            if (group.size() > 5) {
+                std::vector<cv::Point> cleanedGroup;
+                
+                double sumX = 0, sumX2 = 0;
+                for (const auto& pt : group) {
+                    sumX += pt.x;
+                    sumX2 += pt.x * pt.x;
+                }
+                double meanX = sumX / group.size();
+                double stdX = std::sqrt(sumX2 / group.size() - meanX * meanX);
+                
+                for (const auto& pt : group) {
+                    if (std::abs(pt.x - meanX) <= 2.0 * stdX) {
+                        cleanedGroup.push_back(pt);
+                    }
+                }
+                
+                group = cleanedGroup;
+            }
+        }
             
         for (const auto& group : otherLaneGroups)
         {
