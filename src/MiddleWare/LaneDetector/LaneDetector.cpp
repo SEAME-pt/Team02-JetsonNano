@@ -1375,10 +1375,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     float tolerance = laneWidthEstimate * 0.2f;
 
     // (Optional) Visual debug: Draw expected boundaries
-    cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
-             cv::Scalar(128, 0, 255), 2);
-    cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
-             cv::Scalar(0, 128, 255), 2);
+    // cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
+    //          cv::Scalar(128, 0, 255), 2);
+    // cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
+    //          cv::Scalar(0, 128, 255), 2);
 
     // Stage 3: Assign points to lanes based on expected boundaries
     assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
