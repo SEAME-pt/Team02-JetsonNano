@@ -1096,7 +1096,7 @@ static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float lane
                                       const std::vector<cv::Point>& prevRightCurve,
                                       int &expectedLeftBoundary, int &expectedRightBoundary)
 {
-    int width = frame.cols;
+    //int width = frame.cols;
     if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
         // Use the bottom-most points from previous curves.
         int leftX = prevLeftCurve.front().x;
