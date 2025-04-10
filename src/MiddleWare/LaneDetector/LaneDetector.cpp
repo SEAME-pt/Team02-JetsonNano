@@ -1202,9 +1202,10 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
 // Helper: Compute expected left/right boundaries using history and laneWidthEstimate.
 // If history is available, use previous lane curves; otherwise, fall back to the simple midline.
 static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float laneWidthEstimate,
-                                      const std::vector<cv::Point>& prevLeftCurve,
-                                      const std::vector<cv::Point>& prevRightCurve,
-                                      int &expectedLeftBoundary, int &expectedRightBoundary)
+    const std::vector<cv::Point>& prevLeftCurve,
+    const std::vector<cv::Point>& prevRightCurve,
+    std::vector<cv::Point>& leftBoundary,
+    std::vector<cv::Point>& rightBoundary)
 {
     int height = frame.rows;
     leftBoundary.clear();
@@ -1366,7 +1367,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     if (laneWidthEstimate <= 0) {
         laneWidthEstimate = width * 0.6f;
     }
-    int expectedLeftBoundary, expectedRightBoundary;
+    std::vector<cv::Point> expectedLeftBoundary, expectedRightBoundary;
     computeExpectedBoundaries(frame, midX, laneWidthEstimate,
                               prevLeftCurve, prevRightCurve,
                               expectedLeftBoundary, expectedRightBoundary);
