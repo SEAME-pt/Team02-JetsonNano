@@ -1327,7 +1327,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
     
     // If no significant gap found, use the median
-    int divisionLine = (largestGap > gapThreshold) ? bestDivisionX : medianX;
+    //int divisionLine = (largestGap > gapThreshold) ? bestDivisionX : medianX;
     
     // --- Stage 3: Assign points based on division line ---
     for (const auto& pt : densityFiltered) {
