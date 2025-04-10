@@ -1365,7 +1365,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     //     // Add text indicator that forced re-clustering happened
     //     cv::putText(frame, "Re-clustered", cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX,
     //                 0.7, cv::Scalar(255, 0, 255), 2);
-    }
+    // }
 
     for (const auto& pt : leftPoints) {
         cv::circle(frame, pt, 4, cv::Scalar(255, 100, 100), -1); // Light red for left points
