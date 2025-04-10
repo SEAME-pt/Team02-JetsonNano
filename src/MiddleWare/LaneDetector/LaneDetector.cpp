@@ -1062,10 +1062,205 @@ void LaneDetector::drawLanes(cv::Mat& frame,
     }
 }
 
+// void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
+//                                      std::vector<cv::Point>& leftPoints,
+//                                      std::vector<cv::Point>& rightPoints,
+//                                      cv::Mat& frame)
+// {
+//     // Clear output vectors
+//     leftPoints.clear();
+//     rightPoints.clear();
+
+//     int width = frame.cols;
+//     int height = frame.rows;
+//     int midX = width / 2;  // Base midline
+
+//     // --- Stage 1: Pre-filtering ---
+//     // ROI filtering: keep points in the lower 75% and within 5%-95% horizontally.
+//     std::vector<cv::Point> filteredPoints;
+//     for (const auto& pt : points) {
+//         if (pt.y > height * 0.15 && pt.x > width * 0.10 && pt.x < width * 0.90) {
+//             filteredPoints.push_back(pt);
+//         }
+//     }
+    
+//     // std::vector<int> x_coords;
+//     // for (const auto& pt : points) {
+//         //     if (pt.y > height * 0.15) { // Only consider lower part of the image
+//         //         x_coords.push_back(pt.x);
+//         //     }
+//         // }
+        
+//         // if (x_coords.empty()) return;
+        
+//         // std::sort(x_coords.begin(), x_coords.end());
+//         // int median_x = x_coords[x_coords.size() / 2];
+        
+//         // // 2. Adjust the division line using lane width if available
+//         // int divisionLine = median_x;
+//         // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+//             //     // Calculate center from previous frame's lanes
+//             //     int leftX = prevLeftCurve.front().x;
+//             //     int rightX = prevRightCurve.front().x;
+//             //     int historyMidX = (leftX + rightX) / 2;
+            
+//             //     // Use weighted average of median and history
+//             //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
+//             // }
+        
+    
+//         // Density filtering: remove isolated points.
+//     std::vector<cv::Point> densityFiltered;
+//     float radius = width * 0.025f;  // ~2.5% of frame width
+//     for (size_t i = 0; i < filteredPoints.size(); i++) {
+//         int neighborCount = 0;
+//         for (size_t j = 0; j < filteredPoints.size(); j++) {
+//             if (i == j) continue;
+//             float dx = filteredPoints[i].x - filteredPoints[j].x;
+//             float dy = filteredPoints[i].y - filteredPoints[j].y;
+//             if (std::sqrt(dx * dx + dy * dy) < radius) {
+//                 neighborCount++;
+//             }
+//         }
+//         // Require at least 4 neighbors (adjust threshold as needed)
+//         if (neighborCount >= 4)
+//             densityFiltered.push_back(filteredPoints[i]);
+//     }
+
+//     // --- Stage 2: Compute Expected Boundaries Using History and laneWidthEstimate ---
+//     int expectedLeftBoundary, expectedRightBoundary;
+//     if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+//         // Use the bottom-most (first) points from the stored history.
+//         int leftX = prevLeftCurve.front().x;
+//         int rightX = prevRightCurve.front().x;
+//         // Compute a midline based on historical lane positions.
+//         int historyMidX = (leftX + rightX) / 2;
+        
+//         // Use a narrower lane width estimate (80% of the current value)
+//         float adjustedLaneWidth = laneWidthEstimate * 0.5f;
+        
+//         // Expected boundaries are half the lane width to either side of history midline.
+//         expectedLeftBoundary  = historyMidX - static_cast<int>(adjustedLaneWidth * 0.5f);
+//         expectedRightBoundary = historyMidX + static_cast<int>(adjustedLaneWidth * 0.5f);
+//     } else {
+//         // Fallback: use the image midline and a narrower lane width estimate
+//         float adjustedLaneWidth = laneWidthEstimate * 0.8f;
+//         expectedLeftBoundary  = midX - static_cast<int>(adjustedLaneWidth * 0.5f);
+//         expectedRightBoundary = midX + static_cast<int>(adjustedLaneWidth * 0.5f);
+//     }
+
+//     // Define a tolerance based on lane width (for example, 20% of lane width).
+//     //float tolerance = laneWidthEstimate * 0.2f;
+
+//     // --- Stage 3: Use projected lane curves for assignment ---
+//     std::vector<cv::Point> ambiguousPoints;
+//     for (const auto& pt : densityFiltered) {
+//         // Make tolerance adaptive - larger at the top of the image (distant points)
+//         float yRatio = 1.0f - (float)(pt.y) / height;  // 0 at bottom, 1 at top
+//         float adaptiveTolerance = laneWidthEstimate * (0.2f + yRatio * 0.2f);
+        
+//         // Get expected lane position at this y-level
+//         float expectedLeftX = expectedLeftBoundary;
+//         float expectedRightX = expectedRightBoundary;
+        
+//         // Use lane curves if we have history
+//         if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+//             // Find closest y-points in the curves
+//             for (const auto& curvePt : prevLeftCurve) {
+//                 if (abs(curvePt.y - pt.y) < height * 0.1f) {
+//                     expectedLeftX = curvePt.x;
+//                     break;
+//                 }
+//             }
+            
+//             for (const auto& curvePt : prevRightCurve) {
+//                 if (abs(curvePt.y - pt.y) < height * 0.1f) {
+//                     expectedRightX = curvePt.x;
+//                     break;
+//                 }
+//             }
+//         }
+        
+//         // Calculate distance to lanes at this y-level
+//         float distToLeft = std::abs(pt.x - expectedLeftX);
+//         float distToRight = std::abs(pt.x - expectedRightX);
+        
+//         // Better decision logic - assign to closest lane if it's clearly closer
+//         if (distToLeft < distToRight * 0.7f || 
+//             (distToLeft < adaptiveTolerance && distToLeft < distToRight)) {
+//             leftPoints.push_back(pt);
+//         } 
+//         else if (distToRight < distToLeft * 0.7f || 
+//                  (distToRight < adaptiveTolerance && distToRight < distToLeft)) {
+//             rightPoints.push_back(pt);
+//         }
+//         else {
+//             // This point is truly ambiguous - it's nearly equidistant
+//             // Use position relative to midpoint to decide
+//             float midX = (expectedLeftX + expectedRightX) / 2.0f;
+//             if (pt.x < midX) {
+//                 leftPoints.push_back(pt);
+//             } else {
+//                 rightPoints.push_back(pt);
+//             }
+//         }
+//     }
+
+//     for (const auto& pt : ambiguousPoints)
+//     {
+//         cv::circle(frame, pt, 3, cv::Scalar(0, 255, 255), -1); // Yellow for
+//         // filtered points
+//     }
+
+
+//     // // --- Stage 4: Reassign Ambiguous Points ---
+//     // // For ambiguous points, compare the distance to the expected left/right boundaries.
+//     // for (const auto& pt : ambiguousPoints) {
+//     //     float distToLeft  = std::abs(pt.x - expectedLeftBoundary);
+//     //     float distToRight = std::abs(pt.x - expectedRightBoundary);
+//     //     if (distToLeft < distToRight && distToLeft < tolerance)
+//     //         leftPoints.push_back(pt);
+//     //     else if (distToRight < distToLeft && distToRight < tolerance)
+//     //         rightPoints.push_back(pt);
+//     //     // Otherwise, leave the point unassigned (or store it elsewhere for debugging).
+//     // }
+
+//     // --- Stage 5: Sanity Check ---
+//     // Ensure the left cluster is actually to the left by checking the average x.
+//     double leftMeanX = 0, rightMeanX = 0;
+//     if (!leftPoints.empty()) {
+//         for (const auto& pt : leftPoints)
+//             leftMeanX += pt.x;
+//         leftMeanX /= leftPoints.size();
+//     }
+//     if (!rightPoints.empty()) {
+//         for (const auto& pt : rightPoints)
+//             rightMeanX += pt.x;
+//         rightMeanX /= rightPoints.size();
+//     }
+//     if (!leftPoints.empty() && !rightPoints.empty() && leftMeanX > rightMeanX) {
+//         // Swap clusters if they are reversed.
+//         std::swap(leftPoints, rightPoints);
+//     }
+
+//     // --- Stage 6: Fallback to History ---
+//     // If a lane cluster is too sparse (less than 3 points), fallback to the previous frame's assignment.
+//     // if (leftPoints.size() < 3 && !prevLeftPoints.empty())
+//     //     leftPoints = prevLeftPoints;
+//     // if (rightPoints.size() < 3 && !prevRightPoints.empty())
+//     //     rightPoints = prevRightPoints;
+
+//     // Update history for next frame.
+//     if (leftPoints.size() >= 3)
+//         prevLeftPoints = leftPoints;
+//     if (rightPoints.size() >= 3)
+//         prevRightPoints = rightPoints;
+// }
+
 void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
-                                     std::vector<cv::Point>& leftPoints,
-                                     std::vector<cv::Point>& rightPoints,
-                                     cv::Mat& frame)
+                                    std::vector<cv::Point>& leftPoints,
+                                    std::vector<cv::Point>& rightPoints,
+                                    cv::Mat& frame)
 {
     // Clear output vectors
     leftPoints.clear();
@@ -1076,7 +1271,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     int midX = width / 2;  // Base midline
 
     // --- Stage 1: Pre-filtering ---
-    // ROI filtering: keep points in the lower 75% and within 5%-95% horizontally.
+    // ROI filtering: keep points in the lower 75% and within 10%-90% horizontally
     std::vector<cv::Point> filteredPoints;
     for (const auto& pt : points) {
         if (pt.y > height * 0.15 && pt.x > width * 0.10 && pt.x < width * 0.90) {
@@ -1084,32 +1279,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
     
-    // std::vector<int> x_coords;
-    // for (const auto& pt : points) {
-        //     if (pt.y > height * 0.15) { // Only consider lower part of the image
-        //         x_coords.push_back(pt.x);
-        //     }
-        // }
-        
-        // if (x_coords.empty()) return;
-        
-        // std::sort(x_coords.begin(), x_coords.end());
-        // int median_x = x_coords[x_coords.size() / 2];
-        
-        // // 2. Adjust the division line using lane width if available
-        // int divisionLine = median_x;
-        // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-            //     // Calculate center from previous frame's lanes
-            //     int leftX = prevLeftCurve.front().x;
-            //     int rightX = prevRightCurve.front().x;
-            //     int historyMidX = (leftX + rightX) / 2;
-            
-            //     // Use weighted average of median and history
-            //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
-            // }
-        
-    
-        // Density filtering: remove isolated points.
+    // Density filtering: remove isolated points
     std::vector<cv::Point> densityFiltered;
     float radius = width * 0.025f;  // ~2.5% of frame width
     for (size_t i = 0; i < filteredPoints.size(); i++) {
@@ -1122,113 +1292,73 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 neighborCount++;
             }
         }
-        // Require at least 4 neighbors (adjust threshold as needed)
+        // Require at least 4 neighbors
         if (neighborCount >= 4)
             densityFiltered.push_back(filteredPoints[i]);
     }
-
-    // --- Stage 2: Compute Expected Boundaries Using History and laneWidthEstimate ---
-    int expectedLeftBoundary, expectedRightBoundary;
-    if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-        // Use the bottom-most (first) points from the stored history.
-        int leftX = prevLeftCurve.front().x;
-        int rightX = prevRightCurve.front().x;
-        // Compute a midline based on historical lane positions.
-        int historyMidX = (leftX + rightX) / 2;
-        
-        // Use a narrower lane width estimate (80% of the current value)
-        float adjustedLaneWidth = laneWidthEstimate * 0.5f;
-        
-        // Expected boundaries are half the lane width to either side of history midline.
-        expectedLeftBoundary  = historyMidX - static_cast<int>(adjustedLaneWidth * 0.5f);
-        expectedRightBoundary = historyMidX + static_cast<int>(adjustedLaneWidth * 0.5f);
-    } else {
-        // Fallback: use the image midline and a narrower lane width estimate
-        float adjustedLaneWidth = laneWidthEstimate * 0.8f;
-        expectedLeftBoundary  = midX - static_cast<int>(adjustedLaneWidth * 0.5f);
-        expectedRightBoundary = midX + static_cast<int>(adjustedLaneWidth * 0.5f);
-    }
-
-    // Define a tolerance based on lane width (for example, 20% of lane width).
-    //float tolerance = laneWidthEstimate * 0.2f;
-
-    // --- Stage 3: Use projected lane curves for assignment ---
-    std::vector<cv::Point> ambiguousPoints;
+    
+    if (densityFiltered.empty()) return;
+    
+    // --- Stage 2: Simple Clustering Using Median Division ---
+    // Find median x-coordinate as division point
+    std::vector<int> xCoords;
     for (const auto& pt : densityFiltered) {
-        // Make tolerance adaptive - larger at the top of the image (distant points)
-        float yRatio = 1.0f - (float)(pt.y) / height;  // 0 at bottom, 1 at top
-        float adaptiveTolerance = laneWidthEstimate * (0.2f + yRatio * 0.2f);
+        xCoords.push_back(pt.x);
+    }
+    std::sort(xCoords.begin(), xCoords.end());
+    int medianX = xCoords[xCoords.size() / 2];
+    
+    // Adjust division line based on density distribution
+    // Find the largest gap in the middle region
+    int gapThreshold = width * 0.1f; // 10% of width
+    int bestDivisionX = medianX;
+    int largestGap = 0;
+    
+    // Examine central 60% of width for gaps
+    int minX = width * 0.2f;
+    int maxX = width * 0.8f;
+    std::sort(xCoords.begin(), xCoords.end());
+    
+    for (size_t i = 1; i < xCoords.size(); i++) {
+        int gap = xCoords[i] - xCoords[i-1];
+        int midPoint = (xCoords[i] + xCoords[i-1]) / 2;
         
-        // Get expected lane position at this y-level
-        float expectedLeftX = expectedLeftBoundary;
-        float expectedRightX = expectedRightBoundary;
-        
-        // Use lane curves if we have history
-        if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-            // Find closest y-points in the curves
-            for (const auto& curvePt : prevLeftCurve) {
-                if (abs(curvePt.y - pt.y) < height * 0.1f) {
-                    expectedLeftX = curvePt.x;
-                    break;
-                }
-            }
-            
-            for (const auto& curvePt : prevRightCurve) {
-                if (abs(curvePt.y - pt.y) < height * 0.1f) {
-                    expectedRightX = curvePt.x;
-                    break;
-                }
-            }
+        if (gap > largestGap && gap > gapThreshold && 
+            midPoint > minX && midPoint < maxX) {
+            largestGap = gap;
+            bestDivisionX = midPoint;
         }
-        
-        // Calculate distance to lanes at this y-level
-        float distToLeft = std::abs(pt.x - expectedLeftX);
-        float distToRight = std::abs(pt.x - expectedRightX);
-        
-        // Better decision logic - assign to closest lane if it's clearly closer
-        if (distToLeft < distToRight * 0.7f || 
-            (distToLeft < adaptiveTolerance && distToLeft < distToRight)) {
+    }
+    
+    // If no significant gap found, use the median
+    int divisionLine = (largestGap > gapThreshold) ? bestDivisionX : medianX;
+    
+    // --- Stage 3: Assign points based on division line ---
+    for (const auto& pt : densityFiltered) {
+        if (pt.x < divisionLine) {
             leftPoints.push_back(pt);
-        } 
-        else if (distToRight < distToLeft * 0.7f || 
-                 (distToRight < adaptiveTolerance && distToRight < distToLeft)) {
+        } else {
             rightPoints.push_back(pt);
         }
-        else {
-            // This point is truly ambiguous - it's nearly equidistant
-            // Use position relative to midpoint to decide
-            float midX = (expectedLeftX + expectedRightX) / 2.0f;
-            if (pt.x < midX) {
+    }
+    
+    // --- Stage 4: Validate clusters ---
+    // If one side has too few points, adjust division
+    if (leftPoints.size() < 3 || rightPoints.size() < 3) {
+        // Try a simpler approach - split at image midpoint
+        leftPoints.clear();
+        rightPoints.clear();
+        for (const auto& pt : densityFiltered) {
+            if (pt.x < width/2) {
                 leftPoints.push_back(pt);
             } else {
                 rightPoints.push_back(pt);
             }
         }
     }
-
-    // No ambiguous points remain to process
-
-    for (const auto& pt : ambiguousPoints)
-    {
-        cv::circle(frame, pt, 3, cv::Scalar(0, 255, 255), -1); // Yellow for
-        // filtered points
-    }
-
-
-    // // --- Stage 4: Reassign Ambiguous Points ---
-    // // For ambiguous points, compare the distance to the expected left/right boundaries.
-    // for (const auto& pt : ambiguousPoints) {
-    //     float distToLeft  = std::abs(pt.x - expectedLeftBoundary);
-    //     float distToRight = std::abs(pt.x - expectedRightBoundary);
-    //     if (distToLeft < distToRight && distToLeft < tolerance)
-    //         leftPoints.push_back(pt);
-    //     else if (distToRight < distToLeft && distToRight < tolerance)
-    //         rightPoints.push_back(pt);
-    //     // Otherwise, leave the point unassigned (or store it elsewhere for debugging).
-    // }
-
-    // --- Stage 5: Sanity Check ---
-    // Ensure the left cluster is actually to the left by checking the average x.
+    
+    // --- Stage 5: Final sanity check ---
+    // Ensure the left cluster is actually to the left
     double leftMeanX = 0, rightMeanX = 0;
     if (!leftPoints.empty()) {
         for (const auto& pt : leftPoints)
@@ -1241,22 +1371,14 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         rightMeanX /= rightPoints.size();
     }
     if (!leftPoints.empty() && !rightPoints.empty() && leftMeanX > rightMeanX) {
-        // Swap clusters if they are reversed.
+        // Swap clusters if they are reversed
         std::swap(leftPoints, rightPoints);
     }
-
-    // --- Stage 6: Fallback to History ---
-    // If a lane cluster is too sparse (less than 3 points), fallback to the previous frame's assignment.
-    // if (leftPoints.size() < 3 && !prevLeftPoints.empty())
-    //     leftPoints = prevLeftPoints;
-    // if (rightPoints.size() < 3 && !prevRightPoints.empty())
-    //     rightPoints = prevRightPoints;
-
-    // Update history for next frame.
-    if (leftPoints.size() >= 3)
-        prevLeftPoints = leftPoints;
-    if (rightPoints.size() >= 3)
-        prevRightPoints = rightPoints;
+    
+    // Draw the division line for visualization
+    cv::line(frame, cv::Point(divisionLine, 0), 
+             cv::Point(divisionLine, height), 
+             cv::Scalar(0, 255, 255), 1);
 }
 
 std::vector<cv::Point>
