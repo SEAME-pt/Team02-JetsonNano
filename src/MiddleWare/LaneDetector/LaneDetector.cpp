@@ -1137,7 +1137,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         int historyMidX = (leftX + rightX) / 2;
         
         // Use a narrower lane width estimate (80% of the current value)
-        float adjustedLaneWidth = laneWidthEstimate * 0.8f;
+        float adjustedLaneWidth = laneWidthEstimate * 1f;
         
         // Expected boundaries are half the lane width to either side of history midline.
         expectedLeftBoundary  = historyMidX - static_cast<int>(adjustedLaneWidth * 0.5f);
@@ -1152,19 +1152,59 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Define a tolerance based on lane width (for example, 20% of lane width).
     float tolerance = laneWidthEstimate * 0.2f;
 
-    // --- Stage 3: Initial Assignment Based on Expected Boundaries ---
-    // Instead of a pure adaptive midline, assign points if they are clearly within 
-    // the expected left or right boundary bands.
+    // --- Stage 3: Use projected lane curves for assignment ---
     std::vector<cv::Point> ambiguousPoints;
     for (const auto& pt : densityFiltered) {
-        if (pt.x < expectedLeftBoundary + tolerance) {
+        // Make tolerance adaptive - larger at the top of the image (distant points)
+        float yRatio = 1.0f - (float)(pt.y) / height;  // 0 at bottom, 1 at top
+        float adaptiveTolerance = laneWidthEstimate * (0.2f + yRatio * 0.2f);
+        
+        // Get expected lane position at this y-level
+        float expectedLeftX = expectedLeftBoundary;
+        float expectedRightX = expectedRightBoundary;
+        
+        // Use lane curves if we have history
+        if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+            // Find closest y-points in the curves
+            for (const auto& curvePt : prevLeftCurve) {
+                if (abs(curvePt.y - pt.y) < height * 0.1f) {
+                    expectedLeftX = curvePt.x;
+                    break;
+                }
+            }
+            
+            for (const auto& curvePt : prevRightCurve) {
+                if (abs(curvePt.y - pt.y) < height * 0.1f) {
+                    expectedRightX = curvePt.x;
+                    break;
+                }
+            }
+        }
+        
+        // Calculate distance to lanes at this y-level
+        float distToLeft = std::abs(pt.x - expectedLeftX);
+        float distToRight = std::abs(pt.x - expectedRightX);
+        
+        // Better decision logic - assign to closest lane if it's clearly closer
+        if (distToLeft < distToRight * 0.7f) {
             leftPoints.push_back(pt);
-        } else if (pt.x > expectedRightBoundary - tolerance) {
+        } 
+        else if (distToRight < distToLeft * 0.7f) {
             rightPoints.push_back(pt);
-        } else {
-            ambiguousPoints.push_back(pt);  // points in the ambiguous central zone
+        }
+        else {
+            // This point is truly ambiguous - it's nearly equidistant
+            // Use position relative to midpoint to decide
+            float midX = (expectedLeftX + expectedRightX) / 2.0f;
+            if (pt.x < midX) {
+                leftPoints.push_back(pt);
+            } else {
+                rightPoints.push_back(pt);
+            }
         }
     }
+
+    // No ambiguous points remain to process
 
     for (const auto& pt : ambiguousPoints)
     {
@@ -1173,17 +1213,17 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
 
 
-    // --- Stage 4: Reassign Ambiguous Points ---
-    // For ambiguous points, compare the distance to the expected left/right boundaries.
-    for (const auto& pt : ambiguousPoints) {
-        float distToLeft  = std::abs(pt.x - expectedLeftBoundary);
-        float distToRight = std::abs(pt.x - expectedRightBoundary);
-        if (distToLeft < distToRight && distToLeft < tolerance)
-            leftPoints.push_back(pt);
-        else if (distToRight < distToLeft && distToRight < tolerance)
-            rightPoints.push_back(pt);
-        // Otherwise, leave the point unassigned (or store it elsewhere for debugging).
-    }
+    // // --- Stage 4: Reassign Ambiguous Points ---
+    // // For ambiguous points, compare the distance to the expected left/right boundaries.
+    // for (const auto& pt : ambiguousPoints) {
+    //     float distToLeft  = std::abs(pt.x - expectedLeftBoundary);
+    //     float distToRight = std::abs(pt.x - expectedRightBoundary);
+    //     if (distToLeft < distToRight && distToLeft < tolerance)
+    //         leftPoints.push_back(pt);
+    //     else if (distToRight < distToLeft && distToRight < tolerance)
+    //         rightPoints.push_back(pt);
+    //     // Otherwise, leave the point unassigned (or store it elsewhere for debugging).
+    // }
 
     // --- Stage 5: Sanity Check ---
     // Ensure the left cluster is actually to the left by checking the average x.
