@@ -1307,26 +1307,22 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
     std::sort(xCoords.begin(), xCoords.end());
     int medianX = xCoords[xCoords.size() / 2];
+    int divisionLine = (abs(medianX - midX) < width * 0.2) ? medianX : midX;
     
-    // Adjust division line based on density distribution
-    // Find the largest gap in the middle region
-    int gapThreshold = width * 0.1f; // 10% of width
-    int bestDivisionX = medianX;
+    // Look for the largest gap in the middle 60% of the frame
+    int gapThreshold = width * 0.08f; // 8% of width
     int largestGap = 0;
-    
-    // Examine central 60% of width for gaps
-    int minX = width * 0.2f;
-    int maxX = width * 0.8f;
-    std::sort(xCoords.begin(), xCoords.end());
+    int minSearchX = midX - width * 0.3;  // Use midX as reference for search area
+    int maxSearchX = midX + width * 0.3;
     
     for (size_t i = 1; i < xCoords.size(); i++) {
         int gap = xCoords[i] - xCoords[i-1];
         int midPoint = (xCoords[i] + xCoords[i-1]) / 2;
         
         if (gap > largestGap && gap > gapThreshold && 
-            midPoint > minX && midPoint < maxX) {
+            midPoint > minSearchX && midPoint < maxSearchX) {
             largestGap = gap;
-            bestDivisionX = midPoint;
+            divisionLine = midPoint;
         }
     }
     
