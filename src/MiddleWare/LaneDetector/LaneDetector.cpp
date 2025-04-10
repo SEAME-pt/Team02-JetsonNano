@@ -1274,7 +1274,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // ROI filtering: keep points in the lower 85% and within 10%-90% horizontally
     std::vector<cv::Point> filteredPoints;
     for (const auto& pt : points) {
-        if (pt.y > height * 0.15 && pt.x > width * 0.10 && pt.x < width * 0.90) {
+        if (pt.y > height * 0.15 && pt.x > width * 0.20 && pt.x < width * 0.80) {
             filteredPoints.push_back(pt);
         }
     }
