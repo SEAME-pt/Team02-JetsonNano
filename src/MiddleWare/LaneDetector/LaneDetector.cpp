@@ -605,7 +605,8 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         {
             double currentWidth = rightX - leftX;
             // Exponential moving average to smooth lane width estimate
-            laneWidthEstimate = 0.2 * currentWidth + 0.8 * laneWidthEstimate;
+            laneWidthEstimate = 0.8 * currentWidth + 0.2 * laneWidthEstimate;
+            // laneWidthEstimate = std::max(minLaneWidth, std::min(, laneWidthEstimate));
         }
     }
     double alpha = 0.3;
@@ -1202,144 +1203,55 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
 // Helper: Compute expected left/right boundaries using history and laneWidthEstimate.
 // If history is available, use previous lane curves; otherwise, fall back to the simple midline.
 static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float laneWidthEstimate,
-    const std::vector<cv::Point>& prevLeftCurve,
-    const std::vector<cv::Point>& prevRightCurve,
-    std::vector<cv::Point>& leftBoundary,
-    std::vector<cv::Point>& rightBoundary)
+                                      const std::vector<cv::Point>& prevLeftCurve,
+                                      const std::vector<cv::Point>& prevRightCurve,
+                                      int &expectedLeftBoundary, int &expectedRightBoundary)
 {
-    int height = frame.rows;
-    leftBoundary.clear();
-    rightBoundary.clear();
-    
-    // If we have previous curves, use them to create curved boundaries
+    //int width = frame.cols;
+    (void) frame;
     if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-        // Re-sample both curves at consistent y values to create boundary curves
-        for (int y = height; y >= height * 0.3; y -= 10) {
-            // Find closest points in both curves at this y level
-            cv::Point leftPt, rightPt;
-            int minDistLeft = INT_MAX, minDistRight = INT_MAX;
-            
-            for (const auto& pt : prevLeftCurve) {
-                int dist = std::abs(pt.y - y);
-                if (dist < minDistLeft) {
-                    minDistLeft = dist;
-                    leftPt = pt;
-                }
-            }
-            
-            for (const auto& pt : prevRightCurve) {
-                int dist = std::abs(pt.y - y);
-                if (dist < minDistRight) {
-                    minDistRight = dist;
-                    rightPt = pt;
-                }
-            }
-            
-            // Only add point if we found reasonable matches
-            if (minDistLeft < height * 0.1 && minDistRight < height * 0.1) {
-                int midX = (leftPt.x + rightPt.x) / 2;
-                leftBoundary.push_back(cv::Point(midX - laneWidthEstimate * 0.5, y));
-                rightBoundary.push_back(cv::Point(midX + laneWidthEstimate * 0.5, y));
-            }
-        }
-    }
-    
-    // If we couldn't create proper boundaries, fall back to vertical lines
-    if (leftBoundary.empty() || rightBoundary.empty()) {
-        int defaultLeft = midX - laneWidthEstimate * 0.5;
-        int defaultRight = midX + laneWidthEstimate * 0.5;
-        
-        for (int y = height; y >= height * 0.3; y -= 10) {
-            leftBoundary.push_back(cv::Point(defaultLeft, y));
-            rightBoundary.push_back(cv::Point(defaultRight, y));
-        }
+        // Use the bottom-most points from previous curves.
+        int leftX = prevLeftCurve.front().x;
+        int rightX = prevRightCurve.front().x;
+        int historyMidX = (leftX + rightX) / 2;
+        expectedLeftBoundary  = historyMidX - static_cast<int>(laneWidthEstimate * 0.5f);
+        expectedRightBoundary = historyMidX + static_cast<int>(laneWidthEstimate * 0.5f);
+    } else {
+        expectedLeftBoundary  = midX - static_cast<int>(laneWidthEstimate * 0.5f);
+        expectedRightBoundary = midX + static_cast<int>(laneWidthEstimate * 0.5f);
     }
 }
 
 // Helper: Assign filtered points to left/right clusters using expected boundaries and an adaptive tolerance.
 static void assignPointsToLanes(const std::vector<cv::Point>& points,
-    std::vector<cv::Point>& leftPoints,
-    std::vector<cv::Point>& rightPoints,
-    const std::vector<cv::Point>& leftBoundary,
-    const std::vector<cv::Point>& rightBoundary,
-    float tolerance,
-    int midX)
+                                std::vector<cv::Point>& leftPoints,
+                                std::vector<cv::Point>& rightPoints,
+                                int expectedLeftBoundary,
+                                int expectedRightBoundary,
+                                float tolerance,
+                                int midX)
 {
     std::vector<cv::Point> ambiguous;
-    
     for (const auto& pt : points) {
-        // Find closest boundary points at this y-level
-        float minDistLeft = FLT_MAX, minDistRight = FLT_MAX;
-        cv::Point closestLeftBound, closestRightBound;
-        
-        for (const auto& bp : leftBoundary) {
-            float dist = std::abs(bp.y - pt.y);
-            if (dist < minDistLeft) {
-                minDistLeft = dist;
-                closestLeftBound = bp;
-            }
-        }
-        
-        for (const auto& bp : rightBoundary) {
-            float dist = std::abs(bp.y - pt.y);
-            if (dist < minDistRight) {
-                minDistRight = dist;
-                closestRightBound = bp;
-            }
-        }
-        
-        // Check if point is to the left/right of the boundary
-        if (minDistLeft < FLT_MAX && minDistRight < FLT_MAX) {
-            float distToLeftBound = pt.x - closestLeftBound.x;
-            float distToRightBound = closestRightBound.x - pt.x;
-            
-            if (distToLeftBound < 0 && std::abs(distToLeftBound) < tolerance) {
-                leftPoints.push_back(pt);
-            }
-            else if (distToRightBound < 0 && std::abs(distToRightBound) < tolerance) {
-                rightPoints.push_back(pt);
-            }
-            else if (pt.x < closestLeftBound.x) {
-                leftPoints.push_back(pt); // Clear left
-            }
-            else if (pt.x > closestRightBound.x) {
-                rightPoints.push_back(pt); // Clear right
-            }
-            else {
-                ambiguous.push_back(pt);
-            }
-        }
+        if (pt.x < expectedLeftBoundary + tolerance)
+            leftPoints.push_back(pt);
+        else if (pt.x > expectedRightBoundary - tolerance)
+            rightPoints.push_back(pt);
+        else
+            ambiguous.push_back(pt);
+    }
+    // For ambiguous points, decide based on closeness.
+    for (const auto& pt : ambiguous) {
+        float dLeft = std::abs(pt.x - expectedLeftBoundary);
+        float dRight = std::abs(pt.x - expectedRightBoundary);
+        if (dLeft < dRight && dLeft < tolerance)
+            leftPoints.push_back(pt);
+        else if (dRight < dLeft && dRight < tolerance)
+            rightPoints.push_back(pt);
         else {
-            // Fallback to midpoint separation
+            // Fallback: use midline separation.
             if (pt.x < midX) leftPoints.push_back(pt);
             else rightPoints.push_back(pt);
-        }
-    }
-    
-    // For ambiguous points, use distances to decide
-    for (const auto& pt : ambiguous) {
-        // Find minimum distances to both boundaries
-        float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
-        
-        for (const auto& bp : leftBoundary) {
-            float dy = bp.y - pt.y;
-            float dx = bp.x - pt.x;
-            float dist = std::sqrt(dx*dx + dy*dy);
-            minLeftDist = std::min(minLeftDist, dist);
-        }
-        
-        for (const auto& bp : rightBoundary) {
-            float dy = bp.y - pt.y;
-            float dx = bp.x - pt.x;
-            float dist = std::sqrt(dx*dx + dy*dy);
-            minRightDist = std::min(minRightDist, dist);
-        }
-        
-        // Assign to closest cluster
-        if (minLeftDist < minRightDist) {
-            leftPoints.push_back(pt);
-        } else {
-            rightPoints.push_back(pt);
         }
     }
         // Draw the current clustered points first (before curve fitting)
@@ -1355,19 +1267,63 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     leftPoints.clear();
     rightPoints.clear();
     int width = frame.cols;
-    //int height = frame.rows;
+    int height = frame.rows;
     int midX = width / 2;
 
     // Stage 1: Filter points (ROI + density)
     std::vector<cv::Point> filtered = filterPoints(points, frame);
     if (filtered.empty()) return; // no valid points
 
+    // *** NEW STAGE 1B: DETECT NATURAL X-AXIS SEPARATION ***
+    bool naturalSeparationFound = false;
+    int separationPoint = midX;
+    
+    // Sort points by x-coordinate
+    std::vector<int> xCoordinates;
+    for (const auto& pt : filtered) {
+        xCoordinates.push_back(pt.x);
+    }
+    std::sort(xCoordinates.begin(), xCoordinates.end());
+    
+    // Look for the largest gap in x coordinates
+    int maxGap = 0;
+    int gapPosition = -1;
+    int minGapWidth = width * 0.05f; // Minimum meaningful gap (5% of width)
+    
+    for (size_t i = 1; i < xCoordinates.size(); i++) {
+        int gap = xCoordinates[i] - xCoordinates[i-1];
+        if (gap > maxGap && gap > minGapWidth) {
+            // Only consider gaps not too far to left or right
+            int midGapPosition = (xCoordinates[i] + xCoordinates[i-1]) / 2;
+            if (midGapPosition > width * 0.25 && midGapPosition < width * 0.75) {
+                maxGap = gap;
+                gapPosition = midGapPosition;
+            }
+        }
+    }
+    
+    // If we found a significant gap, use it for separation
+    if (maxGap > 0 && gapPosition > 0) {
+        naturalSeparationFound = true;
+        separationPoint = gapPosition;
+        
+        // Draw the detected separation
+        cv::line(frame, cv::Point(separationPoint, height), 
+                 cv::Point(separationPoint, height/2),
+                 cv::Scalar(255, 0, 255), 2);
+        
+        // Add text to show the gap size
+        std::string gapText = "Gap: " + std::to_string(maxGap);
+        cv::putText(frame, gapText, cv::Point(separationPoint - 50, height/2 + 30), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+    }
+
     // Stage 2: Compute expected boundaries from history and laneWidthEstimate
     // Ensure laneWidthEstimate has a default (if not yet set).
     if (laneWidthEstimate <= 0) {
         laneWidthEstimate = width * 0.6f;
     }
-    std::vector<cv::Point> expectedLeftBoundary, expectedRightBoundary;
+    int expectedLeftBoundary, expectedRightBoundary;
     computeExpectedBoundaries(frame, midX, laneWidthEstimate,
                               prevLeftCurve, prevRightCurve,
                               expectedLeftBoundary, expectedRightBoundary);
@@ -1375,10 +1331,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     float tolerance = laneWidthEstimate * 0.2f;
 
     // (Optional) Visual debug: Draw expected boundaries
-    // cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
-    //          cv::Scalar(128, 0, 255), 2);
-    // cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
-    //          cv::Scalar(0, 128, 255), 2);
+    cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
+             cv::Scalar(128, 0, 255), 2);
+    cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
+             cv::Scalar(0, 128, 255), 2);
 
     // Stage 3: Assign points to lanes based on expected boundaries
     assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
@@ -1413,6 +1369,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         prevLeftPoints = leftPoints;
     if (rightPoints.size() >= 3)
         prevRightPoints = rightPoints;
+
+    std::string methodText = naturalSeparationFound ? "Separation Detected" : "Using History/Default";
+    cv::putText(frame, methodText, cv::Point(20, 120), 
+                cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
 }
 
 
