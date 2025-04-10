@@ -48,9 +48,9 @@ LaneDetector::LaneDetector(const std::string& enginePath,
 
     // cap.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
     // cap.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 800);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 600);
-
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, 800);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, 600);
+    
     cap.set(cv::CAP_PROP_FPS, 30);
     // Set camera buffer size
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
