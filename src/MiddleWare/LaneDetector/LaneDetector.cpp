@@ -1108,11 +1108,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
             // }
         
-    for (const auto& pt : filteredPoints)
-    {
-        cv::circle(frame, pt, 3, cv::Scalar(0, 255, 255), -1); // Yellow for
-        // filtered points
-    }
     
         // Density filtering: remove isolated points.
     std::vector<cv::Point> densityFiltered;
@@ -1171,6 +1166,11 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
 
+    for (const auto& pt : ambiguousPoints)
+    {
+        cv::circle(frame, pt, 3, cv::Scalar(0, 255, 255), -1); // Yellow for
+        // filtered points
+    }
 
 
     // --- Stage 4: Reassign Ambiguous Points ---
