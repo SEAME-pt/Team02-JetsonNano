@@ -1355,7 +1355,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     leftPoints.clear();
     rightPoints.clear();
     int width = frame.cols;
-    int height = frame.rows;
+    //int height = frame.rows;
     int midX = width / 2;
 
     // Stage 1: Filter points (ROI + density)
