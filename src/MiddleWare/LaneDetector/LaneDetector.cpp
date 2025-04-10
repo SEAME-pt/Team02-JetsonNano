@@ -1191,6 +1191,14 @@ static void assignPointsToLanes(const std::vector<cv::Point>& points,
             else rightPoints.push_back(pt);
         }
     }
+        // Draw the current clustered points first (before curve fitting)
+    for (const auto& pt : leftPoints) {
+        cv::circle(frame, pt, 4, cv::Scalar(255, 100, 100), -1); // Light red for left points
+    }
+
+    for (const auto& pt : rightPoints) {
+        cv::circle(frame, pt, 4, cv::Scalar(100, 255, 100), -1); // Light green for right points
+    }
 }
 
 // Main function: Cluster lane points into left and right using the expected boundaries.
