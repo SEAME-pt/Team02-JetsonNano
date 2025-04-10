@@ -1292,77 +1292,77 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Stage 3: Assign points to lanes based on expected boundaries
     assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
 
-    if ((leftPoints.size() > 10 * rightPoints.size() && rightPoints.size() < 3) ||
-    (rightPoints.size() > 10 * leftPoints.size() && leftPoints.size() < 3)) {
+    // if ((leftPoints.size() > 10 * rightPoints.size() && rightPoints.size() < 3) ||
+    // (rightPoints.size() > 10 * leftPoints.size() && leftPoints.size() < 3)) {
         
-        // Clear the current assignments since they're imbalanced
-        leftPoints.clear();
-        rightPoints.clear();
+    //     // Clear the current assignments since they're imbalanced
+    //     leftPoints.clear();
+    //     rightPoints.clear();
         
-        // Use k-means to separate points regardless of history
-        std::vector<cv::Point2f> pts_float;
-        for (const auto& pt : filtered) {
-            pts_float.push_back(cv::Point2f(pt.x, pt.y));
-        }
+    //     // Use k-means to separate points regardless of history
+    //     std::vector<cv::Point2f> pts_float;
+    //     for (const auto& pt : filtered) {
+    //         pts_float.push_back(cv::Point2f(pt.x, pt.y));
+    //     }
         
-        // Bail if we don't have enough points
-        if (pts_float.size() < 6) return;
+    //     // Bail if we don't have enough points
+    //     if (pts_float.size() < 6) return;
         
-        // Prepare for k-means
-        cv::Mat points(pts_float.size(), 1, CV_32FC2, pts_float.data());
-        cv::Mat labels, centers;
+    //     // Prepare for k-means
+    //     cv::Mat points(pts_float.size(), 1, CV_32FC2, pts_float.data());
+    //     cv::Mat labels, centers;
         
-        // Initial centers - one at 1/4 width, one at 3/4 width, at bottom of frame
-        std::vector<cv::Point2f> initial_centers = {
-            cv::Point2f(width * 0.25f, height * 0.85f),
-            cv::Point2f(width * 0.75f, height * 0.85f)
-        };
-        cv::Mat initial_centers_mat(2, 1, CV_32FC2, initial_centers.data());
+    //     // Initial centers - one at 1/4 width, one at 3/4 width, at bottom of frame
+    //     std::vector<cv::Point2f> initial_centers = {
+    //         cv::Point2f(width * 0.25f, height * 0.85f),
+    //         cv::Point2f(width * 0.75f, height * 0.85f)
+    //     };
+    //     cv::Mat initial_centers_mat(2, 1, CV_32FC2, initial_centers.data());
         
-        // Run k-means with custom initial centers
-        cv::kmeans(points, 2, labels, 
-                cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0),
-                3, cv::KMEANS_PP_CENTERS, centers);
+    //     // Run k-means with custom initial centers
+    //     cv::kmeans(points, 2, labels, 
+    //             cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0),
+    //             3, cv::KMEANS_PP_CENTERS, centers);
         
-        // Process results - determine which cluster is left vs right
-        cv::Point2f center1 = centers.at<cv::Point2f>(0);
-        cv::Point2f center2 = centers.at<cv::Point2f>(1);
-        bool isCenter1Left = center1.x < center2.x;
+    //     // Process results - determine which cluster is left vs right
+    //     cv::Point2f center1 = centers.at<cv::Point2f>(0);
+    //     cv::Point2f center2 = centers.at<cv::Point2f>(1);
+    //     bool isCenter1Left = center1.x < center2.x;
         
-        // Assign points based on k-means labels
-        for (int i = 0; i < labels.rows; i++) {
-            int cluster = labels.at<int>(i, 0);
-            if ((cluster == 0 && isCenter1Left) || (cluster == 1 && !isCenter1Left)) {
-                leftPoints.push_back(filtered[i]);
-            } else {
-                rightPoints.push_back(filtered[i]);
-            }
-        }
+    //     // Assign points based on k-means labels
+    //     for (int i = 0; i < labels.rows; i++) {
+    //         int cluster = labels.at<int>(i, 0);
+    //         if ((cluster == 0 && isCenter1Left) || (cluster == 1 && !isCenter1Left)) {
+    //             leftPoints.push_back(filtered[i]);
+    //         } else {
+    //             rightPoints.push_back(filtered[i]);
+    //         }
+    //     }
         
-        // Visualize the new boundaries after re-clustering
-        if (!leftPoints.empty() && !rightPoints.empty()) {
-            int newLeftX = 0, newRightX = 0;
-            for (const auto& pt : leftPoints) newLeftX += pt.x;
-            for (const auto& pt : rightPoints) newRightX += pt.x;
-            newLeftX /= leftPoints.size();
-            newRightX /= rightPoints.size();
+    //     // Visualize the new boundaries after re-clustering
+    //     if (!leftPoints.empty() && !rightPoints.empty()) {
+    //         int newLeftX = 0, newRightX = 0;
+    //         for (const auto& pt : leftPoints) newLeftX += pt.x;
+    //         for (const auto& pt : rightPoints) newRightX += pt.x;
+    //         newLeftX /= leftPoints.size();
+    //         newRightX /= rightPoints.size();
             
-            // Draw new boundaries with different color
-            cv::line(frame, cv::Point(newLeftX, height), cv::Point(newLeftX, height/2),
-                    cv::Scalar(255, 0, 128), 2);
-            cv::line(frame, cv::Point(newRightX, height), cv::Point(newRightX, height/2),
-                    cv::Scalar(128, 0, 255), 2);
+    //         // Draw new boundaries with different color
+    //         cv::line(frame, cv::Point(newLeftX, height), cv::Point(newLeftX, height/2),
+    //                 cv::Scalar(255, 0, 128), 2);
+    //         cv::line(frame, cv::Point(newRightX, height), cv::Point(newRightX, height/2),
+    //                 cv::Scalar(128, 0, 255), 2);
                     
-            // Update estimation of lane width
-            float newWidth = newRightX - newLeftX;
-            if (newWidth > width * 0.15f && newWidth < width * 0.6f) {
-                laneWidthEstimate = laneWidthEstimate * 0.7f + newWidth * 0.3f;
-            }
-        }
+    //         // Update estimation of lane width
+    //         float newWidth = newRightX - newLeftX;
+    //         if (newWidth > width * 0.15f && newWidth < width * 0.6f) {
+    //             laneWidthEstimate = laneWidthEstimate * 0.7f + newWidth * 0.3f;
+    //         }
+    //     }
         
-        // Add text indicator that forced re-clustering happened
-        cv::putText(frame, "Re-clustered", cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX,
-                    0.7, cv::Scalar(255, 0, 255), 2);
+    //     // Add text indicator that forced re-clustering happened
+    //     cv::putText(frame, "Re-clustered", cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX,
+    //                 0.7, cv::Scalar(255, 0, 255), 2);
     }
 
     for (const auto& pt : leftPoints) {
