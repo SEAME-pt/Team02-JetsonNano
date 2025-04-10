@@ -1435,6 +1435,44 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
 
+    if (!leftBoundary.empty()) {
+        // Draw left boundary points
+        for (const auto& pt : leftBoundary) {
+            cv::circle(frame, pt, 3, cv::Scalar(255, 0, 128), -1); // Magenta for left boundary
+        }
+        
+        // Connect left boundary points with lines
+        for (size_t i = 1; i < leftBoundary.size(); i++) {
+            cv::line(frame, leftBoundary[i-1], leftBoundary[i], 
+                     cv::Scalar(255, 0, 128), 2);
+        }
+    }
+    
+    if (!rightBoundary.empty()) {
+        // Draw right boundary points
+        for (const auto& pt : rightBoundary) {
+            cv::circle(frame, pt, 3, cv::Scalar(128, 255, 0), -1); // Light green for right boundary
+        }
+        
+        // Connect right boundary points with lines
+        for (size_t i = 1; i < rightBoundary.size(); i++) {
+            cv::line(frame, rightBoundary[i-1], rightBoundary[i], 
+                     cv::Scalar(128, 255, 0), 2);
+        }
+    }
+    
+    // Draw the midline boundary if available
+    if (!midBoundary.empty()) {
+        // Connect midline points with a dashed line
+        for (size_t i = 1; i < midBoundary.size(); i++) {
+            if (i % 2 == 0) {  // Create dashed effect by drawing every other segment
+                cv::line(frame, midBoundary[i-1], midBoundary[i], 
+                        cv::Scalar(255, 255, 0), 1);
+            }
+        }
+    }
+
+
     // --- Stage 4: Use projected lane curves for point assignment ---
     std::vector<cv::Point> ambiguousPoints;
     for (const auto& pt : densityFiltered) {
@@ -1491,17 +1529,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 rightPoints.push_back(pt);
             }
         }
-    }
-
-    // Draw curved boundaries for visualization
-    for (size_t i = 1; i < leftBoundary.size(); i++) {
-        cv::line(frame, leftBoundary[i-1], leftBoundary[i], 
-                cv::Scalar(128, 0, 255), 2);
-    }
-
-    for (size_t i = 1; i < rightBoundary.size(); i++) {
-        cv::line(frame, rightBoundary[i-1], rightBoundary[i], 
-                cv::Scalar(0, 128, 255), 2);
     }
     
     // --- Stage 5: Handle Ambiguous Points ---
