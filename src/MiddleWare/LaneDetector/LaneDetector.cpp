@@ -822,6 +822,48 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         }
     }
 
+    // Limit the maximum curve drift from center
+    if (!leftCurve.empty() && !rightCurve.empty()) {
+        int width = frame.cols;
+        float centerX = width / 2.0f;
+        float maxOffsetDistance = width * 0.3f; // Maximum allowed offset (30% of frame width)
+        
+        // Calculate current lane midpoint at each y-level
+        for (size_t i = 0; i < std::min(leftCurve.size(), rightCurve.size()); i++) {
+            size_t leftIdx = i * leftCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+            size_t rightIdx = i * rightCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+            
+            float midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2.0f;
+            float offset = midX - centerX;
+            
+            // If offset exceeds limit, adjust both lane curves
+            if (std::abs(offset) > maxOffsetDistance) {
+                float adjustment = offset - (offset > 0 ? maxOffsetDistance : -maxOffsetDistance);
+                
+                // Apply adjustment to this point in both curves
+                leftCurve[leftIdx].x -= adjustment;
+                rightCurve[rightIdx].x -= adjustment;
+            }
+        }
+        
+        // Additional check: Maintain minimum lane width
+        float minLaneWidth = laneWidthEstimate * 0.7f;
+        
+        for (size_t i = 0; i < std::min(leftCurve.size(), rightCurve.size()); i++) {
+            size_t leftIdx = i * leftCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+            size_t rightIdx = i * rightCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+            
+            float currentWidth = rightCurve[rightIdx].x - leftCurve[leftIdx].x;
+            
+            // If lanes are too close, expand them
+            if (currentWidth < minLaneWidth) {
+                float adjustment = (minLaneWidth - currentWidth) / 2.0f;
+                leftCurve[leftIdx].x -= adjustment;
+                rightCurve[rightIdx].x += adjustment;
+            }
+        }
+    }
+
     // 9. Calculate reference point for lateral error - IMPROVED HANDLING
     cv::Point midPoint;
     int height = frame.rows;
