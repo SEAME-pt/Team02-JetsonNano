@@ -8,11 +8,10 @@ int main(int argc, char** argv)
 {
     const std::string pipeline =
       "nvarguscamerasrc sensor-id=0 ! "
-      "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, format=NV12, framerate=(fraction)30/1 ! "
+      "video/x-raw(memory:NVMM), width=(int)216, height=(int)128, format=NV12, framerate=(fraction)30/1 ! "
       "nvvidconv ! video/x-raw, format=BGRx ! "
       "videoconvert ! video/x-raw, format=BGR ! "
       "appsink";
-      
     try
     {
         std::shared_ptr<zenoh::Session> session;
