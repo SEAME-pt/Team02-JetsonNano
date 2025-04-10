@@ -605,7 +605,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         {
             double currentWidth = rightX - leftX;
             // Exponential moving average to smooth lane width estimate
-            laneWidthEstimate = 0.8 * currentWidth + 0.2 * laneWidthEstimate;
+            laneWidthEstimate = 0.3 * currentWidth + 0.7 * laneWidthEstimate;
             // laneWidthEstimate = std::max(minLaneWidth, std::min(, laneWidthEstimate));
         }
     }
@@ -1510,8 +1510,8 @@ void LaneDetector::initKalmanFilters(const std::vector<cv::Point>& leftCurve,
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
 
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
 
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
