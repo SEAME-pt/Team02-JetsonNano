@@ -336,7 +336,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
 
     if (firstFrame)
     {
-        laneWidthEstimate = frame.cols * 0.45;
+        laneWidthEstimate = frame.cols * 0.25;
         firstFrame        = false;
     }
 
@@ -1079,7 +1079,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // ROI filtering: keep points in the lower 75% and within 5%-95% horizontally.
     std::vector<cv::Point> filteredPoints;
     for (const auto& pt : points) {
-        if (pt.y > height * 0.25 && pt.x > width * 0.05 && pt.x < width * 0.95) {
+        if (pt.y > height * 0.15 && pt.x > width * 0.10 && pt.x < width * 0.90) {
             filteredPoints.push_back(pt);
         }
     }
