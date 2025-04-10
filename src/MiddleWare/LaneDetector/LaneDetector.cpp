@@ -792,8 +792,17 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         prevLeftCurve  = leftCurve;
         prevRightCurve = rightCurve;
         // Also update your previous points used for clustering:
-        prevLeftPoints  = leftCurve;
-        prevRightPoints = rightCurve;
+    }
+    else
+    {
+        // Add: Reset history after too many missed detections
+        static int missedDetectionCount = 0;
+        if (++missedDetectionCount > 10) {
+            // Reset history after too many missed detections
+            prevLeftCurve.clear();
+            prevRightCurve.clear();
+            missedDetectionCount = 0;
+    }
     }
 
     // 8. Compute center lane as average of left and right lanes
@@ -1005,6 +1014,15 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
 
     float lateralError = prevError + errorChange;
     prevError          = lateralError;
+
+    const float MAX_ERROR = 1.5f;
+    if (lateralError > MAX_ERROR) {
+        lateralError = MAX_ERROR;
+        prevError = MAX_ERROR; // Update prevError as well
+    } else if (lateralError < -MAX_ERROR) {
+        lateralError = -MAX_ERROR;
+        prevError = -MAX_ERROR; // Update prevError as well
+    }
 
     // Publish error to control system if needed
     if (publisher_)
