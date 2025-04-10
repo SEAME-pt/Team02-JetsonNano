@@ -359,6 +359,9 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     // Use Kalman filter predictions when lanes disappear or are unstable
     if (kfInitialized)
     {
+        cv::Mat leftPredicted  = leftLaneKF.predict();
+        cv::Mat rightPredicted = rightLaneKF.predict();
+        
         if (!leftCurve.empty() && leftCurve.size() >= 3)
         {
             // If valid measurement exists, update Kalman filter normally.
