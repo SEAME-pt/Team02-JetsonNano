@@ -1084,6 +1084,30 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
 
+    // std::vector<int> x_coords;
+    // for (const auto& pt : points) {
+    //     if (pt.y > height * 0.15) { // Only consider lower part of the image
+    //         x_coords.push_back(pt.x);
+    //     }
+    // }
+    
+    // if (x_coords.empty()) return;
+    
+    // std::sort(x_coords.begin(), x_coords.end());
+    // int median_x = x_coords[x_coords.size() / 2];
+    
+    // // 2. Adjust the division line using lane width if available
+    // int divisionLine = median_x;
+    // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+    //     // Calculate center from previous frame's lanes
+    //     int leftX = prevLeftCurve.front().x;
+    //     int rightX = prevRightCurve.front().x;
+    //     int historyMidX = (leftX + rightX) / 2;
+        
+    //     // Use weighted average of median and history
+    //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
+    // }
+
     // Density filtering: remove isolated points.
     std::vector<cv::Point> densityFiltered;
     float radius = width * 0.025f;  // ~2.5% of frame width
@@ -1110,13 +1134,18 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         int rightX = prevRightCurve.front().x;
         // Compute a midline based on historical lane positions.
         int historyMidX = (leftX + rightX) / 2;
+        
+        // Use a narrower lane width estimate (80% of the current value)
+        float adjustedLaneWidth = laneWidthEstimate * 0.8f;
+        
         // Expected boundaries are half the lane width to either side of history midline.
-        expectedLeftBoundary  = historyMidX - static_cast<int>(laneWidthEstimate * 0.5f);
-        expectedRightBoundary = historyMidX + static_cast<int>(laneWidthEstimate * 0.5f);
+        expectedLeftBoundary  = historyMidX - static_cast<int>(adjustedLaneWidth * 0.5f);
+        expectedRightBoundary = historyMidX + static_cast<int>(adjustedLaneWidth * 0.5f);
     } else {
-        // Fallback: use the image midline and laneWidthEstimate if history is unavailable.
-        expectedLeftBoundary  = midX - static_cast<int>(laneWidthEstimate * 0.5f);
-        expectedRightBoundary = midX + static_cast<int>(laneWidthEstimate * 0.5f);
+        // Fallback: use the image midline and a narrower lane width estimate
+        float adjustedLaneWidth = laneWidthEstimate * 0.8f;
+        expectedLeftBoundary  = midX - static_cast<int>(adjustedLaneWidth * 0.5f);
+        expectedRightBoundary = midX + static_cast<int>(adjustedLaneWidth * 0.5f);
     }
 
     // Define a tolerance based on lane width (for example, 20% of lane width).
