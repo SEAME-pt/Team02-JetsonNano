@@ -1437,7 +1437,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
 
     // --- Stage 4: Use projected lane curves for point assignment ---
     std::vector<cv::Point> ambiguousPoints;
-    or (const auto& pt : densityFiltered) {
+    for (const auto& pt : densityFiltered) {
         // Find the closest y-level boundary points
         int closestLeftIdx = -1, closestRightIdx = -1;
         int minLeftDist = INT_MAX, minRightDist = INT_MAX;
