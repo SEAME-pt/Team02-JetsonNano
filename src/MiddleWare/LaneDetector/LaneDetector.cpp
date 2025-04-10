@@ -1137,7 +1137,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         int historyMidX = (leftX + rightX) / 2;
         
         // Use a narrower lane width estimate (80% of the current value)
-        float adjustedLaneWidth = laneWidthEstimate * 1f;
+        float adjustedLaneWidth = laneWidthEstimate * 0.5f;
         
         // Expected boundaries are half the lane width to either side of history midline.
         expectedLeftBoundary  = historyMidX - static_cast<int>(adjustedLaneWidth * 0.5f);
