@@ -1337,53 +1337,53 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         }
     }
     
-    // // --- Stage 5: Handle Ambiguous Points ---
-    // // Use cluster statistics to decide where ambiguous points belong
-    // if (!ambiguousPoints.empty()) {
-    //     if (!leftPoints.empty() && !rightPoints.empty()) {
-    //         // Calculate average y-position for each lane to detect if one lane is higher/lower
-    //         float leftAvgY = 0, rightAvgY = 0;
-    //         for (const auto& pt : leftPoints) leftAvgY += pt.y;
-    //         for (const auto& pt : rightPoints) rightAvgY += pt.y;
-    //         leftAvgY /= leftPoints.size();
-    //         rightAvgY /= rightPoints.size();
+    // --- Stage 5: Handle Ambiguous Points ---
+    // Use cluster statistics to decide where ambiguous points belong
+    if (!ambiguousPoints.empty()) {
+        if (!leftPoints.empty() && !rightPoints.empty()) {
+            // Calculate average y-position for each lane to detect if one lane is higher/lower
+            float leftAvgY = 0, rightAvgY = 0;
+            for (const auto& pt : leftPoints) leftAvgY += pt.y;
+            for (const auto& pt : rightPoints) rightAvgY += pt.y;
+            leftAvgY /= leftPoints.size();
+            rightAvgY /= rightPoints.size();
             
-    //         // Process each ambiguous point
-    //         for (const auto& pt : ambiguousPoints) {
-    //             // Calculate midpoint between expected lanes at this y-level
-    //             float midPoint = (expectedLeftBoundary + expectedRightBoundary) / 2.0f;
+            // Process each ambiguous point
+            for (const auto& pt : ambiguousPoints) {
+                // Calculate midpoint between expected lanes at this y-level
+                float midPoint = (expectedLeftBoundary + expectedRightBoundary) / 2.0f;
                 
-    //             // Calculate y-based bias - prefer assigning to the lane with closer average y
-    //             float leftYBias = std::abs(pt.y - leftAvgY);
-    //             float rightYBias = std::abs(pt.y - rightAvgY);
+                // Calculate y-based bias - prefer assigning to the lane with closer average y
+                float leftYBias = std::abs(pt.y - leftAvgY);
+                float rightYBias = std::abs(pt.y - rightAvgY);
                 
-    //             // Assign points based on position and y-bias
-    //             if (pt.x < midPoint || leftYBias < rightYBias * 0.7f) {
-    //                 leftPoints.push_back(pt);
-    //             } else {
-    //                 rightPoints.push_back(pt);
-    //             }
+                // Assign points based on position and y-bias
+                if (pt.x < midPoint || leftYBias < rightYBias * 0.7f) {
+                    leftPoints.push_back(pt);
+                } else {
+                    rightPoints.push_back(pt);
+                }
                 
-    //             // Visualize ambiguous points (for debugging)
-    //             cv::circle(frame, pt, 4, cv::Scalar(0, 255, 255), 1);
-    //         }
-    //     } else if (!leftPoints.empty()) {
-    //         // Only left lane detected, assign based on distance
-    //         leftPoints.insert(leftPoints.end(), ambiguousPoints.begin(), ambiguousPoints.end());
-    //     } else if (!rightPoints.empty()) {
-    //         // Only right lane detected, assign based on distance
-    //         rightPoints.insert(rightPoints.end(), ambiguousPoints.begin(), ambiguousPoints.end());
-    //     } else {
-    //         // No clear lanes yet - use simple midpoint division
-    //         for (const auto& pt : ambiguousPoints) {
-    //             if (pt.x < midX) {
-    //                 leftPoints.push_back(pt);
-    //             } else {
-    //                 rightPoints.push_back(pt);
-    //             }
-    //         }
-    //     }
-    // }
+                // Visualize ambiguous points (for debugging)
+                cv::circle(frame, pt, 4, cv::Scalar(0, 255, 255), 1);
+            }
+        } else if (!leftPoints.empty()) {
+            // Only left lane detected, assign based on distance
+            leftPoints.insert(leftPoints.end(), ambiguousPoints.begin(), ambiguousPoints.end());
+        } else if (!rightPoints.empty()) {
+            // Only right lane detected, assign based on distance
+            rightPoints.insert(rightPoints.end(), ambiguousPoints.begin(), ambiguousPoints.end());
+        } else {
+            // No clear lanes yet - use simple midpoint division
+            for (const auto& pt : ambiguousPoints) {
+                if (pt.x < midX) {
+                    leftPoints.push_back(pt);
+                } else {
+                    rightPoints.push_back(pt);
+                }
+            }
+        }
+    }
 
     // --- Stage 6: Sanity Check ---
     // Ensure the left cluster is actually to the left
