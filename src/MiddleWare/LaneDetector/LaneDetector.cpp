@@ -1258,12 +1258,12 @@ static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float lane
 
 // Helper: Assign filtered points to left/right clusters using expected boundaries and an adaptive tolerance.
 static void assignPointsToLanes(const std::vector<cv::Point>& points,
-                                std::vector<cv::Point>& leftPoints,
-                                std::vector<cv::Point>& rightPoints,
-                                int expectedLeftBoundary,
-                                int expectedRightBoundary,
-                                float tolerance,
-                                int midX)
+    std::vector<cv::Point>& leftPoints,
+    std::vector<cv::Point>& rightPoints,
+    const std::vector<cv::Point>& leftBoundary,
+    const std::vector<cv::Point>& rightBoundary,
+    float tolerance,
+    int midX)
 {
     std::vector<cv::Point> ambiguous;
     
