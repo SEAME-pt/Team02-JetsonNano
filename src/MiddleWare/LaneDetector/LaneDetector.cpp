@@ -1150,7 +1150,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     }
 
     // Define a tolerance based on lane width (for example, 20% of lane width).
-    float tolerance = laneWidthEstimate * 0.2f;
+    //float tolerance = laneWidthEstimate * 0.2f;
 
     // --- Stage 3: Use projected lane curves for assignment ---
     std::vector<cv::Point> ambiguousPoints;
