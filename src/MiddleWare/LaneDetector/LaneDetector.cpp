@@ -1168,10 +1168,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
 
     // --- Stage 6: Fallback to History ---
     // If a lane cluster is too sparse (less than 3 points), fallback to the previous frame's assignment.
-    if (leftPoints.size() < 3 && !prevLeftPoints.empty())
-        leftPoints = prevLeftPoints;
-    if (rightPoints.size() < 3 && !prevRightPoints.empty())
-        rightPoints = prevRightPoints;
+    // if (leftPoints.size() < 3 && !prevLeftPoints.empty())
+    //     leftPoints = prevLeftPoints;
+    // if (rightPoints.size() < 3 && !prevRightPoints.empty())
+    //     rightPoints = prevRightPoints;
 
     // Update history for next frame.
     if (leftPoints.size() >= 3)
