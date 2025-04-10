@@ -792,6 +792,8 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         prevLeftCurve  = leftCurve;
         prevRightCurve = rightCurve;
         // Also update your previous points used for clustering:
+        prevLeftPoints = leftCurve;
+        prevRightPoints = rightCurve;
     }
     else
     {
