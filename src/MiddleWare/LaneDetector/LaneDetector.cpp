@@ -1415,7 +1415,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         if (!predictedLeftX.empty() && !predictedRightX.empty()) {
             // Find closest y-level prediction
             int yIndex = (height - pt.y) / 10; // Based on 10-pixel steps in predictions
-            if (yIndex >= 0 && yIndex < predictedLeftX.size()) {
+            if (yIndex >= 0 && yIndex < (int)predictedLeftX.size()) {
                 expectedLeftX = predictedLeftX[yIndex];
                 expectedRightX = predictedRightX[yIndex];
                 foundPrediction = true;
