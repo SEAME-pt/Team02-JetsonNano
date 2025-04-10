@@ -1083,32 +1083,38 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             filteredPoints.push_back(pt);
         }
     }
-
+    
     // std::vector<int> x_coords;
     // for (const auto& pt : points) {
-    //     if (pt.y > height * 0.15) { // Only consider lower part of the image
-    //         x_coords.push_back(pt.x);
-    //     }
-    // }
-    
-    // if (x_coords.empty()) return;
-    
-    // std::sort(x_coords.begin(), x_coords.end());
-    // int median_x = x_coords[x_coords.size() / 2];
-    
-    // // 2. Adjust the division line using lane width if available
-    // int divisionLine = median_x;
-    // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-    //     // Calculate center from previous frame's lanes
-    //     int leftX = prevLeftCurve.front().x;
-    //     int rightX = prevRightCurve.front().x;
-    //     int historyMidX = (leftX + rightX) / 2;
+        //     if (pt.y > height * 0.15) { // Only consider lower part of the image
+        //         x_coords.push_back(pt.x);
+        //     }
+        // }
         
-    //     // Use weighted average of median and history
-    //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
-    // }
-
-    // Density filtering: remove isolated points.
+        // if (x_coords.empty()) return;
+        
+        // std::sort(x_coords.begin(), x_coords.end());
+        // int median_x = x_coords[x_coords.size() / 2];
+        
+        // // 2. Adjust the division line using lane width if available
+        // int divisionLine = median_x;
+        // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+            //     // Calculate center from previous frame's lanes
+            //     int leftX = prevLeftCurve.front().x;
+            //     int rightX = prevRightCurve.front().x;
+            //     int historyMidX = (leftX + rightX) / 2;
+            
+            //     // Use weighted average of median and history
+            //     divisionLine = static_cast<int>(0.3 * median_x + 0.7 * historyMidX);
+            // }
+        
+    for (const auto& pt : filteredPoints)
+    {
+        cv::circle(frame, pt, 3, cv::Scalar(0, 255, 255), -1); // Yellow for
+        // filtered points
+    }
+    
+        // Density filtering: remove isolated points.
     std::vector<cv::Point> densityFiltered;
     float radius = width * 0.025f;  // ~2.5% of frame width
     for (size_t i = 0; i < filteredPoints.size(); i++) {
@@ -1164,6 +1170,8 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
             ambiguousPoints.push_back(pt);  // points in the ambiguous central zone
         }
     }
+
+
 
     // --- Stage 4: Reassign Ambiguous Points ---
     // For ambiguous points, compare the distance to the expected left/right boundaries.
