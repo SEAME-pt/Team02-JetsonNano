@@ -1061,7 +1061,11 @@ void LaneDetector::drawLanes(cv::Mat& frame,
         }
     }
 }
- std::vector<cv::Point> filtered, densityFiltered;
+
+
+// Helper: Filter points by ROI and density
+static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points, const cv::Mat& frame) {
+    std::vector<cv::Point> filtered, densityFiltered;
     int width = frame.cols, height = frame.rows;
     
     // Define trapezoidal ROI
@@ -1121,10 +1125,6 @@ void LaneDetector::drawLanes(cv::Mat& frame,
     }
     
     return densityFiltered;
-
-// Helper: Filter points by ROI and density
-static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points, const cv::Mat& frame) {
-
 }
 
 // Helper: Compute expected left/right boundaries using history and laneWidthEstimate.
