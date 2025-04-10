@@ -1232,6 +1232,14 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     // Stage 3: Assign points to lanes based on expected boundaries
     assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
 
+    for (const auto& pt : leftPoints) {
+        cv::circle(frame, pt, 4, cv::Scalar(255, 100, 100), -1); // Light red for left points
+    }
+
+    for (const auto& pt : rightPoints) {
+        cv::circle(frame, pt, 4, cv::Scalar(100, 255, 100), -1); // Light green for right points
+    }
+
     // Stage 4: Sanity Check – verify that the left cluster is actually on the left.
     if (!leftPoints.empty() && !rightPoints.empty()) {
         double leftMean = 0, rightMean = 0;
