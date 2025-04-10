@@ -1186,10 +1186,12 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         float distToRight = std::abs(pt.x - expectedRightX);
         
         // Better decision logic - assign to closest lane if it's clearly closer
-        if (distToLeft < distToRight * 0.7f) {
+        if (distToLeft < distToRight * 0.7f || 
+            (distToLeft < adaptiveTolerance && distToLeft < distToRight)) {
             leftPoints.push_back(pt);
         } 
-        else if (distToRight < distToLeft * 0.7f) {
+        else if (distToRight < distToLeft * 0.7f || 
+                 (distToRight < adaptiveTolerance && distToRight < distToLeft)) {
             rightPoints.push_back(pt);
         }
         else {
