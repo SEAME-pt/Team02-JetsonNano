@@ -1061,19 +1061,52 @@ void LaneDetector::drawLanes(cv::Mat& frame,
         }
     }
 }
-
-
-// Helper: Filter points by ROI and density
-static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points, const cv::Mat& frame) {
-    std::vector<cv::Point> filtered, densityFiltered;
+ std::vector<cv::Point> filtered, densityFiltered;
     int width = frame.cols, height = frame.rows;
-    // ROI: Keep points with y > 15% of height and x between 10% and 90% of frame width.
+    
+    // Define trapezoidal ROI
+    // Bottom width: 80% of frame width (10% margin on each side)
+    // Top width: 50% of frame width (25% margin on each side)
+    // Bottom position: bottom of the frame
+    // Top position: 15% from the top of the frame
+    
+    float bottomY = height;
+    float topY = height * 0.30f;
+    
+    float bottomLeftX = width * 0.10f;
+    float bottomRightX = width * 0.90f;
+    
+    float topLeftX = width * 0.25f;
+    float topRightX = width * 0.75f;
+    
+    // ROI filtering using trapezoidal shape
     for (const auto& pt : points) {
-        if (pt.y > height * 0.15 && pt.x > width * 0.10 && pt.x < width * 0.90)
+        // Calculate expected x boundaries at this y level using linear interpolation
+        float yRatio = (pt.y - topY) / (bottomY - topY);
+        
+        // If point is above the ROI, skip it
+        if (yRatio < 0) continue;
+        
+        float leftBoundary = topLeftX + yRatio * (bottomLeftX - topLeftX);
+        float rightBoundary = topRightX + yRatio * (bottomRightX - topRightX);
+        
+        if (pt.y >= topY && pt.x >= leftBoundary && pt.x <= rightBoundary) {
             filtered.push_back(pt);
+        }
     }
-    // Density filtering: require at least 3 neighbors within a radius.
-    float radius = width * 0.025f;
+    
+    // Visualize the trapezoid (optional)
+    std::vector<cv::Point> trapezoid = {
+        cv::Point(bottomLeftX, bottomY),
+        cv::Point(bottomRightX, bottomY),
+        cv::Point(topRightX, topY),
+        cv::Point(topLeftX, topY)
+    };
+    
+    cv::polylines(frame, std::vector<std::vector<cv::Point>>{trapezoid}, true, cv::Scalar(0, 255, 255), 2);
+    
+    // Density filtering: require at least 2 neighbors within a radius (reduced from 3)
+    float radius = width * 0.03f;  // Increased from 0.025f
     for (size_t i = 0; i < filtered.size(); ++i) {
         int neighborCount = 0;
         for (size_t j = 0; j < filtered.size(); ++j) {
@@ -1083,10 +1116,15 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
             if (std::sqrt(dx * dx + dy * dy) < radius)
                 neighborCount++;
         }
-        if (neighborCount >= 3)
+        if (neighborCount >= 2)  // Reduced from 3
             densityFiltered.push_back(filtered[i]);
     }
+    
     return densityFiltered;
+
+// Helper: Filter points by ROI and density
+static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points, const cv::Mat& frame) {
+
 }
 
 // Helper: Compute expected left/right boundaries using history and laneWidthEstimate.
@@ -1097,6 +1135,7 @@ static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float lane
                                       int &expectedLeftBoundary, int &expectedRightBoundary)
 {
     //int width = frame.cols;
+    (void) frame;
     if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
         // Use the bottom-most points from previous curves.
         int leftX = prevLeftCurve.front().x;
