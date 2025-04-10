@@ -1402,7 +1402,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     for (const auto& pt : densityFiltered) {
         // Make tolerance adaptive - larger at the top of the image (distant points)
         float yRatio = 1.0f - (float)(pt.y) / height;  // 0 at bottom, 1 at top
-        float adaptiveTolerance = laneWidthEstimate * (0.2f + yRatio * 0.3f); // More tolerance at top
+        float adaptiveTolerance = laneWidthEstimate * (0.15f + yRatio * 0.2f); // More tolerance at top
         
         // Get expected lane position at this y-level
         float expectedLeftX = expectedLeftBoundary;
@@ -1425,7 +1425,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         // If no Kalman prediction, try using curve history
         if (!foundPrediction && !prevLeftCurve.empty() && !prevRightCurve.empty()) {
             // Find closest y-points in the curves - use 15% of height for tolerance
-            float yTolerance = height * 0.15f;
+            float yTolerance = height * 0.1f;
             
             for (const auto& curvePt : prevLeftCurve) {
                 if (abs(curvePt.y - pt.y) < yTolerance) {
@@ -1449,12 +1449,12 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
         float distToRight = std::abs(pt.x - expectedRightX);
         
         // Balanced decision logic with improved asymmetrical comparison
-        if (distToLeft < distToRight * 0.85f || 
-            (distToLeft < adaptiveTolerance && distToLeft < distToRight * 0.95f)) {
+        if (distToLeft < distToRight * 0.8f || 
+            (distToLeft < adaptiveTolerance && distToLeft < distToRight * 0.9f)) {
             leftPoints.push_back(pt);
         } 
-        else if (distToRight < distToLeft * 0.85f || 
-                 (distToRight < adaptiveTolerance && distToRight < distToLeft * 0.95f)) {
+        else if (distToRight < distToLeft * 0.8f || 
+                 (distToRight < adaptiveTolerance && distToRight < distToLeft * 0.9f)) {
             rightPoints.push_back(pt);
         }
         else {
