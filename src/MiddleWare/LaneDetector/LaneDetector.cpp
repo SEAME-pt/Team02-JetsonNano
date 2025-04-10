@@ -1206,18 +1206,52 @@ static void computeExpectedBoundaries(const cv::Mat& frame, int midX, float lane
                                       const std::vector<cv::Point>& prevRightCurve,
                                       int &expectedLeftBoundary, int &expectedRightBoundary)
 {
-    //int width = frame.cols;
-    (void) frame;
+    int height = frame.rows;
+    leftBoundary.clear();
+    rightBoundary.clear();
+    
+    // If we have previous curves, use them to create curved boundaries
     if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-        // Use the bottom-most points from previous curves.
-        int leftX = prevLeftCurve.front().x;
-        int rightX = prevRightCurve.front().x;
-        int historyMidX = (leftX + rightX) / 2;
-        expectedLeftBoundary  = historyMidX - static_cast<int>(laneWidthEstimate * 0.5f);
-        expectedRightBoundary = historyMidX + static_cast<int>(laneWidthEstimate * 0.5f);
-    } else {
-        expectedLeftBoundary  = midX - static_cast<int>(laneWidthEstimate * 0.5f);
-        expectedRightBoundary = midX + static_cast<int>(laneWidthEstimate * 0.5f);
+        // Re-sample both curves at consistent y values to create boundary curves
+        for (int y = height; y >= height * 0.3; y -= 10) {
+            // Find closest points in both curves at this y level
+            cv::Point leftPt, rightPt;
+            int minDistLeft = INT_MAX, minDistRight = INT_MAX;
+            
+            for (const auto& pt : prevLeftCurve) {
+                int dist = std::abs(pt.y - y);
+                if (dist < minDistLeft) {
+                    minDistLeft = dist;
+                    leftPt = pt;
+                }
+            }
+            
+            for (const auto& pt : prevRightCurve) {
+                int dist = std::abs(pt.y - y);
+                if (dist < minDistRight) {
+                    minDistRight = dist;
+                    rightPt = pt;
+                }
+            }
+            
+            // Only add point if we found reasonable matches
+            if (minDistLeft < height * 0.1 && minDistRight < height * 0.1) {
+                int midX = (leftPt.x + rightPt.x) / 2;
+                leftBoundary.push_back(cv::Point(midX - laneWidthEstimate * 0.5, y));
+                rightBoundary.push_back(cv::Point(midX + laneWidthEstimate * 0.5, y));
+            }
+        }
+    }
+    
+    // If we couldn't create proper boundaries, fall back to vertical lines
+    if (leftBoundary.empty() || rightBoundary.empty()) {
+        int defaultLeft = midX - laneWidthEstimate * 0.5;
+        int defaultRight = midX + laneWidthEstimate * 0.5;
+        
+        for (int y = height; y >= height * 0.3; y -= 10) {
+            leftBoundary.push_back(cv::Point(defaultLeft, y));
+            rightBoundary.push_back(cv::Point(defaultRight, y));
+        }
     }
 }
 
@@ -1231,26 +1265,80 @@ static void assignPointsToLanes(const std::vector<cv::Point>& points,
                                 int midX)
 {
     std::vector<cv::Point> ambiguous;
+    
     for (const auto& pt : points) {
-        if (pt.x < expectedLeftBoundary + tolerance)
-            leftPoints.push_back(pt);
-        else if (pt.x > expectedRightBoundary - tolerance)
-            rightPoints.push_back(pt);
-        else
-            ambiguous.push_back(pt);
-    }
-    // For ambiguous points, decide based on closeness.
-    for (const auto& pt : ambiguous) {
-        float dLeft = std::abs(pt.x - expectedLeftBoundary);
-        float dRight = std::abs(pt.x - expectedRightBoundary);
-        if (dLeft < dRight && dLeft < tolerance)
-            leftPoints.push_back(pt);
-        else if (dRight < dLeft && dRight < tolerance)
-            rightPoints.push_back(pt);
+        // Find closest boundary points at this y-level
+        float minDistLeft = FLT_MAX, minDistRight = FLT_MAX;
+        cv::Point closestLeftBound, closestRightBound;
+        
+        for (const auto& bp : leftBoundary) {
+            float dist = std::abs(bp.y - pt.y);
+            if (dist < minDistLeft) {
+                minDistLeft = dist;
+                closestLeftBound = bp;
+            }
+        }
+        
+        for (const auto& bp : rightBoundary) {
+            float dist = std::abs(bp.y - pt.y);
+            if (dist < minDistRight) {
+                minDistRight = dist;
+                closestRightBound = bp;
+            }
+        }
+        
+        // Check if point is to the left/right of the boundary
+        if (minDistLeft < FLT_MAX && minDistRight < FLT_MAX) {
+            float distToLeftBound = pt.x - closestLeftBound.x;
+            float distToRightBound = closestRightBound.x - pt.x;
+            
+            if (distToLeftBound < 0 && std::abs(distToLeftBound) < tolerance) {
+                leftPoints.push_back(pt);
+            }
+            else if (distToRightBound < 0 && std::abs(distToRightBound) < tolerance) {
+                rightPoints.push_back(pt);
+            }
+            else if (pt.x < closestLeftBound.x) {
+                leftPoints.push_back(pt); // Clear left
+            }
+            else if (pt.x > closestRightBound.x) {
+                rightPoints.push_back(pt); // Clear right
+            }
+            else {
+                ambiguous.push_back(pt);
+            }
+        }
         else {
-            // Fallback: use midline separation.
+            // Fallback to midpoint separation
             if (pt.x < midX) leftPoints.push_back(pt);
             else rightPoints.push_back(pt);
+        }
+    }
+    
+    // For ambiguous points, use distances to decide
+    for (const auto& pt : ambiguous) {
+        // Find minimum distances to both boundaries
+        float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
+        
+        for (const auto& bp : leftBoundary) {
+            float dy = bp.y - pt.y;
+            float dx = bp.x - pt.x;
+            float dist = std::sqrt(dx*dx + dy*dy);
+            minLeftDist = std::min(minLeftDist, dist);
+        }
+        
+        for (const auto& bp : rightBoundary) {
+            float dy = bp.y - pt.y;
+            float dx = bp.x - pt.x;
+            float dist = std::sqrt(dx*dx + dy*dy);
+            minRightDist = std::min(minRightDist, dist);
+        }
+        
+        // Assign to closest cluster
+        if (minLeftDist < minRightDist) {
+            leftPoints.push_back(pt);
+        } else {
+            rightPoints.push_back(pt);
         }
     }
         // Draw the current clustered points first (before curve fitting)
@@ -1293,79 +1381,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
 
     // Stage 3: Assign points to lanes based on expected boundaries
     assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
-
-    // if ((leftPoints.size() > 10 * rightPoints.size() && rightPoints.size() < 3) ||
-    // (rightPoints.size() > 10 * leftPoints.size() && leftPoints.size() < 3)) {
-        
-    //     // Clear the current assignments since they're imbalanced
-    //     leftPoints.clear();
-    //     rightPoints.clear();
-        
-    //     // Use k-means to separate points regardless of history
-    //     std::vector<cv::Point2f> pts_float;
-    //     for (const auto& pt : filtered) {
-    //         pts_float.push_back(cv::Point2f(pt.x, pt.y));
-    //     }
-        
-    //     // Bail if we don't have enough points
-    //     if (pts_float.size() < 6) return;
-        
-    //     // Prepare for k-means
-    //     cv::Mat points(pts_float.size(), 1, CV_32FC2, pts_float.data());
-    //     cv::Mat labels, centers;
-        
-    //     // Initial centers - one at 1/4 width, one at 3/4 width, at bottom of frame
-    //     std::vector<cv::Point2f> initial_centers = {
-    //         cv::Point2f(width * 0.25f, height * 0.85f),
-    //         cv::Point2f(width * 0.75f, height * 0.85f)
-    //     };
-    //     cv::Mat initial_centers_mat(2, 1, CV_32FC2, initial_centers.data());
-        
-    //     // Run k-means with custom initial centers
-    //     cv::kmeans(points, 2, labels, 
-    //             cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 1.0),
-    //             3, cv::KMEANS_PP_CENTERS, centers);
-        
-    //     // Process results - determine which cluster is left vs right
-    //     cv::Point2f center1 = centers.at<cv::Point2f>(0);
-    //     cv::Point2f center2 = centers.at<cv::Point2f>(1);
-    //     bool isCenter1Left = center1.x < center2.x;
-        
-    //     // Assign points based on k-means labels
-    //     for (int i = 0; i < labels.rows; i++) {
-    //         int cluster = labels.at<int>(i, 0);
-    //         if ((cluster == 0 && isCenter1Left) || (cluster == 1 && !isCenter1Left)) {
-    //             leftPoints.push_back(filtered[i]);
-    //         } else {
-    //             rightPoints.push_back(filtered[i]);
-    //         }
-    //     }
-        
-    //     // Visualize the new boundaries after re-clustering
-    //     if (!leftPoints.empty() && !rightPoints.empty()) {
-    //         int newLeftX = 0, newRightX = 0;
-    //         for (const auto& pt : leftPoints) newLeftX += pt.x;
-    //         for (const auto& pt : rightPoints) newRightX += pt.x;
-    //         newLeftX /= leftPoints.size();
-    //         newRightX /= rightPoints.size();
-            
-    //         // Draw new boundaries with different color
-    //         cv::line(frame, cv::Point(newLeftX, height), cv::Point(newLeftX, height/2),
-    //                 cv::Scalar(255, 0, 128), 2);
-    //         cv::line(frame, cv::Point(newRightX, height), cv::Point(newRightX, height/2),
-    //                 cv::Scalar(128, 0, 255), 2);
-                    
-    //         // Update estimation of lane width
-    //         float newWidth = newRightX - newLeftX;
-    //         if (newWidth > width * 0.15f && newWidth < width * 0.6f) {
-    //             laneWidthEstimate = laneWidthEstimate * 0.7f + newWidth * 0.3f;
-    //         }
-    //     }
-        
-    //     // Add text indicator that forced re-clustering happened
-    //     cv::putText(frame, "Re-clustered", cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX,
-    //                 0.7, cv::Scalar(255, 0, 255), 2);
-    // }
 
     for (const auto& pt : leftPoints) {
         cv::circle(frame, pt, 4, cv::Scalar(255, 100, 100), -1); // Light red for left points
