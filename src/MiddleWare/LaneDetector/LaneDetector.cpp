@@ -1510,8 +1510,8 @@ void LaneDetector::initKalmanFilters(const std::vector<cv::Point>& leftCurve,
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
 
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(5e-5));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(5e-5));
 
     // Set measurement noise covariance
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
