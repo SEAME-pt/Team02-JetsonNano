@@ -1418,8 +1418,8 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 float ny = dx / length;   // Normal vector y (perpendicular)
                 
                 // Add boundary points
-                leftBoundary.push_back(cv::Point(pt.x - halfLaneWidth, pt.y));
-                rightBoundary.push_back(cv::Point(pt.x + halfLaneWidth, pt.y));
+                leftBoundary.push_back(cv::Point(pt.x + nx * halfLaneWidth, pt.y + ny * halfLaneWidth));
+                rightBoundary.push_back(cv::Point(pt.x - nx * halfLaneWidth, pt.y - ny * halfLaneWidth));
             }
         }
     } else {
