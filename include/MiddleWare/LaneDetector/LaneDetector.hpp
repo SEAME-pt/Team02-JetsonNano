@@ -94,6 +94,10 @@ class LaneDetector
       const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
 
+    int cluster2DPoints(const std::vector<cv::Point>& points, 
+        std::vector<std::vector<cv::Point>>& clusters,
+        float distanceThreshold);
+
     void clusterLanePoints(const std::vector<cv::Point>& points, 
       std::vector<cv::Point>& leftPoints,
       std::vector<cv::Point>& rightPoints,
