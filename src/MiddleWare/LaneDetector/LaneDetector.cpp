@@ -1036,8 +1036,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
 
     // Draw the final lane visualization
     drawLanes(frame, leftCurve, rightCurve);
-    sendCoefs(const std::vector<cv::Point>& leftCurve,
-        const std::vector<cv::Point>& rightCurve)
+    sendCoefs(leftCurve, rightCurve);
 
     // Draw center lane and reference point
     if (!midCurve.empty())
