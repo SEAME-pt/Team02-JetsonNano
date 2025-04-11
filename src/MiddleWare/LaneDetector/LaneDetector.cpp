@@ -301,10 +301,12 @@ void LaneDetector::postProcess(cv::Mat& frame)
     int width = mask.cols;
 
     // Define trapezoidal ROI (same as in filterPoints)
-    float bottomY = height * 0.90f;
-    float topY = height * 0.20f;
-    float bottomLeftX = width * 0.00f;
-    float bottomRightX = width * 1.00f;
+    float bottomY = height;
+    float topY = height * 0.30f;
+    
+    float bottomLeftX = width * - 1.5f;
+    float bottomRightX = width * 2.5f;
+    
     float topLeftX = width * 0.3f;
     float topRightX = width * 0.7f;
 
@@ -1168,11 +1170,11 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
     float bottomY = height;
     float topY = height * 0.30f;
     
-    float bottomLeftX = width * - 1.0f;
-    float bottomRightX = width * 2.0f;
+    float bottomLeftX = width * - 1.5f;
+    float bottomRightX = width * 2.5f;
     
-    float topLeftX = width * 0.4f;
-    float topRightX = width * 0.6f;
+    float topLeftX = width * 0.3f;
+    float topRightX = width * 0.7f;
     
     // ROI filtering using trapezoidal shape
     for (const auto& pt : points) {
