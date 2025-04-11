@@ -338,7 +338,7 @@ void PidController::updateControl(float error, double current_time)
     publisher_->publishSteering(direction);
     //publisher_->publishSpeed(dynamicSpeed);
 
-    std::cout << "Direction: " << direction << ", Speed: " << dynamicSpeed
+    std::cout << "Direction: " << direction //<< ", Speed: " << dynamicSpeed
               << std::endl;
     // publisher_->publishCurrentGear(1);
 }
