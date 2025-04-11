@@ -197,10 +197,10 @@ void LaneDetector::detect(cv::Mat& frame)
 
     cudaStreamSynchronize(stream);
 
-    cudaEventRecord(stop, stream);
     // Postprocess
     postProcess(frame);
-
+    
+    cudaEventRecord(stop, stream);
     cudaEventSynchronize(stop);
 
     float milliseconds = 0;
