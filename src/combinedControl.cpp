@@ -21,9 +21,9 @@ int main(int argc, char** argv)
             pidController    = new PidController(manualController);
         }
         // PID controller values
-        float kp                = 170;
-        float ki                = 0.000002;
-        float kd                = 20;
+        float kp                = 120;
+        float ki                = 0.000001;
+        float kd                = 10;
         float constant_throttle = 0.3;
         float delta_time        = 0.05; // ms
 
