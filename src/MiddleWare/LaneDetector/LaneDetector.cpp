@@ -57,6 +57,9 @@ LaneDetector::LaneDetector(const std::string& enginePath,
 
     // Initialize the lane detector publisher
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+    const std::string canDevice = "/dev/spidev0.0";
+    this->canBus                = new CAN();
+    this->canBus->init(canDevice);
 }
 
 LaneDetector::~LaneDetector()
@@ -546,71 +549,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
         }
     }
 
-
-    // // After the Kalman predictions, add a separation enforcement
-    // if (!leftCurve.empty() && !rightCurve.empty())
-    // {
-    //     // Check if left and right curves are too close or crossed
-    //     double leftMeanX = 0, rightMeanX = 0;
-        
-    //     for (const auto& pt : leftCurve) {
-    //         leftMeanX += pt.x;
-    //     }
-    //     leftMeanX /= leftCurve.size();
-        
-    //     for (const auto& pt : rightCurve) {
-    //         rightMeanX += pt.x;
-    //     }
-    //     rightMeanX /= rightCurve.size();
-        
-    //     // If curves are crossed or too close
-    //     if (leftMeanX >= rightMeanX || (rightMeanX - leftMeanX) < laneWidthEstimate * 0.7)
-    //     {
-    //         // Determine which curve is more reliable based on original points
-    //         bool leftMoreReliable = leftPoints.size() > rightPoints.size() * 1.5;
-    //         bool rightMoreReliable = rightPoints.size() > leftPoints.size() * 1.5;
-            
-    //         if (leftMoreReliable && !rightMoreReliable)
-    //         {
-    //             // Keep left curve, regenerate right curve with lane width offset
-    //             std::vector<cv::Point> fixedRightCurve;
-    //             for (size_t i = 0; i < leftCurve.size(); i++)
-    //             {
-    //                 int newX = leftCurve[i].x + laneWidthEstimate;
-    //                 fixedRightCurve.push_back(cv::Point(newX, leftCurve[i].y));
-    //             }
-    //             rightCurve = fixedRightCurve;
-    //         }
-    //         else if (!leftMoreReliable && rightMoreReliable)
-    //         {
-    //             // Keep right curve, regenerate left curve with lane width offset
-    //             std::vector<cv::Point> fixedLeftCurve;
-    //             for (size_t i = 0; i < rightCurve.size(); i++)
-    //             {
-    //                 int newX = rightCurve[i].x - laneWidthEstimate;
-    //                 fixedLeftCurve.push_back(cv::Point(newX, rightCurve[i].y));
-    //             }
-    //             leftCurve = fixedLeftCurve;
-    //         }
-            // else
-            // {
-            //     // Neither is clearly more reliable, force separation
-            //     double adjustment = (laneWidthEstimate - (rightMeanX - leftMeanX)) / 2.0;
-            //     if (adjustment > 0)
-            //     {
-            //         // Move each curve outward by half the required adjustment
-            //         for (auto& pt : leftCurve) {
-            //             pt.x -= adjustment;
-            //         }
-            //         for (auto& pt : rightCurve) {
-            //             pt.x += adjustment;
-            //         }
-            //     }
-            // }
-        // }
-    // }
-
-
     // Update lane width estimate when both curves are detected
     if (!leftCurve.empty() && !rightCurve.empty())
     {
@@ -1098,6 +1036,8 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
 
     // Draw the final lane visualization
     drawLanes(frame, leftCurve, rightCurve);
+    sendCoefs(const std::vector<cv::Point>& leftCurve,
+        const std::vector<cv::Point>& rightCurve)
 
     // Draw center lane and reference point
     if (!midCurve.empty())
@@ -1702,4 +1642,116 @@ void LaneDetector::initKalmanFilters(const std::vector<cv::Point>& leftCurve,
     }
 
     kfInitialized = true;
+}
+
+void LaneDetector::sendCoefs(const std::vector<cv::Point>& leftCurve,
+                               const std::vector<cv::Point>& rightCurve)
+{
+    // Extract coefficients for the left curve
+    cv::Mat leftCoeffs;
+    if (!leftCurve.empty() && leftCurve.size() >= 3)
+    {
+        std::vector<float> x_vals, y_vals;
+        for (const auto& pt : leftCurve)
+        {
+            x_vals.push_back(pt.x);
+            y_vals.push_back(pt.y);
+        }
+
+        cv::Mat x_mat(x_vals), y_mat(y_vals);
+        leftCoeffs = polyfit(y_mat, x_mat, 2);
+    }
+
+    // Extract coefficients for the right curve
+    cv::Mat rightCoeffs;
+    if (!rightCurve.empty() && rightCurve.size() >= 3)
+    {
+        std::vector<float> x_vals, y_vals;
+        for (const auto& pt : rightCurve)
+        {
+            x_vals.push_back(pt.x);
+            y_vals.push_back(pt.y);
+        }
+
+        cv::Mat x_mat(x_vals), y_mat(y_vals);
+        rightCoeffs = polyfit(y_mat, x_mat, 2);
+    }
+
+    // Publish the coefficients if they were successfully calculated
+    if (!leftCoeffs.empty() && !rightCoeffs.empty() && leftCoeffs.rows >= 3 &&
+        rightCoeffs.rows >= 3)
+    {
+        // Extract coefficients
+        float leftA = static_cast<float>(
+            leftCoeffs.at<double>(0)); // quadratic coefficient
+        float leftB =
+            static_cast<float>(leftCoeffs.at<double>(1)); // linear coefficient
+        float leftC =
+            static_cast<float>(leftCoeffs.at<double>(2)); // constant term
+        std::cout << "Left lane polynomial: " << leftA << "y² + " << leftB
+                  << "y + " << leftC << std::endl;
+        float rightA = static_cast<float>(
+            rightCoeffs.at<double>(0)); // quadratic coefficient
+        float rightB =
+            static_cast<float>(rightCoeffs.at<double>(1)); // linear coefficient
+        float rightC =
+            static_cast<float>(rightCoeffs.at<double>(2)); // constant term
+        std::cout << "Right lane polynomial: " << rightA << "y² + " << rightB
+                  << "y + " << rightC << std::endl;
+        // CAN message addresses
+        const uint32_t LEFT_LANE_ADDR  = 0x100;
+        const uint32_t RIGHT_LANE_ADDR = 0x101;
+
+        // Create buffer for CAN messages (8 bytes per message)
+        uint8_t buffer[8];
+
+        // Send null message first
+        memset(buffer, 0, sizeof(buffer));
+        int32_t coefA = 0;
+        int32_t coefB = 1;
+        int32_t coefC = 2;
+
+        
+        // Send left lane coefficients one at a time
+        // Coefficient A
+        memcpy(buffer, &coefA, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &leftA, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+
+        // Coefficient B
+        memcpy(buffer, &coefB, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &leftB, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+
+        // Coefficient C
+        memcpy(buffer, &coefC, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &leftC, sizeof(float));
+        canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+
+        usleep(1000);
+
+        memset(buffer, 0, sizeof(buffer));
+
+        // Send right lane coefficients one at a time
+        // Coefficient A
+        memcpy(buffer, &coefA, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &rightA, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+
+        // Coefficient B
+        memcpy(buffer, &coefB, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &rightB, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+
+        // Coefficient C
+        memcpy(buffer, &coefC, sizeof(int32_t));
+        memcpy(buffer + sizeof(int32_t), &rightC, sizeof(float));
+        canBus->writeMessage(RIGHT_LANE_ADDR, buffer, sizeof(buffer));
+
+        // Log the sent coefficients
+        std::cout << "Left lane coeffs: " << leftA << ", " << leftB << ", "
+                  << leftC << std::endl;
+        std::cout << "Right lane coeffs: " << rightA << ", " << rightB << ", "
+                  << rightC << std::endl;
+    }
 }
