@@ -333,10 +333,10 @@ void PidController::conditionalAutomation(float lane_error, double current_time)
 void PidController::updateControl(float error, double current_time)
 {
     float direction = steeringPID(error, current_time);\
-    float dynamicSpeed = speedAdjustment(error);
+    //float dynamicSpeed = speedAdjustment(error);
 
     publisher_->publishSteering(direction);
-    publisher_->publishSpeed(dynamicSpeed);
+    //publisher_->publishSpeed(dynamicSpeed);
 
     std::cout << "Direction: " << direction << ", Speed: " << dynamicSpeed
               << std::endl;
@@ -365,6 +365,7 @@ void PidController::run()
         {
             std::cout << "sae_level: " << sae_level << std::endl;
             updateControl(cameraError_, current_time);
+            publisher_->publishSpeed(manual_speed);
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
