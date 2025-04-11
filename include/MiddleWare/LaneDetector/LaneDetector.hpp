@@ -70,6 +70,8 @@ class LaneDetector
     cv::Point prevMidPoint = cv::Point(-1, -1);
     const size_t historySize = 5;
 
+    CAN* canBus;
+
   public:
     LaneDetector(const std::string& enginePath, const std::string& pipeline,
       std::shared_ptr<zenoh::Session> session);
@@ -106,4 +108,7 @@ class LaneDetector
     std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
+
+    void LaneDetector::sendCoefs(const std::vector<cv::Point>& leftCurve,
+        const std::vector<cv::Point>& rightCurve)
 };  
