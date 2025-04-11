@@ -363,6 +363,7 @@ void PidController::run()
         std::string sae_level = getAutonomousDriveState();
         if (sae_level.find("SAE_5") != std::string::npos || sae_level == "SAE_4")
         {
+            float manual_speed = xboxController_->getManualSpeed();
             std::cout << "sae_level: " << sae_level << std::endl;
             updateControl(cameraError_, current_time);
             publisher_->publishSpeed(manual_speed);
