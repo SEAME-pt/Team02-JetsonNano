@@ -545,51 +545,51 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     }
 
 
-    // After the Kalman predictions, add a separation enforcement
-    if (!leftCurve.empty() && !rightCurve.empty())
-    {
-        // Check if left and right curves are too close or crossed
-        double leftMeanX = 0, rightMeanX = 0;
+    // // After the Kalman predictions, add a separation enforcement
+    // if (!leftCurve.empty() && !rightCurve.empty())
+    // {
+    //     // Check if left and right curves are too close or crossed
+    //     double leftMeanX = 0, rightMeanX = 0;
         
-        for (const auto& pt : leftCurve) {
-            leftMeanX += pt.x;
-        }
-        leftMeanX /= leftCurve.size();
+    //     for (const auto& pt : leftCurve) {
+    //         leftMeanX += pt.x;
+    //     }
+    //     leftMeanX /= leftCurve.size();
         
-        for (const auto& pt : rightCurve) {
-            rightMeanX += pt.x;
-        }
-        rightMeanX /= rightCurve.size();
+    //     for (const auto& pt : rightCurve) {
+    //         rightMeanX += pt.x;
+    //     }
+    //     rightMeanX /= rightCurve.size();
         
-        // If curves are crossed or too close
-        if (leftMeanX >= rightMeanX || (rightMeanX - leftMeanX) < laneWidthEstimate * 0.7)
-        {
-            // Determine which curve is more reliable based on original points
-            bool leftMoreReliable = leftPoints.size() > rightPoints.size() * 1.5;
-            bool rightMoreReliable = rightPoints.size() > leftPoints.size() * 1.5;
+    //     // If curves are crossed or too close
+    //     if (leftMeanX >= rightMeanX || (rightMeanX - leftMeanX) < laneWidthEstimate * 0.7)
+    //     {
+    //         // Determine which curve is more reliable based on original points
+    //         bool leftMoreReliable = leftPoints.size() > rightPoints.size() * 1.5;
+    //         bool rightMoreReliable = rightPoints.size() > leftPoints.size() * 1.5;
             
-            if (leftMoreReliable && !rightMoreReliable)
-            {
-                // Keep left curve, regenerate right curve with lane width offset
-                std::vector<cv::Point> fixedRightCurve;
-                for (size_t i = 0; i < leftCurve.size(); i++)
-                {
-                    int newX = leftCurve[i].x + laneWidthEstimate;
-                    fixedRightCurve.push_back(cv::Point(newX, leftCurve[i].y));
-                }
-                rightCurve = fixedRightCurve;
-            }
-            else if (!leftMoreReliable && rightMoreReliable)
-            {
-                // Keep right curve, regenerate left curve with lane width offset
-                std::vector<cv::Point> fixedLeftCurve;
-                for (size_t i = 0; i < rightCurve.size(); i++)
-                {
-                    int newX = rightCurve[i].x - laneWidthEstimate;
-                    fixedLeftCurve.push_back(cv::Point(newX, rightCurve[i].y));
-                }
-                leftCurve = fixedLeftCurve;
-            }
+    //         if (leftMoreReliable && !rightMoreReliable)
+    //         {
+    //             // Keep left curve, regenerate right curve with lane width offset
+    //             std::vector<cv::Point> fixedRightCurve;
+    //             for (size_t i = 0; i < leftCurve.size(); i++)
+    //             {
+    //                 int newX = leftCurve[i].x + laneWidthEstimate;
+    //                 fixedRightCurve.push_back(cv::Point(newX, leftCurve[i].y));
+    //             }
+    //             rightCurve = fixedRightCurve;
+    //         }
+    //         else if (!leftMoreReliable && rightMoreReliable)
+    //         {
+    //             // Keep right curve, regenerate left curve with lane width offset
+    //             std::vector<cv::Point> fixedLeftCurve;
+    //             for (size_t i = 0; i < rightCurve.size(); i++)
+    //             {
+    //                 int newX = rightCurve[i].x - laneWidthEstimate;
+    //                 fixedLeftCurve.push_back(cv::Point(newX, rightCurve[i].y));
+    //             }
+    //             leftCurve = fixedLeftCurve;
+    //         }
             // else
             // {
             //     // Neither is clearly more reliable, force separation
@@ -605,7 +605,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
             //         }
             //     }
             // }
-        }
+        // }
     }
 
 
@@ -1657,12 +1657,12 @@ void LaneDetector::initKalmanFilters(const std::vector<cv::Point>& leftCurve,
     cv::setIdentity(rightLaneKF.measurementMatrix, cv::Scalar(1));
 
     // Set process noise covariance
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-5));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-5));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
 
     // Set measurement noise covariance
-    cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-2));
-    cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(1e-2));
+    cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
+    cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(1e-1));
 
     // Set error covariance
     cv::setIdentity(leftLaneKF.errorCovPost, cv::Scalar(1));
