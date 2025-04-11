@@ -110,5 +110,5 @@ class LaneDetector
       const std::vector<cv::Point>& rightCurve);
 
     void LaneDetector::sendCoefs(const std::vector<cv::Point>& leftCurve,
-        const std::vector<cv::Point>& rightCurve)
+        const std::vector<cv::Point>& rightCurve);
 };  
