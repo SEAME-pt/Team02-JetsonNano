@@ -353,8 +353,8 @@ void LaneDetector::postProcess(cv::Mat& frame)
         int scaledY = pt.y * y_scale;
         lanePoints.push_back(cv::Point(scaledX, scaledY));
     }
-    // cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
-    cv::cvtColor(mask, colored_mask, cv::COLOR_GRAY2BGR);
+    cv::resize(mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
     createLanes(lanePoints, frame);
 }
 
