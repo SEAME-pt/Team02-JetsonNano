@@ -231,37 +231,58 @@ float PidController::steeringPID(float error, double current_time) {
 }
 
 float PidController::speedAdjustment(float error) {
+    static bool is_starting = true;
+    static auto start_time = std::chrono::steady_clock::now();
+    static const float BOOST_DURATION_SEC = 0.5f; // Duration of initial boost
+    static const float BOOST_MULTIPLIER = 1.2f;   // 20% boost to starting speed
+    
+    // Check if we're in the initial starting phase
+    bool apply_boost = false;
+    if (is_starting) {
+        auto current_time = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration<float>(current_time - start_time).count();
+        
+        if (elapsed < BOOST_DURATION_SEC) {
+            apply_boost = true;
+            // Log that we're applying boost
+            std::cout << "Applying initial speed boost: " << elapsed << " seconds" << std::endl;
+        } else {
+            // Boost period has ended
+            is_starting = false;
+            std::cout << "Initial boost complete" << std::endl;
+        }
+    }
+    
     // Dynamic speed adjustment based on error
     float error_magnitude = std::fabs(error);
 
     // Define speed control parameters
-    const float BASE_SPEED =
-        constant_speed_; // Maximum speed when error is minimal
-    const float MIN_SPEED = BASE_SPEED * 0.5f; // Minimum speed (50% of max)
-    const float ERROR_THRESHOLD =
-        40.0f; // Error threshold where speed starts decreasing
+    const float BASE_SPEED = constant_speed_; // Maximum speed when error is minimal
+    const float MIN_SPEED = BASE_SPEED * 0.6f; // Minimum speed (60% of max)
+    const float ERROR_THRESHOLD = 40.0f; // Error threshold where speed starts decreasing
 
     // Calculate dynamic speed
     float dynamic_speed;
-    if (error_magnitude < ERROR_THRESHOLD)
-    {
+    if (error_magnitude < ERROR_THRESHOLD) {
         // Linear interpolation between BASE_SPEED and slightly reduced speed
         float reduction_factor = error_magnitude / ERROR_THRESHOLD;
         dynamic_speed = BASE_SPEED - (reduction_factor * (BASE_SPEED * 0.2f));
-    }
-    else
-    {
+    } else {
         // For larger errors, reduce speed more aggressively
         float excess_error = error_magnitude - ERROR_THRESHOLD;
-        float reduction_factor =
-            std::min(1.0f, excess_error / (ERROR_THRESHOLD * 2));
-        dynamic_speed =
-            BASE_SPEED * 0.8f - (reduction_factor * (BASE_SPEED * 0.2f));
+        float reduction_factor = std::min(1.0f, excess_error / (ERROR_THRESHOLD * 2));
+        dynamic_speed = BASE_SPEED * 0.8f - (reduction_factor * (BASE_SPEED * 0.2f));
     }
 
     // Ensure speed doesn't go below minimum
-    dynamic_speed = std::max(MIN_SPEED, dynamic_speed) * 100;
-    return dynamic_speed;
+    dynamic_speed = std::max(MIN_SPEED, dynamic_speed);
+    
+    // Apply boost if in starting phase
+    if (apply_boost) {
+        dynamic_speed *= BOOST_MULTIPLIER;
+    }
+    
+    return dynamic_speed * 100;
 }
 
 //SAE_1

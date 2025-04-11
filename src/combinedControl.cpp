@@ -21,10 +21,10 @@ int main(int argc, char** argv)
             pidController    = new PidController(manualController);
         }
         // PID controller values
-        float kp                = 90;
+        float kp                = 130;
         float ki                = 0.000001;
         float kd                = 10;
-        float constant_throttle = 0.3;
+        float constant_throttle = 0.2;
         float delta_time        = 0.05; // ms
 
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
