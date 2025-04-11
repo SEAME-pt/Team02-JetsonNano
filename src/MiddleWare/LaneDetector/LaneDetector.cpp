@@ -1165,11 +1165,11 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
     // Bottom position: bottom of the frame
     // Top position: 15% from the top of the frame
     
-    float bottomY = height * 0.90f;
+    float bottomY = height * 1.20f;
     float topY = height * 0.20f;
     
     float bottomLeftX = width * 0.00f;
-    float bottomRightX = width * 1.00f;
+    float bottomRightX = width * 1.20f;
     
     float topLeftX = width * 0.3f;
     float topRightX = width * 0.7f;
