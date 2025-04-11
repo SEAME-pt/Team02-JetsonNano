@@ -606,7 +606,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
             //     }
             // }
         // }
-    }
+    // }
 
 
     // Update lane width estimate when both curves are detected
