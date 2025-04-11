@@ -296,18 +296,51 @@ void LaneDetector::postProcess(cv::Mat& frame)
         mask_data[i] = (p0 > p1) ? 255 : 0;
     }
 
-    // Collect points in mask coordinates
+    // Apply ROI directly to the mask before collecting points
+    int height = mask.rows;
+    int width = mask.cols;
+
+    // Define trapezoidal ROI (same as in filterPoints)
+    float bottomY = height * 0.90f;
+    float topY = height * 0.20f;
+    float bottomLeftX = width * 0.00f;
+    float bottomRightX = width * 1.00f;
+    float topLeftX = width * 0.3f;
+    float topRightX = width * 0.7f;
+
+    // Create a copy of the mask for ROI application
+    cv::Mat roiMask = mask.clone();
+
+    // Set all points outside ROI to zero
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            // Calculate if this point is inside the trapezoid
+            bool inROI = false;
+            if (y >= topY) {
+                float yRatio = (y - topY) / (bottomY - topY);
+                float leftBoundary = topLeftX + yRatio * (bottomLeftX - topLeftX);
+                float rightBoundary = topRightX + yRatio * (bottomRightX - topRightX);
+                
+                inROI = (x >= leftBoundary && x <= rightBoundary);
+            }
+            
+            // If outside ROI, set to zero
+            if (!inROI) {
+                roiMask.at<uchar>(y, x) = 0;
+            }
+        }
+    }
+
+    // Collect points from the ROI-filtered mask
     std::vector<cv::Point> maskPoints;
-    for (int y = 0; y < mask.rows; y++)
-    {
-        for (int x = 0; x < mask.cols; x++)
-        {
-            if (mask.at<uchar>(y, x) == 255)
-            {
+    for (int y = 0; y < roiMask.rows; y++) {
+        for (int x = 0; x < roiMask.cols; x++) {
+            if (roiMask.at<uchar>(y, x) == 255) {
                 maskPoints.push_back(cv::Point(x, y));
             }
         }
     }
+
     // Scale all points to frame coordinates
     std::vector<cv::Point> lanePoints;
     lanePoints.reserve(maskPoints.size()); // Pre-allocate for performance
@@ -1034,7 +1067,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
 
     // Apply rate limiting to error changes
     static float prevError       = 0.0f;
-    const float MAX_ERROR_CHANGE = 0.15f; // Maximum allowed change per frame
+    const float MAX_ERROR_CHANGE = 0.3f; // Maximum allowed change per frame
 
     float errorChange = rawError - prevError;
     if (std::abs(errorChange) > MAX_ERROR_CHANGE)
