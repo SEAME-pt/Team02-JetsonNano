@@ -1165,14 +1165,14 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
     // Bottom position: bottom of the frame
     // Top position: 15% from the top of the frame
     
-    float bottomY = height * 1.20f;
-    float topY = height * 0.25f;
+    float bottomY = height;
+    float topY = height * 0.30f;
     
-    float bottomLeftX = width * - 0.30f;
-    float bottomRightX = width * 1.30f;
+    float bottomLeftX = width * - 0.40f;
+    float bottomRightX = width * 1.40f;
     
-    float topLeftX = width * 0.3f;
-    float topRightX = width * 0.7f;
+    float topLeftX = width * 0.4f;
+    float topRightX = width * 0.8f;
     
     // ROI filtering using trapezoidal shape
     for (const auto& pt : points) {
