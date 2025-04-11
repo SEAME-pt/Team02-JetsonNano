@@ -8,7 +8,7 @@ int main(int argc, char** argv)
 {
     const std::string pipeline =
       "nvarguscamerasrc sensor-id=0 ! "
-      "video/x-raw(memory:NVMM), width=(int)1280, height=(int)860, format=NV12, framerate=(fraction)30/1 ! "
+      "video/x-raw(memory:NVMM), width=(int)320, height=(int)215, format=NV12, framerate=(fraction)30/1 ! "
       "nvvidconv ! video/x-raw, format=BGRx ! "
       "videoconvert ! video/x-raw, format=BGR ! "
       "appsink";
