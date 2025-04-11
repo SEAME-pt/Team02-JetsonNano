@@ -12,7 +12,7 @@ Logger logger;
 LaneDetector::LaneDetector(const std::string& enginePath,
                            const std::string& pipeline,
                            std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(4),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(6),
       laneWidthEstimate(0.0), firstFrame(true), frame_count(0)
 {
     createExecutionContext(enginePath);
@@ -557,21 +557,21 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
                 }
                 leftCurve = fixedLeftCurve;
             }
-            else
-            {
-                // Neither is clearly more reliable, force separation
-                double adjustment = (laneWidthEstimate - (rightMeanX - leftMeanX)) / 2.0;
-                if (adjustment > 0)
-                {
-                    // Move each curve outward by half the required adjustment
-                    for (auto& pt : leftCurve) {
-                        pt.x -= adjustment;
-                    }
-                    for (auto& pt : rightCurve) {
-                        pt.x += adjustment;
-                    }
-                }
-            }
+            // else
+            // {
+            //     // Neither is clearly more reliable, force separation
+            //     double adjustment = (laneWidthEstimate - (rightMeanX - leftMeanX)) / 2.0;
+            //     if (adjustment > 0)
+            //     {
+            //         // Move each curve outward by half the required adjustment
+            //         for (auto& pt : leftCurve) {
+            //             pt.x -= adjustment;
+            //         }
+            //         for (auto& pt : rightCurve) {
+            //             pt.x += adjustment;
+            //         }
+            //     }
+            // }
         }
     }
 
@@ -850,22 +850,6 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
             }
         }
         
-        // // Additional check: Maintain minimum lane width
-        // float minLaneWidth = laneWidthEstimate * 0.7f;
-        
-        // for (size_t i = 0; i < std::min(leftCurve.size(), rightCurve.size()); i++) {
-        //     size_t leftIdx = i * leftCurve.size() / std::min(leftCurve.size(), rightCurve.size());
-        //     size_t rightIdx = i * rightCurve.size() / std::min(leftCurve.size(), rightCurve.size());
-            
-        //     float currentWidth = rightCurve[rightIdx].x - leftCurve[leftIdx].x;
-            
-        //     // If lanes are too close, expand them
-        //     if (currentWidth < minLaneWidth) {
-        //         float adjustment = (minLaneWidth - currentWidth) / 2.0f;
-        //         leftCurve[leftIdx].x -= adjustment;
-        //         rightCurve[rightIdx].x += adjustment;
-        //     }
-        // }
     }
 
     // 9. Calculate reference point for lateral error - IMPROVED HANDLING
@@ -1490,7 +1474,7 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     for (const auto& pt : rightPoints) {
         cv::circle(frame, pt, 4, cv::Scalar(100, 255, 100), -1); // Light green for right points
     }
-    
+
     // Stage 2: Compute expected boundaries from history and laneWidthEstimate
     // Ensure laneWidthEstimate has a default (if not yet set).
     
