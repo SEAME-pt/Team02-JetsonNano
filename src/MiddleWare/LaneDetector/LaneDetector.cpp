@@ -1407,7 +1407,6 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                         cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 1);
                         
             // Since we've assigned points directly, skip to Stage 6 to update history
-            goto UpdateHistory;
         }
         // If clustering didn't give useful results, fall back to simple gap detection
         else {
@@ -1445,29 +1444,44 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
                 cv::putText(frame, gapText, cv::Point(separationPoint - 50, height/2 + 30), 
                             cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             }
+
+            if (laneWidthEstimate <= 0) {
+                laneWidthEstimate = width * 0.6f;
+            }
+            int expectedLeftBoundary, expectedRightBoundary;
+            computeExpectedBoundaries(frame, midX, laneWidthEstimate,
+                                      prevLeftCurve, prevRightCurve,
+                                      expectedLeftBoundary, expectedRightBoundary);
+            // Set tolerance to about 20% of lane width.
+            float tolerance = laneWidthEstimate * 0.2f;
+        
+            // (Optional) Visual debug: Draw expected boundaries
+            cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
+                     cv::Scalar(128, 0, 255), 2);
+            cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
+                     cv::Scalar(0, 128, 255), 2);
+        
+            // Stage 3: Assign points to lanes based on expected boundaries
+            assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
+        
+            // Stage 4: Sanity Check – verify that the left cluster is actually on the left.
+            if (!leftPoints.empty() && !rightPoints.empty()) {
+                double leftMean = 0, rightMean = 0;
+                for (auto pt : leftPoints) leftMean += pt.x;
+                for (auto pt : rightPoints) rightMean += pt.x;
+                leftMean /= leftPoints.size();
+                rightMean /= rightPoints.size();
+                if (leftMean > rightMean)
+                    std::swap(leftPoints, rightPoints);
+            }
+        
+            // Stage 5: Fallback to history if clusters are too sparse.
+            if (leftPoints.size() < 3 && !prevLeftPoints.empty())
+                leftPoints = prevLeftPoints;
+            if (rightPoints.size() < 3 && !prevRightPoints.empty())
+                rightPoints = prevRightPoints;
         }
     }
-
-    // Stage 2: Compute expected boundaries from history and laneWidthEstimate
-    // Ensure laneWidthEstimate has a default (if not yet set).
-    if (laneWidthEstimate <= 0) {
-        laneWidthEstimate = width * 0.6f;
-    }
-    int expectedLeftBoundary, expectedRightBoundary;
-    computeExpectedBoundaries(frame, midX, laneWidthEstimate,
-                              prevLeftCurve, prevRightCurve,
-                              expectedLeftBoundary, expectedRightBoundary);
-    // Set tolerance to about 20% of lane width.
-    float tolerance = laneWidthEstimate * 0.2f;
-
-    // (Optional) Visual debug: Draw expected boundaries
-    cv::line(frame, cv::Point(expectedLeftBoundary, height), cv::Point(expectedLeftBoundary, height/2),
-             cv::Scalar(128, 0, 255), 2);
-    cv::line(frame, cv::Point(expectedRightBoundary, height), cv::Point(expectedRightBoundary, height/2),
-             cv::Scalar(0, 128, 255), 2);
-
-    // Stage 3: Assign points to lanes based on expected boundaries
-    assignPointsToLanes(filtered, leftPoints, rightPoints, expectedLeftBoundary, expectedRightBoundary, tolerance, midX);
 
     for (const auto& pt : leftPoints) {
         cv::circle(frame, pt, 4, cv::Scalar(255, 100, 100), -1); // Light red for left points
@@ -1476,25 +1490,10 @@ void LaneDetector::clusterLanePoints(const std::vector<cv::Point>& points,
     for (const auto& pt : rightPoints) {
         cv::circle(frame, pt, 4, cv::Scalar(100, 255, 100), -1); // Light green for right points
     }
-
-    // Stage 4: Sanity Check – verify that the left cluster is actually on the left.
-    if (!leftPoints.empty() && !rightPoints.empty()) {
-        double leftMean = 0, rightMean = 0;
-        for (auto pt : leftPoints) leftMean += pt.x;
-        for (auto pt : rightPoints) rightMean += pt.x;
-        leftMean /= leftPoints.size();
-        rightMean /= rightPoints.size();
-        if (leftMean > rightMean)
-            std::swap(leftPoints, rightPoints);
-    }
-
-    // Stage 5: Fallback to history if clusters are too sparse.
-    if (leftPoints.size() < 3 && !prevLeftPoints.empty())
-        leftPoints = prevLeftPoints;
-    if (rightPoints.size() < 3 && !prevRightPoints.empty())
-        rightPoints = prevRightPoints;
-
-    UpdateHistory:
+    
+    // Stage 2: Compute expected boundaries from history and laneWidthEstimate
+    // Ensure laneWidthEstimate has a default (if not yet set).
+    
     // Stage 6: Update history for next frame.
     if (leftPoints.size() >= 3)
         prevLeftPoints = leftPoints;
