@@ -109,6 +109,6 @@ class LaneDetector
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
 
-    void LaneDetector::sendCoefs(const std::vector<cv::Point>& leftCurve,
+    void sendCoefs(const std::vector<cv::Point>& leftCurve,
         const std::vector<cv::Point>& rightCurve);
 };  
