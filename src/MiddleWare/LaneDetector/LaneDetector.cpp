@@ -1171,7 +1171,7 @@ static std::vector<cv::Point> filterPoints(const std::vector<cv::Point>& points,
     float bottomLeftX = width * - 0.40f;
     float bottomRightX = width * 1.40f;
     
-    float topLeftX = width * 0.4f;
+    float topLeftX = width * 0.2f;
     float topRightX = width * 0.8f;
     
     // ROI filtering using trapezoidal shape
