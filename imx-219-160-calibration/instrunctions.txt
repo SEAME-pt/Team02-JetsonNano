@@ -1,0 +1,19 @@
+mkdir build
+cd build
+cmake ..
+make
+pictureTaker      - makes ./pictureTaker that you can use to take pictures pressing space ( built for the jetson nano adapt it to your needss)
+calibrateCam     - run this with the images of the chessboard here to generate the calibration yml file
+undistortedCam    - uses the previous generated yml to make a live view of the camera with no distortion
+
+
+
+
+PS:
+I used the calibration chessboard image available at openCV website.
+The paramathers of each square of the chessboard image size and quantity should all be set on the code for a correct calibration generation.
+Take the pictures with your camera of you chessboard and use those to calibrate.
+
+Optimization:
+For greater performance a calibration mao should be initialized to then remap the frames of your chosing.
+This greatly improves speed.
