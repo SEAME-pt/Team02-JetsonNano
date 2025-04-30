@@ -1031,7 +1031,7 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     if (publisher_)
     {
         publisher_->publishCameraError(lateralError);
-        // publisher_->publishLanes(leftCurve, rightCurve);
+        //publisher_->publishLanes(leftCurve, rightCurve);
     }
 
     // Draw the final lane visualization
@@ -1055,6 +1055,8 @@ void LaneDetector::createLanes(std::vector<cv::Point> lanePoints,
     std::string errorText = "Error: " + std::to_string(lateralError);
     cv::putText(frame, errorText, cv::Point(20, 90), cv::FONT_HERSHEY_SIMPLEX,
                 0.7, cv::Scalar(255, 255, 255), 2);
+
+    return (leftCurve, rightCurve)
 }
 
 void LaneDetector::drawLanes(cv::Mat& frame,
@@ -1676,10 +1678,12 @@ void LaneDetector::sendCoefs(const std::vector<cv::Point>& leftCurve,
         rightCoeffs = polyfit(y_mat, x_mat, 2);
     }
 
+    publisher_->publishLanes(leftCoeffs, rightCoeffs);
     // Publish the coefficients if they were successfully calculated
     if (!leftCoeffs.empty() && !rightCoeffs.empty() && leftCoeffs.rows >= 3 &&
         rightCoeffs.rows >= 3)
     {
+        publisher_->publishLanes(leftCoeffs, rightCoeffs);
         // Extract coefficients
         float leftA = static_cast<float>(
             leftCoeffs.at<double>(0)); // quadratic coefficient

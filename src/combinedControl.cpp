@@ -13,12 +13,12 @@ int main(int argc, char** argv)
         if (argc == 3)
         {
             manualController = new XboxController(argv[1]);
-            pidController    = new PidController(argv[2], manualController);
+            pidController    = new ModelPredictiveController(argv[2], manualController);
         }
         else
         {
             manualController = new XboxController();
-            pidController    = new PidController(manualController);
+            pidController    = new ModelPredictiveController(manualController);
         }
         // PID controller values
         float kp                = 130;
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
         std::thread manualThread(&XboxController::run, manualController);
-        std::thread pidThread(&PidController::run, pidController);
+        std::thread MPCThread(&PidController::run, pidController);
         manualThread.join();
         pidThread.join();
 
