@@ -1129,7 +1129,6 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         int32_t coefB = 1;
         int32_t coefC = 2;
 
-        
         // Send left lane coefficients one at a time
         // Coefficient A
         memcpy(buffer, &coefA, sizeof(int32_t));

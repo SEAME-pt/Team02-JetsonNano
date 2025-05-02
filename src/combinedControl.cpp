@@ -13,7 +13,8 @@ int main(int argc, char** argv)
         if (argc == 3)
         {
             manualController = new XboxController(argv[1]);
-            pidController    = new ModelPredictiveController(argv[2], manualController);
+            pidController =
+                new ModelPredictiveController(argv[2], manualController);
         }
         else
         {
