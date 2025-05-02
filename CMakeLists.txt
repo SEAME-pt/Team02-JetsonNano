@@ -1,15 +1,21 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(VehicleSystem VERSION 0.1)
+project(VehicleSystem CUDA CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 
+enable_language(CUDA)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_72")
+set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+
+find_package(CUDA REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 
@@ -31,10 +37,18 @@ include_directories(include/Vehicle)
 include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
+include_directories(include/MiddleWare/LaneDetector)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/PCA9685/include)
+
+include_directories(
+    ${CUDA_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    /usr/include/aarch64-linux-gnu
+    include/MiddleWare/LaneDetector
+)
 
 set(SOURCES
     ./src/Communication/VSSSubscriber.cpp
@@ -97,6 +111,71 @@ target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(XboxController
     zenohcxx::zenohc)
 
+add_executable(CombinedController
+    ./src/Controllers/XboxController.cpp
+    ./src/Controllers/PidController.cpp
+    ./src/Communication/ControllerPublisher.cpp
+    ./src/combinedControl.cpp
+)
+
+target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
+
+target_link_libraries(CombinedController
+    ${CMAKE_THREAD_LIBS_INIT}
+    zenohcxx::zenohc)
+
+    
+add_executable(LaneDetector
+    ./src/MiddleWare/LaneDetector/LaneDetector.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
+    ./src/laneDetector.cpp
+)
+
+target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
+
+find_library(CUDA_RUNTIME_LIBRARY
+    NAMES cudart
+    HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+)
+
+target_link_libraries(LaneDetector
+    ${OpenCV_LIBS}
+    zenohcxx::zenohc
+    Libs
+    vehicle_lib
+    ${CUDA_LIBRARIES}
+    ${CUDA_RUNTIME_LIBRARY}
+    nvinfer
+    nvonnxparser
+)
+
+add_executable(LaneDetectorCV
+    ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
+    ./src/laneDetectorCV.cpp
+)
+
+target_compile_options(LaneDetectorCV PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
+
+
+target_link_libraries(LaneDetectorCV
+    ${OpenCV_LIBS}
+    zenohcxx::zenohc
+    Libs
+    vehicle_lib
+)
 
 add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp
@@ -108,6 +187,7 @@ add_executable(MiddleWare
 target_compile_options(MiddleWare PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(MiddleWare
+    ${CMAKE_THREAD_LIBS_INIT}
     Libs
     vehicle_lib
 )
@@ -169,10 +249,10 @@ if(ENABLE_TESTING)
         ./tests/ADAS/ObstacleDetectionTests.cpp
     )
 
-set(CONTROLLERS_TEST_FILES
-    ./tests/Controllers/MockFunctions.cpp
-    ./tests/Controllers/XboxControllerTests.cpp
-)
+    set(CONTROLLERS_TEST_FILES
+        ./tests/Controllers/MockFunctions.cpp
+        ./tests/Controllers/XboxControllerTests.cpp
+    )
 
     set(COMMUNICATION_TEST_FILES
         ./tests/Communication/ControllerPublisherTests.cpp
@@ -197,16 +277,16 @@ set(CONTROLLERS_TEST_FILES
 
     target_compile_definitions(vehicle_test_lib PRIVATE TEST_MODE)
 
-add_executable(vehicle_tests
-    ${VEHICLE_TEST_FILES}
-    ${MOTION_TEST_FILES}
-    ${POWERTRAIN_TEST_FILES}
-    ${CHASSIS_TEST_FILES}
-    ${BODY_TEST_FILES}
-    ${ADAS_TEST_FILES}
-    ${COMMUNICATION_TEST_FILES}
-    ${CONTROLLERS_TEST_FILES}
-)
+    add_executable(vehicle_tests
+        ${VEHICLE_TEST_FILES}
+        ${MOTION_TEST_FILES}
+        ${POWERTRAIN_TEST_FILES}
+        ${CHASSIS_TEST_FILES}
+        ${BODY_TEST_FILES}
+        ${ADAS_TEST_FILES}
+        ${COMMUNICATION_TEST_FILES}
+        ${CONTROLLERS_TEST_FILES}
+    )
 
     target_link_libraries(vehicle_test_lib PUBLIC
         zenohcxx::zenohc
