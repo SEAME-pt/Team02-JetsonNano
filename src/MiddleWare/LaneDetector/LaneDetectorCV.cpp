@@ -1,6 +1,7 @@
 #include "LaneDetectorCV.hpp"
 #include <sys/time.h>
 #include <iostream>
+#include <unistd.h>
 
 using namespace cv;
 using namespace std;
@@ -32,6 +33,8 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
       frame_count(0), FRAME_SKIP(2)
 
 {
+    //(void) pipeline;
+
     if (!cap.isOpened())
     {
         throw std::runtime_error("Error opening video stream");
@@ -41,6 +44,9 @@ LaneDetectorCV::LaneDetectorCV(const std::string& pipeline,
     kfInitialized = false;
 
     // Set camera buffer size
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 512);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 256);
+    cap.set(cv::CAP_PROP_FPS, 30);
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     // Initialize the lane detector publisher
@@ -968,7 +974,7 @@ void LaneDetectorCV::run()
             remap(frame, undistorted, map1, map2, INTER_LINEAR);
             frame = undistorted;
             detect(frame);
-            // imshow("Lane Detection", frame);
+            imshow("Lane Detection", frame);
             publisher_->publishCameraFrame(frame);
         }
 
@@ -1138,6 +1144,8 @@ void LaneDetectorCV::sendCoefs(const std::vector<cv::Point>& leftCurve,
         memcpy(buffer, &coefC, sizeof(int32_t));
         memcpy(buffer + sizeof(int32_t), &leftC, sizeof(float));
         canBus->writeMessage(LEFT_LANE_ADDR, buffer, sizeof(buffer));
+
+        usleep(1000);
 
         memset(buffer, 0, sizeof(buffer));
 

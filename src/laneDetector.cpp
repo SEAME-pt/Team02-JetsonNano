@@ -8,12 +8,11 @@ int main(int argc, char** argv)
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
-        "video/x-raw(memory:NVMM), width=640, height=480, format=NV12, "
-        "framerate=30/1 ! "
+        "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, "
+        "format=NV12, framerate=(fraction)30/1 ! "
         "nvvidconv ! video/x-raw, format=BGRx ! "
         "videoconvert ! video/x-raw, format=BGR ! "
         "appsink";
-
     try
     {
         std::shared_ptr<zenoh::Session> session;
@@ -29,7 +28,7 @@ int main(int argc, char** argv)
             session     = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-        std::string file = "/home/team02/cam/model_segmentation5.engine";
+        std::string file = "/home/team02/model_segmentation12_model4.engine";
         LaneDetector detector(file, pipeline, session);
         detector.setCalibrationParameters();
         detector.run();
