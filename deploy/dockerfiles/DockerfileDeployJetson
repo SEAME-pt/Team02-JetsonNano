@@ -14,6 +14,6 @@ RUN cd /home$projectDir && \
     -DZENOHCXX_ZENOHC=ON && \
     # -DENABLE_COVERAGE=ON \
     # -DBUILD_TESTING=ON && \
-    cmake --build . \
+    cmake --build .
     # ctest --output-on-failure && \
-    # make coverage
+    # make coverag
