@@ -206,7 +206,7 @@ void XboxController::run()
                     case (AXIS_LEFT_STICK):
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
-                        //publisher_->publishActiveAutonomyLevel("SAE_0");
+                        // publisher_->publishActiveAutonomyLevel("SAE_0");
                         if (speed < -5)
                         {
                             publisher_->publishCurrentGear(-1);
@@ -219,7 +219,7 @@ void XboxController::run()
                         {
                             publisher_->publishCurrentGear(0);
                         }
-                        //publisher_->publishSpeed(speed);
+                        // publisher_->publishSpeed(speed);
                         manual_speed_.store(speed);
                         std::cout << "Speed" << std::endl;
                         break;
@@ -228,7 +228,7 @@ void XboxController::run()
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
                         publisher_->publishActiveAutonomyLevel("SAE_0");
-                        //publisher_->publishSteering(direction);
+                        // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
                         break;
@@ -251,7 +251,6 @@ void XboxController::run()
         fflush(stdout);
     }
 }
-
 
 float XboxController::getManualSteering() const
 {
