@@ -156,25 +156,25 @@ void ObjectDetector::preProcess(const cv::Mat& frame)
     // Create static GPU matrices
     static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
     static cv::Mat cpu_rgb_image(HEIGHT, WIDTH, CV_8UC3);
-    
+
     // Upload input frame to GPU
     d_frame.upload(frame);
-    
+
     // Resize on GPU with CUDA stream
     cv::cuda::resize(d_frame, d_resized, cv::Size(WIDTH, HEIGHT), 0, 0,
-                   cv::INTER_NEAREST, stream);
-    
+                     cv::INTER_NEAREST, stream);
+
     // Convert BGR to RGB on GPU
     cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, stream);
-    
+
     // Download the result back to CPU
     d_rgb_image.download(cpu_rgb_image, stream);
-    
+
     // Wait for CUDA operations to complete
     cudaStreamSynchronize(stream);
-    
+
     // Continue with existing channel reordering code
-    const int plane_size = HEIGHT * WIDTH;
+    const int plane_size      = HEIGHT * WIDTH;
     const uint8_t* frame_data = cpu_rgb_image.data;
 
     for (int c = 0; c < 3; c++)
@@ -190,25 +190,26 @@ void ObjectDetector::postProcess(cv::Mat& frame)
 {
     // Create a colored segmentation mask
     static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
-    
+
     // Define color map for each class
     const cv::Scalar color_map[] = {
-        cv::Scalar(0, 0, 0),         // Background
-        cv::Scalar(128, 64, 128),    // Road
-        cv::Scalar(0, 0, 142),       // Car
-        cv::Scalar(250, 170, 30),    // Traffic Light
-        cv::Scalar(220, 220, 0),     // Traffic Sign
-        cv::Scalar(220, 20, 60),     // Person
-        cv::Scalar(244, 35, 232),    // Sidewalks
-        cv::Scalar(0, 0, 70),        // Truck
-        cv::Scalar(0, 60, 100),      // Bus
-        cv::Scalar(0, 0, 230)        // Motorcycle
+        cv::Scalar(0, 0, 0),      // Background
+        cv::Scalar(128, 64, 128), // Road
+        cv::Scalar(0, 0, 142),    // Car
+        cv::Scalar(250, 170, 30), // Traffic Light
+        cv::Scalar(220, 220, 0),  // Traffic Sign
+        cv::Scalar(220, 20, 60),  // Person
+        cv::Scalar(244, 35, 232), // Sidewalks
+        cv::Scalar(0, 0, 70),     // Truck
+        cv::Scalar(0, 60, 100),   // Bus
+        cv::Scalar(0, 0, 230)     // Motorcycle
     };
-    
+
     const int total_pixels = HEIGHT * WIDTH;
-    
+
     // For each pixel, find the class with highest probability
-    for (int i = 0; i < total_pixels; i++) {
+    for (int i = 0; i < total_pixels; i++)
+    {
         // Get probability for each class
         float probs[10];
         probs[0] = outputData[i];
@@ -220,35 +221,37 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         probs[6] = outputData[total_pixels * 6 + i];
         probs[7] = outputData[total_pixels * 7 + i];
         probs[8] = outputData[total_pixels * 8 + i];
-        probs[9] = outputData[total_pixels * 9 + i];  // You need this for class 9
-        
+        probs[9] =
+            outputData[total_pixels * 9 + i]; // You need this for class 9
+
         // Find class with highest probability
         int best_class = 0;
         float max_prob = probs[0];
-        
-        for (int c = 1; c < 10; c++) {
-            if (probs[c] > max_prob) {
-                max_prob = probs[c];
+
+        for (int c = 1; c < 10; c++)
+        {
+            if (probs[c] > max_prob)
+            {
+                max_prob   = probs[c];
                 best_class = c;
             }
         }
-        
+
         // Map pixel coordinates (i) back to x,y
         int y = i / WIDTH;
         int x = i % WIDTH;
-        
+
         // Set pixel color based on class
-        colored_mask.at<cv::Vec3b>(y, x) = cv::Vec3b(
-            color_map[best_class][0],
-            color_map[best_class][1], 
-            color_map[best_class][2]
-        );
+        colored_mask.at<cv::Vec3b>(y, x) =
+            cv::Vec3b(color_map[best_class][0], color_map[best_class][1],
+                      color_map[best_class][2]);
     }
-    
+
     // Resize the segmentation mask to match the frame size
     cv::Mat resized_mask;
-    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
-    
+    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
+               cv::INTER_NEAREST);
+
     // Blend the segmentation mask with the original frame
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
