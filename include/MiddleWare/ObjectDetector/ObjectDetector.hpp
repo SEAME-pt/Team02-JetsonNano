@@ -39,7 +39,8 @@ class ObjectDetector
 {
   private:
     std::shared_ptr<nvinfer1::IExecutionContext> context;
-    static cudaEvent_t start, stop;
+    cudaEvent_t start;
+    cudaEvent_t stop;
     cudaStream_t stream;
     cv::cuda::Stream cv_stream;
     void* inputDevice;

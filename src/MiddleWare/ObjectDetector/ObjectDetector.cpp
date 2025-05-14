@@ -1,11 +1,9 @@
 #include "ObjectDetector.hpp"
-
 #include <sys/time.h>
 #include <iostream>
 
 using namespace cv;
 using namespace std;
-using namespace zenoh;
 
 Logger logger;
 
