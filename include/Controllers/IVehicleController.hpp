@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Vehicle.cpp"
+#include "Vehicle.hpp"
 
 /**
  * @brief Interface for vehicle control implementations
