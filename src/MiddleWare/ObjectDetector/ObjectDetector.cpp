@@ -1,0 +1,275 @@
+#include "ObjectDetector.hpp"
+
+#include <sys/time.h>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+using namespace zenoh;
+
+Logger logger;
+
+ObjectDetector::ObjectDetector(const std::string& enginePath,
+                               const std::string& pipeline)
+    : cap(pipeline, cv::CAP_GSTREAMER), FRAME_SKIP(3), frame_count(0)
+{
+    createExecutionContext(enginePath);
+
+    // Set highest stream priority
+    int leastPriority, greatestPriority;
+    cudaDeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
+    cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking,
+                                 greatestPriority);
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    // Pin memory for faster transfers
+    void* input_ptr;
+    void* output_ptr;
+    cudaHostAlloc(&input_ptr, INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                  cudaHostAllocMapped);
+    cudaHostAlloc(&output_ptr, OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                  cudaHostAllocMapped);
+    inputData  = static_cast<float*>(input_ptr);
+    outputData = static_cast<float*>(output_ptr);
+
+    // Allocate GPU memory
+    size_t pitch;
+    cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
+                    HEIGHT * INPUT_SIZE);
+    cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
+                    HEIGHT * OUTPUT_SIZE);
+
+    if (!cap.isOpened())
+    {
+        throw std::runtime_error("Error opening video stream");
+    }
+
+    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+}
+
+ObjectDetector::~ObjectDetector()
+{
+    cudaFreeHost(inputData);
+    cudaFreeHost(outputData);
+    cudaFree(inputDevice);
+    cudaFree(outputDevice);
+    cudaStreamDestroy(stream);
+}
+
+void ObjectDetector::setCalibrationParameters(void)
+{
+    FileStorage fs("calibration.yml", FileStorage::READ);
+    if (!fs.isOpened())
+    {
+        cerr << "Failed to open calibration.yml" << endl;
+        return;
+    }
+    Mat tempMatrix, tempCoeffs;
+    fs["CameraMatrix"] >> tempMatrix;
+    fs["DistCoeffs"] >> tempCoeffs;
+    fs.release();
+    this->cameraMatrix = tempMatrix;
+    this->distCoeffs   = tempCoeffs;
+}
+
+double ObjectDetector::getCurrentTime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
+void ObjectDetector::detect(cv::Mat& frame)
+{
+    float milliseconds = 0;
+
+    // Preprocess
+    preProcess(frame);
+
+    cudaEventRecord(start, stream);
+
+    // Copy to GPU
+    cudaMemcpyAsync(inputDevice, inputData,
+                    INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    cudaMemcpyHostToDevice, stream);
+
+    // Run inference with optimization flags
+    void* bindings[] = {inputDevice, outputDevice};
+    context->enqueueV2(bindings, stream, nullptr);
+
+    // Copy back to CPU
+    cudaMemcpyAsync(outputData, outputDevice,
+                    OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    cudaMemcpyDeviceToHost, stream);
+
+    cudaStreamSynchronize(stream);
+
+    // Postprocess
+    postProcess(frame);
+
+    cudaEventRecord(stop, stream);
+    cudaEventSynchronize(stop);
+
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    std::cout << "Inference time: " << milliseconds << "ms\n";
+}
+
+void ObjectDetector::run()
+{
+    bool mapsInitialized = false;
+    cv::Mat frame;
+
+    while (true)
+    {
+        cap >> frame;
+        if (frame.empty())
+            break;
+        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty())
+        {
+            Size imageSize = frame.size();
+            initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
+                                    cameraMatrix, imageSize, CV_16SC2, map1,
+                                    map2);
+            mapsInitialized = true;
+        }
+        if (frame_count % FRAME_SKIP == 0)
+        {
+            cv::Mat undistorted;
+            remap(frame, undistorted, map1, map2, INTER_LINEAR);
+            frame = undistorted;
+            detect(frame);
+            imshow("Object Detection", frame);
+        }
+        frame_count++;
+
+        if (cv::waitKey(1) == 'q')
+            break;
+    }
+
+    cv::destroyAllWindows();
+}
+
+void ObjectDetector::preProcess(const cv::Mat& frame)
+{
+    // Create static GPU matrices
+    static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
+    static cv::Mat cpu_rgb_image(HEIGHT, WIDTH, CV_8UC3);
+    
+    // Upload input frame to GPU
+    d_frame.upload(frame);
+    
+    // Resize on GPU with CUDA stream
+    cv::cuda::resize(d_frame, d_resized, cv::Size(WIDTH, HEIGHT), 0, 0,
+                   cv::INTER_NEAREST, stream);
+    
+    // Convert BGR to RGB on GPU
+    cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, stream);
+    
+    // Download the result back to CPU
+    d_rgb_image.download(cpu_rgb_image, stream);
+    
+    // Wait for CUDA operations to complete
+    cudaStreamSynchronize(stream);
+    
+    // Continue with existing channel reordering code
+    const int plane_size = HEIGHT * WIDTH;
+    const uint8_t* frame_data = cpu_rgb_image.data;
+
+    for (int c = 0; c < 3; c++)
+    {
+        for (int i = 0; i < plane_size; i++)
+        {
+            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
+        }
+    }
+}
+
+void ObjectDetector::postProcess(cv::Mat& frame)
+{
+    // Create a colored segmentation mask
+    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
+    
+    // Define color map for each class
+    const cv::Scalar color_map[] = {
+        cv::Scalar(0, 0, 0),         // Background
+        cv::Scalar(128, 64, 128),    // Road
+        cv::Scalar(0, 0, 142),       // Car
+        cv::Scalar(250, 170, 30),    // Traffic Light
+        cv::Scalar(220, 220, 0),     // Traffic Sign
+        cv::Scalar(220, 20, 60),     // Person
+        cv::Scalar(244, 35, 232),    // Sidewalks
+        cv::Scalar(0, 0, 70),        // Truck
+        cv::Scalar(0, 60, 100),      // Bus
+        cv::Scalar(0, 0, 230)        // Motorcycle
+    };
+    
+    const int total_pixels = HEIGHT * WIDTH;
+    
+    // For each pixel, find the class with highest probability
+    for (int i = 0; i < total_pixels; i++) {
+        // Get probability for each class
+        float probs[10];
+        probs[0] = outputData[i];
+        probs[1] = outputData[total_pixels * 1 + i];
+        probs[2] = outputData[total_pixels * 2 + i];
+        probs[3] = outputData[total_pixels * 3 + i];
+        probs[4] = outputData[total_pixels * 4 + i];
+        probs[5] = outputData[total_pixels * 5 + i];
+        probs[6] = outputData[total_pixels * 6 + i];
+        probs[7] = outputData[total_pixels * 7 + i];
+        probs[8] = outputData[total_pixels * 8 + i];
+        probs[9] = outputData[total_pixels * 9 + i];  // You need this for class 9
+        
+        // Find class with highest probability
+        int best_class = 0;
+        float max_prob = probs[0];
+        
+        for (int c = 1; c < 10; c++) {
+            if (probs[c] > max_prob) {
+                max_prob = probs[c];
+                best_class = c;
+            }
+        }
+        
+        // Map pixel coordinates (i) back to x,y
+        int y = i / WIDTH;
+        int x = i % WIDTH;
+        
+        // Set pixel color based on class
+        colored_mask.at<cv::Vec3b>(y, x) = cv::Vec3b(
+            color_map[best_class][0],
+            color_map[best_class][1], 
+            color_map[best_class][2]
+        );
+    }
+    
+    // Resize the segmentation mask to match the frame size
+    cv::Mat resized_mask;
+    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    
+    // Blend the segmentation mask with the original frame
+    cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
+}
+
+void ObjectDetector::createExecutionContext(const std::string& enginePath)
+{
+    std::ifstream file(enginePath, std::ios::binary);
+    if (!file)
+    {
+        throw std::runtime_error("Failed to open engine file");
+    }
+
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char> engineData(size);
+    file.read(engineData.data(), size);
+
+    nvinfer1::IRuntime* runtime = nvinfer1::createInferRuntime(logger);
+    nvinfer1::ICudaEngine* engine =
+        runtime->deserializeCudaEngine(engineData.data(), size);
+    context.reset(engine->createExecutionContext());
+}
