@@ -21,6 +21,9 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
     cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking,
                                  greatestPriority);
 
+    // Create an OpenCV CUDA stream (with default flags)
+    cv_stream = cv::cuda::Stream();    
+
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
@@ -162,16 +165,16 @@ void ObjectDetector::preProcess(const cv::Mat& frame)
 
     // Resize on GPU with CUDA stream
     cv::cuda::resize(d_frame, d_resized, cv::Size(WIDTH, HEIGHT), 0, 0,
-                     cv::INTER_NEAREST, stream);
+                     cv::INTER_NEAREST, cv_stream);
 
     // Convert BGR to RGB on GPU
-    cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, stream);
+    cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
 
     // Download the result back to CPU
-    d_rgb_image.download(cpu_rgb_image, stream);
+    d_rgb_image.download(cpu_rgb_image, cv_stream);
 
     // Wait for CUDA operations to complete
-    cudaStreamSynchronize(stream);
+    cudaStreamSynchronize(cv_stream);
 
     // Continue with existing channel reordering code
     const int plane_size      = HEIGHT * WIDTH;
