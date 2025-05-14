@@ -174,7 +174,7 @@ void ObjectDetector::preProcess(const cv::Mat& frame)
     d_rgb_image.download(cpu_rgb_image, cv_stream);
 
     // Wait for CUDA operations to complete
-    cudaStreamSynchronize(cv_stream);
+    cv_stream.waitForCompletion();
 
     // Continue with existing channel reordering code
     const int plane_size      = HEIGHT * WIDTH;
