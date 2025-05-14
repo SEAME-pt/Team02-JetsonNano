@@ -2,9 +2,8 @@
 
 using namespace cv;
 using namespace std;
-using namespace zenoh;
 
-int main(int argc, char** argv)
+int main()
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
@@ -16,7 +15,7 @@ int main(int argc, char** argv)
     try
     {
         std::string file = "/home/team02/obj_UNet_3_epoch_185.engine";
-        ObjectDetector detector(file, pipeline, session);
+        ObjectDetector detector(file, pipeline);
         detector.setCalibrationParameters();
         detector.run();
     }
