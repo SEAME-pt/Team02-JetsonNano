@@ -70,8 +70,6 @@ class LaneDetector
     cv::Point prevMidPoint = cv::Point(-1, -1);
     const size_t historySize = 5;
 
-    CAN* canBus;
-
   public:
     LaneDetector(const std::string& enginePath, const std::string& pipeline,
       std::shared_ptr<zenoh::Session> session);
@@ -96,9 +94,18 @@ class LaneDetector
       const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
 
-    int cluster2DPoints(const std::vector<cv::Point>& points, 
-        std::vector<std::vector<cv::Point>>& clusters,
-        float distanceThreshold);
+    void pureHistoricDefinition(
+      const std::vector<cv::Point>& prevLeftCurve,
+      const std::vector<cv::Point>& prevRightCurve,
+      std::vector<cv::Point>& projectedLeftLane,
+      std::vector<cv::Point>& projectedRightLane,
+      const cv::Mat& frame);
+    
+    bool checkAndAssignSingleLane(
+      const std::vector<cv::Point>& filteredPoints,
+      std::vector<cv::Point>& leftPoints,
+      std::vector<cv::Point>& rightPoints,
+      const cv::Mat& frame);
 
     void clusterLanePoints(const std::vector<cv::Point>& points, 
       std::vector<cv::Point>& leftPoints,
@@ -106,9 +113,8 @@ class LaneDetector
       cv::Mat& frame);
 
     std::vector<cv::Point> fitCurveToPoints(const std::vector<cv::Point>& points, cv::Mat& frame);
+    void reassignPointsUsingPreviousFrame(std::vector<cv::Point>& leftPoints, 
+      std::vector<cv::Point>& rightPoints);
     void initKalmanFilters(const std::vector<cv::Point>& leftCurve, 
       const std::vector<cv::Point>& rightCurve);
-
-    void sendCoefs(const std::vector<cv::Point>& leftCurve,
-        const std::vector<cv::Point>& rightCurve);
 };  

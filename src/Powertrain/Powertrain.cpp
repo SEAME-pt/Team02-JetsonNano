@@ -60,5 +60,3 @@ void Powertrain::set_traction_battery(const TractionBattery& value)
 {
     this->traction_battery = value;
 }
-
-
