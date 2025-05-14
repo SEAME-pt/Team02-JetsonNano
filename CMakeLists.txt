@@ -14,7 +14,7 @@ set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 find_package(CUDA REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui cudaimgproc cudawarping cudafilters dnn)
+find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
 
 include(FetchContent)
