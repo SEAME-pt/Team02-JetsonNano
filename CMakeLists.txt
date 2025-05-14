@@ -112,18 +112,18 @@ target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(XboxController
     zenohcxx::zenohc)
 
-add_executable(CombinedController
-    ./src/Controllers/XboxController.cpp
-    ./src/Controllers/PidController.cpp
-    ./src/Communication/ControllerPublisher.cpp
-    ./src/combinedControl.cpp
-)
+# add_executable(CombinedController
+#     ./src/Controllers/XboxController.cpp
+#     ./src/Controllers/PidController.cpp
+#     ./src/Communication/ControllerPublisher.cpp
+#     ./src/combinedControl.cpp
+# )
 
-target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
+# target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
-target_link_libraries(CombinedController
-    ${CMAKE_THREAD_LIBS_INIT}
-    zenohcxx::zenohc)
+# target_link_libraries(CombinedController
+#     ${CMAKE_THREAD_LIBS_INIT}
+#     zenohcxx::zenohc)
 
     
 add_executable(LaneDetector
