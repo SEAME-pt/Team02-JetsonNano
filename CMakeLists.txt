@@ -158,7 +158,7 @@ nvonnxparser
 
 add_executable(ObjectDetector
     ./src/MiddleWare/ObjectDetector/ObjectDetector.cpp
-    ./src/ObjectDetector.cpp
+    ./src/objectDetector.cpp
 )
 
 target_compile_options(ObjectDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
