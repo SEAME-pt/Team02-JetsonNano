@@ -14,7 +14,7 @@ set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 find_package(CUDA REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui cudaimgproc cudawarping cudafilters dnn)
 find_package(Threads REQUIRED)
 
 include(FetchContent)
@@ -38,6 +38,7 @@ include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
 include_directories(include/MiddleWare/LaneDetector)
+include_directories(include/MiddleWare/ObjectDetector)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -145,8 +146,31 @@ find_library(CUDA_RUNTIME_LIBRARY
 )
 
 target_link_libraries(LaneDetector
+${OpenCV_LIBS}
+zenohcxx::zenohc
+Libs
+vehicle_lib
+${CUDA_LIBRARIES}
+${CUDA_RUNTIME_LIBRARY}
+nvinfer
+nvonnxparser
+)
+
+add_executable(ObjectDetector
+    ./src/MiddleWare/ObjectDetector/ObjectDetector.cpp
+    ./src/ObjectDetector.cpp
+)
+
+target_compile_options(ObjectDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
+
+target_link_libraries(ObjectDetector
     ${OpenCV_LIBS}
-    zenohcxx::zenohc
     Libs
     vehicle_lib
     ${CUDA_LIBRARIES}
