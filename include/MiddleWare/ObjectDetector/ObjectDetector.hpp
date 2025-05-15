@@ -56,6 +56,8 @@ class ObjectDetector
     const int FRAME_SKIP;
     int frame_count;
 
+    bool is_emergency_stop = false;
+
   public:
     ObjectDetector(const std::string& enginePath, const std::string& pipeline);
     ~ObjectDetector();
@@ -68,6 +70,7 @@ class ObjectDetector
     void preProcess(const cv::Mat& frame);
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
-
     double getCurrentTime();
+    
+    bool checkForwardCollision(const cv::Mat& segmentation_mask);
 };  

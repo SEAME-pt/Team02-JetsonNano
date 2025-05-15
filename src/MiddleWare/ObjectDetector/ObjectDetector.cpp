@@ -82,6 +82,28 @@ double ObjectDetector::getCurrentTime()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
+void ObjectDetector::createExecutionContext(const std::string& enginePath)
+{
+    std::ifstream file(enginePath, std::ios::binary);
+    if (!file)
+    {
+        throw std::runtime_error("Failed to open engine file");
+    }
+
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char> engineData(size);
+    file.read(engineData.data(), size);
+
+    nvinfer1::IRuntime* runtime = nvinfer1::createInferRuntime(logger);
+    nvinfer1::ICudaEngine* engine =
+        runtime->deserializeCudaEngine(engineData.data(), size);
+    context.reset(engine->createExecutionContext());
+}
+
+
 void ObjectDetector::detect(cv::Mat& frame)
 {
     float milliseconds = 0;
@@ -253,27 +275,73 @@ void ObjectDetector::postProcess(cv::Mat& frame)
     cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
+     // Check for collision in the danger zone
+     bool collision_danger = checkForwardCollision(colored_mask);
+    
+     if (collision_danger) {
+         // Visual warning (red text on frame)
+         cv::putText(frame, "OBSTACLE DETECTED!", 
+                    cv::Point(frame.cols/2 - 150, frame.rows/2),
+                    cv::FONT_HERSHEY_SIMPLEX, 1.0,
+                    cv::Scalar(0, 0, 255), 3);
+                    
+         // Terminal warning
+         std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING VEHICLE ***\033[0m" << std::endl;
+         
+         // Set emergency stop flag
+         is_emergency_stop = true;
+         
+         // Here you would add code to signal the motor controller to stop
+         // For example, call a function like:
+         // stopVehicle();
+     } else if (is_emergency_stop) {
+         // Clear emergency when path is clear again
+         std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m" << std::endl;
+         is_emergency_stop = false;
+         
+         // Here you would add code to allow resuming:
+         // resumeVehicle();
+     }
+
     // Blend the segmentation mask with the original frame
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
 
-void ObjectDetector::createExecutionContext(const std::string& enginePath)
-{
-    std::ifstream file(enginePath, std::ios::binary);
-    if (!file)
-    {
-        throw std::runtime_error("Failed to open engine file");
+bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask) {
+    // Define danger zone (lower-center portion of the image)
+    const int zone_width = WIDTH * 0.6;   // 60% of image width
+    const int zone_height = HEIGHT * 0.3; // 30% of image height
+    const int zone_x = (WIDTH - zone_width) / 2;  // Center horizontally
+    const int zone_y = HEIGHT - zone_height;      // Bottom of image
+    
+    // Count pixels in danger zone by class
+    int total_pixels = 0;
+    int road_pixels = 0;
+    
+    for (int y = zone_y; y < HEIGHT; y++) {
+        for (int x = zone_x; x < zone_x + zone_width; x++) {
+            total_pixels++;
+            cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
+            
+            // Check if pixel is road (class 1)
+            // Road color is (128, 64, 128)
+            if (pixel == cv::Vec3b(128, 64, 128)) {
+                road_pixels++;
+            }
+        }
     }
-
-    file.seekg(0, std::ios::end);
-    size_t size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> engineData(size);
-    file.read(engineData.data(), size);
-
-    nvinfer1::IRuntime* runtime = nvinfer1::createInferRuntime(logger);
-    nvinfer1::ICudaEngine* engine =
-        runtime->deserializeCudaEngine(engineData.data(), size);
-    context.reset(engine->createExecutionContext());
+    
+    // Calculate percentage of road in danger zone
+    float road_percentage = static_cast<float>(road_pixels) / total_pixels;
+    
+    // Danger detected if less than threshold percentage is road
+    const float SAFE_ROAD_THRESHOLD = 0.7; // 70% of zone should be road
+    bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
+    
+    // Draw danger zone on frame (green if safe, red if danger)
+    cv::Scalar zone_color = danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
+    cv::rectangle(segmentation_mask, cv::Rect(zone_x, zone_y, zone_width, zone_height), 
+                 zone_color, 2);
+    
+    return danger_detected;
 }
