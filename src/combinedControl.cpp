@@ -14,12 +14,12 @@ int main(int argc, char** argv)
         {
             manualController = new XboxController(argv[1]);
             pidController =
-                new ModelPredictiveController(argv[2], manualController);
+                new PidController(argv[2], manualController);
         }
         else
         {
             manualController = new XboxController();
-            pidController    = new ModelPredictiveController(manualController);
+            pidController    = new PidController(manualController);
         }
         // PID controller values
         float kp                = 130;
