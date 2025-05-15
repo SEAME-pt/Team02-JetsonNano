@@ -170,6 +170,7 @@ target_compile_options(ObjectDetector PRIVATE -Wall -Werror -Wextra -O3 # Maximu
 
 target_link_libraries(ObjectDetector
     ${OpenCV_LIBS}
+    zenohcxx::zenohc
     Libs
     vehicle_lib
     ${CUDA_LIBRARIES}
