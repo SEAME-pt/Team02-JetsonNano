@@ -45,11 +45,13 @@ XboxController::XboxController()
         [this](const zenoh::Sample& sample)
         {
             std::string value_str = sample.get_payload().as_string();
-        
+
             // Convert string to boolean
             bool lock_value = false;
-            if (value_str.find("1") != std::string::npos) {
+            if (value_str.find("1") != std::string::npos)
+            {
                 lock_value = true;
+                manual_speed_.store(0);
             }
 
             speed_lock_ = lock_value;
