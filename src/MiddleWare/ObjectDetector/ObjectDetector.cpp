@@ -11,9 +11,9 @@ Logger logger;
 ObjectDetector::ObjectDetector(const std::string& enginePath,
                                const std::string& pipeline,
                                std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(3),
-      frame_count(0)
+    : cap(pipeline, cv::CAP_GSTREAMER), FRAME_SKIP(3), frame_count(0)
 {
+    session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     speed_lock_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
