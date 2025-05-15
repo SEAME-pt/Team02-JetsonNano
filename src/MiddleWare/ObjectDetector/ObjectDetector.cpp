@@ -4,6 +4,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace zenoh;
 
 Logger logger;
 
