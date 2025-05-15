@@ -48,7 +48,7 @@ XboxController::XboxController()
         
             // Convert string to boolean
             bool lock_value = false;
-            if (value_str == "1") {
+            if (value_str.find("1") != std::string::npos) {
                 lock_value = true;
             }
 
