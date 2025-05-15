@@ -2,6 +2,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace zenoh;
 
 int main(int argc, char** argv)
 {
@@ -29,7 +30,7 @@ int main(int argc, char** argv)
         }
 
         std::string file = "/home/team02/obj_MOB_1_epoch_133.engine";
-        ObjectDetector detector(file, pipeline, session);
+        ObjectDetector detector(file, pipeline, session );
         detector.setCalibrationParameters();
         detector.run();
     }
