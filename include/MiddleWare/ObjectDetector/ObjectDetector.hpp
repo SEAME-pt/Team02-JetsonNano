@@ -79,5 +79,5 @@ class ObjectDetector
 
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
 
-    void publishSpeedLock();
+    void publishSpeedLock(const std::string &value_str);
 };

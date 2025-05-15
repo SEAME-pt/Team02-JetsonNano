@@ -299,7 +299,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         // Set emergency stop flag
         is_emergency_stop = true;
 
-        publishSpeedLock();
+        publishSpeedLock("1");
     }
     else if (is_emergency_stop)
     {
@@ -308,7 +308,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
                   << std::endl;
         is_emergency_stop = false;
 
-        publishSpeedLock();
+        publishSpeedLock("0");
     }
 
     // Blend the segmentation mask with the original frame
@@ -360,9 +360,8 @@ bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask)
     return danger_detected;
 }
 
-void ObjectDetector::publishSpeedLock()
+void ObjectDetector::publishSpeedLock(const std::string &value_str)
 {
-    std::string value_str = "Speed Lock;";
     const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
