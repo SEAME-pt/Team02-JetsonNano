@@ -14,7 +14,7 @@ int main()
         "appsink";
     try
     {
-        std::string file = "/home/team02/obj_UNet_3_epoch_185.engine";
+        std::string file = "/home/team02/obj_MOB_1_epoch_133.engine";
         ObjectDetector detector(file, pipeline);
         detector.setCalibrationParameters();
         detector.run();
