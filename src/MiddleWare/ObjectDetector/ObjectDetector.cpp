@@ -310,7 +310,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
 bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask) {
     // Define danger zone (lower-center portion of the image)
     const int zone_width = WIDTH * 0.6;   // 60% of image width
-    const int zone_height = HEIGHT * 0.3; // 30% of image height
+    const int zone_height = HEIGHT * 0.4; // 40% of image height
     const int zone_x = (WIDTH - zone_width) / 2;  // Center horizontally
     const int zone_y = HEIGHT - zone_height;      // Bottom of image
     
