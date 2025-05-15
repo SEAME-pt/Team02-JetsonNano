@@ -227,7 +227,7 @@ void XboxController::run()
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
-                        if (speed_lock_)
+                        if (!speed_lock_)
                         {
                             if (speed < -5)
                             {
