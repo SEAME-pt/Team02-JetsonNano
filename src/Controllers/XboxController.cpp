@@ -44,6 +44,9 @@ XboxController::XboxController()
         "Vehicle/1/Speed/Lock",
         [this](const zenoh::Sample& sample)
         {
+            std::string value_str = sample.get_payload().as_string();
+
+            (void)value_str;
             speed_lock_ ? speed_lock_ = false : speed_lock_ = true;
 
             speed_lock_ ? manual_speed_.store(0);
