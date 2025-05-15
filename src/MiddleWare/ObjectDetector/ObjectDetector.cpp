@@ -10,7 +10,7 @@ Logger logger;
 ObjectDetector::ObjectDetector(const std::string& enginePath,
                                const std::string& pipeline,
                                std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), session_(session) FRAME_SKIP(3),
+    : cap(pipeline, cv::CAP_GSTREAMER), session_(session), FRAME_SKIP(3),
       frame_count(0)
 {
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
@@ -361,7 +361,8 @@ bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask)
 
 void ObjectDetector::publishSpeedLock()
 {
-    std::string value_str = "Speed Lock;" const auto len = value_str.size() + 1;
+    std::string value_str = "Speed Lock;";
+    const auto len        = value_str.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
