@@ -31,7 +31,7 @@ int main(int argc, char** argv)
         pidController->init(kp, ki, kd, constant_throttle, delta_time);
 
         std::thread manualThread(&XboxController::run, manualController);
-        std::thread MPCThread(&PidController::run, pidController);
+        std::thread pidThread(&PidController::run, pidController);
         manualThread.join();
         pidThread.join();
 

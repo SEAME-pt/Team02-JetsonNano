@@ -3,7 +3,7 @@
 using namespace cv;
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
@@ -14,8 +14,22 @@ int main()
         "appsink";
     try
     {
+        std::shared_ptr<zenoh::Session> session;
+        if (argc == 2)
+        {
+            auto config = Config::from_file(std::string(argv[1]));
+            session     = std::make_shared<zenoh::Session>(
+                zenoh::Session::open(std::move(config)));
+        }
+        else
+        {
+            auto config = Config::create_default();
+            session     = std::make_shared<zenoh::Session>(
+                zenoh::Session::open(std::move(config)));
+        }
+
         std::string file = "/home/team02/obj_MOB_1_epoch_133.engine";
-        ObjectDetector detector(file, pipeline);
+        ObjectDetector detector(file, pipeline, session);
         detector.setCalibrationParameters();
         detector.run();
     }

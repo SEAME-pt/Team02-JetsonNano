@@ -38,6 +38,10 @@ extern Logger logger;
 class ObjectDetector
 {
   private:
+    std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
+    std::optional<zenoh::Publisher> speed_lock_publisher_;
+
     std::shared_ptr<nvinfer1::IExecutionContext> context;
     cudaEvent_t start;
     cudaEvent_t stop;
@@ -59,7 +63,8 @@ class ObjectDetector
     bool is_emergency_stop = false;
 
   public:
-    ObjectDetector(const std::string& enginePath, const std::string& pipeline);
+    ObjectDetector(const std::string& enginePath, const std::string& pipeline,
+                   std::shared_ptr<zenoh::Session> session);
     ~ObjectDetector();
     void setCalibrationParameters(void);
 
@@ -71,6 +76,8 @@ class ObjectDetector
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
     double getCurrentTime();
-    
+
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
-};  
+
+    void publishSpeedLock();
+};
