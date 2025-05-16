@@ -1,87 +1,187 @@
-<br />
-<div align="center">
-  <h1 align="center">JetRacer Assembly</h1>
-  <p align="center">
-    Hands-on project assembling and testing a JetRacer using the Jetson Nano for robotics and electronics experience.
-    <br />
-    ·
-    <a href="https://github.com/SEAME-pt/Team02-PyRacer/issues/new?labels=bug&template=external-contribution-bug-report.md">Report Bug</a>
-    ·
-    <a href="https://github.com/SEAME-pt/Team02-PyRacer/issues/new?labels=enhancement&template=external-contribution-feature-request.md">Request Feature</a>
-  </p>
-</div>
+# Vehicle Control System for Jetson Nano Platform
 
-## Table of Contents
-1. [About The Project](#about-the-project)
-   - [Built With](#built-with)
-2. [Usage](#usage)
-3. [Roadmap](#roadmap)
-4. [Contributing](#contributing)
-5. [License](#license)
-6. [Contact](#contact)
-7. [Acknowledgments](#acknowledgments)
+This repository contains the complete control system for an autonomous vehicle, designed to run on the NVIDIA Jetson Nano platform. The system leverages computer vision, sensor fusion, and advanced control algorithms to enable autonomous driving capabilities.
 
-## About The Project
+## System Overview
 
-The **JetRacer Assembly** project is our team's first step in the Seam:Me Mobility course. This hands-on project allows us to dive into the world of electronics, robotics, and programming by assembling and testing a JetRacer — a small racing car powered by the **Jetson Nano Developer Kit**. Through this project, we enhanced our skills in software programming and practical problem-solving. We explored the construction of the car and plan to develop 3D parts for future enhancements. We learned about motors, car controlling with C language, and remote control.
+The Vehicle Control System integrates multiple components that work together to provide autonomous driving functionality:
 
-In this project, we have two main components:
+- **Vehicle System**: Core vehicle management and control
+- **Object Detection**: Real-time object detection using TensorRT
+- **Lane Detection**: Lane marking detection and tracking
+- **Middleware**: Sensor data processing and signal conversion
+- **Combined Controller**: Intelligent control switching between manual and autonomous modes
 
-1. **Car Controller:** Developed in C, this component is responsible for controlling the motors, direction, speed, and other functionalities of the car.
-2. **Xbox Controller:** Also developed in C, this component serves as the remote controller, allowing for the control of the car's movements and actions.
+## Architecture
 
-### Built With
+The system follows a modular architecture based on automotive domain standards:
 
-This section lists the major technologies and tools used for this project.
+![Architecture Diagram](./docs/architecture.png)
 
-#### Technologies and Frameworks
-- [![C](https://img.shields.io/badge/C-LANGUAGE-3776AB?style=for-the-badge&logo=C&logoColor=white)](https://www.python.org/)
+### Key Components:
 
-#### Hardware Components
+1. **Vehicle System**
+   - Manages overall vehicle state and behavior
+   - Implements VSS (Vehicle Signal Specification) data model
+   - Coordinates subsystems (Powertrain, Chassis, Body, ...)
 
-- **JetRacer AI RaceCar Kit** Motors, wheels, chassis, and sensors for constructing the PiRacer vehicle.
-- **Jetson Nano Developer Kit:** Used for controlling the vehicle and processing data.
----
+2. **ADAS System**
+   - Obstacle detection and avoidance
+   - Trajectory planning
+   - Safety monitoring
 
-### Usage
+3. **Middleware**
+   - Converts between communication protocols
+   - Handles sensor data acquisition and processing
+   - Implements signal routing between components
 
-Once the JetRacer is assembled, follow these instructions to bring it to life:
+4. **Controller Systems**
+   - PID controller for autonomous driving
+   - Xbox controller interface for manual override
+   - Controller switching logic
 
-[DEMONSTRATION GIF OF THE CAR BEING CONTROLLED WILL BE ATTACHED]
+5. **Perception Systems**
+   - Object Detection using TensorRT-accelerated CNN
+   - Lane Detection with optimized image processing
 
----
+## Communication
 
-## The Team 🤝
-> Together, we've collaborated to bring this project to life, combining our knowledge, skills, and experience every step of the way. It has been a great journey of learning and growing as a team.
+The system uses a sophisticated communication architecture:
 
-  - <a href="https://github.com/Rui-Pedro-Pires">Rui Pires</a>
-  - <a href="https://github.com/ziliolu">Luiza Zilio</a>
-  - <a href="https://github.com/luis-ffe">Luis Filipe Carvalho</a>
-  - <a href="https://github.com/mjorgecruz">Jorge Cruz</a>
+- **Zenoh**: High-performance pub/sub middleware for IPC communication with shared-memory
+- **Zenoh Router**: Connects vehicle systems to cloud services
+- **CAN Bus**: Communication with vehicle hardware components (Micro Controller and Raspberry Pi)
+- **VSS**: Standardized vehicle signal specification for data exchange
 
-## Contributing
+## Building and Running
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. **Any contributions you make are greatly appreciated.**
+### Prerequisites
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Don't forget to give the project a star! Thanks again!
+- NVIDIA Jetson Nano with JetPack 4.6 or later
+- CUDA Toolkit 10.2 or later
+- OpenCV 4.1.1 or later
+- Zenoh C/C++ libraries
+- CMake 3.16 or later
 
-1. Fork the repository
-2. Create a new branch for your feature (`git checkout -b feature-name`)
-3. Commit your changes (`git commit -m 'Add feature'`)
-4. Push to the branch (`git push origin feature-name`)
-5. Open a pull request
+### Build Instructions
 
----
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/SEAME-pt/Team02-JetsonNano.git
+   cd Team02-JetsonNano
+   ```
+
+2. Create a build directory:
+   ```bash
+   mkdir build && cd build
+   ```
+
+3. Configure and build:
+   ```bash
+   cmake ..
+   make -j4
+   ```
+
+### Running the System
+
+#### Vehicle System
+```bash
+./VehicleSystem
+```
+
+#### Object Detector
+```bash
+./ObjectDetector
+```
+
+#### Middleware
+```bash
+./MiddleWare
+```
+
+#### Combined Controller
+```bash
+./CombinedController
+```
+
+## Components in Detail
+
+### Vehicle System
+
+The core vehicle management system implementing a complete vehicle model following automotive standards:
+
+- **Powertrain**: Electric motor, transmission, and battery management
+- **Chassis**: Accelerator, brake, steering, and axle control
+- **Body**: Exterior components, lights, and accessories
+- **Vehicle**: Main vehicle state, connectivity, and motion management
+
+### Object Detector
+
+Computer vision system for detecting and classifying road objects:
+
+- Uses TensorRT-optimized neural networks for efficient inference
+- Processes camera input in real-time
+- Identifies vehicles, pedestrians, traffic signs, etc.
+- Publishes detection results via Zenoh
+
+### Lane Detector
+
+Vision system for lane detection and tracking:
+
+- Processes camera frames to identify lane markings
+- Calculates road geometry and vehicle position
+- Provides lane keeping assistance data
+- Optimized for Jetson Nano using CUDA acceleration
+
+### Middleware
+
+Communication and signal processing system:
+
+- Interfaces with physical sensors (battery, etc.)
+- Converts between communication protocols
+- Implements signal routing and filtering
+- Provides hardware abstraction layer
+
+### Combined Controller
+
+Intelligent control system with manual and autonomous capabilities:
+
+- Xbox controller interface for manual control
+- PID controller implementation for autonomous driving
+- Trajectory planning and following
+- Transition between control modes
+
+## Testing
+
+The system includes comprehensive unit tests using Catch2:
+
+```bash
+cd build
+cmake -DENABLE_TESTING=ON ..
+make
+ctest
+```
+
+For generating code coverage:
+```bash
+cmake -DENABLE_TESTING=ON -DENABLE_COVERAGE=ON ..
+make coverage
+```
+
+## Dependencies
+
+The system depends on several external libraries:
+
+- **CUDA**: GPU acceleration for computer vision
+- **OpenCV**: Computer vision algorithms
+- **Zenoh**: Communication middleware
+- **TensorRT**: Neural network inference acceleration
+- **Team02-Libs**: Custom libraries for hardware interface
 
 ## License
 
-Distributed under the MIT License. See LICENSE for more information.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
----
+## Team
 
-## Acknowledgments
-
-- [Jetson Nano Developer Kit](https://developer.nvidia.com/embedded/jetson-nano) – The powerful embedded system used in the project for control and processing. It comes inside the JetRacer AI RaceCar Kit.
-- [JetRacer AI RaceCar Kit](https://www.waveshare.com/wiki/JetRacer_AI_Kit) – The parts that make up the JetRacer vehicle.
-
----
+This project is developed by Team02 at SEAME Polytechnic Singapore.

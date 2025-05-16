@@ -101,17 +101,6 @@ target_link_libraries(VehicleSystem
     vehicle_lib
 )
 
-add_executable(XboxController
-    ./src/Controllers/XboxController.cpp
-    ./src/Communication/ControllerPublisher.cpp
-    ./src/control.cpp
-)
-
-target_compile_options(XboxController PRIVATE -Wall -Werror -Wextra)
-
-target_link_libraries(XboxController
-    zenohcxx::zenohc)
-
 add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
@@ -178,28 +167,6 @@ target_link_libraries(ObjectDetector
     nvinfer
     nvonnxparser
 )
-
-# add_executable(LaneDetectorCV
-#     ./src/MiddleWare/LaneDetector/LaneDetectorCV.cpp
-#     ./src/Communication/LaneDetectorPublisher.cpp
-#     ./src/laneDetectorCV.cpp
-# )
-
-# target_compile_options(LaneDetectorCV PRIVATE -Wall -Werror -Wextra -O3 # Maximum optimization level
-#     -march=native           # Optimize for the current CPU architecture
-#     -flto                   # Enable link-time optimization
-#     -ffast-math             # Fast math operations (may affect precision)
-#     -ftree-vectorize        # Explicit vectorization
-#     -funroll-loops
-# )
-
-
-# target_link_libraries(LaneDetectorCV
-#     ${OpenCV_LIBS}
-#     zenohcxx::zenohc
-#     Libs
-#     vehicle_lib
-# )
 
 add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp
