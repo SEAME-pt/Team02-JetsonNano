@@ -261,8 +261,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         probs[6] = outputData[total_pixels * 6 + i];
         probs[7] = outputData[total_pixels * 7 + i];
         probs[8] = outputData[total_pixels * 8 + i];
-        probs[9] =
-            outputData[total_pixels * 9 + i]; // You need this for class 9
+        probs[9] = outputData[total_pixels * 9 + i];
 
         // Find class with highest probability
         int best_class = 0;
@@ -297,17 +296,14 @@ void ObjectDetector::postProcess(cv::Mat& frame)
 
     if (collision_danger)
     {
-        // Visual warning (red text on frame)
         cv::putText(frame, "OBSTACLE DETECTED!",
                     cv::Point(frame.cols / 2 - 150, frame.rows / 2),
                     cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 3);
 
-        // Terminal warning
         std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
                      "VEHICLE ***\033[0m"
                   << std::endl;
 
-        // Set emergency stop flag
         is_emergency_stop = true;
 
         publishSpeedLock("1");
@@ -316,7 +312,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
             uint8_t value[8];
             memcpy(value, "DANGER", sizeof(value));
     
-            this->canBus->writeMessage(0x10, value, sizeof(value));
+            this->canBus->writeMessage(0x200, value, sizeof(value));
         }
         catch (const std::exception& e)
         {
@@ -327,7 +323,6 @@ void ObjectDetector::postProcess(cv::Mat& frame)
     }
     else if (is_emergency_stop)
     {
-        // Clear emergency when path is clear again
         std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
                   << std::endl;
         is_emergency_stop = false;
@@ -335,7 +330,6 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         publishSpeedLock("0");
     }
 
-    // Blend the segmentation mask with the original frame
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
 
@@ -358,8 +352,6 @@ bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask)
             total_pixels++;
             cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
 
-            // Check if pixel is road (class 1)
-            // Road color is (128, 64, 128)
             if (pixel == cv::Vec3b(128, 64, 128))
             {
                 road_pixels++;
@@ -370,7 +362,6 @@ bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask)
     // Calculate percentage of road in danger zone
     float road_percentage = static_cast<float>(road_pixels) / total_pixels;
 
-    // Danger detected if less than threshold percentage is road
     const float SAFE_ROAD_THRESHOLD = 0.7; // 70% of zone should be road
     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
 
