@@ -55,6 +55,17 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
     }
 
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+
+    try
+    {
+        this->canBus     = new CAN();
+        this->canBus->init("/dev/spidev0.0");
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing CAN on Object Detector " << e.what() << std::endl;
+    }
+
 }
 
 ObjectDetector::~ObjectDetector()
@@ -300,6 +311,19 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         is_emergency_stop = true;
 
         publishSpeedLock("1");
+        try
+        {
+            uint8_t value[8];
+            memcpy(value, "DANGER", sizeof(value));
+    
+            this->canBus->writeMessage(0x10, value, sizeof(value));
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error sending CAN message on Object Detector: " << e.what()
+                      << std::endl;
+        }
+
     }
     else if (is_emergency_stop)
     {
