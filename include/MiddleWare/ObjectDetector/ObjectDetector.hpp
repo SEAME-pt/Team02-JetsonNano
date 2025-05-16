@@ -17,6 +17,8 @@
 #include <cmath>
 #include <sys/time.h>
 
+#include "CAN.hpp"
+
 #define WIDTH 256
 #define HEIGHT 128
 #define INPUT_SIZE 3
@@ -61,6 +63,8 @@ class ObjectDetector
     int frame_count;
 
     bool is_emergency_stop = false;
+
+    CAN* canBus;
 
   public:
     ObjectDetector(const std::string& enginePath, const std::string& pipeline,
