@@ -1,8 +1,11 @@
 #include "LaneDetector.hpp"
+#include <cstdlib>
 
 using namespace cv;
 using namespace std;
 using namespace zenoh;
+
+setenv("DISPLAY", ":0", 1);
 
 int main(int argc, char** argv)
 {
