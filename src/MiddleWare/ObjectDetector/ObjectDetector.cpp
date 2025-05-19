@@ -58,14 +58,14 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
 
     try
     {
-        this->canBus     = new CAN();
+        this->canBus = new CAN();
         this->canBus->init("/dev/spidev0.0");
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error initializing CAN on Object Detector " << e.what() << std::endl;
+        std::cerr << "Error initializing CAN on Object Detector " << e.what()
+                  << std::endl;
     }
-
 }
 
 ObjectDetector::~ObjectDetector()
@@ -311,15 +311,14 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         {
             uint8_t value[8];
             memcpy(value, "DANGER", sizeof(value));
-    
+
             this->canBus->writeMessage(0x200, value, sizeof(value));
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Error sending CAN message on Object Detector: " << e.what()
-                      << std::endl;
+            std::cerr << "Error sending CAN message on Object Detector: "
+                      << e.what() << std::endl;
         }
-
     }
     else if (is_emergency_stop)
     {
@@ -375,9 +374,9 @@ bool ObjectDetector::checkForwardCollision(const cv::Mat& segmentation_mask)
     return danger_detected;
 }
 
-void ObjectDetector::publishSpeedLock(const std::string &value_str)
+void ObjectDetector::publishSpeedLock(const std::string& value_str)
 {
-    const auto len        = value_str.size() + 1;
+    const auto len = value_str.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
