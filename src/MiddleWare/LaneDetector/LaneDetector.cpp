@@ -238,7 +238,7 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat mask(HEIGHT, WIDTH, CV_8UC3);
+    static cv::Mat mask(HEIGHT, WIDTH, CV_8UC1);
     const int total_pixels = HEIGHT * WIDTH;
 
     uchar* mask_data = mask.data;
