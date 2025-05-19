@@ -30,9 +30,9 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&output_ptr, 1 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
@@ -40,9 +40,9 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     // Allocate GPU memory
     size_t pitch;
     cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * INPUT_SIZE);
+                    HEIGHT * 3);
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * OUTPUT_SIZE);
+                    HEIGHT * 1);
 
     try
     {
@@ -99,7 +99,7 @@ void LaneDetector::detect(cv::Mat& frame)
 
     // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
-                    INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    3 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
 
     // Run inference with optimization flags
@@ -108,7 +108,7 @@ void LaneDetector::detect(cv::Mat& frame)
 
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
-                    OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    1 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
