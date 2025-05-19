@@ -11,7 +11,6 @@ enable_language(CUDA)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_72")
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
 
-find_package(CUDA REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
