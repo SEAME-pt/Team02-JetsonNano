@@ -7,8 +7,6 @@ using namespace zenoh;
 
 int main(int argc, char** argv)
 {
-    setenv("DISPLAY", ":0", 1);
-
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
         "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
