@@ -245,12 +245,12 @@ void LaneDetector::postProcess(cv::Mat& frame)
     {
         int y = i / WIDTH;
         int x = i % WIDTH;
-        colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? 255 : 0;
+        colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? cv::Vec3b(255, 255, 255) : cv::Vec3b(0, 0, 0);
     }
 
-    // Resize the segmentation mask to match the frame size
+    // Fix: Swap source and destination
     cv::Mat resized_mask;
-    cv::resize(resized_mask, colored_mask, frame.size(), 0, 0,
+    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
