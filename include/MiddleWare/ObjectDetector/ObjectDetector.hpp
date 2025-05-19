@@ -54,33 +54,22 @@ class ObjectDetector
     float* inputData;
     float* outputData;
 
-    cv::VideoCapture cap;
-    cv::Mat cameraMatrix;
-    cv::Mat distCoeffs;
-    cv::Mat map1, map2;
-
-    const int FRAME_SKIP;
-    int frame_count;
-
     bool is_emergency_stop = false;
 
     CAN* canBus;
 
   public:
-    ObjectDetector(const std::string& enginePath, const std::string& pipeline,
+    ObjectDetector(const std::string& enginePath,
                    std::shared_ptr<zenoh::Session> session);
     ~ObjectDetector();
-    void setCalibrationParameters(void);
 
     void detect(cv::Mat& frame);
-    void run();
 
   private:
     void preProcess(const cv::Mat& frame);
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
-    double getCurrentTime();
-
+    
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
 
     void publishSpeedLock(const std::string &value_str);

@@ -10,10 +10,7 @@ using namespace zenoh;
 
 Logger logger;
 
-LaneDetector::LaneDetector(const std::string& enginePath,
-                               const std::string& pipeline,
-                               std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), FRAME_SKIP(3), frame_count(0)
+LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
@@ -49,13 +46,6 @@ LaneDetector::LaneDetector(const std::string& enginePath,
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
                     HEIGHT * OUTPUT_SIZE);
 
-    if (!cap.isOpened())
-    {
-        throw std::runtime_error("Error opening video stream");
-    }
-
-    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-
     try
     {
         this->canBus     = new CAN();
@@ -75,29 +65,6 @@ LaneDetector::~LaneDetector()
     cudaFree(inputDevice);
     cudaFree(outputDevice);
     cudaStreamDestroy(stream);
-}
-
-void LaneDetector::setCalibrationParameters(void)
-{
-    FileStorage fs("calibration.yml", FileStorage::READ);
-    if (!fs.isOpened())
-    {
-        cerr << "Failed to open calibration.yml" << endl;
-        return;
-    }
-    Mat tempMatrix, tempCoeffs;
-    fs["CameraMatrix"] >> tempMatrix;
-    fs["DistCoeffs"] >> tempCoeffs;
-    fs.release();
-    this->cameraMatrix = tempMatrix;
-    this->distCoeffs   = tempCoeffs;
-}
-
-double LaneDetector::getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
 void LaneDetector::createExecutionContext(const std::string& enginePath)
@@ -154,51 +121,6 @@ void LaneDetector::detect(cv::Mat& frame)
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time: " << milliseconds << "ms\n";
-}
-
-std::atomic<bool> running(true);
-
-// Add this function before your main
-void signalHandler(int signum) {
-    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
-    running = false;
-}
-
-void LaneDetector::run()
-{
-    signal(SIGINT, signalHandler);
-
-    bool mapsInitialized = false;
-    cv::Mat frame;
-
-    while (running)
-    {
-        cap >> frame;
-        if (frame.empty())
-            break;
-        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty())
-        {
-            Size imageSize = frame.size();
-            initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                                    cameraMatrix, imageSize, CV_16SC2, map1,
-                                    map2);
-            mapsInitialized = true;
-        }
-        if (frame_count % FRAME_SKIP == 0)
-        {
-            cv::Mat undistorted;
-            remap(frame, undistorted, map1, map2, INTER_LINEAR);
-            frame = undistorted;
-            detect(frame);
-            imshow("Object Detection", frame);
-        }
-        frame_count++;
-
-        if (cv::waitKey(1) == 'q')
-            break;
-    }
-
-    cv::destroyAllWindows();
 }
 
 void LaneDetector::preProcess(const cv::Mat& frame)

@@ -52,28 +52,16 @@ class LaneDetector
     float* inputData;
     float* outputData;
 
-    cv::VideoCapture cap;
-    cv::Mat cameraMatrix;
-    cv::Mat distCoeffs;
-    cv::Mat map1, map2;
-
-    const int FRAME_SKIP;
-    int frame_count;
-
     CAN* canBus;
 
   public:
-    LaneDetector(const std::string& enginePath, const std::string& pipeline,
+    LaneDetector(const std::string& enginePath,
                    std::shared_ptr<zenoh::Session> session);
     ~LaneDetector();
-    void setCalibrationParameters(void);
-
     void detect(cv::Mat& frame);
-    void run();
 
   private:
     void preProcess(const cv::Mat& frame);
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
-    double getCurrentTime();
 };
