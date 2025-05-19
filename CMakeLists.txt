@@ -8,9 +8,9 @@ set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 
 enable_language(CUDA)
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_72")
-set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --gpu-architecture=sm_53")
 
+find_package(CUDAToolkit REQUIRED)
 find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -36,9 +36,7 @@ include_directories(include/Vehicle)
 include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
-include_directories(include/MiddleWare/LaneDetector)
-include_directories(include/MiddleWare/ObjectDetector)
-include_directories(include/MiddleWare)
+include_directories(include/MiddleWare/Detection)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -48,7 +46,6 @@ include_directories(
     ${CUDA_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     /usr/include/aarch64-linux-gnu
-    include/MiddleWare/LaneDetector
 )
 
 set(SOURCES
@@ -114,11 +111,6 @@ target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc)
 
-find_library(CUDA_RUNTIME_LIBRARY
-    NAMES cudart
-    HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64
-)
-
 add_executable(Detector
     ./src/MiddleWare/ObjectDetector/ObjectDetector.cpp
     ./src/MiddleWare/LaneDetector/LaneDetector.cpp
@@ -139,8 +131,7 @@ target_link_libraries(Detector
     zenohcxx::zenohc
     Libs
     vehicle_lib
-    ${CUDA_LIBRARIES}
-    ${CUDA_RUNTIME_LIBRARY}
+    CUDA::cudart
     nvinfer
     nvonnxparser
 )
