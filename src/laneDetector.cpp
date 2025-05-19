@@ -29,7 +29,7 @@ int main(int argc, char** argv)
                 zenoh::Session::open(std::move(config)));
         }
 
-        std::string file = "/home/team02/obj_MOB_1_epoch_133.engine";
+        std::string file = "/home/team02/lane_Mob1_epoch_48.engine";
         LaneDetector detector(file, pipeline, session );
         detector.setCalibrationParameters();
         detector.run();
