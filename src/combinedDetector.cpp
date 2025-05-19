@@ -38,7 +38,7 @@ void objectDetectionThread(ObjectDetector* detector, Camera* camera) {
         
         if (!frame.empty()) {
             detector->detect(frame);
-            
+
             std::lock_guard<std::mutex> lock(displayMutex);
             frame.copyTo(displayFrame(Rect(displayFrame.cols/2, 0, displayFrame.cols/2, displayFrame.rows)));
         }
@@ -111,6 +111,19 @@ int main(int argc, char** argv)
         ObjectDetector objDetector("/home/team02/obj_MOB_1_epoch_133.engine", session);
 
         camera.startCapture();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Give camera time to start
+        
+        cv::Mat initialFrame = camera.getFrame();
+        if (initialFrame.empty()) {
+            throw std::runtime_error("Failed to get initial frame for display setup");
+        }
+        
+        {
+            std::lock_guard<std::mutex> lock(displayMutex);
+            displayFrame = cv::Mat(initialFrame.rows, initialFrame.cols * 2, initialFrame.type(), cv::Scalar(0,0,0));
+            initialFrame.copyTo(displayFrame(cv::Rect(0, 0, initialFrame.cols, initialFrame.rows)));
+            initialFrame.copyTo(displayFrame(cv::Rect(initialFrame.cols, 0, initialFrame.cols, initialFrame.rows)));
+        }
 
         thread laneThread(laneDetectionThread, &laneDetector, &camera);
         thread objThread(objectDetectionThread, &objDetector, &camera);
