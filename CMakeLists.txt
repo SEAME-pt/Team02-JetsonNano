@@ -128,6 +128,7 @@ target_compile_options(Detector PRIVATE -Wall -Werror -Wextra -O3
 
 target_link_libraries(Detector
     ${OpenCV_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc
     Libs
     vehicle_lib
