@@ -1,17 +1,14 @@
 #include "LaneDetector.hpp"
 #include <sys/time.h>
 #include <iostream>
+#include <signal.h>
+#include <atomic>
 
 using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-Logger logger;
-
-LaneDetector::LaneDetector(const std::string& enginePath,
-                               const std::string& pipeline,
-                               std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), FRAME_SKIP(3), frame_count(0)
+LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
@@ -33,9 +30,9 @@ LaneDetector::LaneDetector(const std::string& enginePath,
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&output_ptr, 1 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
@@ -43,16 +40,9 @@ LaneDetector::LaneDetector(const std::string& enginePath,
     // Allocate GPU memory
     size_t pitch;
     cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * INPUT_SIZE);
+                    HEIGHT * 3);
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * OUTPUT_SIZE);
-
-    if (!cap.isOpened())
-    {
-        throw std::runtime_error("Error opening video stream");
-    }
-
-    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+                    HEIGHT * 1);
 
     try
     {
@@ -75,31 +65,10 @@ LaneDetector::~LaneDetector()
     cudaStreamDestroy(stream);
 }
 
-void LaneDetector::setCalibrationParameters(void)
-{
-    FileStorage fs("calibration.yml", FileStorage::READ);
-    if (!fs.isOpened())
-    {
-        cerr << "Failed to open calibration.yml" << endl;
-        return;
-    }
-    Mat tempMatrix, tempCoeffs;
-    fs["CameraMatrix"] >> tempMatrix;
-    fs["DistCoeffs"] >> tempCoeffs;
-    fs.release();
-    this->cameraMatrix = tempMatrix;
-    this->distCoeffs   = tempCoeffs;
-}
-
-double LaneDetector::getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
-
 void LaneDetector::createExecutionContext(const std::string& enginePath)
 {
+    Logger logger;
+
     std::ifstream file(enginePath, std::ios::binary);
     if (!file)
     {
@@ -130,7 +99,7 @@ void LaneDetector::detect(cv::Mat& frame)
 
     // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
-                    INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    3 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
 
     // Run inference with optimization flags
@@ -139,7 +108,7 @@ void LaneDetector::detect(cv::Mat& frame)
 
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
-                    OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    1 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
@@ -152,51 +121,6 @@ void LaneDetector::detect(cv::Mat& frame)
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time: " << milliseconds << "ms\n";
-}
-
-std::atomic<bool> running(true);
-
-// Add this function before your main
-void signalHandler(int signum) {
-    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
-    running = false;
-}
-
-void LaneDetector::run()
-{
-    signal(SIGINT, signalHandler);
-
-    bool mapsInitialized = false;
-    cv::Mat frame;
-
-    while (running)
-    {
-        cap >> frame;
-        if (frame.empty())
-            break;
-        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty())
-        {
-            Size imageSize = frame.size();
-            initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                                    cameraMatrix, imageSize, CV_16SC2, map1,
-                                    map2);
-            mapsInitialized = true;
-        }
-        if (frame_count % FRAME_SKIP == 0)
-        {
-            cv::Mat undistorted;
-            remap(frame, undistorted, map1, map2, INTER_LINEAR);
-            frame = undistorted;
-            detect(frame);
-            imshow("Object Detection", frame);
-        }
-        frame_count++;
-
-        if (cv::waitKey(1) == 'q')
-            break;
-    }
-
-    cv::destroyAllWindows();
 }
 
 void LaneDetector::preProcess(const cv::Mat& frame)
@@ -236,23 +160,20 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat mask(HEIGHT, WIDTH, CV_8UC3);
+    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
     const int total_pixels = HEIGHT * WIDTH;
-
-    uchar* mask_data = mask.data;
 
     for (int i = 0; i < total_pixels; i++)
     {
-        mask_data[i] = (outputData[i] > 0.5) ? 255 : 0;
+        int y = i / WIDTH;
+        int x = i % WIDTH;
+        colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? cv::Vec3b(255, 255, 255) : cv::Vec3b(0, 0, 0);
     }
 
-    // Resize the segmentation mask to match the frame size
+    // Fix: Swap source and destination
     cv::Mat resized_mask;
-    cv::resize(mask, resized_mask, frame.size(), 0, 0,
+    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
-
-    cv::Mat colored_mask;
-    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
 
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
