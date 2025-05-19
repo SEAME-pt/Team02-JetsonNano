@@ -198,7 +198,7 @@ PidController::PidController(const std::string& configFile,
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber_.emplace(session_->declare_subscriber(
+    speed_lock_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed/Lock",
         [this](const zenoh::Sample& sample)
         {
@@ -219,7 +219,7 @@ PidController::PidController(const std::string& configFile,
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber_.emplace(session_->declare_subscriber(
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
