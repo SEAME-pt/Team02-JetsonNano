@@ -154,12 +154,22 @@ void LaneDetector::detect(cv::Mat& frame)
     std::cout << "Inference time: " << milliseconds << "ms\n";
 }
 
+std::atomic<bool> running(true);
+
+// Add this function before your main
+void signalHandler(int signum) {
+    std::cout << "\nInterrupt signal (" << signum << ") received.\n";
+    running = false;
+}
+
 void LaneDetector::run()
 {
+    signal(SIGINT, signalHandler);
+
     bool mapsInitialized = false;
     cv::Mat frame;
 
-    while (true)
+    while (True)
     {
         cap >> frame;
         if (frame.empty())
