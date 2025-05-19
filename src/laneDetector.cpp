@@ -7,8 +7,7 @@ using namespace zenoh;
 
 int main(int argc, char** argv)
 {
-    setenv("DISPLAY", ":0", 1);
-    
+    setenv("DISPLAY", ":0", 0);
 
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
