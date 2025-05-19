@@ -100,7 +100,7 @@ PidController::PidController(XboxController* xbox_controller)
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber_.emplace(session_->declare_subscriber(
+    speed_lock_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed/Lock",
         [this](const zenoh::Sample& sample)
         {
@@ -111,7 +111,6 @@ PidController::PidController(XboxController* xbox_controller)
             if (value_str.find("1") != std::string::npos)
             {
                 lock_value = true;
-                manual_speed_.store(0);
             }
 
             speed_lock_ = lock_value;
@@ -119,6 +118,15 @@ PidController::PidController(XboxController* xbox_controller)
             std::cout << "Speed lock "
                       << (lock_value ? "activated" : "deactivated")
                       << std::endl;
+        },
+        zenoh::closures::none));
+
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
         },
         zenoh::closures::none));
 
