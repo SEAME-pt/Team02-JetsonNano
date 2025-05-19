@@ -4,6 +4,7 @@
 #include <zenoh.hxx>
 #include "ControllerPublisher.hpp"
 #include "IVehicleController.hpp"
+#include "SpeedPidController.hpp"
 #include "XboxController.hpp"
 #include <iostream>
 #include <chrono>
@@ -30,12 +31,21 @@ private:
     std::optional<zenoh::Subscriber<void>> kd_subscriber;
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     
     // PID constants
     float kp_; // Proportional gain
     float ki_; // Integral gain
     float kd_; // Derivative gain
     
+    SpeedPidController* speedPidController_;
+    // Control parameters
+    float max_speed_; // Maximum speed for the car
+    float speedKp_;
+    float speedKi_;
+    float speedKd_;
+    float current_speed_;
+
     // PID variables
     float prev_error_;
     float cameraError_;
@@ -50,6 +60,8 @@ private:
 
     std::string autonomousDrive_;
     XboxController* xboxController_;
+
+    bool speed_lock_;
 
     //SAE Levels
     //SAE1
