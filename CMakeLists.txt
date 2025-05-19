@@ -111,14 +111,14 @@ target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc)
 
-add_executable(Detector
+add_executable(Detection
     ./src/MiddleWare/Detection/ObjectDetector.cpp
     ./src/MiddleWare/Detection/LaneDetector.cpp
     ./src/Hardware/Camera.cpp
-    ./src/combinedDetector.cpp
+    ./src/detection.cpp
 )
 
-target_compile_options(Detector PRIVATE -Wall -Werror -Wextra -O3
+target_compile_options(Detection PRIVATE -Wall -Werror -Wextra -O3
     -march=native           # Optimize for the current CPU architecture
     -flto                   # Enable link-time optimization
     -ffast-math             # Fast math operations (may affect precision)
@@ -126,7 +126,7 @@ target_compile_options(Detector PRIVATE -Wall -Werror -Wextra -O3
     -funroll-loops
 )
 
-target_link_libraries(Detector
+target_link_libraries(Detection
     ${OpenCV_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc
