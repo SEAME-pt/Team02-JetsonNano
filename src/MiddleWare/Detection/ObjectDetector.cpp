@@ -6,12 +6,8 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-Logger logger;
-
 ObjectDetector::ObjectDetector(const std::string& enginePath,
-                               const std::string& pipeline,
                                std::shared_ptr<zenoh::Session> session)
-    : cap(pipeline, cv::CAP_GSTREAMER), FRAME_SKIP(3), frame_count(0)
 {
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
@@ -35,9 +31,9 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&output_ptr, 10 * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
@@ -45,16 +41,9 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
     // Allocate GPU memory
     size_t pitch;
     cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * INPUT_SIZE);
+                    HEIGHT * 3);
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * OUTPUT_SIZE);
-
-    if (!cap.isOpened())
-    {
-        throw std::runtime_error("Error opening video stream");
-    }
-
-    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+                    HEIGHT * 10);
 
     try
     {
@@ -77,31 +66,10 @@ ObjectDetector::~ObjectDetector()
     cudaStreamDestroy(stream);
 }
 
-void ObjectDetector::setCalibrationParameters(void)
-{
-    FileStorage fs("calibration.yml", FileStorage::READ);
-    if (!fs.isOpened())
-    {
-        cerr << "Failed to open calibration.yml" << endl;
-        return;
-    }
-    Mat tempMatrix, tempCoeffs;
-    fs["CameraMatrix"] >> tempMatrix;
-    fs["DistCoeffs"] >> tempCoeffs;
-    fs.release();
-    this->cameraMatrix = tempMatrix;
-    this->distCoeffs   = tempCoeffs;
-}
-
-double ObjectDetector::getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
-
 void ObjectDetector::createExecutionContext(const std::string& enginePath)
 {
+    Logger logger;
+
     std::ifstream file(enginePath, std::ios::binary);
     if (!file)
     {
@@ -132,7 +100,7 @@ void ObjectDetector::detect(cv::Mat& frame)
 
     // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
-                    INPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    3 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
 
     // Run inference with optimization flags
@@ -141,7 +109,7 @@ void ObjectDetector::detect(cv::Mat& frame)
 
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
-                    OUTPUT_SIZE * HEIGHT * WIDTH * sizeof(float),
+                    10 * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
@@ -154,41 +122,6 @@ void ObjectDetector::detect(cv::Mat& frame)
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time: " << milliseconds << "ms\n";
-}
-
-void ObjectDetector::run()
-{
-    bool mapsInitialized = false;
-    cv::Mat frame;
-
-    while (true)
-    {
-        cap >> frame;
-        if (frame.empty())
-            break;
-        if (!mapsInitialized && !cameraMatrix.empty() && !distCoeffs.empty())
-        {
-            Size imageSize = frame.size();
-            initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                                    cameraMatrix, imageSize, CV_16SC2, map1,
-                                    map2);
-            mapsInitialized = true;
-        }
-        if (frame_count % FRAME_SKIP == 0)
-        {
-            cv::Mat undistorted;
-            remap(frame, undistorted, map1, map2, INTER_LINEAR);
-            frame = undistorted;
-            detect(frame);
-            imshow("Object Detection", frame);
-        }
-        frame_count++;
-
-        if (cv::waitKey(1) == 'q')
-            break;
-    }
-
-    cv::destroyAllWindows();
 }
 
 void ObjectDetector::preProcess(const cv::Mat& frame)
