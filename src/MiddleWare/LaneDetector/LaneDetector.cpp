@@ -229,9 +229,11 @@ void LaneDetector::postProcess(cv::Mat& frame)
     static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
     const int total_pixels = HEIGHT * WIDTH;
 
+    uchar* mask_data = colored_mask.data;
+
     for (int i = 0; i < total_pixels; i++)
     {
-        colored_mask[i] = (outputData[i] > 0.5) ? 255 : 0;
+        mask_data[i] = (outputData[i] > 0.5) ? 255 : 0;
     }
 
     // Resize the segmentation mask to match the frame size
@@ -241,3 +243,4 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
+
