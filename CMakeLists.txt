@@ -112,8 +112,8 @@ target_link_libraries(CombinedController
     zenohcxx::zenohc)
 
 add_executable(Detector
-    ./src/MiddleWare/ObjectDetector/ObjectDetector.cpp
-    ./src/MiddleWare/LaneDetector/LaneDetector.cpp
+    ./src/MiddleWare/Detection/ObjectDetector.cpp
+    ./src/MiddleWare/Detection/LaneDetector.cpp
     ./src/Hardware/Camera.cpp
     ./src/combinedDetector.cpp
 )
