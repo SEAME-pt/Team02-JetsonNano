@@ -32,6 +32,7 @@ private:
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
+    std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     
     // PID constants
     float kp_; // Proportional gain
