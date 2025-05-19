@@ -22,8 +22,6 @@
 
 #define WIDTH 256
 #define HEIGHT 128
-#define INPUT_SIZE 3
-#define OUTPUT_SIZE 10
 
 class ObjectDetector
 {

@@ -21,8 +21,6 @@
 
 #define WIDTH 256
 #define HEIGHT 128
-#define INPUT_SIZE 3
-#define OUTPUT_SIZE 1
 
 class LaneDetector
 {
