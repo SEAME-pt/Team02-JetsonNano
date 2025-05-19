@@ -18,14 +18,15 @@ void signalHandler(int signum) {
 }
 
 void laneDetectionThread(LaneDetector* detector, Camera* camera) {
+    cv::namedWindow("Lane Detection", cv::WINDOW_NORMAL);
+    
     while (running) {
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
             detector->detect(frame);
-
-            std::lock_guard<std::mutex> lock(displayMutex);
-            frame.copyTo(displayFrame(Rect(0, 0, displayFrame.cols/2, displayFrame.rows)));
+            cv::imshow("Lane Detection", frame);
+            cv::waitKey(1);
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -33,50 +34,18 @@ void laneDetectionThread(LaneDetector* detector, Camera* camera) {
 }
 
 void objectDetectionThread(ObjectDetector* detector, Camera* camera) {
+    cv::namedWindow("Object Detection", cv::WINDOW_NORMAL);
+    
     while (running) {
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
             detector->detect(frame);
-
-            std::lock_guard<std::mutex> lock(displayMutex);
-            frame.copyTo(displayFrame(Rect(displayFrame.cols/2, 0, displayFrame.cols/2, displayFrame.rows)));
+            cv::imshow("Object Detection", frame);
+            cv::waitKey(1);
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-}
-
-void displayThread() {
-    cv::namedWindow("Combined Detection", cv::WINDOW_NORMAL);
-    cv::setWindowProperty("Combined Detection", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    
-    while (running) {
-        cv::Mat currentDisplay;
-        {
-            std::lock_guard<std::mutex> lock(displayMutex);
-            if (!displayFrame.empty())
-                currentDisplay = displayFrame.clone();
-        }
-        
-        if (!currentDisplay.empty()) {
-            cv::line(currentDisplay, 
-                     cv::Point(currentDisplay.cols/2, 0),
-                     cv::Point(currentDisplay.cols/2, currentDisplay.rows),
-                     cv::Scalar(0, 0, 255), 2);
-                     
-            cv::putText(currentDisplay, "Lane Detection", cv::Point(10, 30), 
-                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
-            cv::putText(currentDisplay, "Object Detection", cv::Point(currentDisplay.cols/2 + 10, 30), 
-                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
-                        
-            cv::imshow("Combined Detection", currentDisplay);
-        }
-        
-        if (cv::waitKey(1) == 'q')
-            running = false;
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 
@@ -111,27 +80,9 @@ int main(int argc, char** argv)
         ObjectDetector objDetector("/home/team02/obj_MOB_1_epoch_133.engine", session);
 
         camera.startCapture();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Give camera time to start
-        
-        cv::Mat initialFrame = camera.getFrame();
-        if (initialFrame.empty()) {
-            throw std::runtime_error("Failed to get initial frame for display setup");
-        }
-        
-        {
-            std::lock_guard<std::mutex> lock(displayMutex);
-            displayFrame = cv::Mat(initialFrame.rows, initialFrame.cols * 2, initialFrame.type(), cv::Scalar(0,0,0));
-            initialFrame.copyTo(displayFrame(cv::Rect(0, 0, initialFrame.cols, initialFrame.rows)));
-            initialFrame.copyTo(displayFrame(cv::Rect(initialFrame.cols, 0, initialFrame.cols, initialFrame.rows)));
-        }
 
         thread laneThread(laneDetectionThread, &laneDetector, &camera);
         thread objThread(objectDetectionThread, &objDetector, &camera);
-        thread dispThread(displayThread);
-
-        if (dispThread.joinable()) {
-            dispThread.join();
-        }
 
         if (laneThread.joinable()) {
             laneThread.join();
@@ -141,6 +92,7 @@ int main(int argc, char** argv)
         }
 
         camera.stopCapture();
+        
         cv::destroyAllWindows();
     }
     catch (const std::exception& e)
