@@ -238,23 +238,20 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat mask(HEIGHT, WIDTH, CV_8UC1);
+    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
     const int total_pixels = HEIGHT * WIDTH;
-
-    uchar* mask_data = mask.data;
 
     for (int i = 0; i < total_pixels; i++)
     {
-        mask_data[i] = (outputData[i] > 0.5) ? 255 : 0;
+        int y = i / WIDTH;
+        int x = i % WIDTH;
+        colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? 255 : 0;
     }
 
     // Resize the segmentation mask to match the frame size
     cv::Mat resized_mask;
-    cv::resize(mask, resized_mask, frame.size(), 0, 0,
+    cv::resize(resized_mask, colored_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
-
-    cv::Mat colored_mask;
-    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
 
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
 }
