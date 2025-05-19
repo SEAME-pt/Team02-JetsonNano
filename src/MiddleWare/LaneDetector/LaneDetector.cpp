@@ -8,8 +8,6 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-Logger logger;
-
 LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
@@ -69,6 +67,8 @@ LaneDetector::~LaneDetector()
 
 void LaneDetector::createExecutionContext(const std::string& enginePath)
 {
+    Logger logger;
+
     std::ifstream file(enginePath, std::ios::binary);
     if (!file)
     {

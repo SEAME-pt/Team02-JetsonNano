@@ -6,7 +6,7 @@ using namespace std;
 
 Camera::Camera(const std::string& pipeline, const std::string& calibrationFile) : FRAME_SKIP(3), frame_count(0)
 {
-    cap.open(pipeline, cv::CAP_GSTREAMER)
+    cap.open(pipeline, cv::CAP_GSTREAMER);
 
     if (!cap.isOpened())
     {
@@ -65,7 +65,7 @@ void Camera::stopCapture()
     }
 }
 
-void Camera::run()
+void Camera::captureLoop()
 {
     while (running)
     {

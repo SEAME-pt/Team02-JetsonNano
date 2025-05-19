@@ -6,8 +6,6 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-Logger logger;
-
 ObjectDetector::ObjectDetector(const std::string& enginePath,
                                std::shared_ptr<zenoh::Session> session)
 {
@@ -70,6 +68,8 @@ ObjectDetector::~ObjectDetector()
 
 void ObjectDetector::createExecutionContext(const std::string& enginePath)
 {
+    Logger logger;
+
     std::ifstream file(enginePath, std::ios::binary);
     if (!file)
     {
