@@ -9,6 +9,8 @@ using namespace std;
 using namespace zenoh;
 
 std::atomic<bool> running(true);
+Mat displayFrame;
+std::mutex displayMutex;
 
 void signalHandler(int signum) {
     std::cout << "Interrupt signal (" << signum << ") received.\n";
@@ -16,15 +18,14 @@ void signalHandler(int signum) {
 }
 
 void laneDetectionThread(LaneDetector* detector, Camera* camera) {
-    cv::namedWindow("Lane Detection", cv::WINDOW_NORMAL);
-    
     while (running) {
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
             detector->detect(frame);
-            cv::imshow("Lane Detection", frame);
-            cv::waitKey(1);
+
+            std::lock_guard<std::mutex> lock(displayMutex);
+            frame.copyTo(displayFrame(Rect(0, 0, displayFrame.cols/2, displayFrame.rows)));
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -32,19 +33,50 @@ void laneDetectionThread(LaneDetector* detector, Camera* camera) {
 }
 
 void objectDetectionThread(ObjectDetector* detector, Camera* camera) {
-    cv::namedWindow("Object Detection", cv::WINDOW_NORMAL);
-    
     while (running) {
-        // Get a fresh frame from the camera
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
             detector->detect(frame);
-            cv::imshow("Object Detection", frame);
-            cv::waitKey(1);
+            
+            std::lock_guard<std::mutex> lock(displayMutex);
+            frame.copyTo(displayFrame(Rect(displayFrame.cols/2, 0, displayFrame.cols/2, displayFrame.rows)));
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void displayThread() {
+    cv::namedWindow("Combined Detection", cv::WINDOW_NORMAL);
+    cv::setWindowProperty("Combined Detection", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+    
+    while (running) {
+        cv::Mat currentDisplay;
+        {
+            std::lock_guard<std::mutex> lock(displayMutex);
+            if (!displayFrame.empty())
+                currentDisplay = displayFrame.clone();
+        }
+        
+        if (!currentDisplay.empty()) {
+            cv::line(currentDisplay, 
+                     cv::Point(currentDisplay.cols/2, 0),
+                     cv::Point(currentDisplay.cols/2, currentDisplay.rows),
+                     cv::Scalar(0, 0, 255), 2);
+                     
+            cv::putText(currentDisplay, "Lane Detection", cv::Point(10, 30), 
+                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
+            cv::putText(currentDisplay, "Object Detection", cv::Point(currentDisplay.cols/2 + 10, 30), 
+                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
+                        
+            cv::imshow("Combined Detection", currentDisplay);
+        }
+        
+        if (cv::waitKey(1) == 'q')
+            running = false;
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 
@@ -67,12 +99,12 @@ int main(int argc, char** argv)
         }
 
         const std::string pipeline =
-        "nvarguscamerasrc sensor-id=0 ! "
-        "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
-        "format=NV12, framerate=(fraction)30/1 ! "
-        "nvvidconv ! video/x-raw, format=BGRx ! "
-        "videoconvert ! video/x-raw, format=BGR ! "
-        "appsink";
+            "nvarguscamerasrc sensor-id=0 ! "
+            "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
+            "format=NV12, framerate=(fraction)30/1 ! "
+            "nvvidconv ! video/x-raw, format=BGRx ! "
+            "videoconvert ! video/x-raw, format=BGR ! "
+            "appsink";
     
         Camera camera(pipeline, "calibration.yml");
         LaneDetector laneDetector("/home/team02/lane_Mob1_epoch_48.engine", session);
@@ -82,6 +114,11 @@ int main(int argc, char** argv)
 
         thread laneThread(laneDetectionThread, &laneDetector, &camera);
         thread objThread(objectDetectionThread, &objDetector, &camera);
+        thread dispThread(displayThread);
+
+        if (dispThread.joinable()) {
+            dispThread.join();
+        }
 
         if (laneThread.joinable()) {
             laneThread.join();
@@ -91,7 +128,6 @@ int main(int argc, char** argv)
         }
 
         camera.stopCapture();
-        
         cv::destroyAllWindows();
     }
     catch (const std::exception& e)
