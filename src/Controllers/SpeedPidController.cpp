@@ -19,13 +19,6 @@
 #define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
-double getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
-
 SpeedPidController::SpeedPidController()
 {
     prev_error_  = 0.0f;
