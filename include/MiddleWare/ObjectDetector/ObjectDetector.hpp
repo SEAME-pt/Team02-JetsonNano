@@ -16,6 +16,7 @@
 #include <deque>
 #include <cmath>
 #include <sys/time.h>
+#include "Logger.hpp"
 
 #include "CAN.hpp"
 
@@ -23,19 +24,6 @@
 #define HEIGHT 128
 #define INPUT_SIZE 3
 #define OUTPUT_SIZE 10
-
-class Logger : public nvinfer1::ILogger
-{
-    void log(Severity severity, const char* msg) noexcept override
-    {
-        if (severity <= Severity::kWARNING)
-        {
-            std::cout << msg << std::endl;
-        }
-    }
-};
-
-extern Logger logger;
 
 class ObjectDetector
 {
@@ -69,7 +57,7 @@ class ObjectDetector
     void preProcess(const cv::Mat& frame);
     void postProcess(cv::Mat& frame);
     void createExecutionContext(const std::string& enginePath);
-    
+
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
 
     void publishSpeedLock(const std::string &value_str);

@@ -17,24 +17,12 @@
 #include <cmath>
 #include <sys/time.h>
 #include "CAN.hpp"
+#include "Logger.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
 #define INPUT_SIZE 3
 #define OUTPUT_SIZE 1
-
-class Logger : public nvinfer1::ILogger
-{
-    void log(Severity severity, const char* msg) noexcept override
-    {
-        if (severity <= Severity::kWARNING)
-        {
-            std::cout << msg << std::endl;
-        }
-    }
-};
-
-extern Logger logger;
 
 class LaneDetector
 {
