@@ -245,7 +245,10 @@ PidController::PidController(const std::string& configFile,
     std::cout << "PID controller created!" << std::endl;
 }
 
-PidController::~PidController() {}
+PidController::~PidController() {
+    delete speedPidController_;
+    session_->close();
+}
 
 void PidController::init(float kp, float ki, float kd, float speed,
                          float delta_time)
