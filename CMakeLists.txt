@@ -122,7 +122,7 @@ target_link_libraries(CombinedController
 
 add_executable(LaneDetector
     ./src/MiddleWare/LaneDetector/LaneDetector.cpp
-    ./src/LaneDetector.cpp
+    ./src/laneDetector.cpp
 )
 
 target_compile_options(LaneDetector PRIVATE -Wall -Werror -Wextra -O3
