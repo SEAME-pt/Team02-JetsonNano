@@ -209,7 +209,6 @@ PidController::PidController(const std::string& configFile,
             if (value_str.find("1") != std::string::npos)
             {
                 lock_value = true;
-                manual_speed_.store(0);
             }
 
             speed_lock_ = lock_value;
@@ -310,7 +309,7 @@ void PidController::LKASControl(float lane_error, double current_time,
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
     else
-        publisher_->publishSpeed(speedPidController_->speedPid(0 - current_speed_, current_time));
+        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
 
 }
 
@@ -411,7 +410,7 @@ void PidController::run()
                 if (!speed_lock_)
                     publisher_->publishSpeed(manual_speed);
                 else
-                    publisher_->publishSpeed(speedPidController_->speedPid(0 - current_speed_, current_time));
+                    publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
             }
         }
     }
