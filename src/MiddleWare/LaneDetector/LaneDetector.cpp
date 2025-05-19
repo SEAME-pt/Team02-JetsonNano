@@ -1,6 +1,8 @@
 #include "LaneDetector.hpp"
 #include <sys/time.h>
 #include <iostream>
+#include <signal.h>
+#include <atomic>
 
 using namespace cv;
 using namespace std;
@@ -169,7 +171,7 @@ void LaneDetector::run()
     bool mapsInitialized = false;
     cv::Mat frame;
 
-    while (True)
+    while (running)
     {
         cap >> frame;
         if (frame.empty())
