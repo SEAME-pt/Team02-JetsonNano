@@ -56,7 +56,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float nearDistance = 1.5f;       // meters
     float farDistance = 15.0f;       // meters
     float laneWidth = 7.0f;          // meters
-    bevSize = cv::Size(WIDTH, WIDTH);
+    bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
     ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
@@ -193,7 +193,7 @@ void LaneDetector::postProcess(cv::Mat& frame)
     cv::Mat ipm_mask = ipm.transformPoints(binary_mask);
     cv::Mat ipm_frame = ipm.applyIPM(frame);
     
-    // IMPORTANT: Resize mask to match ipm_frame size, not original frame
+    // Resize mask to match ipm_frame size, not original frame
     cv::Mat resized_mask;
     cv::resize(ipm_mask, resized_mask, ipm_frame.size(), 0, 0, cv::INTER_NEAREST);
     
