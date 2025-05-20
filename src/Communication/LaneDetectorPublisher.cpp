@@ -53,16 +53,6 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80}; // 80% quality
     cv::imencode(".jpg", resized_frame, buffer, params);
 
-    // Create timestamp and metadata
-    // frame_count_++;
-    // std::string metadata = "frame_" + std::to_string(frame_count_) +
-    //                        "_time_" + std::to_string(current_time);
-
-    // Create Zenoh payload with metadata prefix
-    // auto options = zenoh::Publisher::PutOptions::create_default();
-    // options.encoding = zenoh::Encoding::Predefined::image_jpeg();
-    // std::cout << payload << std::endl;
-
     std::cout << "frame ready" << std::endl;
     cameraFrame_pub->put(buffer);
 }

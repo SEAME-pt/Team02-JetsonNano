@@ -19,6 +19,7 @@
 #include "CAN.hpp"
 #include "Logger.hpp"
 #include "IPM.hpp"
+#include "LaneDetectorPublisher.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -28,6 +29,7 @@ class LaneDetector
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
+    std::shared_ptr<LaneDetectorPublisher> publisher_;
 
     std::shared_ptr<nvinfer1::IExecutionContext> context;
     cudaEvent_t start;
