@@ -51,6 +51,6 @@ void LaneDetectorPublisher::publishCameraFrame(cv::Mat frame)
     std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 80}; // 80% quality
     cv::imencode(".jpg", resized_frame, buffer, params);
 
-    std::cout << "frame ready" << std::endl;
+    std::cout << "send frame" << std::endl;
     cameraFrame_pub->put(buffer);
 }
