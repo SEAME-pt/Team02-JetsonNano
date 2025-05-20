@@ -27,6 +27,7 @@ void laneDetectionThread(LaneDetector* detector, Camera* camera) {
         if (!frame.empty()) {
             detector->detect(frame);
             cv::imshow("Lane Detection", frame);
+            detector->publisher_->publishCameraFrame(frame);
             cv::waitKey(1);
         }
         
