@@ -47,7 +47,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     // Calibrate IPM
 
     float cameraHeight = 0.137f;       // meters
-    float cameraPitch = 23.5f;       // degrees down from horizontal
+    float cameraPitch = 21.5f;       // degrees down from horizontal
     float horizontalFOV = 100.0f;     // degrees
     float img_height = static_cast<float>(HEIGHT);
     float img_width = static_cast<float>(WIDTH);
@@ -55,7 +55,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
     float nearDistance = 0.2f;       // meters
     float farDistance = 1.0f;       // meters
-    float laneWidth = 1.2f;      // meters
+    float laneWidth = 1.0f;      // meters
     bevSize = cv::Size(WIDTH, WIDTH);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
