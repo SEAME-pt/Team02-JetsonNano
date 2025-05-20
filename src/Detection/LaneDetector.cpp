@@ -294,52 +294,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     allPolylinesViz.copyTo(frame);
 }
 
-std::vector<size_t> rangeQuery(const std::vector<cv::Point2f>& points, size_t idx, float eps) {
-    std::vector<size_t> neighbors;
-    for (size_t i = 0; i < points.size(); i++) {
-        float dist = cv::norm(points[idx] - points[i]);
-        if (dist <= eps) neighbors.push_back(i);
-    }
-    return neighbors;
-}
-
-std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int minPts) {
-    std::vector<int> labels(points.size(), -1);
-    int cluster = 0;
-    
-    for (size_t i = 0; i < points.size(); i++) {
-        if (labels[i] != -1) continue;
-        
-        std::vector<size_t> neighbors = rangeQuery(points, i, eps);
-        // Fix first comparison
-        if (neighbors.size() < static_cast<size_t>(minPts)) {
-            labels[i] = -2; // Noise
-            continue;
-        }
-        
-        labels[i] = cluster;
-        std::vector<size_t> seedSet = neighbors;
-        seedSet.erase(std::remove(seedSet.begin(), seedSet.end(), i), seedSet.end());
-        
-        for (size_t j = 0; j < seedSet.size(); j++) {
-            size_t idx = seedSet[j];
-            if (labels[idx] == -2) labels[idx] = cluster;
-            
-            if (labels[idx] != -1) continue;
-            
-            labels[idx] = cluster;
-            std::vector<size_t> newNeighbors = rangeQuery(points, idx, eps);
-            // Fix second comparison
-            if (newNeighbors.size() >= static_cast<size_t>(minPts)) {
-                seedSet.insert(seedSet.end(), newNeighbors.begin(), newNeighbors.end());
-            }
-        }
-        
-        cluster++;
-    }
-    
-    return labels;
-}
 
 std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
     static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
@@ -364,9 +318,23 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         pointsFloat.push_back(cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y)));
     }
     
-    double bandwidth = 40.0; // Adjust based on your lane width
-    
-    std::vector<int> labels = dbscan(pointsFloat, bandwidth, 10);
+    cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
+    int k = std::min(6, std::max(2, static_cast<int>(points.size() / 200))); // Adaptive cluster count
+    cv::Mat points_mat(pointsFloat.size(), 2, CV_32F);
+    for (int i = 0; i < points_mat.rows; i++) {
+        points_mat.at<float>(i, 0) = pointsFloat[i].x;
+        points_mat.at<float>(i, 1) = pointsFloat[i].y;
+    }
+
+    cv::Mat labels, centers;
+    cv::kmeans(points_mat, k, labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+
+    // Group points by their cluster labels
+    std::map<int, std::vector<cv::Point>> clusters;
+    for (size_t i = 0; i < points.size(); i++) {
+        int label = labels.at<int>(i);
+        clusters[label].push_back(points[i]);
+    }
     
     // Group points by their cluster labels
     std::map<int, std::vector<cv::Point>> clusters;
