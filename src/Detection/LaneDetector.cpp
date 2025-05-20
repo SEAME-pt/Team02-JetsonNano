@@ -48,7 +48,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
 
     float cameraHeight = 0.137f;       // meters
     float cameraPitch = 21.5f;       // degrees down from horizontal
-    float horizontalFOV = 100.0f;     // degrees
+    float horizontalFOV = 90.0f;     // degrees
     float img_height = static_cast<float>(HEIGHT);
     float img_width = static_cast<float>(WIDTH);
     float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
