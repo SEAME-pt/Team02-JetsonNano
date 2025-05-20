@@ -181,26 +181,30 @@ void LaneDetector::postProcess(cv::Mat& frame)
     static cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     const int total_pixels = HEIGHT * WIDTH;
 
-    for (int i = 0; i < total_pixels; i++)
-    {
+    // Create binary mask as before
+    for (int i = 0; i < total_pixels; i++) {
         int y = i / WIDTH;
         int x = i % WIDTH;
-
         uchar value = (outputData[i] > 0.5) ? 255 : 0;
         binary_mask.at<uchar>(y, x) = value;
     }
 
+    // Apply IPM to binary mask and frame
     cv::Mat ipm_mask = ipm.transformPoints(binary_mask);
     cv::Mat ipm_frame = ipm.applyIPM(frame);
-
-    // Fix: Swap source and destination
+    
+    // IMPORTANT: Resize mask to match ipm_frame size, not original frame
     cv::Mat resized_mask;
-    cv::resize(ipm_mask, resized_mask, frame.size(), 0, 0,
-               cv::INTER_NEAREST);
-
+    cv::resize(ipm_mask, resized_mask, ipm_frame.size(), 0, 0, cv::INTER_NEAREST);
+    
     cv::Mat colored_mask;
     cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
-
-    cv::addWeighted(ipm_frame, 0.7, colored_mask, 0.3, 0, frame);
+    
+    // Create a temporary result image for the bird's eye view
+    cv::Mat bev_result;
+    cv::addWeighted(ipm_frame, 0.7, colored_mask, 0.3, 0, bev_result);
+    
+    // Replace the original frame with the bird's eye view result
+    bev_result.copyTo(frame);
 }
 
