@@ -208,7 +208,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 20, 10, 6);
     // std::cout << "Number of lane polylines after merging: " << lanePolylines.size() << std::endl;
     
-    allPolylinesViz = frame.clone();
+    cv::Mat allPolylinesViz = frame.clone();
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // Blue
         cv::Scalar(0, 255, 0),    // Green
@@ -316,7 +316,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
     }
     
     // Use partial sort instead of full sort when number of valid components bigger than maxLanes
-    if (validComponents.size() > maxLanes) {
+    if (validComponents.size() > static_cast<size_t>(maxLanes)) {
         std::partial_sort(validComponents.begin(), validComponents.begin() + maxLanes, 
                         validComponents.end(), 
                         [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
