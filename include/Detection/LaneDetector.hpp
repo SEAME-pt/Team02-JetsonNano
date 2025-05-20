@@ -29,8 +29,7 @@ class LaneDetector
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
-    std::shared_ptr<LaneDetectorPublisher> publisher_;
-
+    
     std::shared_ptr<nvinfer1::IExecutionContext> context;
     cudaEvent_t start;
     cudaEvent_t stop;
@@ -40,11 +39,14 @@ class LaneDetector
     void* outputDevice;
     float* inputData;
     float* outputData;
-
+    
     CAN* canBus;
     
     IPM ipm;
     cv::Size bevSize;
+
+  public:
+    std::shared_ptr<LaneDetectorPublisher> publisher_;
 
   public:
     LaneDetector(const std::string& enginePath,
