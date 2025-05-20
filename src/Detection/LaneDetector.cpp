@@ -311,7 +311,6 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         return {}; // No lanes detected
     }
     
-    // Convert points to float for meanShift
     std::vector<cv::Point2f> pointsFloat;
     pointsFloat.reserve(points.size());
     for (const auto& pt : points) {
