@@ -187,7 +187,7 @@ void LaneDetector::postProcess(cv::Mat& frame)
         int y = i / WIDTH;
         int x = i % WIDTH;
         uchar value = (outputData[i] > 0.5) ? 127 : 0;
-        binary_mask.at<cv::Vec3b>(y, x) = value;
+        binary_mask.at<uchar>(y, x) = value;
     }
 
     // Apply IPM to mask and frame
