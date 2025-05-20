@@ -196,10 +196,10 @@ void LaneDetector::postProcess(cv::Mat& frame)
     
     createLanes(ipm_mask, ipm_frame);
     
-    cv::Mat resized_ipm_frame;
-    cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
+    // cv::Mat resized_ipm_frame;
+    // cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
     
-    resized_ipm_frame.copyTo(frame);
+    ipm_frame.copyTo(frame);
 }
 
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& ipm_frame)
