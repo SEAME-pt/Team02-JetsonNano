@@ -54,7 +54,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
     float nearDistance = 0.2f;       // meters
-    float farDistance = 2.0f;       // meters
+    float farDistance = 1.5f;       // meters
     float laneWidth = 1.5f;          // meters
     bevSize = cv::Size(WIDTH, WIDTH);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
@@ -62,7 +62,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
                             nearDistance, farDistance, laneWidth);
 
-    try
+    try     
     {
         this->canBus     = new CAN();
         this->canBus->init("/dev/spidev0.0");
