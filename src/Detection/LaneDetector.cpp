@@ -237,6 +237,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+
+    allPolylinesViz.copyTo(frame);
 }
 
 
