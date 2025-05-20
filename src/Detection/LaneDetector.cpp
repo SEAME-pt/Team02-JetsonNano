@@ -294,6 +294,51 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     allPolylinesViz.copyTo(frame);
 }
 
+std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int minPts) {
+    std::vector<int> labels(points.size(), -1);
+    int cluster = 0;
+    
+    for (size_t i = 0; i < points.size(); i++) {
+        if (labels[i] != -1) continue;
+        
+        std::vector<size_t> neighbors = rangeQuery(points, i, eps);
+        if (neighbors.size() < minPts) {
+            labels[i] = -2; // Noise
+            continue;
+        }
+        
+        labels[i] = cluster;
+        std::vector<size_t> seedSet = neighbors;
+        seedSet.erase(std::remove(seedSet.begin(), seedSet.end(), i), seedSet.end());
+        
+        for (size_t j = 0; j < seedSet.size(); j++) {
+            size_t idx = seedSet[j];
+            if (labels[idx] == -2) labels[idx] = cluster;
+            
+            if (labels[idx] != -1) continue;
+            
+            labels[idx] = cluster;
+            std::vector<size_t> newNeighbors = rangeQuery(points, idx, eps);
+            if (newNeighbors.size() >= minPts) {
+                seedSet.insert(seedSet.end(), newNeighbors.begin(), newNeighbors.end());
+            }
+        }
+        
+        cluster++;
+    }
+    
+    return labels;
+}
+
+// Helper function for DBSCAN
+std::vector<size_t> rangeQuery(const std::vector<cv::Point2f>& points, size_t idx, float eps) {
+    std::vector<size_t> neighbors;
+    for (size_t i = 0; i < points.size(); i++) {
+        float dist = cv::norm(points[idx] - points[i]);
+        if (dist <= eps) neighbors.push_back(i);
+    }
+    return neighbors;
+}
 
 std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
     static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
@@ -318,13 +363,9 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         pointsFloat.push_back(cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y)));
     }
     
-    // Apply MeanShift clustering
-    std::vector<int> labels;
-    std::vector<cv::Point2f> centers;
     double bandwidth = 40.0; // Adjust based on your lane width
     
-    cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
-    int numClusters = cv::meanShift(pointsFloat, labels, criteria, bandwidth);
+    std::vector<int> labels = dbscan(pointsFloat, bandwidth, 10);
     
     // Group points by their cluster labels
     std::map<int, std::vector<cv::Point>> clusters;
