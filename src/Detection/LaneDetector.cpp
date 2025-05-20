@@ -295,7 +295,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 }
 
 
-std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
+std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {
+    // Step 1: Same as before - get connected components
     static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
     static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
     
@@ -303,83 +304,136 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, horizontalKernel);
 
-    // Find all non-zero points in the mask
-    std::vector<cv::Point> points;
-    cv::findNonZero(result, points);
+    cv::Mat labels, stats, centroids;
+    int numLabels = cv::connectedComponentsWithStats(result, labels, stats, centroids, 8, CV_32S);
     
-    if (points.empty()) {
-        return {}; // No lanes detected
+    // Step 2: Extract segments as before
+    std::vector<std::pair<int, std::vector<cv::Point>>> segments;
+    for (int i = 1; i < numLabels; i++) {
+        int area = stats.at<int>(i, cv::CC_STAT_AREA);
+        if (area > minArea) {
+            std::vector<cv::Point> points;
+            points.reserve(area/4);
+            
+            // Extract points for this component
+            for (int y = 0; y < labels.rows; y += 2) {
+                const int* row = labels.ptr<int>(y);
+                int xStart = -1, xEnd = -1;
+                
+                for (int x = 0; x < labels.cols; x++) {
+                    if (row[x] == i) {
+                        if (xStart < 0) xStart = x;
+                        xEnd = x;
+                    }
+                }
+                
+                if (xStart >= 0) {
+                    int midX = (xStart + xEnd) / 2;
+                    points.push_back(cv::Point(midX, y));
+                }
+            }
+            
+            if (!points.empty()) {
+                segments.push_back({i, std::move(points)});
+            }
+        }
     }
     
-    std::vector<cv::Point2f> pointsFloat;
-    pointsFloat.reserve(points.size());
-    for (const auto& pt : points) {
-        pointsFloat.push_back(cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y)));
-    }
-    
-    cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
-    int k = std::min(6, std::max(2, static_cast<int>(points.size() / 200))); // Adaptive cluster count
-    cv::Mat points_mat(pointsFloat.size(), 2, CV_32F);
-    for (int i = 0; i < points_mat.rows; i++) {
-        points_mat.at<float>(i, 0) = pointsFloat[i].x;
-        points_mat.at<float>(i, 1) = pointsFloat[i].y;
-    }
-
-    cv::Mat labels, centers;
-    cv::kmeans(points_mat, k, labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-
-    // Group points by their cluster labels
-    std::map<int, std::vector<cv::Point>> clusters;
-    for (size_t i = 0; i < points.size(); i++) {
-        int label = labels.at<int>(i);
-        clusters[label].push_back(points[i]);
-    }
-    
-    // Sort clusters by average x-position (left to right)
-    std::vector<std::pair<int, float>> sortedClusters;
-    sortedClusters.reserve(clusters.size()); 
-    for (const auto& cluster : clusters) {
+    // Step 3: Calculate features for each segment
+    std::vector<std::tuple<int, float, float, cv::Point>> segmentFeatures;
+    for (const auto& segment : segments) {
+        int id = segment.first;
+        const auto& points = segment.second;
+        
+        // Calculate average x position
         float avgX = 0;
-        for (const auto& pt : cluster.second) {
+        for (const auto& pt : points) {
             avgX += pt.x;
         }
-        avgX /= cluster.second.size();
-        sortedClusters.push_back({cluster.first, avgX});
-    }
-    
-    std::sort(sortedClusters.begin(), sortedClusters.end(),
-             [](const auto& a, const auto& b) { return a.second < b.second; });
-    
-    // Limit to max number of lanes
-    if (sortedClusters.size() > static_cast<size_t>(maxLanes)) {
-        sortedClusters.resize(maxLanes);
-    }
-    
-    // Create lane polylines from clusters
-    std::vector<std::vector<cv::Point>> lanePolylines;
-    lanePolylines.reserve(sortedClusters.size());
-    for (const auto& clusterInfo : sortedClusters) {
-        const auto& clusterPoints = clusters[clusterInfo.first];
+        avgX /= points.size();
         
-        // Skip small clusters
-        if (clusterPoints.size() < static_cast<size_t>(minArea / 10)) {
-            continue;
+        // Calculate angle (from linear regression or endpoints)
+        cv::Point topPoint = points.front();
+        cv::Point bottomPoint = points.back();
+        float angle = atan2(bottomPoint.y - topPoint.y, bottomPoint.x - topPoint.x) * 180 / CV_PI;
+        
+        // Store segment features (id, avgX, angle, bottom point)
+        segmentFeatures.push_back({id, avgX, angle, bottomPoint});
+    }
+    
+    // Step 4: Cluster segments by x-position and angle
+    std::vector<std::vector<int>> clusters;
+    std::vector<bool> used(segments.size(), false);
+    
+    for (size_t i = 0; i < segments.size(); i++) {
+        if (used[i]) continue;
+        
+        std::vector<int> currentCluster = {std::get<0>(segmentFeatures[i])};
+        used[i] = true;
+        
+        for (size_t j = 0; j < segments.size(); j++) {
+            if (used[j]) continue;
+            
+            float xDiff = abs(std::get<1>(segmentFeatures[i]) - std::get<1>(segmentFeatures[j]));
+            float angleDiff = abs(std::get<2>(segmentFeatures[i]) - std::get<2>(segmentFeatures[j]));
+            
+            // If segments are similar in position and angle, cluster them
+            if (xDiff < 30 && angleDiff < 20) {
+                currentCluster.push_back(std::get<0>(segmentFeatures[j]));
+                used[j] = true;
+            }
         }
         
-        // Sort points by y-coordinate for consistent polyline
-        std::vector<cv::Point> sortedPoints = clusterPoints;
-        std::sort(sortedPoints.begin(), sortedPoints.end(), 
+        clusters.push_back(currentCluster);
+    }
+    
+    // Limit final clusters to maxLanes
+    if (clusters.size() > static_cast<size_t>(maxLanes)) {
+        // Sort clusters by average x-position
+        std::sort(clusters.begin(), clusters.end(), 
+                 [&segmentFeatures](const std::vector<int>& a, const std::vector<int>& b) {
+                     float avgA = 0, avgB = 0;
+                     for (int id : a) {
+                         for (size_t i = 0; i < segmentFeatures.size(); i++) {
+                             if (std::get<0>(segmentFeatures[i]) == id) {
+                                 avgA += std::get<1>(segmentFeatures[i]);
+                             }
+                         }
+                     }
+                     for (int id : b) {
+                         for (size_t i = 0; i < segmentFeatures.size(); i++) {
+                             if (std::get<0>(segmentFeatures[i]) == id) {
+                                 avgB += std::get<1>(segmentFeatures[i]);
+                             }
+                         }
+                     }
+                     avgA /= a.size();
+                     avgB /= b.size();
+                     return avgA < avgB;
+                 });
+        
+        clusters.resize(maxLanes);
+    }
+    
+    // Step 5: Create final lane polylines from merged clusters
+    std::vector<std::vector<cv::Point>> lanePolylines;
+    for (const auto& cluster : clusters) {
+        std::vector<cv::Point> allPoints;
+        
+        for (int id : cluster) {
+            for (const auto& segment : segments) {
+                if (segment.first == id) {
+                    allPoints.insert(allPoints.end(), segment.second.begin(), segment.second.end());
+                    break;
+                }
+            }
+        }
+        
+        // Sort points by y-position to create a coherent polyline
+        std::sort(allPoints.begin(), allPoints.end(), 
                  [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
         
-        // Sample points to create smooth polyline
-        int step = std::max(1, static_cast<int>(sortedPoints.size() / 20));
-        std::vector<cv::Point> polyline;
-        polyline.reserve(sortedPoints.size() / step + 1);
-        for (size_t i = 0; i < sortedPoints.size(); i += step) {
-            polyline.push_back(sortedPoints[i]);
-        }
-        
-        lanePolylines.push_back(polyline);
+        lanePolylines.push_back(std::move(allPoints));
     }
     
     return lanePolylines;
