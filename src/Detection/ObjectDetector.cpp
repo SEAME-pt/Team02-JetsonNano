@@ -193,14 +193,14 @@ void ObjectDetector::postProcess(cv::Mat& frame)
         probs[5] = outputData[total_pixels * 5 + i];
         probs[6] = outputData[total_pixels * 6 + i];
         probs[7] = outputData[total_pixels * 7 + i];
-        // probs[8] = outputData[total_pixels * 8 + i];
-        // probs[9] = outputData[total_pixels * 9 + i];
+        probs[8] = outputData[total_pixels * 8 + i];
+        probs[9] = outputData[total_pixels * 9 + i];
 
         // Find class with highest probability
         int best_class = 0;
         float max_prob = probs[0];
 
-        for (int c = 1; c < 8; c++)
+        for (int c = 1; c < 10; c++)
         {
             if (probs[c] > max_prob)
             {
