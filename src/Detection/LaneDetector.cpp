@@ -53,7 +53,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float img_width = static_cast<float>(WIDTH);
     float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-    float nearDistance = 0.4f;       // meters
+    float nearDistance = 0.2f;       // meters
     float farDistance = 1.5f;       // meters
     float laneWidth = 2.0f;          // meters
     bevSize = cv::Size(WIDTH, WIDTH);
