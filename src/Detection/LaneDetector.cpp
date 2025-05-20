@@ -294,6 +294,15 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     allPolylinesViz.copyTo(frame);
 }
 
+std::vector<size_t> rangeQuery(const std::vector<cv::Point2f>& points, size_t idx, float eps) {
+    std::vector<size_t> neighbors;
+    for (size_t i = 0; i < points.size(); i++) {
+        float dist = cv::norm(points[idx] - points[i]);
+        if (dist <= eps) neighbors.push_back(i);
+    }
+    return neighbors;
+}
+
 std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int minPts) {
     std::vector<int> labels(points.size(), -1);
     int cluster = 0;
@@ -328,16 +337,6 @@ std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int m
     }
     
     return labels;
-}
-
-// Helper function for DBSCAN
-std::vector<size_t> rangeQuery(const std::vector<cv::Point2f>& points, size_t idx, float eps) {
-    std::vector<size_t> neighbors;
-    for (size_t i = 0; i < points.size(); i++) {
-        float dist = cv::norm(points[idx] - points[i]);
-        if (dist <= eps) neighbors.push_back(i);
-    }
-    return neighbors;
 }
 
 std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
