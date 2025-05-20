@@ -240,6 +240,57 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 
+
+    std::vector<cv::Point> leftCurve, rightCurve;
+    
+    if (lanePolylines.size() == 2) {
+        // Find the lowest point (highest y-value) in each polyline
+        cv::Point lowestPoint1(-1, -1);
+        cv::Point lowestPoint2(-1, -1);
+        
+        // Find lowest point in first polyline
+        for (const auto& pt : lanePolylines[0]) {
+            if (pt.y > lowestPoint1.y) {
+                lowestPoint1 = pt;
+            }
+        }
+        
+        // Find lowest point in second polyline
+        for (const auto& pt : lanePolylines[1]) {
+            if (pt.y > lowestPoint2.y) {
+                lowestPoint2 = pt;
+            }
+        }
+        
+        // Determine left and right lanes based on the x-coordinate of lowest points
+        int centerX = frame.cols / 2;
+        
+        // Debug visualization of lowest points
+        cv::circle(allPolylinesViz, lowestPoint1, 8, cv::Scalar(255, 0, 255), -1);
+        cv::circle(allPolylinesViz, lowestPoint2, 8, cv::Scalar(0, 255, 255), -1);
+        
+        // Compare x-coordinates to determine left/right
+        if (lowestPoint1.x < lowestPoint2.x) {
+            leftCurve = lanePolylines[0];
+            rightCurve = lanePolylines[1];
+            
+            // Debug text
+            std::string leftText = "Left: " + std::to_string(lowestPoint1.x);
+            std::string rightText = "Right: " + std::to_string(lowestPoint2.x);
+            cv::putText(allPolylinesViz, leftText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            cv::putText(allPolylinesViz, rightText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+        } else {
+            leftCurve = lanePolylines[1];
+            rightCurve = lanePolylines[0];
+            
+            // Debug text
+            std::string leftText = "Left: " + std::to_string(lowestPoint2.x);
+            std::string rightText = "Right: " + std::to_string(lowestPoint1.x);
+            cv::putText(allPolylinesViz, leftText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+        }
+    }
+
     allPolylinesViz.copyTo(frame);
 }
 
