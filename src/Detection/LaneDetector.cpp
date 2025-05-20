@@ -373,9 +373,9 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
                  [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
         
         // Sample points to create smooth polyline
+        int step = std::max(1, static_cast<int>(sortedPoints.size() / 20));
         std::vector<cv::Point> polyline;
         polyline.reserve(sortedPoints.size() / step + 1);
-        int step = std::max(1, static_cast<int>(sortedPoints.size() / 20));
         for (size_t i = 0; i < sortedPoints.size(); i += step) {
             polyline.push_back(sortedPoints[i]);
         }
