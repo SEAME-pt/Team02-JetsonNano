@@ -198,6 +198,9 @@ void LaneDetector::postProcess(cv::Mat& frame)
     cv::resize(ipm_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
-    cv::addWeighted(ipm_frame, 0.7, resized_mask, 0.3, 0, frame);
+    cv::Mat colored_mask;
+    cv::cvtColor(resized_mask, colored_mask, cv::COLOR_GRAY2BGR);
+
+    cv::addWeighted(ipm_frame, 0.7, colored_mask, 0.3, 0, frame);
 }
 
