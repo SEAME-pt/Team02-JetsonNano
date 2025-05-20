@@ -200,15 +200,17 @@ void LaneDetector::postProcess(cv::Mat& frame)
     cv::Mat resized_ipm_frame;
     cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
 
-    createLanes(resized_ipm_mask, resized_ipm_frame, original_frame);
+    resized_ipm_frame.copyTo(frame);
+
+    createLanes(resized_ipm_mask, frame);
 }
 
-void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& ipm_frame, cv::Mat& original_frame)
+void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
     std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 20, 10, 6);
     // std::cout << "Number of lane polylines after merging: " << lanePolylines.size() << std::endl;
     
-    cv::Mat allPolylinesViz = ipm_frame.clone();
+    cv::Mat allPolylinesViz = frame.clone();
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // Blue
         cv::Scalar(0, 255, 0),    // Green
@@ -238,7 +240,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& ipm_frame, cv::Mat
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 
-    allPolylinesViz.copyTo(original_frame);
+    allPolylinesViz.copyTo(frame);
 }
 
 
