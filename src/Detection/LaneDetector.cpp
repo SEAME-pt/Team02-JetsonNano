@@ -178,7 +178,6 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
     static cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     const int total_pixels = HEIGHT * WIDTH;
 
@@ -188,13 +187,10 @@ void LaneDetector::postProcess(cv::Mat& frame)
         int x = i % WIDTH;
 
         uchar value = (outputData[i] > 0.5) ? 255 : 0;
-        colored_mask.at<cv::Vec3b>(y, x) = cv::Vec3b(value, value, value);
         binary_mask.at<uchar>(y, x) = value;
     }
 
-    // cv::Mat ipm_mask = ipm.transformPoints(binary_mask);
-
-    cv::Mat ipm_mask = ipm.applyIPM(colored_mask);
+    cv::Mat ipm_mask = ipm.transformPoints(binary_mask);
     cv::Mat ipm_frame = ipm.applyIPM(frame);
 
     // Fix: Swap source and destination
