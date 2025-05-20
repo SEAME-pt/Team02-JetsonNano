@@ -36,7 +36,7 @@ include_directories(include/Vehicle)
 include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
-include_directories(include/MiddleWare/Detection)
+include_directories(include/Detection)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -112,8 +112,9 @@ target_link_libraries(CombinedController
     zenohcxx::zenohc)
 
 add_executable(Detection
-    ./src/MiddleWare/Detection/ObjectDetector.cpp
-    ./src/MiddleWare/Detection/LaneDetector.cpp
+    ./src/Detection/ObjectDetector.cpp
+    ./src/Detection/LaneDetector.cpp
+    ./src/Detection/IPM.cpp
     ./src/Hardware/Camera.cpp
     ./src/detection.cpp
 )
