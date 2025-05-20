@@ -57,5 +57,9 @@ class LaneDetector
   private:
     void preProcess(const cv::Mat& frame);
     void postProcess(cv::Mat& frame);
+
+    void createLanes(cv::Mat& binary_mask, cv::Mat& frame);
+    std::vector<std::vector<cv::Point>> processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
+
     void createExecutionContext(const std::string& enginePath);
 };
