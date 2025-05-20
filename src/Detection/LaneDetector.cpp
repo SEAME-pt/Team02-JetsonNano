@@ -56,7 +56,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float nearDistance = 0.1f;       // meters
     float farDistance = 0.5f;       // meters
     float laneWidth = 0.8f;      // meters
-    bevSize = cv::Size(WIDTH, WIDTH);
+    bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
     ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
@@ -180,18 +180,18 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame)
 {
-    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
+    static cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     const int total_pixels = HEIGHT * WIDTH;
 
     for (int i = 0; i < total_pixels; i++) {
         int y = i / WIDTH;
         int x = i % WIDTH;
-        uchar value = (outputData[i] > 0.5) ? 255 : 0;
-        colored_mask.at<cv::Vec3b>(y, x) = cv::Vec3b(0, value, 0);
+        uchar value = (outputData[i] > 0.5) ? 127 : 0;
+        binary_mask.at<cv::Vec3b>(y, x) = value;
     }
 
     // Apply IPM to mask and frame
-    cv::Mat ipm_mask = ipm.applyIPM(colored_mask);
+    cv::Mat ipm_mask = ipm.applyIPM(binary_mask);
     cv::Mat ipm_frame = ipm.applyIPM(frame);
     
     cv::Mat resized_ipm_mask;
@@ -199,12 +199,168 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
     cv::Mat resized_ipm_frame;
     cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
-    
-    // Create a temporary result image for the bird's eye view
-    cv::Mat bev_result;
-    cv::addWeighted(resized_ipm_frame, 0.7, resized_ipm_mask, 0.3, 0, bev_result);
-    
-    // Replace the original frame with the bird's eye view result
-    bev_result.copyTo(frame);
+
+    createLanes(resized_ipm_mask, resized_ipm_frame);
 }
 
+void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
+{
+    std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 20, 10, 6);
+    // std::cout << "Number of lane polylines after merging: " << lanePolylines.size() << std::endl;
+    
+    allPolylinesViz = frame.clone();
+    std::vector<cv::Scalar> colors = {
+        cv::Scalar(255, 0, 0),    // Blue
+        cv::Scalar(0, 255, 0),    // Green
+        cv::Scalar(0, 0, 255),    // Red
+        cv::Scalar(255, 255, 0),  // Cyan
+        cv::Scalar(255, 0, 255),  // Magenta
+        cv::Scalar(0, 255, 255)   // Yellow
+    };
+    
+    // Draw each polyline with a different color
+    for (size_t i = 0; i < lanePolylines.size(); i++) {
+        cv::Scalar color = colors[i % colors.size()];
+        for (size_t j = 1; j < lanePolylines[i].size(); j++) {
+            cv::line(allPolylinesViz, lanePolylines[i][j-1], lanePolylines[i][j], color, 2);
+        }
+        
+        // Add a label for each polyline
+        if (!lanePolylines[i].empty()) {
+            std::string label = "Lane " + std::to_string(i+1);
+            cv::putText(allPolylinesViz, label, lanePolylines[i][0], 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+        }
+    }
+    
+    // Display the number of polylines found
+    std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
+    cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
+               cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+}
+
+
+std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
+    static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
+    static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
+    
+    cv::Mat result = laneMask.clone();
+    cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
+    cv::morphologyEx(result, result, cv::MORPH_CLOSE, horizontalKernel);
+
+    // // Create proper diagonal kernels
+    // static cv::Mat diagonalKernel1; // Right curve (sloped right)
+    // static cv::Mat diagonalKernel2; // Left curve (sloped left)
+    
+    // // Initialize diagonal kernels if not already created
+    // if (diagonalKernel1.empty() || diagonalKernel2.empty()) {
+    //     // Create diagonal kernel for right curves (top-left to bottom-right)
+    //     diagonalKernel1 = cv::Mat::zeros(kernelSize * 3, kernelSize * 3, CV_8U);
+    //     for (int i = 0; i < kernelSize * 3; i++) {
+    //         for (int j = 0; j < kernelSize; j++) {
+    //             // Create a curved pattern
+    //             int offset = std::pow(i / (kernelSize * 3.0) - 0.5, 2) * kernelSize * 8;
+    //             int x = i/2 + j + offset;
+    //             if (x >= 0 && x < kernelSize * 3)
+    //                 diagonalKernel1.at<uchar>(i, x) = 1;
+    //         }
+    //     }
+        
+    //     // Create diagonal kernel for left curves (top-right to bottom-left) 
+    //     diagonalKernel2 = cv::Mat::zeros(kernelSize * 3, kernelSize * 3, CV_8U);
+    //     for (int i = 0; i < kernelSize * 3; i++) {
+    //         for (int j = 0; j < kernelSize; j++) {
+    //             // Create a curved pattern (mirror of the first one)
+    //             int offset = std::pow(i / (kernelSize * 3.0) - 0.5, 2) * kernelSize * 8;
+    //             int x = kernelSize * 3 - 1 - (i/2 + j + offset);
+    //             if (x >= 0 && x < kernelSize * 3)
+    //                 diagonalKernel2.at<uchar>(i, x) = 1;
+    //         }
+    //     }
+    // }
+    
+    // Apply multiple directional closings to better connect curved dashed lines
+    
+    // // IMPORTANT: Only apply diagonal kernels if we have curve lanes (check prevLeftCurve/prevRightCurve)
+    // if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3) {
+    //     // Estimate curvature from previous frame
+    //     double curvature = estimateCurvature(prevLeftCurve);
+    //     if (std::abs(curvature) > 0.0001) {  // If significant curvature
+    //         // Choose different kernels based on curve direction
+    //         if (curvature > 0) {
+    //             // Right curve - use diagonal kernel
+    //             cv::morphologyEx(result, result, cv::MORPH_CLOSE, diagonalKernel1);
+    //         } else {
+    //             // Left curve - use other diagonal kernel
+    //             cv::morphologyEx(result, result, cv::MORPH_CLOSE, diagonalKernel2);
+    //         }
+    //     }
+    // }
+    
+    // Standard kernel closing (efficient reuse)
+
+    cv::Mat labels, stats, centroids;
+    int numLabels = cv::connectedComponentsWithStats(result, labels, stats, centroids, 8, CV_32S);
+    
+    std::vector<std::pair<int, float>> validComponents;
+    validComponents.reserve(std::min(numLabels, maxLanes + 3));
+    
+    for (int i = 1; i < numLabels; i++) {
+        int area = stats.at<int>(i, cv::CC_STAT_AREA);
+        if (area > minArea) {
+            float centerX = centroids.at<double>(i, 0);
+            validComponents.push_back(std::make_pair(i, centerX));
+        }
+    }
+    
+    // Use partial sort instead of full sort when number of valid components bigger than maxLanes
+    if (validComponents.size() > maxLanes) {
+        std::partial_sort(validComponents.begin(), validComponents.begin() + maxLanes, 
+                        validComponents.end(), 
+                        [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
+                            return a.second < b.second;
+                        });
+        validComponents.resize(maxLanes);
+    } else {
+        std::sort(validComponents.begin(), validComponents.end(), 
+            [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
+                return a.second < b.second;
+            });
+    }
+    
+    // Reserve capacity for output
+    std::vector<std::vector<cv::Point>> lanePolylines;
+    lanePolylines.reserve(validComponents.size());
+    
+    // Process each lane with optimized extraction
+    for (const auto& comp : validComponents) {
+        int compIdx = comp.first;
+        
+        // Extract points more efficiently using row pointers
+        std::vector<cv::Point> lanePoints;
+        lanePoints.reserve(labels.rows/5); // Pre-allocate approx size
+        
+        for (int y = 0; y < labels.rows; y += 2) {
+            const int* row = labels.ptr<int>(y);
+            int xStart = -1, xEnd = -1;
+            
+            for (int x = 0; x < labels.cols; x++) {
+                if (row[x] == compIdx) {
+                    if (xStart < 0) xStart = x;
+                    xEnd = x;
+                }
+            }
+            
+            if (xStart >= 0) {
+                int midX = (xStart + xEnd) / 2;
+                lanePoints.push_back(cv::Point(midX, y));
+            }
+        }
+        
+        if (!lanePoints.empty()) {
+            lanePolylines.push_back(std::move(lanePoints)); // Use move semantics
+        }
+    }
+    
+    return lanePolylines;
+}
