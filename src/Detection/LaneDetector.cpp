@@ -311,7 +311,8 @@ std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int m
         if (labels[i] != -1) continue;
         
         std::vector<size_t> neighbors = rangeQuery(points, i, eps);
-        if (neighbors.size() < minPts) {
+        // Fix first comparison
+        if (neighbors.size() < static_cast<size_t>(minPts)) {
             labels[i] = -2; // Noise
             continue;
         }
@@ -328,7 +329,8 @@ std::vector<int> dbscan(const std::vector<cv::Point2f>& points, float eps, int m
             
             labels[idx] = cluster;
             std::vector<size_t> newNeighbors = rangeQuery(points, idx, eps);
-            if (newNeighbors.size() >= minPts) {
+            // Fix second comparison
+            if (newNeighbors.size() >= static_cast<size_t>(minPts)) {
                 seedSet.insert(seedSet.end(), newNeighbors.begin(), newNeighbors.end());
             }
         }
