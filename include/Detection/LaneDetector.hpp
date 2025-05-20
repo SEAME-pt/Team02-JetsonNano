@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include "CAN.hpp"
 #include "Logger.hpp"
+#include "IPM.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -39,6 +40,9 @@ class LaneDetector
     float* outputData;
 
     CAN* canBus;
+    
+    IPM ipm;
+    cv::Size bevSize;
 
   public:
     LaneDetector(const std::string& enginePath,

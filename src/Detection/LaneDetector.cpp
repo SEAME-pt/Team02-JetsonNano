@@ -44,6 +44,24 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
                     HEIGHT * 1);
 
+    // Calibrate IPM
+
+    float cameraHeight = 1.5f;       // meters
+    float cameraPitch = 15.0f;       // degrees down from horizontal
+    float horizontalFOV = 105.0f;     // degrees
+    float img_height = static_cast<float>(HEIGHT);
+    float img_width = static_cast<float>(WIDTH);
+    float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
+    float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
+    float nearDistance = 1.5f;       // meters
+    float farDistance = 15.0f;       // meters
+    float laneWidth = 7.0f;          // meters
+    bevSize = cv::Size(WIDTH, WIDTH);
+    cv::Size origSize = cv::Size(WIDTH, HEIGHT);
+    ipm.initialize(origSize, bevSize);
+    ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
+                            nearDistance, farDistance, laneWidth);
+
     try
     {
         this->canBus     = new CAN();
@@ -170,9 +188,11 @@ void LaneDetector::postProcess(cv::Mat& frame)
         colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? cv::Vec3b(255, 255, 255) : cv::Vec3b(0, 0, 0);
     }
 
+    cv::Mat ipm_mask = ipm.transformPoints(colored_mask);
+
     // Fix: Swap source and destination
     cv::Mat resized_mask;
-    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
+    cv::resize(ipm_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
     cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
