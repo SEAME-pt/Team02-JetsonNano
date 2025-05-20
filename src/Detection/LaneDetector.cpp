@@ -294,76 +294,85 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     allPolylinesViz.copyTo(frame);
 }
 
+#include <opencv2/video/tracking.hpp>
 
-std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
-    static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
-    static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
-    
+std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {
+    // Your existing morphology code
     cv::Mat result = laneMask.clone();
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, horizontalKernel);
 
-    cv::Mat labels, stats, centroids;
-    int numLabels = cv::connectedComponentsWithStats(result, labels, stats, centroids, 8, CV_32S);
+    // Find all non-zero points in the mask
+    std::vector<cv::Point> points;
+    cv::findNonZero(result, points);
     
-    std::vector<std::pair<int, float>> validComponents;
-    validComponents.reserve(std::min(numLabels, maxLanes + 3));
+    if (points.empty()) {
+        return {}; // No lanes detected
+    }
     
-    for (int i = 1; i < numLabels; i++) {
-        int area = stats.at<int>(i, cv::CC_STAT_AREA);
-        if (area > minArea) {
-            float centerX = centroids.at<double>(i, 0);
-            validComponents.push_back(std::make_pair(i, centerX));
+    // Convert points to float for meanShift
+    std::vector<cv::Point2f> pointsFloat;
+    pointsFloat.reserve(points.size());
+    for (const auto& pt : points) {
+        pointsFloat.push_back(cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y)));
+    }
+    
+    // Apply MeanShift clustering
+    std::vector<int> labels;
+    std::vector<cv::Point2f> centers;
+    double bandwidth = 40.0; // Adjust based on your lane width
+    
+    cv::TermCriteria criteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10, 1.0);
+    int numClusters = cv::meanShift(pointsFloat, labels, criteria, bandwidth);
+    
+    // Group points by their cluster labels
+    std::map<int, std::vector<cv::Point>> clusters;
+    for (size_t i = 0; i < points.size(); i++) {
+        clusters[labels[i]].push_back(points[i]);
+    }
+    
+    // Sort clusters by average x-position (left to right)
+    std::vector<std::pair<int, float>> sortedClusters;
+    for (const auto& cluster : clusters) {
+        float avgX = 0;
+        for (const auto& pt : cluster.second) {
+            avgX += pt.x;
         }
+        avgX /= cluster.second.size();
+        sortedClusters.push_back({cluster.first, avgX});
     }
     
-    // Use partial sort instead of full sort when number of valid components bigger than maxLanes
-    if (validComponents.size() > static_cast<size_t>(maxLanes)) {
-        std::partial_sort(validComponents.begin(), validComponents.begin() + maxLanes, 
-                        validComponents.end(), 
-                        [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
-                            return a.second < b.second;
-                        });
-        validComponents.resize(maxLanes);
-    } else {
-        std::sort(validComponents.begin(), validComponents.end(), 
-            [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
-                return a.second < b.second;
-            });
+    std::sort(sortedClusters.begin(), sortedClusters.end(),
+             [](const auto& a, const auto& b) { return a.second < b.second; });
+    
+    // Limit to max number of lanes
+    if (sortedClusters.size() > static_cast<size_t>(maxLanes)) {
+        sortedClusters.resize(maxLanes);
     }
     
-    // Reserve capacity for output
+    // Create lane polylines from clusters
     std::vector<std::vector<cv::Point>> lanePolylines;
-    lanePolylines.reserve(validComponents.size());
-    
-    // Process each lane with optimized extraction
-    for (const auto& comp : validComponents) {
-        int compIdx = comp.first;
+    for (const auto& clusterInfo : sortedClusters) {
+        const auto& clusterPoints = clusters[clusterInfo.first];
         
-        // Extract points more efficiently using row pointers
-        std::vector<cv::Point> lanePoints;
-        lanePoints.reserve(labels.rows/5); // Pre-allocate approx size
-        
-        for (int y = 0; y < labels.rows; y += 2) {
-            const int* row = labels.ptr<int>(y);
-            int xStart = -1, xEnd = -1;
-            
-            for (int x = 0; x < labels.cols; x++) {
-                if (row[x] == compIdx) {
-                    if (xStart < 0) xStart = x;
-                    xEnd = x;
-                }
-            }
-            
-            if (xStart >= 0) {
-                int midX = (xStart + xEnd) / 2;
-                lanePoints.push_back(cv::Point(midX, y));
-            }
+        // Skip small clusters
+        if (clusterPoints.size() < static_cast<size_t>(minArea / 10)) {
+            continue;
         }
         
-        if (!lanePoints.empty()) {
-            lanePolylines.push_back(std::move(lanePoints)); // Use move semantics
+        // Sort points by y-coordinate for consistent polyline
+        std::vector<cv::Point> sortedPoints = clusterPoints;
+        std::sort(sortedPoints.begin(), sortedPoints.end(), 
+                 [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
+        
+        // Sample points to create smooth polyline
+        std::vector<cv::Point> polyline;
+        int step = std::max(1, static_cast<int>(sortedPoints.size() / 20));
+        for (size_t i = 0; i < sortedPoints.size(); i += step) {
+            polyline.push_back(sortedPoints[i]);
         }
+        
+        lanePolylines.push_back(polyline);
     }
     
     return lanePolylines;
