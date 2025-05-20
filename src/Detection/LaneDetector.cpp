@@ -252,57 +252,6 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, horizontalKernel);
 
-    // // Create proper diagonal kernels
-    // static cv::Mat diagonalKernel1; // Right curve (sloped right)
-    // static cv::Mat diagonalKernel2; // Left curve (sloped left)
-    
-    // // Initialize diagonal kernels if not already created
-    // if (diagonalKernel1.empty() || diagonalKernel2.empty()) {
-    //     // Create diagonal kernel for right curves (top-left to bottom-right)
-    //     diagonalKernel1 = cv::Mat::zeros(kernelSize * 3, kernelSize * 3, CV_8U);
-    //     for (int i = 0; i < kernelSize * 3; i++) {
-    //         for (int j = 0; j < kernelSize; j++) {
-    //             // Create a curved pattern
-    //             int offset = std::pow(i / (kernelSize * 3.0) - 0.5, 2) * kernelSize * 8;
-    //             int x = i/2 + j + offset;
-    //             if (x >= 0 && x < kernelSize * 3)
-    //                 diagonalKernel1.at<uchar>(i, x) = 1;
-    //         }
-    //     }
-        
-    //     // Create diagonal kernel for left curves (top-right to bottom-left) 
-    //     diagonalKernel2 = cv::Mat::zeros(kernelSize * 3, kernelSize * 3, CV_8U);
-    //     for (int i = 0; i < kernelSize * 3; i++) {
-    //         for (int j = 0; j < kernelSize; j++) {
-    //             // Create a curved pattern (mirror of the first one)
-    //             int offset = std::pow(i / (kernelSize * 3.0) - 0.5, 2) * kernelSize * 8;
-    //             int x = kernelSize * 3 - 1 - (i/2 + j + offset);
-    //             if (x >= 0 && x < kernelSize * 3)
-    //                 diagonalKernel2.at<uchar>(i, x) = 1;
-    //         }
-    //     }
-    // }
-    
-    // Apply multiple directional closings to better connect curved dashed lines
-    
-    // // IMPORTANT: Only apply diagonal kernels if we have curve lanes (check prevLeftCurve/prevRightCurve)
-    // if (!prevLeftCurve.empty() && prevLeftCurve.size() >= 3) {
-    //     // Estimate curvature from previous frame
-    //     double curvature = estimateCurvature(prevLeftCurve);
-    //     if (std::abs(curvature) > 0.0001) {  // If significant curvature
-    //         // Choose different kernels based on curve direction
-    //         if (curvature > 0) {
-    //             // Right curve - use diagonal kernel
-    //             cv::morphologyEx(result, result, cv::MORPH_CLOSE, diagonalKernel1);
-    //         } else {
-    //             // Left curve - use other diagonal kernel
-    //             cv::morphologyEx(result, result, cv::MORPH_CLOSE, diagonalKernel2);
-    //         }
-    //     }
-    // }
-    
-    // Standard kernel closing (efficient reuse)
-
     cv::Mat labels, stats, centroids;
     int numLabels = cv::connectedComponentsWithStats(result, labels, stats, centroids, 8, CV_32S);
     
