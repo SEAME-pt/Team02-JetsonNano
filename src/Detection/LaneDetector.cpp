@@ -294,10 +294,11 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     allPolylinesViz.copyTo(frame);
 }
 
-#include <opencv2/video/tracking.hpp>
 
-std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {
-    // Your existing morphology code
+std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
+    static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
+    static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
+    
     cv::Mat result = laneMask.clone();
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, horizontalKernel);
