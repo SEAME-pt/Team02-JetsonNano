@@ -179,22 +179,29 @@ void LaneDetector::preProcess(const cv::Mat& frame)
 void LaneDetector::postProcess(cv::Mat& frame)
 {
     static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
+    static cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     const int total_pixels = HEIGHT * WIDTH;
 
     for (int i = 0; i < total_pixels; i++)
     {
         int y = i / WIDTH;
         int x = i % WIDTH;
-        colored_mask.at<cv::Vec3b>(y, x) = (outputData[i] > 0.5) ? cv::Vec3b(255, 255, 255) : cv::Vec3b(0, 0, 0);
+
+        uchar value = (outputData[i] > 0.5) ? 255 : 0;
+        colored_mask.at<cv::Vec3b>(y, x) = cv::Vec3b(value, value, value);
+        binary_mask.at<uchar>(y, x) = value;
     }
 
-    // cv::Mat ipm_mask = ipm.transformPoints(colored_mask);
+    // cv::Mat ipm_mask = ipm.transformPoints(binary_mask);
+
+    cv::Mat ipm_mask = ipm.applyIPM(colored_mask);
+    cv::Mat ipm_frame = ipm.applyIPM(frame);
 
     // Fix: Swap source and destination
     cv::Mat resized_mask;
-    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
+    cv::resize(ipm_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
-    cv::addWeighted(frame, 0.7, resized_mask, 0.3, 0, frame);
+    cv::addWeighted(ipm_frame, 0.7, resized_mask, 0.3, 0, frame);
 }
 
