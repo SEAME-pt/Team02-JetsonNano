@@ -336,14 +336,9 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         clusters[label].push_back(points[i]);
     }
     
-    // Group points by their cluster labels
-    std::map<int, std::vector<cv::Point>> clusters;
-    for (size_t i = 0; i < points.size(); i++) {
-        clusters[labels[i]].push_back(points[i]);
-    }
-    
     // Sort clusters by average x-position (left to right)
     std::vector<std::pair<int, float>> sortedClusters;
+    sortedClusters.reserve(clusters.size()); 
     for (const auto& cluster : clusters) {
         float avgX = 0;
         for (const auto& pt : cluster.second) {
@@ -363,6 +358,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
     
     // Create lane polylines from clusters
     std::vector<std::vector<cv::Point>> lanePolylines;
+    lanePolylines.reserve(sortedClusters.size());
     for (const auto& clusterInfo : sortedClusters) {
         const auto& clusterPoints = clusters[clusterInfo.first];
         
@@ -378,6 +374,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         
         // Sample points to create smooth polyline
         std::vector<cv::Point> polyline;
+        polyline.reserve(sortedPoints.size() / step + 1);
         int step = std::max(1, static_cast<int>(sortedPoints.size() / 20));
         for (size_t i = 0; i < sortedPoints.size(); i += step) {
             polyline.push_back(sortedPoints[i]);
