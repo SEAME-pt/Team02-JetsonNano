@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     
         Camera camera(pipeline, "calibration.yml");
         LaneDetector laneDetector("/home/team02/lane_Mob1_epoch_48.engine", session);
-        ObjectDetector objDetector("/home/team02/obj_YOLO_1_epoch_133.engine", session);
+        ObjectDetector objDetector("/home/team02/obj_MOB_1_epoch_133.engine", session);
 
         camera.startCapture();
 
