@@ -19,6 +19,7 @@ void signalHandler(int signum) {
 
 void laneDetectionThread(LaneDetector* detector, Camera* camera) {
     cv::namedWindow("Lane Detection", cv::WINDOW_NORMAL);
+    cv::setWindowProperty("Lane Detection", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
     while (running) {
         cv::Mat frame = camera->getFrame();
