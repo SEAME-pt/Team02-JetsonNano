@@ -207,7 +207,7 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
-    std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 20, 10, 6);
+    std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 30, 40, 6);
     // std::cout << "Number of lane polylines after merging: " << lanePolylines.size() << std::endl;
     
     cv::Mat allPolylinesViz = frame.clone();
