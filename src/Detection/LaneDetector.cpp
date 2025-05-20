@@ -263,7 +263,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
         
         // Determine left and right lanes based on the x-coordinate of lowest points
-        int centerX = frame.cols / 2;
+        // int centerX = frame.cols / 2;
         
         // Debug visualization of lowest points
         cv::circle(allPolylinesViz, lowestPoint1, 8, cv::Scalar(255, 0, 255), -1);
