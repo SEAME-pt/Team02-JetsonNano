@@ -55,7 +55,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
     float nearDistance = 0.2f;       // meters
     float farDistance = 10.0f;       // meters
-    float laneWidth = 0.5f;          // meters
+    float laneWidth = 7.0f;          // meters
     bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
@@ -131,11 +131,11 @@ void LaneDetector::detect(cv::Mat& frame)
 
     cudaStreamSynchronize(stream);
 
-    // Postprocess
-    postProcess(frame);
-
     cudaEventRecord(stop, stream);
     cudaEventSynchronize(stop);
+    
+    // Postprocess
+    postProcess(frame);
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time: " << milliseconds << "ms\n";
