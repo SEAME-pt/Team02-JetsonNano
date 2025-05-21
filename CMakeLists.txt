@@ -101,6 +101,7 @@ target_link_libraries(VehicleSystem
 add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
+    ./src/Controllers/SpeedPidController.cpp
     ./src/Communication/ControllerPublisher.cpp
     ./src/combinedControl.cpp
 )
