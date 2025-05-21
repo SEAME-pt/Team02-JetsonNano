@@ -243,6 +243,15 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     float maxHorizontalDistance = frame.cols * 0.1; // 5% of frame width
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, 0.0);
 
+    if (lanePolylines.size() > 2) {
+        // Sort by number of points (largest first)
+        std::sort(lanePolylines.begin(), lanePolylines.end(), 
+            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
+                return a.size() > b.size();
+            });
+        lanePolylines.resize(2);
+    }
+
     std::vector<cv::Point> leftCurve, rightCurve;
     
     if (lanePolylines.size() == 2) {
