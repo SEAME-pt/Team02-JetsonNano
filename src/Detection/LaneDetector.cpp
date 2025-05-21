@@ -213,8 +213,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     float maxVerticalGap = frame.rows * 0.3;       // 20% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
-    cv::Mat allPolylinesViz = frame.clone();
-    drawPolyLanes(lanePolylines, allPolylinesViz);
+    // cv::Mat allPolylinesViz = frame.clone();
+    // drawPolyLanes(lanePolylines, allPolylinesViz);
 
     if (lanePolylines.size() > 2) {
         // Sort by number of points (largest first)
@@ -224,6 +224,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             });
         lanePolylines.resize(2);
     }
+
+    cv::Mat allPolylinesViz = frame.clone();
+    drawPolyLanes(lanePolylines, allPolylinesViz);
 
     std::vector<cv::Point> leftCurve, rightCurve;
     
@@ -245,10 +248,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                 lowestPoint2 = pt;
             }
         }
-        
-        // Determine left and right lanes based on the x-coordinate of lowest points
-        // int centerX = frame.cols / 2;
-        
+                
         // Debug visualization of lowest points
         cv::circle(allPolylinesViz, lowestPoint1, 8, cv::Scalar(255, 0, 255), -1);
         cv::circle(allPolylinesViz, lowestPoint2, 8, cv::Scalar(0, 255, 255), -1);
@@ -272,6 +272,59 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             std::string rightText = "Right: " + std::to_string(lowestPoint1.x);
             cv::putText(allPolylinesViz, leftText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+        }
+
+        std::vector<cv::Point> midCurve;
+        if (!leftCurve.empty() && !rightCurve.empty())
+        {
+            // Make sure we have equal length curves by resampling if needed
+            int numPoints = std::min(leftCurve.size(), rightCurve.size());
+            for (int i = 0; i < numPoints; i++)
+            {
+                size_t leftIdx  = i * leftCurve.size() / numPoints;
+                size_t rightIdx = i * rightCurve.size() / numPoints;
+
+                int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
+                int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
+                midCurve.push_back(cv::Point(midX, midY));
+            }
+        }
+
+        // Limit the maximum curve drift from center
+        if (!leftCurve.empty() && !rightCurve.empty()) {
+            int width = frame.cols;
+            float centerX = width / 2.0f;
+            float maxOffsetDistance = width * 0.3f; // Maximum allowed offset (30% of frame width)
+            
+            // Calculate current lane midpoint at each y-level
+            for (size_t i = 0; i < std::min(leftCurve.size(), rightCurve.size()); i++) {
+                size_t leftIdx = i * leftCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+                size_t rightIdx = i * rightCurve.size() / std::min(leftCurve.size(), rightCurve.size());
+                
+                float midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2.0f;
+                float offset = midX - centerX;
+                
+                // If offset exceeds limit, adjust both lane curves
+                if (std::abs(offset) > maxOffsetDistance) {
+                    float adjustment = offset - (offset > 0 ? maxOffsetDistance : -maxOffsetDistance);
+                    
+                    // Apply adjustment to this point in both curves
+                    leftCurve[leftIdx].x -= adjustment;
+                    rightCurve[rightIdx].x -= adjustment;
+                }
+            }
+        }
+
+        if (!midCurve.empty()) {
+            // Draw middle lane curve with white color and thicker line
+            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+            for (size_t i = 1; i < midCurve.size(); i++) {
+                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+            }
+            
+            // Mark the middle curve
+            cv::putText(allPolylinesViz, "Middle Path", midCurve[midCurve.size()/2], 
+                        cv::FONT_HERSHEY_SIMPLEX, 0.6, midCurveColor, 2);
         }
     }
 
