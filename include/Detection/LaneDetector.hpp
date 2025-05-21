@@ -45,16 +45,13 @@ class LaneDetector
     IPM ipm;
     cv::Size bevSize;
 
-    bool hadPreviousLanes = false;
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
-    const int MIN_POINTS_FOR_MEMORY = 5;
-    const float IDENTITY_SWITCH_THRESHOLD = 0.7f;
 
     int leftLaneLastUpdatedFrame = 0;
     int rightLaneLastUpdatedFrame = 0;
     int currentFrame = 0;
-    const int MAX_LANE_MEMORY_FRAMES = 3;
+    const int MAX_LANE_MEMORY_FRAMES = 1;
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
