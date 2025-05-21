@@ -60,7 +60,7 @@ class LaneDetector
 
     void createLanes(cv::Mat& binary_mask, cv::Mat& frame);
     std::vector<std::vector<cv::Point>> processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
-    void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float minOverlapRatio)
+    void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float minOverlapRatio);
     
     void createExecutionContext(const std::string& enginePath);
 };
