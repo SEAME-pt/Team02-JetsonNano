@@ -380,16 +380,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     }
 
     if (!midCurve.empty()) {
-        // Draw middle lane curve with white color and thicker line
-        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-        for (size_t i = 1; i < midCurve.size(); i++) {
-            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
-        }
-        
-        // Mark the middle curve
-        cv::putText(allPolylinesViz, "Middle Path", midCurve[midCurve.size()/2], 
-                    cv::FONT_HERSHEY_SIMPLEX, 0.6, midCurveColor, 2);
-
         int targetY = HEIGHT - (1 * HEIGHT / 3); // 1/3 up from bottom
 
         // Find closest point to target Y
@@ -408,6 +398,12 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Use the point at found index
         midPoint = midCurve[closestIdx];
+
+        // Draw middle lane curve with white color and thicker line
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        }
 
         cv::circle(frame, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
