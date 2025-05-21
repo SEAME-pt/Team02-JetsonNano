@@ -225,6 +225,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     cv::Mat allPolylinesViz = frame.clone();
     drawPolyLanes(lanePolylines, allPolylinesViz);
 
+    currentFrame++;
+
     std::vector<cv::Point> leftCurve, rightCurve;
     
     if (lanePolylines.size() == 2) {
@@ -318,16 +320,25 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = false;
+
+        bool hasValidLeftMemory = (currentFrame - leftLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
+        bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
         
         // If we have previous lanes, use them to identify current lane
-        if (hadPreviousLanes && 
-            prevLeftCurve.size() > static_cast<uint8_t>(MIN_POINTS_FOR_MEMORY) && 
-            prevRightCurve.size() > static_cast<uint8_t>(MIN_POINTS_FOR_MEMORY)) {
+        if (hadPreviousLanes && hasValidLeftMemory && hasValidRightMemory) {
             
             float leftDistance = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
             float rightDistance = calculateLaneDistance(lanePolylines[0], prevRightCurve);
             
-            // Lower distance means better match to previous lane
+            // Calculate a "staleness penalty" that increases with time
+            float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
+            float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+            
+            // Apply staleness penalty to distances
+            leftDistance *= leftStaleness;
+            rightDistance *= rightStaleness;
+            
+            // Lower (adjusted) distance means better match
             isLeftLane = leftDistance < rightDistance;
             
             std::string debugMsg = "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") + 
@@ -335,13 +346,25 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                                   "/R:" + std::to_string(rightDistance).substr(0,5) + ")";
             cv::putText(allPolylinesViz, debugMsg, cv::Point(20, 80), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+            
+            // Add staleness information
+            std::string staleMsg = "Staleness - L:" + std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
+                                  " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
+            cv::putText(allPolylinesViz, staleMsg, cv::Point(20, 100), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
         }
         else {
             // Fallback to position-based detection
             isLeftLane = avgX < centerX;
             
-            cv::putText(allPolylinesViz, "Position-based detection", cv::Point(20, 80), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+            // If memory is too old, add a notice
+            if (hadPreviousLanes && (!hasValidLeftMemory || !hasValidRightMemory)) {
+                cv::putText(allPolylinesViz, "Memory expired - using position", cv::Point(20, 80), 
+                           cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+            } else {
+                cv::putText(allPolylinesViz, "Position-based detection", cv::Point(20, 80), 
+                           cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+            }
         }
         
         if (isLeftLane) {
@@ -472,6 +495,18 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
         hadPreviousLanes = true;
+        
+        // Update both timestamps when we have both lanes
+        leftLaneLastUpdatedFrame = currentFrame;
+        rightLaneLastUpdatedFrame = currentFrame;
+    } else if (!leftCurve.empty()) {
+        // We only have left lane
+        prevLeftCurve = leftCurve;
+        leftLaneLastUpdatedFrame = currentFrame;
+    } else if (!rightCurve.empty()) {
+        // We only have right lane
+        prevRightCurve = rightCurve;
+        rightLaneLastUpdatedFrame = currentFrame;
     }
     allPolylinesViz.copyTo(frame);
 }
