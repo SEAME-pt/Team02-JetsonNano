@@ -360,7 +360,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             isLeftLane = avgX < centerX;
             
             // If memory is too old, add a notice
-            if (hadPreviousLanes && (!hasValidLeftMemory || !hasValidRightMemory)) {
+            if (!hasValidLeftMemory || !hasValidRightMemory) {
                 cv::putText(allPolylinesViz, "Memory expired - using position", cv::Point(20, 80), 
                            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
             } else {
