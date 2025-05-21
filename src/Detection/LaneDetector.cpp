@@ -450,7 +450,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     int width  = frame.cols;
 
     if (!midCurve.empty()) {
-        int targetY = height - (1 * height / 3); // 1/3 up from bottom
+        int targetY = height - (1.5 * height / 3); // 1/3 up from bottom
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -485,7 +485,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         float lateralError = prevError + errorChange;
         prevError          = lateralError;
 
-        const float MAX_ERROR = 1.5f;
+        const float MAX_ERROR = 2.5f;
         if (lateralError > MAX_ERROR) {
             lateralError = MAX_ERROR;
             prevError = MAX_ERROR; // Update prevError as well
