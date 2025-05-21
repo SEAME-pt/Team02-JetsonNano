@@ -43,6 +43,11 @@ PidController::PidController(XboxController* xbox_controller)
     fixed_delta_time_ = 0.02f;
     autonomousDrive_  = "SAE_0";
     xboxController_   = xbox_controller;
+    current_speed_    = 0.0f;
+    speed_lock_       = false;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(1.0f, 0.0f, 1.0f,
+                               fixed_delta_time_);
 
     auto config = zenoh::Config::create_default();
     session_ =
@@ -100,6 +105,36 @@ PidController::PidController(XboxController* xbox_controller)
         },
         zenoh::closures::none));
 
+    speed_lock_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Lock",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string value_str = sample.get_payload().as_string();
+
+            // Convert string to boolean
+            bool lock_value = false;
+            if (value_str.find("1") != std::string::npos)
+            {
+                lock_value = true;
+            }
+
+            speed_lock_ = lock_value;
+
+            std::cout << "Speed lock "
+                      << (lock_value ? "activated" : "deactivated")
+                      << std::endl;
+        },
+        zenoh::closures::none));
+
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+        },
+        zenoh::closures::none));
+
     std::cout << "PID controller created!" << std::endl;
 }
 
@@ -121,6 +156,11 @@ PidController::PidController(const std::string& configFile,
     fixed_delta_time_ = 0.02f;
     autonomousDrive_  = "SAE_0";
     xboxController_   = xbox_controller;
+    current_speed_    = 0.0f;
+    speed_lock_       = false;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(1.0f, 0.0f, 1.0f,
+                               fixed_delta_time_);
 
     auto config = zenoh::Config::from_file(configFile);
     session_ =
@@ -171,10 +211,44 @@ PidController::PidController(const std::string& configFile,
             setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));
+
+    speed_lock_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Lock",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string value_str = sample.get_payload().as_string();
+
+            // Convert string to boolean
+            bool lock_value = false;
+            if (value_str.find("1") != std::string::npos)
+            {
+                lock_value = true;
+            }
+
+            speed_lock_ = lock_value;
+
+            std::cout << "Speed lock "
+                      << (lock_value ? "activated" : "deactivated")
+                      << std::endl;
+        },
+        zenoh::closures::none));
+
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+        },
+        zenoh::closures::none));
+
     std::cout << "PID controller created!" << std::endl;
 }
 
-PidController::~PidController() {}
+PidController::~PidController() {
+    delete speedPidController_;
+    session_->close();
+}
 
 void PidController::init(float kp, float ki, float kd, float speed,
                          float delta_time)
@@ -231,76 +305,6 @@ float PidController::steeringPID(float error, double current_time)
     return direction;
 }
 
-float PidController::speedAdjustment(float error)
-{
-    static bool is_starting               = true;
-    static auto start_time                = std::chrono::steady_clock::now();
-    static const float BOOST_DURATION_SEC = 0.5f; // Duration of initial boost
-    static const float BOOST_MULTIPLIER   = 1.2f; // 20% boost to starting speed
-
-    // Check if we're in the initial starting phase
-    bool apply_boost = false;
-    if (is_starting)
-    {
-        auto current_time = std::chrono::steady_clock::now();
-        auto elapsed =
-            std::chrono::duration<float>(current_time - start_time).count();
-
-        if (elapsed < BOOST_DURATION_SEC)
-        {
-            apply_boost = true;
-            // Log that we're applying boost
-            std::cout << "Applying initial speed boost: " << elapsed
-                      << " seconds" << std::endl;
-        }
-        else
-        {
-            // Boost period has ended
-            is_starting = false;
-            std::cout << "Initial boost complete" << std::endl;
-        }
-    }
-
-    // Dynamic speed adjustment based on error
-    float error_magnitude = std::fabs(error);
-
-    // Define speed control parameters
-    const float BASE_SPEED =
-        constant_speed_; // Maximum speed when error is minimal
-    const float MIN_SPEED = BASE_SPEED * 0.6f; // Minimum speed (60% of max)
-    const float ERROR_THRESHOLD =
-        40.0f; // Error threshold where speed starts decreasing
-
-    // Calculate dynamic speed
-    float dynamic_speed;
-    if (error_magnitude < ERROR_THRESHOLD)
-    {
-        // Linear interpolation between BASE_SPEED and slightly reduced speed
-        float reduction_factor = error_magnitude / ERROR_THRESHOLD;
-        dynamic_speed = BASE_SPEED - (reduction_factor * (BASE_SPEED * 0.2f));
-    }
-    else
-    {
-        // For larger errors, reduce speed more aggressively
-        float excess_error = error_magnitude - ERROR_THRESHOLD;
-        float reduction_factor =
-            std::min(1.0f, excess_error / (ERROR_THRESHOLD * 2));
-        dynamic_speed =
-            BASE_SPEED * 0.8f - (reduction_factor * (BASE_SPEED * 0.2f));
-    }
-
-    // Ensure speed doesn't go below minimum
-    dynamic_speed = std::max(MIN_SPEED, dynamic_speed);
-
-    // Apply boost if in starting phase
-    if (apply_boost)
-    {
-        dynamic_speed *= BOOST_MULTIPLIER;
-    }
-
-    return dynamic_speed * 100;
-}
-
 // SAE_1
 void PidController::LKASControl(float lane_error, double current_time,
                                 float manual_steering, float manual_speed)
@@ -319,10 +323,11 @@ void PidController::LKASControl(float lane_error, double current_time,
     {
         publisher_->publishSteering(manual_steering);
     }
-    publisher_->publishSpeed(manual_speed);
+    if (!speed_lock_)
+        publisher_->publishSpeed(manual_speed);
+    else
+        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
 
-    std::cout << "Direction: " << manual_steering << ", Speed: " << manual_speed
-              << std::endl;
 }
 
 void PidController::adaptiveCruiseControl(float lane_error, double current_time,
@@ -419,7 +424,10 @@ void PidController::run()
             else
             {
                 publisher_->publishSteering(manual_steering);
-                publisher_->publishSpeed(manual_speed);
+                if (!speed_lock_)
+                    publisher_->publishSpeed(manual_speed);
+                else
+                    publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
             }
         }
     }
