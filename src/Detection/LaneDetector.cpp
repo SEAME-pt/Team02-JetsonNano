@@ -339,6 +339,16 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             float rightDistance = hasValidRightMemory ? 
                                 calculateLaneDistance(lanePolylines[0], prevRightCurve) : 
                                 FLT_MAX;
+
+            if (hasValidLeftMemory) {
+                float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
+                leftDistance *= leftStaleness;
+            }
+            
+            if (hasValidRightMemory) {
+                float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+                rightDistance *= rightStaleness;
+            }
             
             // Lower (adjusted) distance means better match
             isLeftLane = leftDistance < rightDistance;
