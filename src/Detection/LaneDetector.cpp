@@ -240,7 +240,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 
-    float maxHorizontalDistance = frame.cols * 0.05; // 5% of frame width
+    float maxHorizontalDistance = frame.cols * 0.1; // 5% of frame width
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, 0.0);
 
     std::vector<cv::Point> leftCurve, rightCurve;
