@@ -213,15 +213,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     float maxVerticalGap = frame.rows * 0.2;       // 20% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
-    if (lanePolylines.size() > 2) {
-        // Sort by number of points (largest first)
-        std::sort(lanePolylines.begin(), lanePolylines.end(), 
-            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
-                return a.size() > b.size();
-            });
-        lanePolylines.resize(2);
-    }
-    
     cv::Mat allPolylinesViz = frame.clone();
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // Blue
@@ -251,6 +242,15 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+
+    if (lanePolylines.size() > 2) {
+        // Sort by number of points (largest first)
+        std::sort(lanePolylines.begin(), lanePolylines.end(), 
+            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
+                return a.size() > b.size();
+            });
+        lanePolylines.resize(2);
+    }
 
     std::vector<cv::Point> leftCurve, rightCurve;
     
