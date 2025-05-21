@@ -318,6 +318,7 @@ void PidController::LKASControl(float lane_error, double current_time,
             (steeringPID(lane_error, current_time) - manual_steering) * 0.5f;
         // publisher_->publishAlert("Lane Departure");
         publisher_->publishSteering(direction);
+        publisher_->publishSpeed(speedPidController_->speedPID(4 - current_speed_, current_time));
     }
     else
     {
