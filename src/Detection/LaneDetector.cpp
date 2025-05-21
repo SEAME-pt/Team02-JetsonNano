@@ -341,15 +341,15 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                                 FLT_MAX;
             
             // Apply staleness penalty only to valid memories
-            if (hasValidLeftMemory) {
-                float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
-                leftDistance *= leftStaleness;
-            }
+            // if (hasValidLeftMemory) {
+            //     float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
+            //     leftDistance *= leftStaleness;
+            // }
             
-            if (hasValidRightMemory) {
-                float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
-                rightDistance *= rightStaleness;
-            }
+            // if (hasValidRightMemory) {
+            //     float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+            //     rightDistance *= rightStaleness;
+            // }
             
             // Lower (adjusted) distance means better match
             isLeftLane = leftDistance < rightDistance;
