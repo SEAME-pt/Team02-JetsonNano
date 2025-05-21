@@ -344,7 +344,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         
         // Extract points more efficiently using row pointers
         std::vector<cv::Point> lanePoints;
-        lanePoints.reserve(labels.rows/5); // Pre-allocate approx size
+        lanePoints.reserve(labels.rows/5);
         
         for (int y = 0; y < labels.rows; y += 2) {
             const int* row = labels.ptr<int>(y);
@@ -364,7 +364,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
         }
         
         if (!lanePoints.empty()) {
-            lanePolylines.push_back(std::move(lanePoints)); // Use move semantics
+            lanePolylines.push_back(std::move(lanePoints));
         }
     }
     
@@ -373,6 +373,8 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
 
 void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float minOverlapRatio) {
     if (lanePolylines.size() <= 1) return;
+
+    (void) minOverlapRatio;
     
     bool mergePerformed = true;
     while (mergePerformed) {
