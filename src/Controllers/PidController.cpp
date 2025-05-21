@@ -395,7 +395,7 @@ void PidController::run()
             float manual_speed = xboxController_->getManualSpeed();
             std::cout << "sae_level: " << sae_level << std::endl;
             updateControl(cameraError_, current_time);
-            publisher_->publishSpeed(manual_speed);
+            publisher_->publishSpeed(speedPidController_->speedPID(200 - current_speed_, current_time));
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
@@ -425,7 +425,7 @@ void PidController::run()
             {
                 publisher_->publishSteering(manual_steering);
                 if (!speed_lock_)
-                    publisher_->publishSpeed(speedPidController_->speedPID(20 - current_speed_, current_time));
+                    publisher_->publishSpeed(manual_speed);
                 else
                     publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
             }
