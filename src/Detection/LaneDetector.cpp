@@ -314,7 +314,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
         
         // Default lane width for creating synthetic lane
-        float laneWidth = frame.cols * 0.6f;  // 30% of frame width
+        float laneWidth = frame.cols * 0.7f;  // 30% of frame width
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = avgX < centerX;
