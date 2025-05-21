@@ -210,7 +210,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frame.cols * 0.1; // 10% of frame width
-    float maxVerticalGap = frame.rows * 0.3;       // 20% of frame height
+    float maxVerticalGap = frame.rows * 0.35;       // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     if (lanePolylines.size() > 2) {
