@@ -295,34 +295,100 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                 }
             }
         }
-
-        std::vector<cv::Point> midCurve;
-        if (!leftCurve.empty() && !rightCurve.empty())
-        {
-            // Make sure we have equal length curves by resampling if needed
-            int numPoints = std::min(leftCurve.size(), rightCurve.size());
-            for (int i = 0; i < numPoints; i++)
-            {
-                size_t leftIdx  = i * leftCurve.size() / numPoints;
-                size_t rightIdx = i * rightCurve.size() / numPoints;
-
-                int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
-                int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
-                midCurve.push_back(cv::Point(midX, midY));
+    } else if (lanePolylines.size() == 1) {
+        // Determine if the detected lane is left or right
+        cv::Point lowestPoint(-1, -1);
+        int centerX = frame.cols / 2;
+        float avgX = 0;
+        
+        // Find lowest point and average X position
+        for (const auto& pt : lanePolylines[0]) {
+            if (pt.y > lowestPoint.y) {
+                lowestPoint = pt;
             }
+            avgX += pt.x;
         }
-
-        if (!midCurve.empty()) {
-            // Draw middle lane curve with white color and thicker line
-            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-            for (size_t i = 1; i < midCurve.size(); i++) {
-                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        avgX /= lanePolylines[0].size();
+        
+        // Draw detected lane's lowest point
+        cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
+        
+        // Default lane width for creating synthetic lane
+        float laneWidth = frame.cols * 0.3f;  // 30% of frame width
+        
+        // Determine if it's a left or right lane based on position
+        bool isLeftLane = avgX < centerX;
+        
+        if (isLeftLane) {
+            // The detected lane is the left lane
+            leftCurve = lanePolylines[0];
+            cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            
+            // Create synthetic right lane
+            rightCurve.reserve(leftCurve.size());
+            for (const auto& pt : leftCurve) {
+                rightCurve.push_back(cv::Point(pt.x + laneWidth, pt.y));
             }
             
-            // Mark the middle curve
-            cv::putText(allPolylinesViz, "Middle Path", midCurve[midCurve.size()/2], 
-                        cv::FONT_HERSHEY_SIMPLEX, 0.6, midCurveColor, 2);
+            // Visualize synthetic right lane
+            for (size_t i = 1; i < rightCurve.size(); i++) {
+                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], cv::Scalar(0, 255, 255), 2, cv::LINE_DASHED);
+            }
+            cv::putText(allPolylinesViz, "Right Lane (Estimated)", rightCurve[rightCurve.size()/2] + cv::Point(10, 10), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+        } else {
+            // The detected lane is the right lane
+            rightCurve = lanePolylines[0];
+            cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            
+            // Create synthetic left lane
+            leftCurve.reserve(rightCurve.size());
+            for (const auto& pt : rightCurve) {
+                leftCurve.push_back(cv::Point(pt.x - laneWidth, pt.y));
+            }
+            
+            // Visualize synthetic left lane
+            for (size_t i = 1; i < leftCurve.size(); i++) {
+                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], cv::Scalar(255, 0, 255), 2, cv::LINE_DASHED);
+            }
+            cv::putText(allPolylinesViz, "Left Lane (Estimated)", leftCurve[leftCurve.size()/2] + cv::Point(10, 10), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
         }
+        
+        // Log that we're using a synthetic lane
+        std::string statusMsg = isLeftLane ? "Using synthetic RIGHT lane" : "Using synthetic LEFT lane"; 
+        cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
+                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+    }
+
+    std::vector<cv::Point> midCurve;
+    if (!leftCurve.empty() && !rightCurve.empty())
+    {
+        // Make sure we have equal length curves by resampling if needed
+        int numPoints = std::min(leftCurve.size(), rightCurve.size());
+        for (int i = 0; i < numPoints; i++)
+        {
+            size_t leftIdx  = i * leftCurve.size() / numPoints;
+            size_t rightIdx = i * rightCurve.size() / numPoints;
+
+            int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
+            int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
+            midCurve.push_back(cv::Point(midX, midY));
+        }
+    }
+
+    if (!midCurve.empty()) {
+        // Draw middle lane curve with white color and thicker line
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        }
+        
+        // Mark the middle curve
+        cv::putText(allPolylinesViz, "Middle Path", midCurve[midCurve.size()/2], 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, midCurveColor, 2);
     }
 
     allPolylinesViz.copyTo(frame);
