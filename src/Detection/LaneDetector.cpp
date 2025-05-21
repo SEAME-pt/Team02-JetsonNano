@@ -473,7 +473,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Apply rate limiting to error changes
         static float prevError       = 0.0f;
-        const float MAX_ERROR_CHANGE = 0.5f; // Maximum allowed change per frame
+        const float MAX_ERROR_CHANGE = 1.0f; // Maximum allowed change per frame
 
         float errorChange = rawError - prevError;
         if (std::abs(errorChange) > MAX_ERROR_CHANGE)
@@ -484,7 +484,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         float lateralError = prevError + errorChange;
         prevError          = lateralError;
 
-        const float MAX_ERROR = 2.5f;
+        const float MAX_ERROR = 3.0f;
         if (lateralError > MAX_ERROR) {
             lateralError = MAX_ERROR;
             prevError = MAX_ERROR; // Update prevError as well
