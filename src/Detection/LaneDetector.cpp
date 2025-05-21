@@ -430,9 +430,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         publisher_->publishCameraError(lateralError);
 
-        std::string statusMsg = lateralError.to_string();
+        std::string statusMsg = "Error: " + std::to_string(lateralError).substr(0, 6);
         cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
-                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 2);
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
 
         // Draw middle lane curve with white color and thicker line
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
