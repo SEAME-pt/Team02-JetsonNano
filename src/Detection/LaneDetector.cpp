@@ -321,8 +321,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         
         // If we have previous lanes, use them to identify current lane
         if (hadPreviousLanes && 
-            prevLeftCurve.size() > MIN_POINTS_FOR_MEMORY && 
-            prevRightCurve.size() > MIN_POINTS_FOR_MEMORY) {
+            prevLeftCurve.size() > static_cast<uint8_t>(MIN_POINTS_FOR_MEMORY) && 
+            prevRightCurve.size() > static_cast<uint8_t>(MIN_POINTS_FOR_MEMORY)) {
             
             float leftDistance = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
             float rightDistance = calculateLaneDistance(lanePolylines[0], prevRightCurve);
