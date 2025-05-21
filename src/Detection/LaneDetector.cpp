@@ -274,22 +274,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
-        std::vector<cv::Point> midCurve;
-        if (!leftCurve.empty() && !rightCurve.empty())
-        {
-            // Make sure we have equal length curves by resampling if needed
-            int numPoints = std::min(leftCurve.size(), rightCurve.size());
-            for (int i = 0; i < numPoints; i++)
-            {
-                size_t leftIdx  = i * leftCurve.size() / numPoints;
-                size_t rightIdx = i * rightCurve.size() / numPoints;
-
-                int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
-                int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
-                midCurve.push_back(cv::Point(midX, midY));
-            }
-        }
-
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
             int width = frame.cols;
@@ -312,6 +296,22 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                     leftCurve[leftIdx].x -= adjustment;
                     rightCurve[rightIdx].x -= adjustment;
                 }
+            }
+        }
+
+        std::vector<cv::Point> midCurve;
+        if (!leftCurve.empty() && !rightCurve.empty())
+        {
+            // Make sure we have equal length curves by resampling if needed
+            int numPoints = std::min(leftCurve.size(), rightCurve.size());
+            for (int i = 0; i < numPoints; i++)
+            {
+                size_t leftIdx  = i * leftCurve.size() / numPoints;
+                size_t rightIdx = i * rightCurve.size() / numPoints;
+
+                int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
+                int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
+                midCurve.push_back(cv::Point(midX, midY));
             }
         }
 
