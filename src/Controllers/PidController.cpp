@@ -318,8 +318,6 @@ void PidController::LKASControl(float lane_error, double current_time,
             (steeringPID(lane_error, current_time) - manual_steering) * 0.5f;
         // publisher_->publishAlert("Lane Departure");
         publisher_->publishSteering(direction);
-        publisher_->publishSpeed(speedPidController_->speedPID(50 - current_speed_, current_time));
-        std::cout << "PRQWEQEWQEQWEWEWQEQWEWQEQWEQEWWQE" std::endl;
     }
     else
     {
@@ -427,7 +425,7 @@ void PidController::run()
             {
                 publisher_->publishSteering(manual_steering);
                 if (!speed_lock_)
-                    publisher_->publishSpeed(manual_speed);
+                    publisher_->publishSpeed(speedPidController_->speedPID(20 - current_speed_, current_time));
                 else
                     publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
             }
