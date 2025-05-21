@@ -330,7 +330,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
         
         // If we have previous lanes, use them to identify current lane
-        if (hadPreviousLanes && (hasValidLeftMemory || hasValidRightMemory)) {
+        if (hasValidLeftMemory || hasValidRightMemory) {
             
             float leftDistance = hasValidLeftMemory ? 
                         calculateLaneDistance(lanePolylines[0], prevLeftCurve) : 
@@ -381,7 +381,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
         
         if (isLeftLane) {
-            // The detected lane is the left lane
             leftCurve = lanePolylines[0];
 
             prevLeftCurve = leftCurve;
