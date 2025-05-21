@@ -333,7 +333,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
             // Visualize synthetic right lane
             for (size_t i = 1; i < rightCurve.size(); i++) {
-                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], cv::Scalar(0, 255, 255), 2, cv::LINE_DASHED);
+                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
             }
             cv::putText(allPolylinesViz, "Right Lane (Estimated)", rightCurve[rightCurve.size()/2] + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
@@ -351,7 +351,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
             // Visualize synthetic left lane
             for (size_t i = 1; i < leftCurve.size(); i++) {
-                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], cv::Scalar(255, 0, 255), 2, cv::LINE_DASHED);
+                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], cv::Scalar(255, 0, 255), 2, cv::LINE_AA);
             }
             cv::putText(allPolylinesViz, "Left Lane (Estimated)", leftCurve[leftCurve.size()/2] + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
