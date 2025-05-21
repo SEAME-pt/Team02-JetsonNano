@@ -319,6 +319,7 @@ void PidController::LKASControl(float lane_error, double current_time,
         // publisher_->publishAlert("Lane Departure");
         publisher_->publishSteering(direction);
         publisher_->publishSpeed(speedPidController_->speedPID(50 - current_speed_, current_time));
+        std::cout << "PRQWEQEWQEQWEWEWQEQWEWQEQWEQEWWQE" std::endl;
     }
     else
     {
