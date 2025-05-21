@@ -389,8 +389,28 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         // Mark the middle curve
         cv::putText(allPolylinesViz, "Middle Path", midCurve[midCurve.size()/2], 
                     cv::FONT_HERSHEY_SIMPLEX, 0.6, midCurveColor, 2);
-    }
 
+        int targetY = HEIGHT - (1 * HEIGHT / 3); // 1/3 up from bottom
+
+        // Find closest point to target Y
+        size_t closestIdx = 0;
+        int minDistance   = std::abs(midCurve[0].y - targetY);
+
+        for (size_t i = 1; i < midCurve.size(); i++)
+        {
+            int distance = std::abs(midCurve[i].y - targetY);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestIdx  = i;
+            }
+        }
+
+        // Use the point at found index
+        midPoint = midCurve[closestIdx];
+
+        cv::circle(frame, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+    }
     allPolylinesViz.copyTo(frame);
 }
 
