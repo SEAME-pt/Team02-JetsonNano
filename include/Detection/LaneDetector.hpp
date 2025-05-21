@@ -45,6 +45,12 @@ class LaneDetector
     IPM ipm;
     cv::Size bevSize;
 
+    bool hadPreviousLanes = false;
+    std::vector<cv::Point> prevLeftCurve;
+    std::vector<cv::Point> prevRightCurve;
+    const int MIN_POINTS_FOR_MEMORY = 5;
+    const float IDENTITY_SWITCH_THRESHOLD = 0.7f;
+
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
@@ -62,6 +68,7 @@ class LaneDetector
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
     void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz);
+    float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
 
     void createExecutionContext(const std::string& enginePath);
 };
