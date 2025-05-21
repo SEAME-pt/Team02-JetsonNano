@@ -381,7 +381,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
     cv::Point midPoint;
     int height = frame.rows;
-    int width  = frame.cols;
+    // int width  = frame.cols;
 
     if (!midCurve.empty()) {
         int targetY = height - (1 * height / 3); // 1/3 up from bottom
