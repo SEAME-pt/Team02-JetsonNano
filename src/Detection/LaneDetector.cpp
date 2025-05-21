@@ -300,9 +300,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
-        leftLaneIdentified = true;
-        rightLaneIdentified = true;
-        hadPreviousLanes = true;
         
         leftLaneLastUpdatedFrame = currentFrame;
         rightLaneLastUpdatedFrame = currentFrame;
@@ -389,7 +386,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             prevLeftCurve = leftCurve;
             leftLaneLastUpdatedFrame = currentFrame;
-            leftLaneIdentified = true; 
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             
@@ -411,7 +407,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             prevRightCurve = rightCurve;
             rightLaneLastUpdatedFrame = currentFrame;
-            rightLaneIdentified = true; 
             cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
             
