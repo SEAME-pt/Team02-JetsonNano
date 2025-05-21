@@ -239,7 +239,7 @@ void ObjectDetector::postProcess(cv::Mat& frame)
 
         is_emergency_stop = true;
 
-        publishSpeedLock("1");
+        // publishSpeedLock("1");
         try
         {
             uint8_t value[8];
