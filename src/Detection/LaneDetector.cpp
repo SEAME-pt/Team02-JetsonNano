@@ -317,7 +317,32 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         float laneWidth = frame.cols * 0.55f;  // 30% of frame width
         
         // Determine if it's a left or right lane based on position
-        bool isLeftLane = avgX < centerX;
+        bool isLeftLane = false;
+        
+        // If we have previous lanes, use them to identify current lane
+        if (hadPreviousLanes && 
+            prevLeftCurve.size() > MIN_POINTS_FOR_MEMORY && 
+            prevRightCurve.size() > MIN_POINTS_FOR_MEMORY) {
+            
+            float leftDistance = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
+            float rightDistance = calculateLaneDistance(lanePolylines[0], prevRightCurve);
+            
+            // Lower distance means better match to previous lane
+            isLeftLane = leftDistance < rightDistance;
+            
+            std::string debugMsg = "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") + 
+                                  " (L:" + std::to_string(leftDistance).substr(0,5) + 
+                                  "/R:" + std::to_string(rightDistance).substr(0,5) + ")";
+            cv::putText(allPolylinesViz, debugMsg, cv::Point(20, 80), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+        }
+        else {
+            // Fallback to position-based detection
+            isLeftLane = avgX < centerX;
+            
+            cv::putText(allPolylinesViz, "Position-based detection", cv::Point(20, 80), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+        }
         
         if (isLeftLane) {
             // The detected lane is the left lane
@@ -441,6 +466,12 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
 
         cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+    }
+
+    if (!leftCurve.empty() && !rightCurve.empty()) {
+        prevLeftCurve = leftCurve;
+        prevRightCurve = rightCurve;
+        hadPreviousLanes = true;
     }
     allPolylinesViz.copyTo(frame);
 }
@@ -632,4 +663,38 @@ void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylin
     std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+}
+
+float LaneDetector::calculateLaneDistance(const std::vector<cv::Point>& lane1, 
+                                        const std::vector<cv::Point>& lane2) {
+    // Create normalized Y-position mapping of lane points
+    std::map<int, cv::Point> lane1Points;
+    std::map<int, cv::Point> lane2Points;
+    
+    // Normalize Y values to 0-100 range
+    for (const auto& pt : lane1) {
+        int normY = (pt.y * 100) / 480;  // Assuming 480 is max height
+        lane1Points[normY] = pt;
+    }
+    
+    for (const auto& pt : lane2) {
+        int normY = (pt.y * 100) / 480;  // Assuming 480 is max height
+        lane2Points[normY] = pt;
+    }
+    
+    // Calculate average distance between lanes at matching Y positions
+    float totalDist = 0;
+    int matchCount = 0;
+    
+    for (const auto& p1 : lane1Points) {
+        int y = p1.first;
+        if (lane2Points.find(y) != lane2Points.end()) {
+            // Calculate Euclidean distance
+            float dist = cv::norm(p1.second - lane2Points[y]);
+            totalDist += dist;
+            matchCount++;
+        }
+    }
+    
+    return (matchCount > 0) ? (totalDist / matchCount) : FLT_MAX;
 }
