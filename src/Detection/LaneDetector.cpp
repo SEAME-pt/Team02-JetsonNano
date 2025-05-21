@@ -207,41 +207,14 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
-    std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 30, 40, 6);
+    std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frame.cols * 0.1; // 10% of frame width
     float maxVerticalGap = frame.rows * 0.3;       // 20% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     cv::Mat allPolylinesViz = frame.clone();
-    std::vector<cv::Scalar> colors = {
-        cv::Scalar(255, 0, 0),    // Blue
-        cv::Scalar(0, 255, 0),    // Green
-        cv::Scalar(0, 0, 255),    // Red
-        cv::Scalar(255, 255, 0),  // Cyan
-        cv::Scalar(255, 0, 255),  // Magenta
-        cv::Scalar(0, 255, 255)   // Yellow
-    };
-    
-    // Draw each polyline with a different color
-    for (size_t i = 0; i < lanePolylines.size(); i++) {
-        cv::Scalar color = colors[i % colors.size()];
-        for (size_t j = 1; j < lanePolylines[i].size(); j++) {
-            cv::line(allPolylinesViz, lanePolylines[i][j-1], lanePolylines[i][j], color, 2);
-        }
-        
-        // Add a label for each polyline
-        if (!lanePolylines[i].empty()) {
-            std::string label = "Lane " + std::to_string(i+1);
-            cv::putText(allPolylinesViz, label, lanePolylines[i][0], 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
-        }
-    }
-    
-    // Display the number of polylines found
-    std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
-    cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
-               cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    drawPolyLanes(lanePolylines, allPolylinesViz);
 
     if (lanePolylines.size() > 2) {
         // Sort by number of points (largest first)
@@ -306,7 +279,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 }
 
 
-std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
+std::vector<std::vector<cv::Point>> LaneDetector::clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
     static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
     static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
     
@@ -461,4 +434,35 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
                      return a.y < b.y;
                  });
     }
+}
+
+void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz) {
+    std::vector<cv::Scalar> colors = {
+        cv::Scalar(255, 0, 0),    // Blue
+        cv::Scalar(0, 255, 0),    // Green
+        cv::Scalar(0, 0, 255),    // Red
+        cv::Scalar(255, 255, 0),  // Cyan
+        cv::Scalar(255, 0, 255),  // Magenta
+        cv::Scalar(0, 255, 255)   // Yellow
+    };
+    
+    // Draw each polyline with a different color
+    for (size_t i = 0; i < lanePolylines.size(); i++) {
+        cv::Scalar color = colors[i % colors.size()];
+        for (size_t j = 1; j < lanePolylines[i].size(); j++) {
+            cv::line(allPolylinesViz, lanePolylines[i][j-1], lanePolylines[i][j], color, 2);
+        }
+        
+        // Add a label for each polyline
+        if (!lanePolylines[i].empty()) {
+            std::string label = "Lane " + std::to_string(i+1);
+            cv::putText(allPolylinesViz, label, lanePolylines[i][0], 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+        }
+    }
+    
+    // Display the number of polylines found
+    std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
+    cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
+               cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 }
