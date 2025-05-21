@@ -208,7 +208,19 @@ void LaneDetector::postProcess(cv::Mat& frame)
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
     std::vector<std::vector<cv::Point>> lanePolylines = processLaneMask(binary_mask, 30, 40, 6);
-    // std::cout << "Number of lane polylines after merging: " << lanePolylines.size() << std::endl;
+    
+    float maxHorizontalDistance = frame.cols * 0.1; // 10% of frame width
+    float maxVerticalGap = frame.rows * 0.2;       // 20% of frame height
+    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
+
+    if (lanePolylines.size() > 2) {
+        // Sort by number of points (largest first)
+        std::sort(lanePolylines.begin(), lanePolylines.end(), 
+            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
+                return a.size() > b.size();
+            });
+        lanePolylines.resize(2);
+    }
     
     cv::Mat allPolylinesViz = frame.clone();
     std::vector<cv::Scalar> colors = {
@@ -239,18 +251,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
     cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
-
-    float maxHorizontalDistance = frame.cols * 0.1; // 5% of frame width
-    mergeLaneComponents(lanePolylines, maxHorizontalDistance, 0.0);
-
-    if (lanePolylines.size() > 2) {
-        // Sort by number of points (largest first)
-        std::sort(lanePolylines.begin(), lanePolylines.end(), 
-            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
-                return a.size() > b.size();
-            });
-        lanePolylines.resize(2);
-    }
 
     std::vector<cv::Point> leftCurve, rightCurve;
     
@@ -380,10 +380,8 @@ std::vector<std::vector<cv::Point>> LaneDetector::processLaneMask(const cv::Mat&
     return lanePolylines;
 }
 
-void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float minOverlapRatio) {
+void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap) {
     if (lanePolylines.size() <= 1) return;
-
-    (void) minOverlapRatio;
     
     bool mergePerformed = true;
     while (mergePerformed) {
@@ -391,7 +389,7 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
         
         for (size_t i = 0; i < lanePolylines.size() && !mergePerformed; i++) {
             for (size_t j = i + 1; j < lanePolylines.size() && !mergePerformed; j++) {
-                // Compute the y-range of both polylines
+                // Compute the y-range and x-average of both polylines
                 int minY1 = INT_MAX, maxY1 = 0;
                 int minY2 = INT_MAX, maxY2 = 0;
                 float avgX1 = 0, avgX2 = 0;
@@ -410,17 +408,44 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
                 }
                 avgX2 /= lanePolylines[j].size();
                 
-                // Check if they're horizontally aligned
+                // Check if they're horizontally aligned (similar X position)
                 float hDist = std::abs(avgX1 - avgX2);
                 
-                // Check for vertical relationship (one above the other)
-                bool verticallyAligned = (minY1 > maxY2) || (minY2 > maxY1);
+                // Calculate the vertical gap between segments
+                float verticalGap;
+                if (maxY1 < minY2) {
+                    // First segment is above second segment
+                    verticalGap = minY2 - maxY1;
+                } else if (maxY2 < minY1) {
+                    // Second segment is above first segment
+                    verticalGap = minY1 - maxY2;
+                } else {
+                    // Segments overlap vertically - no gap
+                    verticalGap = 0;
+                }
                 
-                if (hDist <= maxHorizontalDist && verticallyAligned) {
+                // Also check if they have similar directions (optional but recommended)
+                bool similarDirection = true;
+                if (!lanePolylines[i].empty() && lanePolylines[i].size() > 1 &&
+                    !lanePolylines[j].empty() && lanePolylines[j].size() > 1) {
+                    
+                    // Calculate direction of first segment
+                    cv::Point dir1 = lanePolylines[i].back() - lanePolylines[i].front();
+                    
+                    // Calculate direction of second segment
+                    cv::Point dir2 = lanePolylines[j].back() - lanePolylines[j].front();
+                    
+                    // Calculate dot product to check direction similarity
+                    float dotProduct = dir1.x * dir2.x + dir1.y * dir2.y;
+                    similarDirection = (dotProduct > 0); // Positive dot product means similar direction
+                }
+                
+                // Merge if horizontally close AND reasonable vertical gap AND similar direction
+                if (hDist <= maxHorizontalDist && verticalGap <= maxVerticalGap && similarDirection) {
                     // Merge polylines
                     lanePolylines[i].insert(lanePolylines[i].end(), 
-                                            lanePolylines[j].begin(), 
-                                            lanePolylines[j].end());
+                                           lanePolylines[j].begin(), 
+                                           lanePolylines[j].end());
                     lanePolylines.erase(lanePolylines.begin() + j);
                     mergePerformed = true;
                     break;
@@ -432,8 +457,8 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
     // Sort points in each polyline by y-coordinate
     for (auto& polyline : lanePolylines) {
         std::sort(polyline.begin(), polyline.end(), 
-            [](const cv::Point& a, const cv::Point& b) {
-                return a.y < b.y;
-            });
+                 [](const cv::Point& a, const cv::Point& b) {
+                     return a.y < b.y;
+                 });
     }
 }
