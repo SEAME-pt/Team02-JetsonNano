@@ -381,7 +381,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
     cv::Point midPoint;
     int height = frame.rows;
-    // int width  = frame.cols;
+    int width  = frame.cols;
 
     if (!midCurve.empty()) {
         int targetY = height - (1 * height / 3); // 1/3 up from bottom
@@ -402,6 +402,37 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Use the point at found index
         midPoint = midCurve[closestIdx];
+
+        float centerX  = width / 2;
+        float rawError = (midPoint.x - centerX) / (width / 2.0f);
+
+        // Apply rate limiting to error changes
+        static float prevError       = 0.0f;
+        const float MAX_ERROR_CHANGE = 0.3f; // Maximum allowed change per frame
+
+        float errorChange = rawError - prevError;
+        if (std::abs(errorChange) > MAX_ERROR_CHANGE)
+        {
+            errorChange = (errorChange > 0) ? MAX_ERROR_CHANGE : -MAX_ERROR_CHANGE;
+        }
+
+        float lateralError = prevError + errorChange;
+        prevError          = lateralError;
+
+        const float MAX_ERROR = 1.5f;
+        if (lateralError > MAX_ERROR) {
+            lateralError = MAX_ERROR;
+            prevError = MAX_ERROR; // Update prevError as well
+        } else if (lateralError < -MAX_ERROR) {
+            lateralError = -MAX_ERROR;
+            prevError = -MAX_ERROR; // Update prevError as well
+        }
+
+        publisher_->publishCameraError(lateralError);
+
+        std::string statusMsg = lateralError.to_string();
+        cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
+                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 2);
 
         // Draw middle lane curve with white color and thicker line
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
