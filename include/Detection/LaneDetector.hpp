@@ -51,7 +51,7 @@ class LaneDetector
     int leftLaneLastUpdatedFrame = 0;
     int rightLaneLastUpdatedFrame = 0;
     int currentFrame = 0;
-    const int MAX_LANE_MEMORY_FRAMES = 1;
+    const int MAX_LANE_MEMORY_FRAMES = 10;
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
