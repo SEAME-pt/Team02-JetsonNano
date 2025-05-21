@@ -297,8 +297,16 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                 }
             }
         }
+
+        prevLeftCurve = leftCurve;
+        prevRightCurve = rightCurve;
+        leftLaneIdentified = true;
+        rightLaneIdentified = true;
+        hadPreviousLanes = true;
+        
+        leftLaneLastUpdatedFrame = currentFrame;
+        rightLaneLastUpdatedFrame = currentFrame;
     } else if (lanePolylines.size() == 1) {
-        // Determine if the detected lane is left or right
         cv::Point lowestPoint(-1, -1);
         int centerX = frame.cols / 2;
         float avgX = 0;
@@ -325,18 +333,26 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
         
         // If we have previous lanes, use them to identify current lane
-        if (hadPreviousLanes && hasValidLeftMemory && hasValidRightMemory) {
+        if (hadPreviousLanes && (hasValidLeftMemory || hasValidRightMemory)) {
             
-            float leftDistance = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
-            float rightDistance = calculateLaneDistance(lanePolylines[0], prevRightCurve);
+            float leftDistance = hasValidLeftMemory ? 
+                        calculateLaneDistance(lanePolylines[0], prevLeftCurve) : 
+                        FLT_MAX;
+    
+            float rightDistance = hasValidRightMemory ? 
+                                calculateLaneDistance(lanePolylines[0], prevRightCurve) : 
+                                FLT_MAX;
             
-            // Calculate a "staleness penalty" that increases with time
-            float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
-            float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+            // Apply staleness penalty only to valid memories
+            if (hasValidLeftMemory) {
+                float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
+                leftDistance *= leftStaleness;
+            }
             
-            // Apply staleness penalty to distances
-            leftDistance *= leftStaleness;
-            rightDistance *= rightStaleness;
+            if (hasValidRightMemory) {
+                float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+                rightDistance *= rightStaleness;
+            }
             
             // Lower (adjusted) distance means better match
             isLeftLane = leftDistance < rightDistance;
@@ -370,6 +386,10 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         if (isLeftLane) {
             // The detected lane is the left lane
             leftCurve = lanePolylines[0];
+
+            prevLeftCurve = leftCurve;
+            leftLaneLastUpdatedFrame = currentFrame;
+            leftLaneIdentified = true; 
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             
@@ -388,6 +408,10 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         } else {
             // The detected lane is the right lane
             rightCurve = lanePolylines[0];
+
+            prevRightCurve = rightCurve;
+            rightLaneLastUpdatedFrame = currentFrame;
+            rightLaneIdentified = true; 
             cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
             
@@ -456,7 +480,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Apply rate limiting to error changes
         static float prevError       = 0.0f;
-        const float MAX_ERROR_CHANGE = 0.3f; // Maximum allowed change per frame
+        const float MAX_ERROR_CHANGE = 0.5f; // Maximum allowed change per frame
 
         float errorChange = rawError - prevError;
         if (std::abs(errorChange) > MAX_ERROR_CHANGE)
@@ -491,23 +515,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
 
-    if (!leftCurve.empty() && !rightCurve.empty()) {
-        prevLeftCurve = leftCurve;
-        prevRightCurve = rightCurve;
-        hadPreviousLanes = true;
-        
-        // Update both timestamps when we have both lanes
-        leftLaneLastUpdatedFrame = currentFrame;
-        rightLaneLastUpdatedFrame = currentFrame;
-    } else if (!leftCurve.empty()) {
-        // We only have left lane
-        prevLeftCurve = leftCurve;
-        leftLaneLastUpdatedFrame = currentFrame;
-    } else if (!rightCurve.empty()) {
-        // We only have right lane
-        prevRightCurve = rightCurve;
-        rightLaneLastUpdatedFrame = currentFrame;
-    }
     allPolylinesViz.copyTo(frame);
 }
 
