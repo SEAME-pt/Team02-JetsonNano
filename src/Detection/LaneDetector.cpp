@@ -53,9 +53,9 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float img_width = static_cast<float>(WIDTH);
     float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-    float nearDistance = 0.05f;       // meters
+    float nearDistance = 0.01f;       // meters
     float farDistance = 0.5f;       // meters
-    float laneWidth = 1.7f;      // meters
+    float laneWidth = 1.9f;      // meters
     bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
@@ -309,6 +309,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
             // Update right lane filter
             cv::Mat rightMeasurement = convertPointsToMeasurement(rightControlPoints);
+            rightLaneKF.correct(rightMeasurement);
         }
 
         prevLeftCurve = leftCurve;
@@ -787,7 +788,7 @@ void LaneDetector::initializeKalmanFilters() {
     }
     
     // Process noise
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.05));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.1));
     cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(0.05));
     
     // Measurement noise  
