@@ -230,6 +230,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     currentFrame++;
 
     std::vector<cv::Point> leftCurve, rightCurve;
+
+    float minLaneWidth = frame.cols * 0.2f; // At least 20% of frame width
     
     if (lanePolylines.size() == 2) {
         if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
