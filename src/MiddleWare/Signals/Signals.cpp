@@ -35,9 +35,9 @@ void Signals::run()
 
                 speed = ntohl(speed);
                 speed = wheelDiame * 3.14 * speed * 10 / 60;
-                printf("Publishing speed: '%d'\n", speed);
                 if (speed < 0 || speed > 100)
                     speed = 0;
+                printf("Publishing speed: '%d'\n", speed);
                 std::string speed_str = std::to_string(speed);
                 publisher_->publishSpeed(std::stof(speed_str));
             }
