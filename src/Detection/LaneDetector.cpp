@@ -319,7 +319,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                 
                 // Add to history queue
                 recentLaneWidths.push_back(measuredWidth);
-                if (recentLaneWidths.size() > MAX_WIDTH_HISTORY) {
+                if (recentLaneWidths.size() > static_cast<uint8_t>(MAX_WIDTH_HISTORY)) {
                     recentLaneWidths.pop_front(); // Remove oldest
                 }
                 
@@ -384,7 +384,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         // Draw detected lane's lowest point
         cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
         
-        float laneWidth = (avgLaneWidth > static<uint8_t>(MIN_VALID_WIDTH)) ? avgLaneWidth : frame.cols * 0.55f;
+        float laneWidth = (avgLaneWidth > MIN_VALID_WIDTH) ? avgLaneWidth : frame.cols * 0.55f;
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = false;
