@@ -394,7 +394,7 @@ void PidController::run()
         {
             std::cout << "sae_level: " << sae_level << std::endl;
             updateControl(cameraError_, current_time);
-            publisher_->publishSpeed(speedPidController_->speedPID(30 - current_speed_, current_time));
+            publisher_->publishSpeed(speedPidController_->speedPID(20 - current_speed_, current_time));
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
