@@ -78,8 +78,8 @@ int main(int argc, char** argv)
             "appsink";
     
         Camera camera(pipeline, "calibration.yml");
-        LaneDetector laneDetector("/home/team02/lane_Mob1_epoch_48.engine", session);
-        ObjectDetector objDetector("/home/team02/obj_MOB_1_epoch_133.engine", session);
+        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine", session);
+        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine", session);
 
         camera.startCapture();
 
