@@ -459,7 +459,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
         
         // Log that we're using a synthetic lane
-        std::string statusMsg = isLeftLane ? "Using synthetic RIGHT lane" : "Using synthetic LEFT lane"; 
+        std::string statusMsg = isLeftLane ? "Using kalmanFilter RIGHT lane" : "Using kalmanFilter LEFT lane"; 
         cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     }
@@ -814,7 +814,7 @@ void LaneDetector::initializeKalmanFilters() {
     }
     
     // Process noise
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.1));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.05));
     cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(0.05));
     
     // Measurement noise  
