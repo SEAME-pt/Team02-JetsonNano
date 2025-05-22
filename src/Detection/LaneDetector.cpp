@@ -142,7 +142,7 @@ void LaneDetector::detect(cv::Mat& frame)
     postProcess(frame);
 
     cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "Inference time: " << milliseconds << "ms\n";
+    std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
 }
 
 void LaneDetector::preProcess(const cv::Mat& frame)
