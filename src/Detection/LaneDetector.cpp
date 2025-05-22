@@ -62,6 +62,8 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
                             nearDistance, farDistance, laneWidth);
 
+    initializeKalmanFilters();
+
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 
     try     
