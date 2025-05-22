@@ -273,70 +273,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
-        if (!leftCurve.empty() && !rightCurve.empty()) {
-            // Calculate actual lane width at several points
-            float totalWidth = 0.0f;
-            int measurementCount = 0;
-            
-            // Sample at different points along the lane height
-            for (int i = 0; i < 5; i++) {
-                int targetY = frame.rows - frame.rows/5 - i*(frame.rows/10);  // From bottom to middle
-                
-                // Find closest points to this Y in both curves
-                int leftIdx = -1, rightIdx = -1;
-                int leftMinDist = INT_MAX, rightMinDist = INT_MAX;
-                
-                for (size_t j = 0; j < leftCurve.size(); j++) {
-                    int dist = std::abs(leftCurve[j].y - targetY);
-                    if (dist < leftMinDist) {
-                        leftMinDist = dist;
-                        leftIdx = j;
-                    }
-                }
-                
-                for (size_t j = 0; j < rightCurve.size(); j++) {
-                    int dist = std::abs(rightCurve[j].y - targetY);
-                    if (dist < rightMinDist) {
-                        rightMinDist = dist;
-                        rightIdx = j;
-                    }
-                }
-                
-                // If valid points found in both curves
-                if (leftIdx >= 0 && rightIdx >= 0) {
-                    float width = rightCurve[rightIdx].x - leftCurve[leftIdx].x;
-                    // Basic sanity check - lane should be positive width and reasonable size
-                    if (width > MIN_VALID_WIDTH && width < frame.cols * 0.8f) {
-                        totalWidth += width;
-                        measurementCount++;
-                    }
-                }
-            }
-            
-            // Update lane width with moving average
-            if (measurementCount > 0) {
-                float measuredWidth = totalWidth / measurementCount;
-                
-                // Add to history queue
-                recentLaneWidths.push_back(measuredWidth);
-                if (recentLaneWidths.size() > static_cast<uint8_t>(MAX_WIDTH_HISTORY)) {
-                    recentLaneWidths.pop_front(); // Remove oldest
-                }
-                
-                // Calculate average
-                float sumWidth = 0.0f;
-                for (const auto& w : recentLaneWidths) {
-                    sumWidth += w;
-                }
-                avgLaneWidth = sumWidth / recentLaneWidths.size();
-                
-                // Display the calculated lane width for debugging
-                std::string widthMsg = "Lane width: " + std::to_string(static_cast<int>(avgLaneWidth)) + "px";
-                cv::putText(allPolylinesViz, widthMsg, cv::Point(20, 120), 
-                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
-            }
-        }
-
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
             int width = frame.cols;
@@ -360,6 +296,17 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                     rightCurve[rightIdx].x -= adjustment;
                 }
             }
+
+             // Sample 3 control points from each curve (bottom, middle, top)
+            std::vector<cv::Point> leftControlPoints = sampleControlPoints(leftCurve, 3);
+            std::vector<cv::Point> rightControlPoints = sampleControlPoints(rightCurve, 3);
+            
+            // Update left lane filter
+            cv::Mat leftMeasurement = convertPointsToMeasurement(leftControlPoints);
+            leftLaneKF.correct(leftMeasurement);
+            
+            // Update right lane filter
+            cv::Mat rightMeasurement = convertPointsToMeasurement(rightControlPoints);
         }
 
         prevLeftCurve = leftCurve;
@@ -383,8 +330,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         
         // Draw detected lane's lowest point
         cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
-        
-        float laneWidth = (avgLaneWidth > MIN_VALID_WIDTH) ? avgLaneWidth : frame.cols * 0.55f;
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = false;
@@ -450,20 +395,24 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             
-            // Create synthetic right lane
-            rightCurve.reserve(leftCurve.size());
-            for (const auto& pt : leftCurve) {
-                rightCurve.push_back(cv::Point(pt.x + laneWidth, pt.y));
-            }
+            // Update left Kalman filter
+            cv::Mat leftMeasurement = convertPointsToMeasurement(
+                sampleControlPoints(leftCurve, 3));
+            leftLaneKF.correct(leftMeasurement);
             
-            // Visualize synthetic right lane
+            // Predict right lane using Kalman filter
+            cv::Mat rightPrediction = rightLaneKF.predict();
+            rightCurve = reconstructLaneFromPrediction(rightPrediction);
+            
+            // Visualize predicted lane
             for (size_t i = 1; i < rightCurve.size(); i++) {
-                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
+                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], 
+                        cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
             }
-            cv::putText(allPolylinesViz, "Right Lane (Estimated)", rightCurve[rightCurve.size()/2] + cv::Point(10, 10), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            cv::putText(allPolylinesViz, "Right Lane (Predicted)", 
+                    rightCurve[rightCurve.size()/2] + cv::Point(10, 10),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         } else {
-            // The detected lane is the right lane
             rightCurve = lanePolylines[0];
 
             prevRightCurve = rightCurve;
@@ -471,18 +420,23 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
             
-            // Create synthetic left lane
-            leftCurve.reserve(rightCurve.size());
-            for (const auto& pt : rightCurve) {
-                leftCurve.push_back(cv::Point(pt.x - laneWidth, pt.y));
-            }
+            // Update right Kalman filter
+            cv::Mat rightMeasurement = convertPointsToMeasurement(
+                sampleControlPoints(rightCurve, 3));
+            rightLaneKF.correct(rightMeasurement);
             
-            // Visualize synthetic left lane
+            // Predict left lane using Kalman filter
+            cv::Mat leftPrediction = leftLaneKF.predict();
+            leftCurve = reconstructLaneFromPrediction(leftPrediction);
+            
+            // Visualize predicted lane
             for (size_t i = 1; i < leftCurve.size(); i++) {
-                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], cv::Scalar(255, 0, 255), 2, cv::LINE_AA);
+                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], 
+                        cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
             }
-            cv::putText(allPolylinesViz, "Left Lane (Estimated)", leftCurve[leftCurve.size()/2] + cv::Point(10, 10), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            cv::putText(allPolylinesViz, "Left Lane (Predicted)", 
+                    leftCurve[leftCurve.size()/2] + cv::Point(10, 10),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
         
         // Log that we're using a synthetic lane
@@ -795,4 +749,120 @@ float LaneDetector::calculateLaneDistance(const std::vector<cv::Point>& lane1,
     }
     
     return (matchCount > 0) ? (totalDist / matchCount) : FLT_MAX;
+}
+
+// Add this to LaneDetector constructor
+void LaneDetector::initializeKalmanFilters() {
+    // For each lane, we track 3 control points with x,y coordinates and their velocities
+    // State: [x1, y1, x2, y2, x3, y3, vx1, vy1, vx2, vy2, vx3, vy3]
+    const int stateSize = 12;
+    const int measSize = 6;  // We measure positions of control points
+    const int contrSize = 0; // No control input
+    
+    // Initialize both Kalman filters
+    leftLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
+    rightLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
+    
+    // Set transition matrix (constant velocity model)
+    cv::setIdentity(leftLaneKF.transitionMatrix);
+    cv::setIdentity(rightLaneKF.transitionMatrix);
+    
+    // Add velocity components
+    for (int i = 0; i < 6; i++) {
+        leftLaneKF.transitionMatrix.at<float>(i, i+6) = 1.0;
+        rightLaneKF.transitionMatrix.at<float>(i, i+6) = 1.0;
+    }
+    
+    // Set measurement matrix (we only measure positions)
+    cv::Mat measurement = cv::Mat::zeros(measSize, 1, CV_32F);
+    
+    leftLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
+    rightLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
+    
+    for (int i = 0; i < measSize; i++) {
+        leftLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
+        rightLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
+    }
+    
+    // Process noise
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.05));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(0.05));
+    
+    // Measurement noise  
+    cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(0.1));
+    cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(0.1));
+    
+    // Initial state covariance
+    cv::setIdentity(leftLaneKF.errorCovPost, cv::Scalar(1));
+    cv::setIdentity(rightLaneKF.errorCovPost, cv::Scalar(1));
+}
+
+std::vector<cv::Point> LaneDetector::sampleControlPoints(
+    const std::vector<cv::Point>& curve, int numPoints) {
+    
+    std::vector<cv::Point> points;
+    if (curve.empty()) return points;
+    
+    for (int i = 0; i < numPoints; i++) {
+        int idx = i * (curve.size()-1) / (numPoints-1);
+        points.push_back(curve[idx]);
+    }
+    
+    return points;
+}
+
+cv::Mat LaneDetector::convertPointsToMeasurement(
+    const std::vector<cv::Point>& points) {
+    
+    cv::Mat measurement(points.size() * 2, 1, CV_32F);
+    
+    for (size_t i = 0; i < points.size(); i++) {
+        measurement.at<float>(i*2) = static_cast<float>(points[i].x);
+        measurement.at<float>(i*2+1) = static_cast<float>(points[i].y);
+    }
+    
+    return measurement;
+}
+
+std::vector<cv::Point> LaneDetector::reconstructLaneFromPrediction(
+    const cv::Mat& prediction) {
+    
+    std::vector<cv::Point> curve;
+    int numControlPoints = prediction.rows / 2;
+    std::vector<cv::Point> controlPoints;
+    
+    // Extract control points
+    for (int i = 0; i < numControlPoints; i++) {
+        int x = cvRound(prediction.at<float>(i*2));
+        int y = cvRound(prediction.at<float>(i*2+1));
+        controlPoints.push_back(cv::Point(x, y));
+    }
+    
+    // Generate full curve using spline interpolation
+    if (controlPoints.size() >= 2) {
+        cv::Mat points(controlPoints);
+        curve = interpolateCurve(controlPoints, 20);
+    }
+    
+    return curve;
+}
+
+std::vector<cv::Point> LaneDetector::interpolateCurve(
+    const std::vector<cv::Point>& points, int resolution) {
+    
+    std::vector<cv::Point> result;
+    if (points.size() < 2) return points;
+    
+    // Simple implementation: linear interpolation
+    // For production: use spline interpolation
+    for (size_t i = 0; i < points.size() - 1; i++) {
+        for (int j = 0; j <= resolution; j++) {
+            float t = j / static_cast<float>(resolution);
+            int x = points[i].x + t * (points[i+1].x - points[i].x);
+            int y = points[i].y + t * (points[i+1].y - points[i].y);
+            result.push_back(cv::Point(x, y));
+        }
+    }
+    
+    return result;
 }
