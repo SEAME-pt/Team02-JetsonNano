@@ -232,6 +232,20 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::vector<cv::Point> leftCurve, rightCurve;
     
     if (lanePolylines.size() == 2) {
+        if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
+            // Lanes are too close - keep only the stronger one
+            if (lanePolylines[0].size() > lanePolylines[1].size()) {
+                lanePolylines.erase(lanePolylines.begin() + 1);
+            } else {
+                lanePolylines.erase(lanePolylines.begin());
+            }
+            
+            cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        }
+    }
+
+    if (lanePolylines.size() == 2) {
         // Find the lowest point (highest y-value) in each polyline
         cv::Point lowestPoint1(-1, -1);
         cv::Point lowestPoint2(-1, -1);
@@ -752,6 +766,16 @@ float LaneDetector::calculateLaneDistance(const std::vector<cv::Point>& lane1,
     }
     
     return (matchCount > 0) ? (totalDist / matchCount) : FLT_MAX;
+}
+
+bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth) {
+    if (lanePolylines.size() < 2) return true;
+    
+    // Calculate average distance between the two lanes
+    float avgDistance = calculateLaneDistance(lanePolylines[0], lanePolylines[1]);
+    
+    // If lanes are too close, they're likely the same lane detected twice
+    return avgDistance >= minLaneWidth;
 }
 
 // Add this to LaneDetector constructor
