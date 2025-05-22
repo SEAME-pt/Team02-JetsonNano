@@ -273,6 +273,70 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
+        if (!leftCurve.empty() && !rightCurve.empty()) {
+            // Calculate actual lane width at several points
+            float totalWidth = 0.0f;
+            int measurementCount = 0;
+            
+            // Sample at different points along the lane height
+            for (int i = 0; i < 5; i++) {
+                int targetY = frame.rows - frame.rows/5 - i*(frame.rows/10);  // From bottom to middle
+                
+                // Find closest points to this Y in both curves
+                int leftIdx = -1, rightIdx = -1;
+                int leftMinDist = INT_MAX, rightMinDist = INT_MAX;
+                
+                for (size_t j = 0; j < leftCurve.size(); j++) {
+                    int dist = std::abs(leftCurve[j].y - targetY);
+                    if (dist < leftMinDist) {
+                        leftMinDist = dist;
+                        leftIdx = j;
+                    }
+                }
+                
+                for (size_t j = 0; j < rightCurve.size(); j++) {
+                    int dist = std::abs(rightCurve[j].y - targetY);
+                    if (dist < rightMinDist) {
+                        rightMinDist = dist;
+                        rightIdx = j;
+                    }
+                }
+                
+                // If valid points found in both curves
+                if (leftIdx >= 0 && rightIdx >= 0) {
+                    float width = rightCurve[rightIdx].x - leftCurve[leftIdx].x;
+                    // Basic sanity check - lane should be positive width and reasonable size
+                    if (width > MIN_VALID_WIDTH && width < frame.cols * 0.8f) {
+                        totalWidth += width;
+                        measurementCount++;
+                    }
+                }
+            }
+            
+            // Update lane width with moving average
+            if (measurementCount > 0) {
+                float measuredWidth = totalWidth / measurementCount;
+                
+                // Add to history queue
+                recentLaneWidths.push_back(measuredWidth);
+                if (recentLaneWidths.size() > MAX_WIDTH_HISTORY) {
+                    recentLaneWidths.pop_front(); // Remove oldest
+                }
+                
+                // Calculate average
+                float sumWidth = 0.0f;
+                for (const auto& w : recentLaneWidths) {
+                    sumWidth += w;
+                }
+                avgLaneWidth = sumWidth / recentLaneWidths.size();
+                
+                // Display the calculated lane width for debugging
+                std::string widthMsg = "Lane width: " + std::to_string(static_cast<int>(avgLaneWidth)) + "px";
+                cv::putText(allPolylinesViz, widthMsg, cv::Point(20, 120), 
+                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+            }
+        }
+
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
             int width = frame.cols;
@@ -320,8 +384,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         // Draw detected lane's lowest point
         cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
         
-        // Default lane width for creating synthetic lane
-        float laneWidth = frame.cols * 0.65f;  // 30% of frame width
+        float laneWidth = (avgLaneWidth > MIN_VALID_WIDTH) ? avgLaneWidth : frame.cols * 0.55f;
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = false;

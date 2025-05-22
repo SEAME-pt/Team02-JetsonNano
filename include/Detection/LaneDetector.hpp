@@ -52,6 +52,11 @@ class LaneDetector
     int rightLaneLastUpdatedFrame = 0;
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 20;
+
+    float avgLaneWidth = 0.0f;           // Stored average lane width
+    std::deque<float> recentLaneWidths;  // Store recent lane width measurements
+    const int MAX_WIDTH_HISTORY = 10;    // Keep last 10 measurements
+    const float MIN_VALID_WIDTH = 20.0f; // Minimum valid lane width in pixels
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
