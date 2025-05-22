@@ -53,10 +53,7 @@ class LaneDetector
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 20;
 
-    float avgLaneWidth = 0.0f;           // Stored average lane width
-    std::deque<float> recentLaneWidths;  // Store recent lane width measurements
-    const int MAX_WIDTH_HISTORY = 10;    // Keep last 10 measurements
-    const float MIN_VALID_WIDTH = 20.0f; // Minimum valid lane width in pixels
+    cv::KalmanFilter leftLaneKF, rightLaneKF;
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
@@ -75,6 +72,16 @@ class LaneDetector
     void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz);
     float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
+
+    void initializeKalmanFilters();
+    std::vector<cv::Point> sampleControlPoints(
+      const std::vector<cv::Point>& curve, int numPoints);
+    cv::Mat convertPointsToMeasurement(
+      const std::vector<cv::Point>& points);
+    std::vector<cv::Point> reconstructLaneFromPrediction(
+      const cv::Mat& prediction);
+    std::vector<cv::Point> interpolateCurve(
+      const std::vector<cv::Point>& points, int resolution);
 
     void createExecutionContext(const std::string& enginePath);
 };
