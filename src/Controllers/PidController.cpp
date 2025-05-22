@@ -46,7 +46,7 @@ PidController::PidController(XboxController* xbox_controller)
     current_speed_    = 0.0f;
     speed_lock_       = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(1.0f, 0.005f, 1.0f,
+    speedPidController_->init(1.25f, 0.005f, 1.0f,
                                fixed_delta_time_);
 
     auto config = zenoh::Config::create_default();
@@ -273,7 +273,6 @@ float PidController::steeringPID(float error, double current_time)
 {
     // dt
     double dt = current_time - last_time_;
-    std::cout << "dt: " << dt << std::endl;
 
     // PID
     float p_term = kp_ * error;
@@ -367,9 +366,6 @@ void PidController::updateControl(float error, double current_time)
 
     publisher_->publishSteering(direction);
     // publisher_->publishSpeed(dynamicSpeed);
-
-    std::cout << "Direction: " << direction //<< ", Speed: " << dynamicSpeed
-              << std::endl;
     // publisher_->publishCurrentGear(1);
 }
 
@@ -392,7 +388,7 @@ void PidController::run()
         if (sae_level.find("SAE_5") != std::string::npos ||
             sae_level == "SAE_4")
         {
-            std::cout << "sae_level: " << sae_level << std::endl;
+            std::cout << "Speed :" << current_speed_ << std::endl;
             updateControl(cameraError_, current_time);
             publisher_->publishSpeed(speedPidController_->speedPID(20 - current_speed_, current_time));
             std::this_thread::sleep_for(std::chrono::milliseconds(
