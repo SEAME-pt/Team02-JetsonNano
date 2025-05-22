@@ -291,6 +291,18 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
+        // Sample 3 control points from each curve (bottom, middle, top)
+        std::vector<cv::Point> leftControlPoints = sampleControlPoints(leftCurve, 3);
+        std::vector<cv::Point> rightControlPoints = sampleControlPoints(rightCurve, 3);
+        
+        // Update left lane filter
+        cv::Mat leftMeasurement = convertPointsToMeasurement(leftControlPoints);
+        leftLaneKF.correct(leftMeasurement);
+        
+        // Update right lane filter
+        cv::Mat rightMeasurement = convertPointsToMeasurement(rightControlPoints);
+        rightLaneKF.correct(rightMeasurement);
+
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
             int width = frame.cols;
@@ -314,18 +326,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                     rightCurve[rightIdx].x -= adjustment;
                 }
             }
-
-             // Sample 3 control points from each curve (bottom, middle, top)
-            std::vector<cv::Point> leftControlPoints = sampleControlPoints(leftCurve, 3);
-            std::vector<cv::Point> rightControlPoints = sampleControlPoints(rightCurve, 3);
             
-            // Update left lane filter
-            cv::Mat leftMeasurement = convertPointsToMeasurement(leftControlPoints);
-            leftLaneKF.correct(leftMeasurement);
-            
-            // Update right lane filter
-            cv::Mat rightMeasurement = convertPointsToMeasurement(rightControlPoints);
-            rightLaneKF.correct(rightMeasurement);
         }
 
         prevLeftCurve = leftCurve;
@@ -814,8 +815,8 @@ void LaneDetector::initializeKalmanFilters() {
     }
     
     // Process noise
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(0.05));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(0.05));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
     
     // Measurement noise  
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(0.1));
