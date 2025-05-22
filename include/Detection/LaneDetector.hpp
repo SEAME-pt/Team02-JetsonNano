@@ -71,7 +71,10 @@ class LaneDetector
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
     void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz);
+
     float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
+    bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
+
 
     void initializeKalmanFilters();
     std::vector<cv::Point> sampleControlPoints(
