@@ -769,9 +769,9 @@ void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const st
     avgDetectedX /= realLane.size();
 
     if (isLeftLane) {
-        expectedMiddleX = avgDetectedX + expectedHalfWidth;
-    } else {
         expectedMiddleX = avgDetectedX - expectedHalfWidth;
+    } else {
+        expectedMiddleX = avgDetectedX + expectedHalfWidth;
     }
     
     // Middle lane should be to the right of left lane by ~half lane width
