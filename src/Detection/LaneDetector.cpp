@@ -55,7 +55,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
     float nearDistance = 0.01f;       // meters
     float farDistance = 0.5f;       // meters
-    float laneWidth = 1.5f;      // meters
+    float laneWidth = 1.2f;      // meters
     bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
@@ -754,7 +754,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
 void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
-    float expectedHalfWidth = width * 0.275f; // Approximately half lane width
+    float expectedHalfWidth = width * 0.215f; // Approximately half lane width
     float expectedMiddleX = 0;
 
     // Calculate average X positions
