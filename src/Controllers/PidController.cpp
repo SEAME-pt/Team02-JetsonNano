@@ -46,7 +46,7 @@ PidController::PidController(XboxController* xbox_controller)
     current_speed_    = 0.0f;
     speed_lock_       = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.1f, 0.05f, 0.005f,
+    speedPidController_->init(0.1f, 0.15f, 0.05f,
                                fixed_delta_time_);
 
     auto config = zenoh::Config::create_default();
