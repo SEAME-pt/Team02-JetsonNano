@@ -784,7 +784,7 @@ void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const st
     float error = std::abs(avgMiddleX - expectedMiddleX);
     
     // If prediction is significantly off
-    if (error > width * 0.1f) {
+    if (error > width * 0.06f) {
         cv::putText(allPolylinesViz, "Invalid mid prediction - using offset", 
                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         
