@@ -62,12 +62,12 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
     }
 
     // Ensure data is in the right format (CV_64F)
-    Mat y_vals_64f, x_vals_64f;
+    cv::Mat y_vals_64f, x_vals_64f;
     y_vals.convertTo(y_vals_64f, CV_64F);
     x_vals.convertTo(x_vals_64f, CV_64F);
 
     // Create the design matrix with appropriate dimensions
-    Mat A = Mat::zeros(y_vals_64f.rows, degree + 1, CV_64F);
+    cv::Mat A = cv::Mat::zeros(y_vals_64f.rows, degree + 1, CV_64F);
 
     // Fill the design matrix
     for (int i = 0; i < y_vals_64f.rows; i++)
@@ -91,7 +91,7 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
     }
 
     // Solve the system using SVD for better stability
-    Mat coeffs;
+    cv::Mat coeffs;
     try
     {
         solve(A, x_vals_64f, coeffs, DECOMP_SVD);
@@ -183,14 +183,12 @@ void KalmanFilter::updateRightLaneFilter(const std::vector<cv::Point>& lane) {
     rightLaneKF.correct(measurement);
 }
 
-std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve() {
-    // Predict right lane using polynomial model
+std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve(int height) {
     cv::Mat leftPrediction = leftLaneKF.predict();
-    return (reconstructLaneFromCoefficients(leftPrediction, frame.rows));
+    return (reconstructLaneFromCoefficients(leftPrediction, height));
 }
 
-std::vector<cv::Point> KalmanFilter::predictRightLaneCurve() {
-    // Predict right lane using polynomial model
+std::vector<cv::Point> KalmanFilter::predictRightLaneCurve(int height) {
     cv::Mat rightPrediction = rightLaneKF.predict();
-    return (reconstructLaneFromCoefficients(rightPrediction, frame.rows));
+    return (reconstructLaneFromCoefficients(rightPrediction, height));
 }
