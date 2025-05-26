@@ -487,8 +487,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         for (size_t i = 1; i < midCurve.size(); i++) {
             cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
         }
-
-        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
     else {
         midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
@@ -498,8 +496,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         for (size_t i = 1; i < midCurve.size(); i++) {
             cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
         }
-
-        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
 
     cv::Point midPoint;
@@ -525,6 +521,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Use the point at found index
         midPoint = midCurve[closestIdx];
+
+        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
 
         float centerX  = width / 2;
         float rawError = (midPoint.x - centerX) / (width / 2.0f);
@@ -799,6 +797,9 @@ bool LaneDetector::isValidLaneCurve(const std::vector<cv::Point>& curve, bool is
     if (curve.size() < 25) {
         return false;
     }
+
+    (void) isLeftLane;
+    (void) frameWidth;
 
     return true;
 }
