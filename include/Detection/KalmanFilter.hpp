@@ -18,8 +18,8 @@ class KalmanFilter
 
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);
-    std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve();
-    std::vector<cv::Point> KalmanFilter::predictRightLaneCurve();
+    std::vector<cv::Point> predictLeftLaneCurve(int height);
+    std::vector<cv::Point> predictRightLaneCurve(int height);
 
   private:
     void initializeKalmanFilters();
