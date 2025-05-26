@@ -55,7 +55,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
     float nearDistance = 0.01f;       // meters
     float farDistance = 0.5f;       // meters
-    float laneWidth = 1.9f;      // meters
+    float laneWidth = 1.5f;      // meters
     bevSize = cv::Size(WIDTH, HEIGHT);
     cv::Size origSize = cv::Size(WIDTH, HEIGHT);
     ipm.initialize(origSize, bevSize);
@@ -422,16 +422,16 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                         cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
             }
             
-            rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
+            // rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
             
-            // Visualize predicted lane
-            for (size_t i = 1; i < rightCurve.size(); i++) {
-                cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], 
-                        cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
-            }
-            cv::putText(allPolylinesViz, "Right Lane (Predicted)", 
-                    rightCurve[rightCurve.size()/2] + cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            // // Visualize predicted lane
+            // for (size_t i = 1; i < rightCurve.size(); i++) {
+            //     cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], 
+            //             cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
+            // }
+            // cv::putText(allPolylinesViz, "Right Lane (Predicted)", 
+            //         rightCurve[rightCurve.size()/2] + cv::Point(10, 10),
+            //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         } else {
             rightCurve = lanePolylines[0];
 
@@ -447,16 +447,16 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                         cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
             }
 
-            leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
+            // leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
             
-            // Visualize predicted lane
-            for (size_t i = 1; i < leftCurve.size(); i++) {
-                cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], 
-                        cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
-            }
-            cv::putText(allPolylinesViz, "Left Lane (Predicted)", 
-                    leftCurve[leftCurve.size()/2] + cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            // // Visualize predicted lane
+            // for (size_t i = 1; i < leftCurve.size(); i++) {
+            //     cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], 
+            //             cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
+            // }
+            // cv::putText(allPolylinesViz, "Left Lane (Predicted)", 
+            //         leftCurve[leftCurve.size()/2] + cv::Point(10, 10),
+            //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
         
         // Log that we're using a synthetic lane
@@ -479,6 +479,27 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
             midCurve.push_back(cv::Point(midX, midY));
         }
+
+        kalmanFilter.updateMiddleLaneFilter(midCurve);
+
+        // Draw middle lane curve with white color and thicker line
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        }
+
+        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+    }
+    else {
+        midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
+
+        // Draw middle lane curve with white color and thicker line
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        }
+
+        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
 
     cv::Point midPoint;
@@ -535,14 +556,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         std::string statusMsg = "Error: " + std::to_string(lateralError).substr(0, 6);
         cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
                 cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-
-        // Draw middle lane curve with white color and thicker line
-        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-        for (size_t i = 1; i < midCurve.size(); i++) {
-            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
-        }
-
-        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
     }
 
     allPolylinesViz.copyTo(frame);
