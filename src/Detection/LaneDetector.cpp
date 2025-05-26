@@ -289,9 +289,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
-        kalmanFilter.updateLeftLaneFilter(leftCurve);
-        kalmanFilter.updateRightLaneFilter(rightCurve);
-
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
             int width = frame.cols;
@@ -316,6 +313,20 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                 }
             }
             
+        }
+
+        if (isValidLaneCurve(leftCurve, true, frame.cols)) {
+            kalmanFilter.updateLeftLaneFilter(leftCurve);
+        } else {
+            cv::putText(allPolylinesViz, "Left curve invalid - not updating filter", 
+                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+        }
+
+        if (isValidLaneCurve(rightCurve, false, frame.cols)) {
+            kalmanFilter.updateRightLaneFilter(rightCurve);
+        } else {
+            cv::putText(allPolylinesViz, "Right curve invalid - not updating filter", 
+                    cv::Point(20, 140), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         }
 
         prevLeftCurve = leftCurve;
@@ -404,7 +415,12 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             
-            kalmanFilter.updateLeftLaneFilter(leftCurve);
+            if (isValidLaneCurve(leftCurve, true, frame.cols)) {
+                kalmanFilter.updateLeftLaneFilter(leftCurve);
+            } else {
+                cv::putText(allPolylinesViz, "Left curve invalid - not updating filter", 
+                        cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+            }
             
             rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
             
@@ -424,7 +440,12 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
             
-            kalmanFilter.updateRightLaneFilter(rightCurve);
+            if (isValidLaneCurve(rightCurve, false, frame.cols)) {
+                kalmanFilter.updateRightLaneFilter(rightCurve);
+            } else {
+                cv::putText(allPolylinesViz, "Right curve invalid - not updating filter", 
+                        cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+            }
 
             leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
             
@@ -758,4 +779,47 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     
     // If lanes are too close, they're likely the same lane detected twice
     return avgDistance >= minLaneWidth;
+}
+
+bool LaneDetector::isValidLaneCurve(const std::vector<cv::Point>& curve, bool isLeftLane, int frameWidth) {
+    // Check for minimum size
+    if (curve.size() < 10) {
+        return false;
+    }
+    
+    // Check if curve is on the correct side of the road
+    int centerX = frameWidth / 2;
+    float avgX = 0;
+    for (const auto& pt : curve) {
+        avgX += pt.x;
+    }
+    avgX /= curve.size();
+    
+    if ((isLeftLane && avgX > centerX) || (!isLeftLane && avgX < centerX)) {
+        return false;
+    }
+
+    return true;
+    
+    // // Check for consistent curvature using polynomial fitting
+    // cv::Mat coeffs = kalmanFilter.extractPolynomialCoefficients(curve);
+    // if (coeffs.empty() || coeffs.rows < 3) {
+    //     return false;
+    // }
+    
+    // // Get curvature direction (sign of the quadratic term)
+    // double curvatureSign = coeffs.at<double>(0) > 0 ? 1.0 : -1.0;
+    
+    // // Expected curvature sign (depends on lane side and coordinate system)
+    // // This may need adjustment based on your specific coordinate system
+    // double expectedCurvatureSign = isLeftLane ? -1.0 : 1.0;
+    
+    // // Allow some tolerance for nearly straight lanes
+    // if (std::abs(coeffs.at<double>(0)) < 1e-5) {
+    //     // Nearly straight lane, curvature sign doesn't matter
+    //     return true;
+    // }
+    
+    // // Verify consistent curvature direction
+    // return (curvatureSign == expectedCurvatureSign);
 }

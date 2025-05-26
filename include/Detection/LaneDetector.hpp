@@ -75,6 +75,7 @@ class LaneDetector
 
     float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
     bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
-
+    bool isValidLaneCurve(const std::vector<cv::Point>& curve, bool isLeftLane, int frameWidth);
+    
     void createExecutionContext(const std::string& enginePath);
 };
