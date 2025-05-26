@@ -212,7 +212,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     
     float maxHorizontalDistance = frame.cols * 0.15; // 15% of frame width
     float maxVerticalGap = frame.rows * 0.35;       // 35% of frame height
-    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
+    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap, frame.cols);
 
     cv::Mat allPolylinesViz = frame.clone();
     drawPolyLanes(lanePolylines, allPolylinesViz);
@@ -400,7 +400,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
 
-            isValidMiddleCurve(midCurve, leftCurve, true, frame.cols);
+            isValidMiddleCurve(midCurve, leftCurve, allPolylinesViz, true, frame.cols);
 
             // Draw middle lane curve with white color and thicker line
             cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
@@ -415,7 +415,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
 
-            isValidMiddleCurve(midCurve, rightCurve, false, frame.cols);
+            isValidMiddleCurve(midCurve, rightCurve, allPolylinesViz, false, frame.cols);
 
             // Draw middle lane curve with white color and thicker line
             cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
