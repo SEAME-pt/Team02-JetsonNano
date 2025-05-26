@@ -429,7 +429,13 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     } else {
-        
+        midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
+
+        // Draw middle lane curve with white color and thicker line
+            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+            for (size_t i = 1; i < midCurve.size(); i++) {
+                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+            }
     }
 
     cv::Point midPoint;
@@ -754,7 +760,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
 void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
-    float expectedHalfWidth = width * 0.25f; // Approximately half lane width
+    float expectedHalfWidth = width * 0.30f; // Approximately half lane width
     float expectedMiddleX = 0;
 
     // Calculate average X positions
