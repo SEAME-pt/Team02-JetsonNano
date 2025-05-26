@@ -207,43 +207,20 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
+    currentFrame++;
     std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frame.cols * 0.15; // 15% of frame width
     float maxVerticalGap = frame.rows * 0.35;       // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
-    if (lanePolylines.size() > 2) {
-        // Sort by number of points (largest first)
-        std::sort(lanePolylines.begin(), lanePolylines.end(), 
-            [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
-                return a.size() > b.size();
-            });
-        lanePolylines.resize(2);
-    }
-
     cv::Mat allPolylinesViz = frame.clone();
     drawPolyLanes(lanePolylines, allPolylinesViz);
 
-    currentFrame++;
 
-    std::vector<cv::Point> leftCurve, rightCurve;
-
-    float minLaneWidth = frame.cols * 0.1f; // At least 20% of frame width
-    
-    if (lanePolylines.size() == 2) {
-        if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
-            // Lanes are too close - keep only the stronger one
-            if (lanePolylines[0].size() > lanePolylines[1].size()) {
-                lanePolylines.erase(lanePolylines.begin() + 1);
-            } else {
-                lanePolylines.erase(lanePolylines.begin());
-            }
-            
-            cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
-        }
-    }
+    std::vector<cv::Point> leftCurve;
+    std::vector<cv::Point> rightCurve;
+    std::vector<cv::Point> midCurve;
 
     if (lanePolylines.size() == 2) {
         // Find the lowest point (highest y-value) in each polyline
@@ -315,18 +292,24 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
         }
 
-        if (isValidLaneCurve(leftCurve, true, frame.cols)) {
-            kalmanFilter.updateLeftLaneFilter(leftCurve);
-        } else {
-            cv::putText(allPolylinesViz, "Left curve invalid - not updating filter", 
-                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+        // Make sure we have equal length curves by resampling if needed
+        int numPoints = std::min(leftCurve.size(), rightCurve.size());
+        for (int i = 0; i < numPoints; i++)
+        {
+            size_t leftIdx  = i * leftCurve.size() / numPoints;
+            size_t rightIdx = i * rightCurve.size() / numPoints;
+
+            int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
+            int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
+            midCurve.push_back(cv::Point(midX, midY));
         }
 
-        if (isValidLaneCurve(rightCurve, false, frame.cols)) {
-            kalmanFilter.updateRightLaneFilter(rightCurve);
-        } else {
-            cv::putText(allPolylinesViz, "Right curve invalid - not updating filter", 
-                    cv::Point(20, 140), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+        kalmanFilter.updateMiddleLaneFilter(midCurve);
+
+        // Draw middle lane curve with white color and thicker line
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
         }
 
         prevLeftCurve = leftCurve;
@@ -414,88 +397,39 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             leftLaneLastUpdatedFrame = currentFrame;
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
-            
-            if (isValidLaneCurve(leftCurve, true, frame.cols)) {
-                kalmanFilter.updateLeftLaneFilter(leftCurve);
-            } else {
-                cv::putText(allPolylinesViz, "Left curve invalid - not updating filter", 
-                        cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+
+            midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
+
+            isValidMiddleCurve(midCurve, leftCurve, true, frame.cols);
+
+            // Draw middle lane curve with white color and thicker line
+            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+            for (size_t i = 1; i < midCurve.size(); i++) {
+                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
             }
-            
-            // rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
-            
-            // // Visualize predicted lane
-            // for (size_t i = 1; i < rightCurve.size(); i++) {
-            //     cv::line(allPolylinesViz, rightCurve[i-1], rightCurve[i], 
-            //             cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
-            // }
-            // cv::putText(allPolylinesViz, "Right Lane (Predicted)", 
-            //         rightCurve[rightCurve.size()/2] + cv::Point(10, 10),
-            //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         } else {
             rightCurve = lanePolylines[0];
 
             prevRightCurve = rightCurve;
             rightLaneLastUpdatedFrame = currentFrame;
-            cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
-            
-            if (isValidLaneCurve(rightCurve, false, frame.cols)) {
-                kalmanFilter.updateRightLaneFilter(rightCurve);
-            } else {
-                cv::putText(allPolylinesViz, "Right curve invalid - not updating filter", 
-                        cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
-            }
 
-            // leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
-            
-            // // Visualize predicted lane
-            // for (size_t i = 1; i < leftCurve.size(); i++) {
-            //     cv::line(allPolylinesViz, leftCurve[i-1], leftCurve[i], 
-            //             cv::Scalar(0, 255, 255), 2, cv::LINE_AA);
-            // }
-            // cv::putText(allPolylinesViz, "Left Lane (Predicted)", 
-            //         leftCurve[leftCurve.size()/2] + cv::Point(10, 10),
-            //         cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
+
+            isValidMiddleCurve(midCurve, rightCurve, false, frame.cols);
+
+            // Draw middle lane curve with white color and thicker line
+            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+            for (size_t i = 1; i < midCurve.size(); i++) {
+                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+            }
         }
         
         // Log that we're using a synthetic lane
         std::string statusMsg = isLeftLane ? "Using kalmanFilter RIGHT lane" : "Using kalmanFilter LEFT lane"; 
         cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-    }
-
-    std::vector<cv::Point> midCurve;
-    if (!leftCurve.empty() && !rightCurve.empty())
-    {
-        // Make sure we have equal length curves by resampling if needed
-        int numPoints = std::min(leftCurve.size(), rightCurve.size());
-        for (int i = 0; i < numPoints; i++)
-        {
-            size_t leftIdx  = i * leftCurve.size() / numPoints;
-            size_t rightIdx = i * rightCurve.size() / numPoints;
-
-            int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
-            int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
-            midCurve.push_back(cv::Point(midX, midY));
-        }
-
-        kalmanFilter.updateMiddleLaneFilter(midCurve);
-
-        // Draw middle lane curve with white color and thicker line
-        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-        for (size_t i = 1; i < midCurve.size(); i++) {
-            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
-        }
-    }
-    else {
-        midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
-
-        // Draw middle lane curve with white color and thicker line
-        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-        for (size_t i = 1; i < midCurve.size(); i++) {
-            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
-        }
+    } else {
+        
     }
 
     cv::Point midPoint;
@@ -715,6 +649,31 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
                      return a.y < b.y;
                  });
     }
+
+    if (lanePolylines.size() > 2) {
+        // // Sort by number of points (largest first)
+        // std::sort(lanePolylines.begin(), lanePolylines.end(), 
+        //     [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
+        //         return a.size() > b.size();
+        //     });
+        lanePolylines.resize(2);
+    }
+
+    float minLaneWidth = frame.cols * 0.1f; // At least 20% of frame width
+    
+    if (lanePolylines.size() == 2) {
+        if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
+            // Lanes are too close - keep only the stronger one
+            if (lanePolylines[0].size() > lanePolylines[1].size()) {
+                lanePolylines.erase(lanePolylines.begin() + 1);
+            } else {
+                lanePolylines.erase(lanePolylines.begin());
+            }
+            
+            cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
+                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        }
+    }
 }
 
 void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz) {
@@ -792,14 +751,44 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-bool LaneDetector::isValidLaneCurve(const std::vector<cv::Point>& curve, bool isLeftLane, int frameWidth) {
-    // Check for minimum size
-    if (curve.size() < 25) {
-        return false;
+bool LaneDetector::isValidMiddleCurve(const std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, bool isLeftLane, int width) {
+    float avgMiddleX = 0;
+    float avgDetectedX = 0;
+    float expectedHalfWidth = width * 0.275f; // Approximately half lane width
+
+    // Calculate average X positions
+    for (const auto& pt : midCurve) {
+        avgMiddleX += pt.x;
     }
+    avgMiddleX /= midCurve.size();
 
-    (void) isLeftLane;
-    (void) frameWidth;
+    for (const auto& pt : realLane) {
+        avgDetectedX += pt.x;
+    }
+    avgDetectedX /= realLane.size();
 
-    return true;
+    if (isLeftLane) {
+        float expectedMiddleX = avgDetectedX + expectedHalfWidth;
+    } else {
+        float expectedMiddleX = avgDetectedX - expectedHalfWidth;
+    }
+    
+    // Middle lane should be to the right of left lane by ~half lane width
+    float error = std::abs(avgMiddleX - expectedMiddleX);
+    
+    // If prediction is significantly off
+    if (error > width * 0.1f) {
+        cv::putText(allPolylinesViz, "Invalid mid prediction - using offset", 
+                  cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+        
+        // Create synthetic middle lane
+        midCurve.clear();
+        midCurve.reserve(realLane.size());
+        for (const auto& pt : realLane) {
+            midCurve.push_back(cv::Point(pt.x + expectedHalfWidth, pt.y));
+        }
+        
+        // Force reset middle Kalman filter with this corrected midpoint
+        kalmanFilter.updateMiddleLaneFilter(midCurve);
+    }
 }
