@@ -20,6 +20,7 @@
 #include "Logger.hpp"
 #include "IPM.hpp"
 #include "LaneDetectorPublisher.hpp"
+#include "KalmanFilter.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -53,7 +54,7 @@ class LaneDetector
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 20;
 
-    cv::KalmanFilter leftLaneKF, rightLaneKF;
+    KalmanFilter kalmanFilter;
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
@@ -74,17 +75,6 @@ class LaneDetector
 
     float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
     bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
-
-
-    void initializeKalmanFilters();
-    std::vector<cv::Point> sampleControlPoints(
-      const std::vector<cv::Point>& curve, int numPoints);
-    cv::Mat convertPointsToMeasurement(
-      const std::vector<cv::Point>& points);
-    std::vector<cv::Point> reconstructLaneFromPrediction(
-      const cv::Mat& prediction);
-    std::vector<cv::Point> interpolateCurve(
-      const std::vector<cv::Point>& points, int resolution);
 
     void createExecutionContext(const std::string& enginePath);
 };

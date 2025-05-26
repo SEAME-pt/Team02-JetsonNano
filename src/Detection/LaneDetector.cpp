@@ -62,8 +62,6 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
                             nearDistance, farDistance, laneWidth);
 
-    initializeKalmanFilters();
-
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 
     try     
@@ -291,17 +289,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
-        // Sample 3 control points from each curve (bottom, middle, top)
-        std::vector<cv::Point> leftControlPoints = sampleControlPoints(leftCurve, 3);
-        std::vector<cv::Point> rightControlPoints = sampleControlPoints(rightCurve, 3);
-        
-        // Update left lane filter
-        cv::Mat leftMeasurement = convertPointsToMeasurement(leftControlPoints);
-        leftLaneKF.correct(leftMeasurement);
-        
-        // Update right lane filter
-        cv::Mat rightMeasurement = convertPointsToMeasurement(rightControlPoints);
-        rightLaneKF.correct(rightMeasurement);
+        kalmanFilter.updateLeftLaneFilter(leftCurve);
+        kalmanFilter.updateRightLaneFilter(rightCurve);
 
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
@@ -415,14 +404,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
             
-            // Update left Kalman filter
-            cv::Mat leftMeasurement = convertPointsToMeasurement(
-                sampleControlPoints(leftCurve, 3));
-            leftLaneKF.correct(leftMeasurement);
+            kalmanFilter.updateLeftLaneFilter(leftCurve);
             
-            // Predict right lane using Kalman filter
-            cv::Mat rightPrediction = rightLaneKF.predict();
-            rightCurve = reconstructLaneFromPrediction(rightPrediction);
+            rightCurve = kalmanFilter.predictRightLaneCurve();
             
             // Visualize predicted lane
             for (size_t i = 1; i < rightCurve.size(); i++) {
@@ -440,14 +424,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Right Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
             
-            // Update right Kalman filter
-            cv::Mat rightMeasurement = convertPointsToMeasurement(
-                sampleControlPoints(rightCurve, 3));
-            rightLaneKF.correct(rightMeasurement);
-            
-            // Predict left lane using Kalman filter
-            cv::Mat leftPrediction = leftLaneKF.predict();
-            leftCurve = reconstructLaneFromPrediction(leftPrediction);
+            kalmanFilter.updateRightLaneFilter(rightCurve);
+
+            leftCurve = kalmanFilter.predictLeftLaneCurve();
             
             // Visualize predicted lane
             for (size_t i = 1; i < leftCurve.size(); i++) {
@@ -779,120 +758,4 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     
     // If lanes are too close, they're likely the same lane detected twice
     return avgDistance >= minLaneWidth;
-}
-
-// Add this to LaneDetector constructor
-void LaneDetector::initializeKalmanFilters() {
-    // For each lane, we track 3 control points with x,y coordinates and their velocities
-    // State: [x1, y1, x2, y2, x3, y3, vx1, vy1, vx2, vy2, vx3, vy3]
-    const int stateSize = 12;
-    const int measSize = 6;  // We measure positions of control points
-    const int contrSize = 0; // No control input
-    
-    // Initialize both Kalman filters
-    leftLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
-    rightLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
-    
-    // Set transition matrix (constant velocity model)
-    cv::setIdentity(leftLaneKF.transitionMatrix);
-    cv::setIdentity(rightLaneKF.transitionMatrix);
-    
-    // Add velocity components
-    for (int i = 0; i < 6; i++) {
-        leftLaneKF.transitionMatrix.at<float>(i, i+6) = 1.0;
-        rightLaneKF.transitionMatrix.at<float>(i, i+6) = 1.0;
-    }
-    
-    // Set measurement matrix (we only measure positions)
-    cv::Mat measurement = cv::Mat::zeros(measSize, 1, CV_32F);
-    
-    leftLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
-    rightLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
-    
-    for (int i = 0; i < measSize; i++) {
-        leftLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
-        rightLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
-    }
-    
-    // Process noise
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-4));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-4));
-    
-    // Measurement noise  
-    cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(0.1));
-    cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(0.1));
-    
-    // Initial state covariance
-    cv::setIdentity(leftLaneKF.errorCovPost, cv::Scalar(1));
-    cv::setIdentity(rightLaneKF.errorCovPost, cv::Scalar(1));
-}
-
-std::vector<cv::Point> LaneDetector::sampleControlPoints(
-    const std::vector<cv::Point>& curve, int numPoints) {
-    
-    std::vector<cv::Point> points;
-    if (curve.empty()) return points;
-    
-    for (int i = 0; i < numPoints; i++) {
-        int idx = i * (curve.size()-1) / (numPoints-1);
-        points.push_back(curve[idx]);
-    }
-    
-    return points;
-}
-
-cv::Mat LaneDetector::convertPointsToMeasurement(
-    const std::vector<cv::Point>& points) {
-    
-    cv::Mat measurement(points.size() * 2, 1, CV_32F);
-    
-    for (size_t i = 0; i < points.size(); i++) {
-        measurement.at<float>(i*2) = static_cast<float>(points[i].x);
-        measurement.at<float>(i*2+1) = static_cast<float>(points[i].y);
-    }
-    
-    return measurement;
-}
-
-std::vector<cv::Point> LaneDetector::reconstructLaneFromPrediction(
-    const cv::Mat& prediction) {
-    
-    std::vector<cv::Point> curve;
-    int numControlPoints = prediction.rows / 2;
-    std::vector<cv::Point> controlPoints;
-    
-    // Extract control points
-    for (int i = 0; i < numControlPoints; i++) {
-        int x = cvRound(prediction.at<float>(i*2));
-        int y = cvRound(prediction.at<float>(i*2+1));
-        controlPoints.push_back(cv::Point(x, y));
-    }
-    
-    // Generate full curve using spline interpolation
-    if (controlPoints.size() >= 2) {
-        cv::Mat points(controlPoints);
-        curve = interpolateCurve(controlPoints, 20);
-    }
-    
-    return curve;
-}
-
-std::vector<cv::Point> LaneDetector::interpolateCurve(
-    const std::vector<cv::Point>& points, int resolution) {
-    
-    std::vector<cv::Point> result;
-    if (points.size() < 2) return points;
-    
-    // Simple implementation: linear interpolation
-    // For production: use spline interpolation
-    for (size_t i = 0; i < points.size() - 1; i++) {
-        for (int j = 0; j <= resolution; j++) {
-            float t = j / static_cast<float>(resolution);
-            int x = points[i].x + t * (points[i+1].x - points[i].x);
-            int y = points[i].y + t * (points[i+1].y - points[i].y);
-            result.push_back(cv::Point(x, y));
-        }
-    }
-    
-    return result;
 }

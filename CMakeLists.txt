@@ -115,8 +115,9 @@ target_link_libraries(CombinedController
 add_executable(Detection
     ./src/Detection/ObjectDetector.cpp
     ./src/Detection/LaneDetector.cpp
-    ./src/Communication/LaneDetectorPublisher.cpp
+    ./src/Detection/KalmanFilter.cpp
     ./src/Detection/IPM.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
     ./src/Hardware/Camera.cpp
     ./src/detection.cpp
 )
