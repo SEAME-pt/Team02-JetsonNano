@@ -46,7 +46,7 @@ PidController::PidController(XboxController* xbox_controller)
     current_speed_    = 0.0f;
     speed_lock_       = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.1f, 0.0f, 0.05f,
+    speedPidController_->init(0.01f, 0.0f, 0.005f,
                                fixed_delta_time_);
 
     auto config = zenoh::Config::create_default();
@@ -390,7 +390,7 @@ void PidController::run()
         {
             std::cout << "Speed :" << current_speed_ << std::endl;
             updateControl(cameraError_, current_time);
-            publisher_->publishSpeed(speedPidController_->speedPID(200 - current_speed_, current_time));
+            publisher_->publishSpeed(speedPidController_->speedPID(500 - current_speed_, current_time));
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
