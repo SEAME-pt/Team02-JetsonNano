@@ -783,43 +783,9 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
 
 bool LaneDetector::isValidLaneCurve(const std::vector<cv::Point>& curve, bool isLeftLane, int frameWidth) {
     // Check for minimum size
-    if (curve.size() < 10) {
-        return false;
-    }
-    
-    // Check if curve is on the correct side of the road
-    int centerX = frameWidth / 2;
-    float avgX = 0;
-    for (const auto& pt : curve) {
-        avgX += pt.x;
-    }
-    avgX /= curve.size();
-    
-    if ((isLeftLane && avgX > centerX) || (!isLeftLane && avgX < centerX)) {
+    if (curve.size() < 25) {
         return false;
     }
 
     return true;
-    
-    // // Check for consistent curvature using polynomial fitting
-    // cv::Mat coeffs = kalmanFilter.extractPolynomialCoefficients(curve);
-    // if (coeffs.empty() || coeffs.rows < 3) {
-    //     return false;
-    // }
-    
-    // // Get curvature direction (sign of the quadratic term)
-    // double curvatureSign = coeffs.at<double>(0) > 0 ? 1.0 : -1.0;
-    
-    // // Expected curvature sign (depends on lane side and coordinate system)
-    // // This may need adjustment based on your specific coordinate system
-    // double expectedCurvatureSign = isLeftLane ? -1.0 : 1.0;
-    
-    // // Allow some tolerance for nearly straight lanes
-    // if (std::abs(coeffs.at<double>(0)) < 1e-5) {
-    //     // Nearly straight lane, curvature sign doesn't matter
-    //     return true;
-    // }
-    
-    // // Verify consistent curvature direction
-    // return (curvatureSign == expectedCurvatureSign);
 }
