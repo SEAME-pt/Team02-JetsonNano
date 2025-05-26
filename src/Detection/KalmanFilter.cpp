@@ -96,7 +96,7 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
     cv::Mat coeffs;
     try
     {
-        solve(A, x_vals_64f, coeffs, DECOMP_SVD);
+        solve(A, x_vals_64f, coeffs, cv::DECOMP_SVD);
     }
     catch (const cv::Exception& e)
     {
