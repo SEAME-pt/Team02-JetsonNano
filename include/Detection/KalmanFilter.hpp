@@ -21,7 +21,7 @@ class KalmanFilter
     std::vector<cv::Point> predictRightLaneCurve(int height, int width);
 
   private:
-    void initializeKalmanFilters();
+    void initializePolynomialKalmanFilters();
   
     std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height, int width);
     cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
