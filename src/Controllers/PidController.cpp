@@ -159,7 +159,7 @@ PidController::PidController(const std::string& configFile,
     current_speed_    = 0.0f;
     speed_lock_       = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.00001f, 0.0005f, 0.0005f,
+    speedPidController_->init(0.000001f, 0.000f, 0.00005f,
                                fixed_delta_time_);
 
     auto config = zenoh::Config::from_file(configFile);
