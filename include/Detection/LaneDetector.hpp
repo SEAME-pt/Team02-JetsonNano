@@ -52,7 +52,7 @@ class LaneDetector
     int leftLaneLastUpdatedFrame = 0;
     int rightLaneLastUpdatedFrame = 0;
     int currentFrame = 0;
-    const int MAX_LANE_MEMORY_FRAMES = 20;
+    const int MAX_LANE_MEMORY_FRAMES = 25;
 
     KalmanFilter kalmanFilter;
   public:
