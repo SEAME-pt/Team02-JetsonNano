@@ -769,9 +769,9 @@ void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const st
     avgDetectedX /= realLane.size();
 
     if (isLeftLane) {
-        expectedMiddleX = avgDetectedX - expectedHalfWidth;
-    } else {
         expectedMiddleX = avgDetectedX + expectedHalfWidth;
+    } else {
+        expectedMiddleX = avgDetectedX - expectedHalfWidth;
     }
     
     // Middle lane should be to the right of left lane by ~half lane width
@@ -785,8 +785,14 @@ void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const st
         // Create synthetic middle lane
         midCurve.clear();
         midCurve.reserve(realLane.size());
-        for (const auto& pt : realLane) {
-            midCurve.push_back(cv::Point(pt.x + expectedHalfWidth, pt.y));
+        if (isLeftLane) {
+            for (const auto& pt : realLane) {
+                midCurve.push_back(cv::Point(pt.x + expectedHalfWidth, pt.y));
+            }
+        } else {
+            for (const auto& pt : realLane) {
+                midCurve.push_back(cv::Point(pt.x - expectedHalfWidth, pt.y));
+            }
         }
         
         // Force reset middle Kalman filter with this corrected midpoint
