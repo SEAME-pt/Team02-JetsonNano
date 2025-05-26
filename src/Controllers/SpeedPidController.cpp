@@ -88,5 +88,6 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     prev_error_ = error;
     last_time_  = current_time;
+    std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
 }
