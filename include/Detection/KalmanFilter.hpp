@@ -26,6 +26,6 @@ class KalmanFilter
   
     std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height);
     cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
-    Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree);
+    cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
 
 };

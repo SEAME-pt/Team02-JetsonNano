@@ -47,7 +47,7 @@ void KalmanFilter::initializePolynomialKalmanFilters() {
     cv::setIdentity(rightLaneKF.errorCovPost, cv::Scalar(1));
 }
 
-Mat KalmanFilter::polyfit(const Mat& y_vals, const Mat& x_vals, int degree)
+cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree)
 {
     // Check if we have enough points for the requested degree
     if (y_vals.rows < degree + 1)
