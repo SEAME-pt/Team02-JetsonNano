@@ -432,10 +432,10 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
 
         // Draw middle lane curve with white color and thicker line
-            cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
-            for (size_t i = 1; i < midCurve.size(); i++) {
-                cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
-            }
+        cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+        for (size_t i = 1; i < midCurve.size(); i++) {
+            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        }
     }
 
     cv::Point midPoint;
