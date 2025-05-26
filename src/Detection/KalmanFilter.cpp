@@ -42,9 +42,9 @@ void KalmanFilter::initializePolynomialKalmanFilters() {
     }
     
     // Lower process noise for polynomials (they change more slowly)
-    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-5));
-    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-5));
-    cv::setIdentity(middleLaneKF.processNoiseCov, cv::Scalar(1e-5));
+    cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
+    cv::setIdentity(middleLaneKF.processNoiseCov, cv::Scalar(1e-3));
     
     // Measurement noise
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(0.01));
