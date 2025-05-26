@@ -29,7 +29,7 @@ void Signals::run()
             if (can_id == 0x01)
             {
                 int speed;
-                double wheelDiame = 0.067;
+                // double wheelDiame = 0.067;
 
                 memcpy(&speed, &data[1], 4);
 
