@@ -10,6 +10,7 @@ class KalmanFilter
   private:
     cv::KalmanFilter rightLaneKF;
     cv::KalmanFilter leftLaneKF;
+    cv::KalmanFilter middleLaneKF;
 
   public:
     KalmanFilter();
@@ -17,8 +18,10 @@ class KalmanFilter
 
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);
+    void updateMiddleLaneFilter(const std::vector<cv::Point>& lane);
     std::vector<cv::Point> predictLeftLaneCurve(int height, int width);
     std::vector<cv::Point> predictRightLaneCurve(int height, int width);
+    std::vector<cv::Point> predictMiddleLaneCurve(int height, int width);
 
   private:
     void initializePolynomialKalmanFilters();
