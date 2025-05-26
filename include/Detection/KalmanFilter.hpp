@@ -16,15 +16,16 @@ class KalmanFilter
                    std::shared_ptr<zenoh::Session> session);
     ~KalmanFilter();
 
-  private:
-    void initializeKalmanFilters();
-
-    std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height);
-    cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
-    Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree);
-
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);
     std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve();
     std::vector<cv::Point> KalmanFilter::predictRightLaneCurve();
+
+  private:
+    void initializeKalmanFilters();
+  
+    std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height);
+    cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
+    Mat polyfit(const Mat& y_vals, const Mat& x_vals, int degree);
+
 };
