@@ -751,7 +751,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-bool LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
+void LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
     float expectedHalfWidth = width * 0.275f; // Approximately half lane width
