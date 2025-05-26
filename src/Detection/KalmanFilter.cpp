@@ -1,7 +1,7 @@
 #include "KalmanFilter.hpp"
 
 KalmanFilter::KalmanFilter() {
-    initializeKalmanFilters();
+    initializePolynomialKalmanFilters();
 }
 
 KalmanFilter::~KalmanFilter() {}
