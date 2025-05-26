@@ -4,6 +4,8 @@ KalmanFilter::KalmanFilter() {
     initializeKalmanFilters();
 }
 
+KalmanFilter::~KalmanFilter() {}
+
 void KalmanFilter::initializePolynomialKalmanFilters() {
     // For each lane, track 3 polynomial coefficients and their derivatives
     // State: [a, b, c, da/dt, db/dt, dc/dt] for y = ax² + bx + c
@@ -55,7 +57,7 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
         // Not enough points - reduce degree or return empty matrix
         if (y_vals.rows < 2)
         {
-            return Mat();
+            return cv::Mat();
         }
         // Adjust degree based on available points
         degree = y_vals.rows - 1;
@@ -99,7 +101,7 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
     catch (const cv::Exception& e)
     {
         std::cerr << "Error in polyfit: " << e.what() << std::endl;
-        return Mat();
+        return cv::Mat();
     }
     if (abs(coeffs.at<double>(0)) < 0.0005)
         coeffs.at<double>(0) = 0;
@@ -129,7 +131,7 @@ cv::Mat KalmanFilter::extractPolynomialCoefficients(const std::vector<cv::Point>
     return polyfit(yVals, xVals, 2);
 }
 
-std::vector<cv::Point> KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height) {
+std::vector<cv::Point> KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height, int width) {
     std::vector<cv::Point> curve;
     
     // Generate points along the polynomial curve
@@ -142,7 +144,7 @@ std::vector<cv::Point> KalmanFilter::reconstructLaneFromCoefficients(const cv::M
         int x = static_cast<int>(a*y*y + b*y + c);
         
         // Ensure point is within frame
-        if (x >= 0 && x < frame.cols) {
+        if (x >= 0 && x < width) {
             curve.push_back(cv::Point(x, y));
         }
     }
@@ -183,12 +185,12 @@ void KalmanFilter::updateRightLaneFilter(const std::vector<cv::Point>& lane) {
     rightLaneKF.correct(measurement);
 }
 
-std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve(int height) {
+std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve(int height, int width) {
     cv::Mat leftPrediction = leftLaneKF.predict();
-    return (reconstructLaneFromCoefficients(leftPrediction, height));
+    return (reconstructLaneFromCoefficients(leftPrediction, height, width));
 }
 
-std::vector<cv::Point> KalmanFilter::predictRightLaneCurve(int height) {
+std::vector<cv::Point> KalmanFilter::predictRightLaneCurve(int height, int width) {
     cv::Mat rightPrediction = rightLaneKF.predict();
-    return (reconstructLaneFromCoefficients(rightPrediction, height));
+    return (reconstructLaneFromCoefficients(rightPrediction, height, width));
 }

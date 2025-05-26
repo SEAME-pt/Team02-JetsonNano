@@ -12,19 +12,18 @@ class KalmanFilter
     cv::KalmanFilter leftLaneKF;
 
   public:
-    KalmanFilter(const std::string& enginePath,
-                   std::shared_ptr<zenoh::Session> session);
+    KalmanFilter();
     ~KalmanFilter();
 
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);
-    std::vector<cv::Point> predictLeftLaneCurve(int height);
-    std::vector<cv::Point> predictRightLaneCurve(int height);
+    std::vector<cv::Point> predictLeftLaneCurve(int height, int width);
+    std::vector<cv::Point> predictRightLaneCurve(int height, int width);
 
   private:
     void initializeKalmanFilters();
   
-    std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height);
+    std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height, int width);
     cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
 

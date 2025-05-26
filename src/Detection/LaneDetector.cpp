@@ -406,7 +406,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
             kalmanFilter.updateLeftLaneFilter(leftCurve);
             
-            rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows);
+            rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
             
             // Visualize predicted lane
             for (size_t i = 1; i < rightCurve.size(); i++) {
@@ -426,7 +426,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             
             kalmanFilter.updateRightLaneFilter(rightCurve);
 
-            leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows);
+            leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
             
             // Visualize predicted lane
             for (size_t i = 1; i < leftCurve.size(); i++) {
