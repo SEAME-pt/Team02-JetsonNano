@@ -18,7 +18,7 @@ void Signals::run()
 {
     while (1)
     {
-        usleep(10);
+        usleep(15);
         int buffer = this->canBus->checktheReceive();
         if (buffer != -1)
         {
@@ -29,13 +29,13 @@ void Signals::run()
             if (can_id == 0x01)
             {
                 int speed;
-                double wheelDiame = 0.067;
+                // double wheelDiame = 0.067;
 
                 memcpy(&speed, &data[1], 4);
 
                 speed = ntohl(speed);
-                speed = wheelDiame * 3.14 * speed * 10 / 60;
-                if (speed < 0 || speed > 100)
+                // speed = wheelDiame * 3.14 * speed * 10 / 60;
+                if (speed < 0 || speed > 2000)
                     speed = 0;
                 printf("Publishing speed: '%d'\n", speed);
                 std::string speed_str = std::to_string(speed);
