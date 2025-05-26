@@ -568,7 +568,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::clusterLaneMask(const cv::Mat&
     return lanePolylines;
 }
 
-void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap) {
+void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap, int width) {
     if (lanePolylines.size() <= 1) return;
     
     bool mergePerformed = true;
@@ -659,21 +659,21 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
         lanePolylines.resize(2);
     }
 
-    // float minLaneWidth = frame.cols * 0.1f; // At least 20% of frame width
+    float minLaneWidth = width * 0.1f; // At least 20% of frame width
     
-    // if (lanePolylines.size() == 2) {
-    //     if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
-    //         // Lanes are too close - keep only the stronger one
-    //         if (lanePolylines[0].size() > lanePolylines[1].size()) {
-    //             lanePolylines.erase(lanePolylines.begin() + 1);
-    //         } else {
-    //             lanePolylines.erase(lanePolylines.begin());
-    //         }
+    if (lanePolylines.size() == 2) {
+        if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
+            // Lanes are too close - keep only the stronger one
+            if (lanePolylines[0].size() > lanePolylines[1].size()) {
+                lanePolylines.erase(lanePolylines.begin() + 1);
+            } else {
+                lanePolylines.erase(lanePolylines.begin());
+            }
             
-    //         cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
-    //                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
-    //     }
-    // }
+            // cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
+            //            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        }
+    }
 }
 
 void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz) {
@@ -751,7 +751,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-bool LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, bool isLeftLane, int width) {
+bool LaneDetector::isValidMiddleCurve(std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
     float expectedHalfWidth = width * 0.275f; // Approximately half lane width

@@ -70,12 +70,12 @@ class LaneDetector
 
     void createLanes(cv::Mat& binary_mask, cv::Mat& frame);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
-    void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
+    void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap, int width);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz);
 
     float calculateLaneDistance(const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2);
     bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
-    bool isValidMiddleCurve(const std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, bool isLeftLane, int width);
+    bool isValidMiddleCurve(const std::vector<cv::Point>& midCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width);
     
     void createExecutionContext(const std::string& enginePath);
 };
