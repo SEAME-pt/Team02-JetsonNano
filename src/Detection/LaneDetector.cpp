@@ -383,7 +383,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
 
-            // midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
             rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
 
             checkPredicedCurve(rightCurve, leftCurve, allPolylinesViz, true, frame.cols);
@@ -396,7 +395,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             prevRightCurve = rightCurve;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            // midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
             leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
 
             checkPredicedCurve(leftCurve, rightCurve, allPolylinesViz, false, frame.cols);
