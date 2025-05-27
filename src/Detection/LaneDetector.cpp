@@ -14,7 +14,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
     try {
-        this->gpuInference = new GPUInference(enginePath);
+        this->gpuInference = new GPUInference(enginePath, 3, 1);
         this->gpuInference->init(); 
     }
     catch (const std::exception& e)
@@ -83,15 +83,18 @@ LaneDetector::~LaneDetector()
 void LaneDetector::detect(cv::Mat& frame)
 {
     cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
+    cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
     
-    preProcess(frame);
+    preProcess(frame, preprocessedFrame);
 
-    gpuInference->inference(frame, binary_mask);
+    gpuInference->copyToGPU(preprocessedFrame);
+    gpuInference->inference();
+    gpuInference->copyToCPUBinaryOutput(binary_mask);
     
     postProcess(frame, binary_mask);
 }
 
-void LaneDetector::preProcess(cv::Mat& frame)
+void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     // Create static GPU matrices
     static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
@@ -107,7 +110,7 @@ void LaneDetector::preProcess(cv::Mat& frame)
     cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
 
     // Download the result back to CPU
-    d_rgb_image.download(frame, cv_stream);
+    d_rgb_image.download(preprocessedFrame, cv_stream);
 
     // Wait for CUDA operations to complete
     cv_stream.waitForCompletion();

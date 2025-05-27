@@ -43,7 +43,9 @@ class GPUInference
     ~GPUInference();
 
     void init();
-    void inference(cv::Mat& frame, cv::Mat& binary_mask);
+    void inference();
+    void copyToCPUBinaryOutput(cv::Mat& outputMask);
+    void copyToCPUClassOutput(cv::Mat& outputMask);
 
   private:
     void createExecutionContext(const std::string& enginePath);
