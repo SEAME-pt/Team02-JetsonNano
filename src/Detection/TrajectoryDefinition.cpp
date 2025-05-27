@@ -1,4 +1,4 @@
-#include "LaneDetector.hpp"
+#include "TrajectoryDefinition.hpp"
 #include <sys/time.h>
 #include <iostream>
 #include <signal.h>
@@ -8,19 +8,10 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh::Session> session)
+TrajectoryDefinition::TrajectoryDefinition(std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
-
-    try {
-        this->gpuInference = new GPUInference(enginePath, 3, 1);
-        this->gpuInference->init(); 
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error initializing GPUInference" << e.what() << std::endl;
-    }
 
     try     
     {
@@ -72,69 +63,36 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 }
 
-LaneDetector::~LaneDetector()
+TrajectoryDefinition::~TrajectoryDefinition()
 {
-    delete gpuInference;
     delete kalmanFilter;
     delete canBus;
     delete ipm;
 }
 
-void LaneDetector::detect(cv::Mat& frame)
+void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
-    cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
-    cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
-    
-    preProcess(frame, preprocessedFrame);
-
-    gpuInference->copyToGPU(preprocessedFrame);
-    gpuInference->inference();
-    gpuInference->copyToCPUBinaryOutput(binary_mask);
-    
-    
-    // postProcess(frame, binary_mask);
-}
-
-void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
-{
-    // Create static GPU matrices
-    static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
-
-    // Upload input frame to GPU
-    d_frame.upload(frame);
-
-    // Resize on GPU with CUDA stream
-    cv::cuda::resize(d_frame, d_resized, cv::Size(WIDTH, HEIGHT), 0, 0,
-                     cv::INTER_NEAREST, cv_stream);
-
-    // Convert BGR to RGB on GPU
-    cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
-
-    // Download the result back to CPU
-    d_rgb_image.download(preprocessedFrame, cv_stream);
-
-    // Wait for CUDA operations to complete
-    cv_stream.waitForCompletion();
-}
-
-void LaneDetector::postProcess(cv::Mat& frame, cv::Mat& binary_mask)
-{
-    cv::Mat ipm_mask = ipm->applyIPM(binary_mask);
+    cv::Mat ipm_binary_mask = ipm->applyIPM(binary_mask);
+    cv::Mat ipm_class_mask = ipm->applyIPM(class_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
     
-    cv::Mat resized_ipm_mask;
-    cv::resize(ipm_mask, resized_ipm_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::Mat resized_ipm_binary_mask;
+    cv::resize(ipm_binary_mask, resized_ipm_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+
+    cv::Mat resized_ipm_class_mask;
+    cv::resize(ipm_class_mask, resized_ipm_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
 
     cv::Mat resized_ipm_frame;
     cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
 
     resized_ipm_frame.copyTo(frame);
 
-    createLanes(resized_ipm_mask, frame);
+    createLanes(frame, resized_ipm_binary_mask, resized_ipm_class_mask);
 }
 
-void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
+void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
+    (void) class_mask;
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
@@ -278,7 +236,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 }
 
 
-std::vector<std::vector<cv::Point>> LaneDetector::clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
+std::vector<std::vector<cv::Point>> TrajectoryDefinition::clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes) {    
     static cv::Mat verticalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
     static cv::Mat horizontalKernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
     
@@ -352,7 +310,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::clusterLaneMask(const cv::Mat&
     return lanePolylines;
 }
 
-void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap) {
+void TrajectoryDefinition::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap) {
     if (lanePolylines.size() <= 1) return;
     
     bool mergePerformed = true;
@@ -452,7 +410,7 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
     }
 }
 
-void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines) {
+void TrajectoryDefinition::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines) {
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // Blue
         cv::Scalar(0, 255, 0),    // Green
@@ -483,7 +441,7 @@ void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylin
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 }
 
-float LaneDetector::calculateLaneDistance(const std::vector<cv::Point>& lane1, 
+float TrajectoryDefinition::calculateLaneDistance(const std::vector<cv::Point>& lane1, 
                                         const std::vector<cv::Point>& lane2) {
     // Create normalized Y-position mapping of lane points
     std::map<int, cv::Point> lane1Points;
@@ -517,7 +475,7 @@ float LaneDetector::calculateLaneDistance(const std::vector<cv::Point>& lane1,
     return (matchCount > 0) ? (totalDist / matchCount) : FLT_MAX;
 }
 
-bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth) {
+bool TrajectoryDefinition::validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth) {
     if (lanePolylines.size() < 2) return true;
     
     // Calculate average distance between the two lanes
@@ -527,7 +485,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane) {
+void TrajectoryDefinition::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
     float expectedHalfWidth = frameWidth_ * 0.50f; // Approximately lane width
@@ -576,7 +534,7 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
     }
 }
 
-void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+void TrajectoryDefinition::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
     // Make sure we have equal length curves by resampling if needed
     int numPoints = std::min(leftCurve.size(), rightCurve.size());
     for (int i = 0; i < numPoints; i++)
@@ -596,7 +554,7 @@ void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::
     }
 }
 
-void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve) {
+void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve) {
     cv::Point midPoint;
     int height = frameHeight_;
     int width  = frameWidth_;
@@ -656,7 +614,7 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve) {
     }
 }
 
-bool LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
+bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
     cv::Point lowestPoint(-1, -1);
     int centerX = frameWidth_ / 2;
     float avgX = 0;

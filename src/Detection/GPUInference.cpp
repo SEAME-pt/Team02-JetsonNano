@@ -86,7 +86,6 @@ void GPUInference::inference() {
 }
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
-    // Continue with existing channel reordering code
     const int plane_size      = HEIGHT * WIDTH;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
@@ -107,7 +106,6 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
 void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask) {
     const int total_pixels = HEIGHT * WIDTH;
     
-    // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
                     outputChannels_ * HEIGHT * WIDTH * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
