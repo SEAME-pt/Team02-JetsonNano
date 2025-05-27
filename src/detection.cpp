@@ -82,7 +82,7 @@ void cameraThread(Camera* camera, FrameQueue *input_queue) {
     }
 }
 
-void laneDetectionThread(LaneDetector* detector, Camera* camera, FrameQueue *input_queue) {
+void laneDetectionThread(LaneDetector* detector, FrameQueue *input_queue) {
     while (running) {
         std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
 
@@ -108,7 +108,7 @@ void laneDetectionThread(LaneDetector* detector, Camera* camera, FrameQueue *inp
     }
 }
 
-void objectDetectionThread(ObjectDetector* detector, Camera* camera, FrameQueue *input_queue) {
+void objectDetectionThread(ObjectDetector* detector, FrameQueue *input_queue) {
     while (running) {
         std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
 
@@ -134,7 +134,7 @@ void objectDetectionThread(ObjectDetector* detector, Camera* camera, FrameQueue 
     }
 }
 
-void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition, FrameQueue *input_queue) {
+void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition) {
     cv::namedWindow("Trajectory Definition", cv::WINDOW_NORMAL);
     cv::setWindowProperty("Trajectory Definition", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
@@ -154,7 +154,7 @@ void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition, Fram
         frame_data->original_frame.copyTo(output_frame);
         
         // Now process with trajectory definition, which uses both masks
-        trajectoryDefinition.process(output_frame, 
+        trajectoryDefinition->process(output_frame, 
                                     frame_data->lane_binary_mask, 
                                     frame_data->object_class_mask);
         // Display result
@@ -203,9 +203,9 @@ int main(int argc, char** argv)
         camera.startCapture();
 
         thread cameraThread(cameraThread, &camera, &input_queue);
-        thread laneThread(laneDetectionThread, &laneDetector, &camera, &input_queue);
-        thread objThread(objectDetectionThread, &objDetector, &camera, &input_queue);
-        thread trajecThread(trajectoryDefinitionThread, &trajectoryDefinition, &camera, &input_queue);
+        thread laneThread(laneDetectionThread, &laneDetector, &input_queue);
+        thread objThread(objectDetectionThread, &objDetector, &input_queue);
+        thread trajecThread(trajectoryDefinitionThread, &trajectoryDefinition);
 
         if (cameraThread.joinable()) {
             cameraThread.join();
