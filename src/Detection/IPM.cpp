@@ -11,7 +11,7 @@ IPM::IPM(const cv::Size& _origSize, const cv::Size& _dstSize,
     initialize(_origSize, _dstSize, _origPoints, _dstPoints);
 }
 
-void IPM::initialize(const cv::Size& _origSize, const cv::Size& _dstSize,
+void IPM::init(const cv::Size& _origSize, const cv::Size& _dstSize,
                      const std::vector<cv::Point2f>& _origPoints, const std::vector<cv::Point2f>& _dstPoints) {
     origSize = _origSize;
     dstSize = _dstSize;

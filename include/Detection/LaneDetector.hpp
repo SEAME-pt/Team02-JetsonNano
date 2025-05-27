@@ -16,11 +16,13 @@
 #include <deque>
 #include <cmath>
 #include <sys/time.h>
+
 #include "CAN.hpp"
 #include "Logger.hpp"
 #include "IPM.hpp"
 #include "LaneDetectorPublisher.hpp"
 #include "KalmanFilter.hpp"
+#include "GPUInference.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -30,22 +32,14 @@ class LaneDetector
   private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
-    
-    std::shared_ptr<nvinfer1::IExecutionContext> context;
-    cudaEvent_t start;
-    cudaEvent_t stop;
-    cudaStream_t stream;
-    cv::cuda::Stream cv_stream;
-    void* inputDevice;
-    void* outputDevice;
-    float* inputData;
-    float* outputData;
-    
-    CAN* canBus;
-    
-    IPM ipm;
-    cv::Size bevSize;
 
+    cv::cuda::Stream cv_stream;
+  
+    GPUInference* gpuInference;
+    CAN* canBus;
+    KalmanFilter* kalmanFilter;
+    IPM* ipm;
+  
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
 
@@ -58,7 +52,6 @@ class LaneDetector
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 25;
 
-    KalmanFilter kalmanFilter;
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 

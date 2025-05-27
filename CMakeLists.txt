@@ -116,6 +116,7 @@ add_executable(Detection
     ./src/Detection/ObjectDetector.cpp
     ./src/Detection/LaneDetector.cpp
     ./src/Detection/KalmanFilter.cpp
+    ./src/Detection/GPUInference.cpp
     ./src/Detection/IPM.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/Hardware/Camera.cpp
