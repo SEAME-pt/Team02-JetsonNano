@@ -37,6 +37,8 @@ class GPUInference
     void* outputDevice;
     float* inputData;
     float* outputData;
+    int inputChannels_;
+    int outputChannels_;
 
   public:
     GPUInference(const std::string &enginePath);

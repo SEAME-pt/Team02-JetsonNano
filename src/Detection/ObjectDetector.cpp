@@ -14,36 +14,14 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
     speed_lock_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
 
-    createExecutionContext(enginePath);
-
-    // Set highest stream priority
-    int leastPriority, greatestPriority;
-    cudaDeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
-    cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking,
-                                 greatestPriority);
-
-    // Create an OpenCV CUDA stream (with default flags)
-    cv_stream = cv::cuda::Stream();
-
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // Pin memory for faster transfers
-    void* input_ptr;
-    void* output_ptr;
-    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
-                  cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, 10 * HEIGHT * WIDTH * sizeof(float),
-                  cudaHostAllocMapped);
-    inputData  = static_cast<float*>(input_ptr);
-    outputData = static_cast<float*>(output_ptr);
-
-    // Allocate GPU memory
-    size_t pitch;
-    cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 3);
-    cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 10);
+    try {
+        this->gpuInference = new GPUInference(enginePath, 3, 1);
+        this->gpuInference->init(); 
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing GPUInference" << e.what() << std::endl;
+    }
 
     try
     {
@@ -59,69 +37,22 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
 
 ObjectDetector::~ObjectDetector()
 {
-    cudaFreeHost(inputData);
-    cudaFreeHost(outputData);
-    cudaFree(inputDevice);
-    cudaFree(outputDevice);
-    cudaStreamDestroy(stream);
-}
-
-void ObjectDetector::createExecutionContext(const std::string& enginePath)
-{
-    Logger logger;
-
-    std::ifstream file(enginePath, std::ios::binary);
-    if (!file)
-    {
-        throw std::runtime_error("Failed to open engine file");
-    }
-
-    file.seekg(0, std::ios::end);
-    size_t size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> engineData(size);
-    file.read(engineData.data(), size);
-
-    nvinfer1::IRuntime* runtime = nvinfer1::createInferRuntime(logger);
-    nvinfer1::ICudaEngine* engine =
-        runtime->deserializeCudaEngine(engineData.data(), size);
-    context.reset(engine->createExecutionContext());
+    delete gpuInference;
+    delete canBus;
 }
 
 void ObjectDetector::detect(cv::Mat& frame)
 {
-    float milliseconds = 0;
+    cv::Mat class_mask(HEIGHT, WIDTH, CV_8UC3);
+    cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
+    
+    preProcess(frame, preprocessedFrame);
 
-    // Preprocess
-    preProcess(frame);
-
-    cudaEventRecord(start, stream);
-
-    // Copy to GPU
-    cudaMemcpyAsync(inputDevice, inputData,
-                    3 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyHostToDevice, stream);
-
-    // Run inference with optimization flags
-    void* bindings[] = {inputDevice, outputDevice};
-    context->enqueueV2(bindings, stream, nullptr);
-
-    // Copy back to CPU
-    cudaMemcpyAsync(outputData, outputDevice,
-                    10 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyDeviceToHost, stream);
-
-    cudaStreamSynchronize(stream);
-
-    // Postprocess
-    postProcess(frame);
-
-    cudaEventRecord(stop, stream);
-    cudaEventSynchronize(stop);
-
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "Inference time: " << milliseconds << "ms\n";
+    gpuInference->copyToGPU(preprocessedFrame);
+    gpuInference->inference();
+    gpuInference->copyToCPUClassOutput(class_mask);
+    
+    postProcess(frame, class_mask);
 }
 
 void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
@@ -146,15 +77,15 @@ void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
     cv_stream.waitForCompletion();
 }
 
-void ObjectDetector::postProcess(cv::Mat& frame)
+void ObjectDetector::postProcess(cv::Mat& frame, cv::Mat& class_mask)
 {
     // Resize the segmentation mask to match the frame size
     cv::Mat resized_mask;
-    cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
+    cv::resize(class_mask, resized_mask, frame.size(), 0, 0,
                cv::INTER_NEAREST);
 
     // Check for collision in the danger zone
-    bool collision_danger = checkForwardCollision(colored_mask);
+    bool collision_danger = checkForwardCollision(resized_mask);
 
     if (collision_danger)
     {
