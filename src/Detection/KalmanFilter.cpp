@@ -4,7 +4,7 @@ KalmanFilter::KalmanFilter() {}
 
 KalmanFilter::~KalmanFilter() {}
 
-void KalmanFilter::initializePolynomialKalmanFilters() {
+void KalmanFilter::init() {
     // For each lane, track 3 polynomial coefficients and their derivatives
     // State: [a, b, c, da/dt, db/dt, dc/dt] for y = ax² + bx + c
     const int stateSize = 6;
