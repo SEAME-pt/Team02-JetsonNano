@@ -30,19 +30,11 @@ class ObjectDetector
     std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> speed_lock_publisher_;
 
-    std::shared_ptr<nvinfer1::IExecutionContext> context;
-    cudaEvent_t start;
-    cudaEvent_t stop;
-    cudaStream_t stream;
-    cv::cuda::Stream cv_stream;
-    void* inputDevice;
-    void* outputDevice;
-    float* inputData;
-    float* outputData;
+    GPUInference* gpuInference;
+    CAN* canBus;
 
     bool is_emergency_stop = false;
 
-    CAN* canBus;
 
   public:
     ObjectDetector(const std::string& enginePath,
@@ -52,8 +44,8 @@ class ObjectDetector
     void detect(cv::Mat& frame);
 
   private:
-    void preProcess(const cv::Mat& frame);
-    void postProcess(cv::Mat& frame);
+    void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
+    void postProcess(cv::Mat& frame, cv::Mat& class_mask);
     void createExecutionContext(const std::string& enginePath);
 
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
