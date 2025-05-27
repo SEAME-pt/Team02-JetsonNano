@@ -2,8 +2,8 @@
 
 GPUInference::GPUInference(const std::string &enginePath, int inputChannels, int outputChannels) {
     enginePath_ = enginePath;
-    outputChannels_ = outputChannels;
     inputChannels_ = inputChannels;
+    outputChannels_ = outputChannels;
 }
 
 GPUInference::~GPUInference() {
@@ -88,13 +88,13 @@ void GPUInference::inference() {
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
     // Continue with existing channel reordering code
     const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* preprocessedFrame = preprocessedFrame.data;
+    const uint8_t* preprocessedData = preprocessedFrame.data;
 
     for (int c = 0; c < inputChannels_; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            inputData[c * plane_size + i] = preprocessedFrame[i * inputChannels_ + c] / 255.0f;
+            inputData[c * plane_size + i] = preprocessedData[i * inputChannels_ + c] / 255.0f;
         }
     }
 
