@@ -41,7 +41,7 @@ class GPUInference
     int outputChannels_;
 
   public:
-    GPUInference(const std::string &enginePath);
+    GPUInference(const std::string &enginePath, int inputChannels, int outputChannels);
     ~GPUInference();
 
     void init();
