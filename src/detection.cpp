@@ -4,6 +4,10 @@
 #include "Camera.hpp"
 #include <thread>
 #include <atomic>
+#include <condition_variable>  // Add this
+#include <queue>              // Add this
+#include <memory>             // Add this
+#include <iostream> 
 
 using namespace cv;
 using namespace std;
