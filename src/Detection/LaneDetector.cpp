@@ -417,63 +417,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
     }
 
-    cv::Point midPoint;
-    int height = frame.rows;
-    int width  = frame.cols;
-
-    if (!midCurve.empty()) {
-        int targetY = height - (1.5 * height / 3); // 1/3 up from bottom
-
-        // Find closest point to target Y
-        size_t closestIdx = 0;
-        int minDistance   = std::abs(midCurve[0].y - targetY);
-
-        for (size_t i = 1; i < midCurve.size(); i++)
-        {
-            int distance = std::abs(midCurve[i].y - targetY);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                closestIdx  = i;
-            }
-        }
-
-        // Use the point at found index
-        midPoint = midCurve[closestIdx];
-
-        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
-
-        float centerX  = width / 2;
-        float rawError = (midPoint.x - centerX) / (width / 2.0f);
-
-        // Apply rate limiting to error changes
-        static float prevError       = 0.0f;
-        const float MAX_ERROR_CHANGE = 1.0f; // Maximum allowed change per frame
-
-        float errorChange = rawError - prevError;
-        if (std::abs(errorChange) > MAX_ERROR_CHANGE)
-        {
-            errorChange = (errorChange > 0) ? MAX_ERROR_CHANGE : -MAX_ERROR_CHANGE;
-        }
-
-        float lateralError = prevError + errorChange;
-        prevError          = lateralError;
-
-        const float MAX_ERROR = 3.0f;
-        if (lateralError > MAX_ERROR) {
-            lateralError = MAX_ERROR;
-            prevError = MAX_ERROR; // Update prevError as well
-        } else if (lateralError < -MAX_ERROR) {
-            lateralError = -MAX_ERROR;
-            prevError = -MAX_ERROR; // Update prevError as well
-        }
-
-        publisher_->publishCameraError(lateralError);
-
-        std::string statusMsg = "Error: " + std::to_string(lateralError).substr(0, 6);
-        cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
-                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-    }
+    createMidPointError(midCurve, frame, allPolylinesViz);
 
     allPolylinesViz.copyTo(frame);
 }
@@ -803,4 +747,65 @@ void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::
     for (size_t i = 1; i < midCurve.size(); i++) {
         cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
     }
+}
+
+void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat frame, cv::Mat& allPolylinesViz) {
+    cv::Point midPoint;
+    int height = frame.rows;
+    int width  = frame.cols;
+
+    if (!midCurve.empty()) {
+        int targetY = height - (1.5 * height / 3); // 1/3 up from bottom
+
+        // Find closest point to target Y
+        size_t closestIdx = 0;
+        int minDistance   = std::abs(midCurve[0].y - targetY);
+
+        for (size_t i = 1; i < midCurve.size(); i++)
+        {
+            int distance = std::abs(midCurve[i].y - targetY);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestIdx  = i;
+            }
+        }
+
+        // Use the point at found index
+        midPoint = midCurve[closestIdx];
+
+        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+
+        float centerX  = width / 2;
+        float rawError = (midPoint.x - centerX) / (width / 2.0f);
+
+        // Apply rate limiting to error changes
+        static float prevError       = 0.0f;
+        const float MAX_ERROR_CHANGE = 1.0f; // Maximum allowed change per frame
+
+        float errorChange = rawError - prevError;
+        if (std::abs(errorChange) > MAX_ERROR_CHANGE)
+        {
+            errorChange = (errorChange > 0) ? MAX_ERROR_CHANGE : -MAX_ERROR_CHANGE;
+        }
+
+        float lateralError = prevError + errorChange;
+        prevError          = lateralError;
+
+        const float MAX_ERROR = 3.0f;
+        if (lateralError > MAX_ERROR) {
+            lateralError = MAX_ERROR;
+            prevError = MAX_ERROR; // Update prevError as well
+        } else if (lateralError < -MAX_ERROR) {
+            lateralError = -MAX_ERROR;
+            prevError = -MAX_ERROR; // Update prevError as well
+        }
+
+        publisher_->publishCameraError(lateralError);
+
+        std::string statusMsg = "Error: " + std::to_string(lateralError).substr(0, 6);
+        cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+    }
+
 }
