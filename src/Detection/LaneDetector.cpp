@@ -343,7 +343,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
     }
 
-    createMidPointError(midCurve, frame);
+    createMidPointError(midCurve);
 
     allPolylinesViz_.copyTo(frame);
 }
