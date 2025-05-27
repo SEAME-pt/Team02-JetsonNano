@@ -86,6 +86,8 @@ void LaneDetector::detect(cv::Mat& frame)
     
     preProcess(frame);
 
+    std::cout << "Aqui" << std::endl;
+
     gpuInference->inference(frame, binary_mask);
     
     postProcess(frame, binary_mask);
