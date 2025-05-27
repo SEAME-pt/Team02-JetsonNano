@@ -58,7 +58,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
 
         this->ipm     = new IPM();
         this->ipm->init(origSize, bevSize);
-        ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
+        this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
                             nearDistance, farDistance, laneWidth);
     }
     catch (const std::exception& e)
@@ -137,8 +137,8 @@ void LaneDetector::postProcess(cv::Mat& frame)
     }
 
     // Apply IPM to mask and frame
-    cv::Mat ipm_mask = ipm.applyIPM(binary_mask);
-    cv::Mat ipm_frame = ipm.applyIPM(frame);
+    cv::Mat ipm_mask = ipm->applyIPM(binary_mask);
+    cv::Mat ipm_frame = ipm->applyIPM(frame);
     
     cv::Mat resized_ipm_mask;
     cv::resize(ipm_mask, resized_ipm_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
