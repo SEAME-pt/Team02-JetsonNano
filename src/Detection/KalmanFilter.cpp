@@ -1,8 +1,6 @@
 #include "KalmanFilter.hpp"
 
-KalmanFilter::KalmanFilter() {
-    initializePolynomialKalmanFilters();
-}
+KalmanFilter::KalmanFilter() {}
 
 KalmanFilter::~KalmanFilter() {}
 

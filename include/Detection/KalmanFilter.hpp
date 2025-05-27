@@ -16,6 +16,8 @@ class KalmanFilter
     KalmanFilter();
     ~KalmanFilter();
 
+    void initializePolynomialKalmanFilters();
+
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);
     void updateMiddleLaneFilter(const std::vector<cv::Point>& lane);
@@ -23,9 +25,7 @@ class KalmanFilter
     std::vector<cv::Point> predictRightLaneCurve(int height, int width);
     std::vector<cv::Point> predictMiddleLaneCurve(int height, int width);
 
-  private:
-    void initializePolynomialKalmanFilters();
-  
+  private:  
     std::vector<cv::Point> reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height, int width);
     cv::Mat extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve);
     cv::Mat polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree);
