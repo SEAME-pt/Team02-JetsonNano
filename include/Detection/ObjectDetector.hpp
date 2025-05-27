@@ -31,6 +31,8 @@ class ObjectDetector
     std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> speed_lock_publisher_;
 
+    cv::cuda::Stream cv_stream;
+
     GPUInference* gpuInference;
     CAN* canBus;
 
@@ -47,7 +49,6 @@ class ObjectDetector
   private:
     void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
     void postProcess(cv::Mat& frame, cv::Mat& class_mask);
-    void createExecutionContext(const std::string& enginePath);
 
     bool checkForwardCollision(const cv::Mat& segmentation_mask);
 
