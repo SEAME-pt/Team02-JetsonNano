@@ -65,8 +65,20 @@ void GPUInference::createExecutionContext(const std::string& enginePath)
     context.reset(engine->createExecutionContext());
 }
 
-void GPUInference::inference(cv::Mat& frame) {
+void GPUInference::inference(cv::Mat& frame, cv::Mat& binary_mask) {
     float milliseconds = 0;
+
+    // Continue with existing channel reordering code
+    const int plane_size      = HEIGHT * WIDTH;
+    const uint8_t* frame_data = frame.data;
+
+    for (int c = 0; c < 3; c++)
+    {
+        for (int i = 0; i < plane_size; i++)
+        {
+            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
+        }
+    }
 
     cudaEventRecord(start, stream);
 
@@ -91,4 +103,13 @@ void GPUInference::inference(cv::Mat& frame) {
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
+
+    const int total_pixels = HEIGHT * WIDTH;
+
+    for (int i = 0; i < total_pixels; i++) {
+        int y = i / WIDTH;
+        int x = i % WIDTH;
+        uchar value = (outputData[i] > 0.5) ? 127 : 0;
+        binary_mask.at<uchar>(y, x) = value;
+    }
 }
