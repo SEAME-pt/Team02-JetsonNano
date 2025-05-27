@@ -13,7 +13,7 @@ public:
         const std::vector<cv::Point2f>& _dstPoints = std::vector<cv::Point2f>());
     
     // Initialize the IPM
-    void initialize(const cv::Size& _origSize, const cv::Size& _dstSize,
+    void init(const cv::Size& _origSize, const cv::Size& _dstSize,
                    const std::vector<cv::Point2f>& _origPoints = std::vector<cv::Point2f>(),
                    const std::vector<cv::Point2f>& _dstPoints = std::vector<cv::Point2f>());
     

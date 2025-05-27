@@ -13,56 +13,14 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
-    createExecutionContext(enginePath);
-
-    // Set highest stream priority
-    int leastPriority, greatestPriority;
-    cudaDeviceGetStreamPriorityRange(&leastPriority, &greatestPriority);
-    cudaStreamCreateWithPriority(&stream, cudaStreamNonBlocking,
-                                 greatestPriority);
-
-    // Create an OpenCV CUDA stream (with default flags)
-    cv_stream = cv::cuda::Stream();
-
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    // Pin memory for faster transfers
-    void* input_ptr;
-    void* output_ptr;
-    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
-                  cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, 1 * HEIGHT * WIDTH * sizeof(float),
-                  cudaHostAllocMapped);
-    inputData  = static_cast<float*>(input_ptr);
-    outputData = static_cast<float*>(output_ptr);
-
-    // Allocate GPU memory
-    size_t pitch;
-    cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 3);
-    cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 1);
-
-    // Calibrate IPM
-
-    float cameraHeight = 0.137f;       // meters
-    float cameraPitch = 20.0f;       // degrees down from horizontal
-    float horizontalFOV = 100.0f;     // degrees
-    float img_height = static_cast<float>(HEIGHT);
-    float img_width = static_cast<float>(WIDTH);
-    float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
-    float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-    float nearDistance = 0.01f;       // meters
-    float farDistance = 0.45f;       // meters
-    float laneWidth = 1.4f;      // meters
-    bevSize = cv::Size(WIDTH, HEIGHT);
-    cv::Size origSize = cv::Size(WIDTH, HEIGHT);
-    ipm.initialize(origSize, bevSize);
-    ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
-                            nearDistance, farDistance, laneWidth);
-
-    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+    try {
+        this->gpuInference = new GPUInference();
+        this->gpuInference->init(); 
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing GPUInference" << e.what() << std::endl;
+    }
 
     try     
     {
@@ -71,76 +29,64 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error initializing CAN on Object Detector " << e.what() << std::endl;
+        std::cerr << "Error initializing CAN" << e.what() << std::endl;
     }
 
+    try {
+        this->kalmanFilter = new KalmanFilter();
+        this->kalmanFilter->init(); 
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing KalmanFilter" << e.what() << std::endl;
+    }
+
+    try     
+    {
+        float cameraHeight = 0.137f;       // meters
+        float cameraPitch = 20.0f;       // degrees down from horizontal
+        float horizontalFOV = 100.0f;     // degrees
+        float img_height = static_cast<float>(HEIGHT);
+        float img_width = static_cast<float>(WIDTH);
+        float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
+        float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
+        float nearDistance = 0.01f;       // meters
+        float farDistance = 0.45f;       // meters
+        float laneWidth = 1.4f;      // meters
+        cv::Size bevSize = cv::Size(WIDTH, HEIGHT);
+        cv::Size origSize = cv::Size(WIDTH, HEIGHT);
+
+        this->ipm     = new IPM();
+        this->ipm->init(origSize, bevSize);
+        ipm.calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV, verticalFOV,
+                            nearDistance, farDistance, laneWidth);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing IPM" << e.what() << std::endl;
+    }
+
+    // Create an OpenCV CUDA stream
+    cv_stream = cv::cuda::Stream();
+
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 }
 
 LaneDetector::~LaneDetector()
 {
-    cudaFreeHost(inputData);
-    cudaFreeHost(outputData);
-    cudaFree(inputDevice);
-    cudaFree(outputDevice);
-    cudaStreamDestroy(stream);
-}
-
-void LaneDetector::createExecutionContext(const std::string& enginePath)
-{
-    Logger logger;
-
-    std::ifstream file(enginePath, std::ios::binary);
-    if (!file)
-    {
-        throw std::runtime_error("Failed to open engine file");
-    }
-
-    file.seekg(0, std::ios::end);
-    size_t size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<char> engineData(size);
-    file.read(engineData.data(), size);
-
-    nvinfer1::IRuntime* runtime = nvinfer1::createInferRuntime(logger);
-    nvinfer1::ICudaEngine* engine =
-        runtime->deserializeCudaEngine(engineData.data(), size);
-    context.reset(engine->createExecutionContext());
+    delete gpuInference;
+    delete kalmanFilter;
+    delete canBus;
+    delete ipm;
 }
 
 void LaneDetector::detect(cv::Mat& frame)
 {
-    float milliseconds = 0;
-
-    // Preprocess
     preProcess(frame);
 
-    cudaEventRecord(start, stream);
-
-    // Copy to GPU
-    cudaMemcpyAsync(inputDevice, inputData,
-                    3 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyHostToDevice, stream);
-
-    // Run inference with optimization flags
-    void* bindings[] = {inputDevice, outputDevice};
-    context->enqueueV2(bindings, stream, nullptr);
-
-    // Copy back to CPU
-    cudaMemcpyAsync(outputData, outputDevice,
-                    1 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyDeviceToHost, stream);
-
-    cudaStreamSynchronize(stream);
-
-    cudaEventRecord(stop, stream);
-    cudaEventSynchronize(stop);
+    gpuInference->inference(frame);
     
-    // Postprocess
     postProcess(frame);
-
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
 }
 
 void LaneDetector::preProcess(const cv::Mat& frame)
@@ -207,22 +153,23 @@ void LaneDetector::postProcess(cv::Mat& frame)
 
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
+    std::vector<cv::Point> leftCurve;
+    std::vector<cv::Point> rightCurve;
+    std::vector<cv::Point> midCurve;
+    std::vector<std::vector<cv::Point>> lanePolylines;
+
     currentFrame++;
     allPolylinesViz_ = frame.clone();
     frameWidth_ = frame.cols;
     frameHeight_ = frame.rows;
 
-    std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
+    lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frameWidth_ * 0.15; // 15% of frame width
     float maxVerticalGap = frameHeight_ * 0.35;       // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
-
-    std::vector<cv::Point> leftCurve;
-    std::vector<cv::Point> rightCurve;
-    std::vector<cv::Point> midCurve;
 
     if (lanePolylines.size() == 2) {
         cv::Point lowestPoint1(-1, -1);
