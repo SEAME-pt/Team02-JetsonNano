@@ -208,15 +208,15 @@ void LaneDetector::postProcess(cv::Mat& frame)
 void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
     currentFrame++;
+    allPolylinesViz_ = frame.clone();
+
     std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frame.cols * 0.15; // 15% of frame width
     float maxVerticalGap = frame.rows * 0.35;       // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap, frame.cols);
 
-    cv::Mat allPolylinesViz = frame.clone();
-    drawPolyLanes(lanePolylines, allPolylinesViz);
-
+    drawPolyLanes(lanePolylines);
 
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
@@ -242,8 +242,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         }
                 
         // Debug visualization of lowest points
-        cv::circle(allPolylinesViz, lowestPoint1, 8, cv::Scalar(255, 0, 255), -1);
-        cv::circle(allPolylinesViz, lowestPoint2, 8, cv::Scalar(0, 255, 255), -1);
+        cv::circle(allPolylinesViz_, lowestPoint1, 8, cv::Scalar(255, 0, 255), -1);
+        cv::circle(allPolylinesViz_, lowestPoint2, 8, cv::Scalar(0, 255, 255), -1);
         
         // Compare x-coordinates to determine left/right
         if (lowestPoint1.x < lowestPoint2.x) {
@@ -253,8 +253,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             // Debug text
             std::string leftText = "Left: " + std::to_string(lowestPoint1.x);
             std::string rightText = "Right: " + std::to_string(lowestPoint2.x);
-            cv::putText(allPolylinesViz, leftText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
-            cv::putText(allPolylinesViz, rightText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            cv::putText(allPolylinesViz_, leftText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            cv::putText(allPolylinesViz_, rightText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         } else {
             leftCurve = lanePolylines[1];
             rightCurve = lanePolylines[0];
@@ -262,8 +262,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             // Debug text
             std::string leftText = "Left: " + std::to_string(lowestPoint2.x);
             std::string rightText = "Right: " + std::to_string(lowestPoint1.x);
-            cv::putText(allPolylinesViz, leftText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
-            cv::putText(allPolylinesViz, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+            cv::putText(allPolylinesViz_, leftText, lowestPoint2 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+            cv::putText(allPolylinesViz_, rightText, lowestPoint1 + cv::Point(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
         }
 
         // Limit the maximum curve drift from center
@@ -295,7 +295,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         kalmanFilter.updateLeftLaneFilter(leftCurve);
         kalmanFilter.updateRightLaneFilter(rightCurve);
 
-        defineTrajectoryCurve(midCurve, leftCurve, rightCurve, allPolylinesViz);
+        defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
         kalmanFilter.updateMiddleLaneFilter(midCurve);
 
         prevLeftCurve = leftCurve;
@@ -318,7 +318,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         avgX /= lanePolylines[0].size();
         
         // Draw detected lane's lowest point
-        cv::circle(allPolylinesViz, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
+        cv::circle(allPolylinesViz_, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
         
         // Determine if it's a left or right lane based on position
         bool isLeftLane = false;
@@ -353,13 +353,13 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             std::string debugMsg = "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") + 
                                   " (L:" + std::to_string(leftDistance).substr(0,5) + 
                                   "/R:" + std::to_string(rightDistance).substr(0,5) + ")";
-            cv::putText(allPolylinesViz, debugMsg, cv::Point(20, 80), 
+            cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
             
             // Add staleness information
             std::string staleMsg = "Staleness - L:" + std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
                                   " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
-            cv::putText(allPolylinesViz, staleMsg, cv::Point(20, 100), 
+            cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
         }
         else {
@@ -367,10 +367,10 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             isLeftLane = avgX < centerX;
             
             if (!hasValidLeftMemory || !hasValidRightMemory) {
-                cv::putText(allPolylinesViz, "Memory expired - using position", cv::Point(20, 80), 
+                cv::putText(allPolylinesViz_, "Memory expired - using position", cv::Point(20, 80), 
                            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
             } else {
-                cv::putText(allPolylinesViz, "Position-based detection", cv::Point(20, 80), 
+                cv::putText(allPolylinesViz_, "Position-based detection", cv::Point(20, 80), 
                            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
             }
         }
@@ -380,14 +380,14 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             prevLeftCurve = leftCurve;
             leftLaneLastUpdatedFrame = currentFrame;
-            cv::putText(allPolylinesViz, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
+            cv::putText(allPolylinesViz_, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
 
             rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
 
-            checkPredicedCurve(rightCurve, leftCurve, allPolylinesViz, true, frame.cols);
+            checkPredicedCurve(rightCurve, leftCurve, true, frame.cols);
 
-            defineTrajectoryCurve(midCurve, leftCurve, rightCurve, allPolylinesViz);
+            defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
             kalmanFilter.updateMiddleLaneFilter(midCurve);
         } else {
             rightCurve = lanePolylines[0];
@@ -397,27 +397,27 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
 
-            checkPredicedCurve(leftCurve, rightCurve, allPolylinesViz, false, frame.cols);
+            checkPredicedCurve(leftCurve, rightCurve, false, frame.cols);
             
-            defineTrajectoryCurve(midCurve, leftCurve, rightCurve, allPolylinesViz);
+            defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
             kalmanFilter.updateMiddleLaneFilter(midCurve);
         }
         
         std::string statusMsg = isLeftLane ? "Using kalmanFilter RIGHT lane" : "Using kalmanFilter LEFT lane"; 
-        cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
+        cv::putText(allPolylinesViz_, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     } else {
         midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
 
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
         for (size_t i = 1; i < midCurve.size(); i++) {
-            cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+            cv::line(allPolylinesViz_, midCurve[i-1], midCurve[i], midCurveColor, 3);
         }
     }
 
-    createMidPointError(midCurve, frame, allPolylinesViz);
+    createMidPointError(midCurve, frame);
 
-    allPolylinesViz.copyTo(frame);
+    allPolylinesViz_.copyTo(frame);
 }
 
 
@@ -578,11 +578,6 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
     }
 
     if (lanePolylines.size() > 2) {
-        // // Sort by number of points (largest first)
-        // std::sort(lanePolylines.begin(), lanePolylines.end(), 
-        //     [](const std::vector<cv::Point>& a, const std::vector<cv::Point>& b) {
-        //         return a.size() > b.size();
-        //     });
         lanePolylines.resize(2);
     }
 
@@ -596,14 +591,11 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
             } else {
                 lanePolylines.erase(lanePolylines.begin());
             }
-            
-            // cv::putText(allPolylinesViz, "Duplicate lane removed", cv::Point(20, 140), 
-            //            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
         }
     }
 }
 
-void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines, cv::Mat& allPolylinesViz) {
+void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines) {
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),    // Blue
         cv::Scalar(0, 255, 0),    // Green
@@ -617,20 +609,20 @@ void LaneDetector::drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylin
     for (size_t i = 0; i < lanePolylines.size(); i++) {
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++) {
-            cv::line(allPolylinesViz, lanePolylines[i][j-1], lanePolylines[i][j], color, 2);
+            cv::line(allPolylinesViz_, lanePolylines[i][j-1], lanePolylines[i][j], color, 2);
         }
         
         // Add a label for each polyline
         if (!lanePolylines[i].empty()) {
             std::string label = "Lane " + std::to_string(i+1);
-            cv::putText(allPolylinesViz, label, lanePolylines[i][0], 
+            cv::putText(allPolylinesViz_, label, lanePolylines[i][0], 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
         }
     }
     
     // Display the number of polylines found
     std::string countText = "Polylines: " + std::to_string(lanePolylines.size());
-    cv::putText(allPolylinesViz, countText, cv::Point(20, 30), 
+    cv::putText(allPolylinesViz_, countText, cv::Point(20, 30), 
                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 }
 
@@ -678,7 +670,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
+void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
     float expectedHalfWidth = width * 0.50f; // Approximately lane width
@@ -704,7 +696,7 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
     float error = std::abs(avgMiddleX - expectedMiddleX);
     
     if (error > width * 0.05f) {
-        cv::putText(allPolylinesViz, "Invalid curve prediction - using offset", 
+        cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset", 
                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         
         predictedCurve.clear();
@@ -727,7 +719,7 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
     }
 }
 
-void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& allPolylinesViz) {
+void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
     // Make sure we have equal length curves by resampling if needed
     int numPoints = std::min(leftCurve.size(), rightCurve.size());
     for (int i = 0; i < numPoints; i++)
@@ -743,11 +735,11 @@ void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::
     // Draw middle lane curve with white color and thicker line
     cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
     for (size_t i = 1; i < midCurve.size(); i++) {
-        cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
+        cv::line(allPolylinesViz_, midCurve[i-1], midCurve[i], midCurveColor, 3);
     }
 }
 
-void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat frame, cv::Mat& allPolylinesViz) {
+void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat frame) {
     cv::Point midPoint;
     int height = frame.rows;
     int width  = frame.cols;
@@ -772,7 +764,7 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat
         // Use the point at found index
         midPoint = midCurve[closestIdx];
 
-        cv::circle(allPolylinesViz, midPoint, 8, cv::Scalar(255, 0, 255), -1);
+        cv::circle(allPolylinesViz_, midPoint, 8, cv::Scalar(255, 0, 255), -1);
 
         float centerX  = width / 2;
         float rawError = (midPoint.x - centerX) / (width / 2.0f);
@@ -802,7 +794,7 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat
         publisher_->publishCameraError(lateralError);
 
         std::string statusMsg = "Error: " + std::to_string(lateralError).substr(0, 6);
-        cv::putText(allPolylinesViz, statusMsg, cv::Point(60, 20), 
+        cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 20), 
                 cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     }
 
