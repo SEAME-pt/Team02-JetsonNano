@@ -77,7 +77,7 @@ void cameraThread(Camera* camera, FrameQueue *input_queue) {
 
 void laneDetectionThread(LaneDetector* detector, Camera* camera, FrameQueue *input_queue) {
     while (running) {
-        std::shared_ptr<SharedFrameData> frame_data = input_queue.pop();
+        std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
 
         cv::Mat lane_frame;
         frame_data->original_frame.copyTo(lane_frame);
@@ -103,7 +103,7 @@ void laneDetectionThread(LaneDetector* detector, Camera* camera, FrameQueue *inp
 
 void objectDetectionThread(ObjectDetector* detector, Camera* camera, FrameQueue *input_queue) {
     while (running) {
-        std::shared_ptr<SharedFrameData> frame_data = input_queue.pop();
+        std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
 
         cv::Mat obj_frame;
         frame_data->original_frame.copyTo(obj_frame);
