@@ -16,7 +16,7 @@ class KalmanFilter
     KalmanFilter();
     ~KalmanFilter();
 
-    void initializePolynomialKalmanFilters();
+    void init();
 
     void updateLeftLaneFilter(const std::vector<cv::Point>& lane);
     void updateRightLaneFilter(const std::vector<cv::Point>& lane);

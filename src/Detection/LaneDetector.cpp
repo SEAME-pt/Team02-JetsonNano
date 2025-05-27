@@ -238,11 +238,11 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             }
         }
 
-        kalmanFilter.updateLeftLaneFilter(leftCurve);
-        kalmanFilter.updateRightLaneFilter(rightCurve);
+        kalmanFilter->updateLeftLaneFilter(leftCurve);
+        kalmanFilter->updateRightLaneFilter(rightCurve);
 
         defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
-        kalmanFilter.updateMiddleLaneFilter(midCurve);
+        kalmanFilter->updateMiddleLaneFilter(midCurve);
 
         prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
@@ -258,31 +258,31 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             prevLeftCurve = leftCurve;
             leftLaneLastUpdatedFrame = currentFrame;
 
-            rightCurve = kalmanFilter.predictRightLaneCurve(frameHeight_, frameWidth_);
+            rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
 
             checkPredicedCurve(rightCurve, leftCurve, true);
 
             defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
-            kalmanFilter.updateMiddleLaneFilter(midCurve);
+            kalmanFilter->updateMiddleLaneFilter(midCurve);
         } else {
             rightCurve = lanePolylines[0];
 
             prevRightCurve = rightCurve;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            leftCurve = kalmanFilter.predictLeftLaneCurve(frameHeight_, frameWidth_);
+            leftCurve = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
 
             checkPredicedCurve(leftCurve, rightCurve, false);
             
             defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
-            kalmanFilter.updateMiddleLaneFilter(midCurve);
+            kalmanFilter->updateMiddleLaneFilter(midCurve);
         }
         
         std::string statusMsg = isLeftLane ? "Using kalmanFilter RIGHT lane" : "Using kalmanFilter LEFT lane"; 
         cv::putText(allPolylinesViz_, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     } else {
-        midCurve = kalmanFilter.predictMiddleLaneCurve(frameHeight_, frameWidth_);
+        midCurve = kalmanFilter->predictMiddleLaneCurve(frameHeight_, frameWidth_);
 
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
         for (size_t i = 1; i < midCurve.size(); i++) {
@@ -587,9 +587,9 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
         }
         
         if (isLeftLane) {
-            kalmanFilter.updateRightLaneFilter(predictedCurve);
+            kalmanFilter->updateRightLaneFilter(predictedCurve);
         } else {
-            kalmanFilter.updateLeftLaneFilter(predictedCurve);
+            kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
     }
 }
