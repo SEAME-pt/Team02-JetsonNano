@@ -788,7 +788,7 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
     }
 }
 
-void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& RightCurve, cv::Mat& allPolylinesViz) {
+void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& allPolylinesViz) {
     // Make sure we have equal length curves by resampling if needed
     int numPoints = std::min(leftCurve.size(), rightCurve.size());
     for (int i = 0; i < numPoints; i++)
