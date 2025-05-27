@@ -42,7 +42,7 @@ class GPUInference
     ~GPUInference();
 
     void init()
-    void inference();
+    void inference(cv::Mat& frame);
 
   private:
     void createExecutionContext(const std::string& enginePath);
