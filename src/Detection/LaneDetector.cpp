@@ -380,7 +380,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             // Fallback to position-based detection
             isLeftLane = avgX < centerX;
             
-            // If memory is too old, add a notice
             if (!hasValidLeftMemory || !hasValidRightMemory) {
                 cv::putText(allPolylinesViz, "Memory expired - using position", cv::Point(20, 80), 
                            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
@@ -402,7 +401,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             isValidMiddleCurve(midCurve, leftCurve, allPolylinesViz, true, frame.cols);
 
-            // Draw middle lane curve with white color and thicker line
             cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
             for (size_t i = 1; i < midCurve.size(); i++) {
                 cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
@@ -417,21 +415,18 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             isValidMiddleCurve(midCurve, rightCurve, allPolylinesViz, false, frame.cols);
 
-            // Draw middle lane curve with white color and thicker line
             cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
             for (size_t i = 1; i < midCurve.size(); i++) {
                 cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
             }
         }
         
-        // Log that we're using a synthetic lane
         std::string statusMsg = isLeftLane ? "Using kalmanFilter RIGHT lane" : "Using kalmanFilter LEFT lane"; 
         cv::putText(allPolylinesViz, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     } else {
         midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
 
-        // Draw middle lane curve with white color and thicker line
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
         for (size_t i = 1; i < midCurve.size(); i++) {
             cv::line(allPolylinesViz, midCurve[i-1], midCurve[i], midCurveColor, 3);
