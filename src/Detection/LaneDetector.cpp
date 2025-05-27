@@ -33,7 +33,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     }
 
     try {
-        this->kalmanFilter = new KalmanFilter();
+        this->kalmanFilter = new ::KalmanFilter();
         this->kalmanFilter->init(); 
     }
     catch (const std::exception& e)
