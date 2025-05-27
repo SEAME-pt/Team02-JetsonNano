@@ -62,7 +62,7 @@ class LaneDetector
     void detect(cv::Mat& frame);
 
   private:
-    void preProcess(const cv::Mat& frame);
+    void preProcess(cv::Mat& frame);
     void postProcess(cv::Mat& frame, cv::Mat& binary_mask);
 
     void createLanes(cv::Mat& binary_mask, cv::Mat& frame);
