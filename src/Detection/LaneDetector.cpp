@@ -739,7 +739,7 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
 void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, cv::Mat& allPolylinesViz, bool isLeftLane, int width) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
-    float expectedHalfWidth = width * 0.55f; // Approximately lane width
+    float expectedHalfWidth = width * 0.50f; // Approximately lane width
     float expectedMiddleX = 0;
 
     // Calculate average X positions
@@ -759,11 +759,9 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
         expectedMiddleX = avgDetectedX - expectedHalfWidth;
     }
     
-    // Middle lane should be to the right of left lane by ~half lane width
     float error = std::abs(avgMiddleX - expectedMiddleX);
     
-    // If prediction is significantly off
-    if (error > width * 0.06f) {
+    if (error > width * 0.05f) {
         cv::putText(allPolylinesViz, "Invalid curve prediction - using offset", 
                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         
