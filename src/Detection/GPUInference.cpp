@@ -1,7 +1,9 @@
 #include "GPUInference.hpp"
 
-GPUInference::GPUInference(const std::string &enginePath) {
+GPUInference::GPUInference(const std::string &enginePath, int inputChannels, int outputChannels) {
     enginePath_ = enginePath;
+    outputChannels_ = outputChannels;
+    inputChannels_ = inputChannels;
 }
 
 GPUInference::~GPUInference() {
@@ -27,9 +29,9 @@ void GPUInference::init() {
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, 3 * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&input_ptr, inputChannels_ * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, 1 * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&output_ptr, outputChannels_ * HEIGHT * WIDTH * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
@@ -37,9 +39,9 @@ void GPUInference::init() {
     // Allocate GPU memory
     size_t pitch;
     cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 3);
+                    HEIGHT * inputChannels_);
     cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * 1);
+                    HEIGHT * outputChannels_);
 }
 
 void GPUInference::createExecutionContext(const std::string& enginePath)
@@ -65,36 +67,14 @@ void GPUInference::createExecutionContext(const std::string& enginePath)
     context.reset(engine->createExecutionContext());
 }
 
-void GPUInference::inference(cv::Mat& frame, cv::Mat& binary_mask) {
+void GPUInference::inference() {
     float milliseconds = 0;
 
-    // Continue with existing channel reordering code
-    const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* frame_data = frame.data;
-
-    for (int c = 0; c < 3; c++)
-    {
-        for (int i = 0; i < plane_size; i++)
-        {
-            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
-        }
-    }
-
     cudaEventRecord(start, stream);
-
-    // Copy to GPU
-    cudaMemcpyAsync(inputDevice, inputData,
-                    3 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyHostToDevice, stream);
 
     // Run inference with optimization flags
     void* bindings[] = {inputDevice, outputDevice};
     context->enqueueV2(bindings, stream, nullptr);
-
-    // Copy back to CPU
-    cudaMemcpyAsync(outputData, outputDevice,
-                    1 * HEIGHT * WIDTH * sizeof(float),
-                    cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
 
@@ -103,13 +83,91 @@ void GPUInference::inference(cv::Mat& frame, cv::Mat& binary_mask) {
 
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
+}
 
+void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
+    // Continue with existing channel reordering code
+    const int plane_size      = HEIGHT * WIDTH;
+    const uint8_t* preprocessedFrame = preprocessedFrame.data;
+
+    for (int c = 0; c < inputChannels_; c++)
+    {
+        for (int i = 0; i < plane_size; i++)
+        {
+            inputData[c * plane_size + i] = preprocessedFrame[i * inputChannels_ + c] / 255.0f;
+        }
+    }
+
+    // Copy to GPU
+    cudaMemcpyAsync(inputDevice, inputData,
+                    inputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    cudaMemcpyHostToDevice, stream);
+}
+
+void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask) {
     const int total_pixels = HEIGHT * WIDTH;
+    
+    // Copy back to CPU
+    cudaMemcpyAsync(outputData, outputDevice,
+                    outputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    cudaMemcpyDeviceToHost, stream);
 
     for (int i = 0; i < total_pixels; i++) {
         int y = i / WIDTH;
         int x = i % WIDTH;
         uchar value = (outputData[i] > 0.5) ? 127 : 0;
-        binary_mask.at<uchar>(y, x) = value;
+        outputMask.at<uchar>(y, x) = value;
+    }
+}
+
+void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask) {
+    const int total_pixels = HEIGHT * WIDTH;
+    const cv::Scalar color_map[] = {
+        cv::Scalar(0, 0, 0),      // Background
+        cv::Scalar(128, 64, 128), // Road
+        cv::Scalar(0, 0, 142),    // Car
+        cv::Scalar(250, 170, 30), // Traffic Light
+        cv::Scalar(220, 220, 0),  // Traffic Sign
+        cv::Scalar(220, 20, 60),  // Person
+        cv::Scalar(244, 35, 232), // Sidewalks
+        cv::Scalar(0, 0, 70),     // Truck
+        cv::Scalar(0, 60, 100),   // Bus
+        cv::Scalar(0, 0, 230)     // Motorcycle
+    };
+    
+    // Copy back to CPU
+    cudaMemcpyAsync(outputData, outputDevice,
+                    outputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    cudaMemcpyDeviceToHost, stream);
+
+    // For each pixel, find the class with highest probability
+    for (int i = 0; i < total_pixels; i++)
+    {
+        // Get probability for each class
+        float probs[outputChannels_];
+        for (int c = 0; c < outputChannels_; c++) {
+            probs[c] = outputData[total_pixels * c + i];
+        }
+
+        int best_class = 0;
+        float max_prob = probs[0];
+
+        for (int c = 1; c < outputChannels_; c++)
+        {
+            if (probs[c] > max_prob)
+            {
+                max_prob   = probs[c];
+                best_class = c;
+            }
+        }
+
+        // Map pixel coordinates (i) back to x,y
+        int y = i / WIDTH;
+        int x = i % WIDTH;
+
+        // Set pixel color based on class
+        outputMask.at<cv::Vec3b>(y, x) =
+            cv::Vec3b(color_map[best_class][0], color_map[best_class][1],
+                      color_map[best_class][2]);
     }
 }
