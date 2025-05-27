@@ -124,11 +124,10 @@ void ObjectDetector::detect(cv::Mat& frame)
     std::cout << "Inference time: " << milliseconds << "ms\n";
 }
 
-void ObjectDetector::preProcess(const cv::Mat& frame)
+void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     // Create static GPU matrices
     static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
-    static cv::Mat cpu_rgb_image(HEIGHT, WIDTH, CV_8UC3);
 
     // Upload input frame to GPU
     d_frame.upload(frame);
@@ -141,84 +140,14 @@ void ObjectDetector::preProcess(const cv::Mat& frame)
     cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
 
     // Download the result back to CPU
-    d_rgb_image.download(cpu_rgb_image, cv_stream);
+    d_rgb_image.download(preprocessedFrame, cv_stream);
 
     // Wait for CUDA operations to complete
     cv_stream.waitForCompletion();
-
-    // Continue with existing channel reordering code
-    const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* frame_data = cpu_rgb_image.data;
-
-    for (int c = 0; c < 3; c++)
-    {
-        for (int i = 0; i < plane_size; i++)
-        {
-            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
-        }
-    }
 }
 
 void ObjectDetector::postProcess(cv::Mat& frame)
 {
-    // Create a colored segmentation mask
-    static cv::Mat colored_mask(HEIGHT, WIDTH, CV_8UC3);
-
-    // Define color map for each class
-    const cv::Scalar color_map[] = {
-        cv::Scalar(0, 0, 0),      // Background
-        cv::Scalar(128, 64, 128), // Road
-        cv::Scalar(0, 0, 142),    // Car
-        cv::Scalar(250, 170, 30), // Traffic Light
-        cv::Scalar(220, 220, 0),  // Traffic Sign
-        cv::Scalar(220, 20, 60),  // Person
-        cv::Scalar(244, 35, 232), // Sidewalks
-        cv::Scalar(0, 0, 70),     // Truck
-        cv::Scalar(0, 60, 100),   // Bus
-        cv::Scalar(0, 0, 230)     // Motorcycle
-    };
-
-    const int total_pixels = HEIGHT * WIDTH;
-
-    // For each pixel, find the class with highest probability
-    for (int i = 0; i < total_pixels; i++)
-    {
-        // Get probability for each class
-        float probs[10];
-        probs[0] = outputData[i];
-        probs[1] = outputData[total_pixels * 1 + i];
-        probs[2] = outputData[total_pixels * 2 + i];
-        probs[3] = outputData[total_pixels * 3 + i];
-        probs[4] = outputData[total_pixels * 4 + i];
-        probs[5] = outputData[total_pixels * 5 + i];
-        probs[6] = outputData[total_pixels * 6 + i];
-        probs[7] = outputData[total_pixels * 7 + i];
-        probs[8] = outputData[total_pixels * 8 + i];
-        probs[9] = outputData[total_pixels * 9 + i];
-
-        // Find class with highest probability
-        int best_class = 0;
-        float max_prob = probs[0];
-
-        for (int c = 1; c < 10; c++)
-        {
-            if (probs[c] > max_prob)
-            {
-                max_prob   = probs[c];
-                best_class = c;
-            }
-        }
-
-        // Map pixel coordinates (i) back to x,y
-        int y = i / WIDTH;
-        int x = i % WIDTH;
-
-        // Set pixel color based on class
-        colored_mask.at<cv::Vec3b>(y, x) =
-            cv::Vec3b(color_map[best_class][0], color_map[best_class][1],
-                      color_map[best_class][2]);
-    }
-
     // Resize the segmentation mask to match the frame size
     cv::Mat resized_mask;
     cv::resize(colored_mask, resized_mask, frame.size(), 0, 0,
