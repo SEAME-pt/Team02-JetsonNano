@@ -140,23 +140,23 @@ void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition, Fram
     
     while (running) {
         std::shared_ptr<SharedFrameData> frame_data;
-            {
-                std::unique_lock<std::mutex> lock(processed_mutex);
-                processed_condition.wait(lock, [&] { 
-                    return !processed_queue.empty(); 
-                });
-                frame_data = processed_queue.front();
-                processed_queue.pop();
-            }
-            
-            // Process combined results
-            cv::Mat output_frame;
-            frame_data->original_frame.copyTo(output_frame);
-            
-            // Now process with trajectory definition, which uses both masks
-            trajectoryDefinition.process(output_frame, 
-                                       frame_data->lane_binary_mask, 
-                                       frame_data->object_class_mask);
+        {
+            std::unique_lock<std::mutex> lock(processed_mutex);
+            processed_condition.wait(lock, [&] { 
+                return !processed_queue.empty(); 
+            });
+            frame_data = processed_queue.front();
+            processed_queue.pop();
+        }
+        
+        // Process combined results
+        cv::Mat output_frame;
+        frame_data->original_frame.copyTo(output_frame);
+        
+        // Now process with trajectory definition, which uses both masks
+        trajectoryDefinition.process(output_frame, 
+                                    frame_data->lane_binary_mask, 
+                                    frame_data->object_class_mask);
         // Display result
         cv::imshow("Trajectory Definition", output_frame);
         cv::waitKey(1);
