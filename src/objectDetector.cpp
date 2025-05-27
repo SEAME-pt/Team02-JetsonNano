@@ -1,19 +1,18 @@
-#include "LaneDetectorCV.hpp"
-#include <zenoh.hxx>
-#include <iostream>
+#include "ObjectDetector.hpp"
 
+using namespace cv;
+using namespace std;
 using namespace zenoh;
 
 int main(int argc, char** argv)
 {
     const std::string pipeline =
         "nvarguscamerasrc sensor-id=0 ! "
-        "video/x-raw(memory:NVMM), width=640, height=480, format=NV12, "
-        "framerate=30/1 ! "
+        "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
+        "format=NV12, framerate=(fraction)30/1 ! "
         "nvvidconv ! video/x-raw, format=BGRx ! "
         "videoconvert ! video/x-raw, format=BGR ! "
         "appsink";
-
     try
     {
         std::shared_ptr<zenoh::Session> session;
@@ -30,7 +29,8 @@ int main(int argc, char** argv)
                 zenoh::Session::open(std::move(config)));
         }
 
-        LaneDetectorCV detector(pipeline, session);
+        std::string file = "/home/team02/obj_MOB_1_epoch_133.engine";
+        ObjectDetector detector(file, pipeline, session);
         detector.setCalibrationParameters();
         detector.run();
     }
