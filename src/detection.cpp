@@ -203,13 +203,13 @@ int main(int argc, char** argv)
 
         camera.startCapture();
 
-        thread cameraThread(cameraThread, &camera, &input_queue);
+        thread camThread(cameraThread, &camera, &input_queue);
         thread laneThread(laneDetectionThread, &laneDetector, &input_queue);
         thread objThread(objectDetectionThread, &objDetector, &input_queue);
         thread trajecThread(trajectoryDefinitionThread, &trajectoryDefinition);
 
-        if (cameraThread.joinable()) {
-            cameraThread.join();
+        if (camThread.joinable()) {
+            camThread.join();
         }
         if (laneThread.joinable()) {
             laneThread.join();
