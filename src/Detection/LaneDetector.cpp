@@ -209,12 +209,14 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 {
     currentFrame++;
     allPolylinesViz_ = frame.clone();
+    frameWidth_ = frame.cols;
+    frameHeight_ = frame.rows;
 
     std::vector<std::vector<cv::Point>> lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
-    float maxHorizontalDistance = frame.cols * 0.15; // 15% of frame width
-    float maxVerticalGap = frame.rows * 0.35;       // 35% of frame height
-    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap, frame.cols);
+    float maxHorizontalDistance = frameWidth_ * 0.15; // 15% of frame width
+    float maxVerticalGap = frameHeight_ * 0.35;       // 35% of frame height
+    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
 
@@ -267,9 +269,8 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
         // Limit the maximum curve drift from center
         if (!leftCurve.empty() && !rightCurve.empty()) {
-            int width = frame.cols;
-            float centerX = width / 2.0f;
-            float maxOffsetDistance = width * 0.3f; // Maximum allowed offset (30% of frame width)
+            float centerX = frameWidth_ / 2.0f;
+            float maxOffsetDistance = frameWidth_ * 0.3f; // Maximum allowed offset (30% of frame width)
             
             // Calculate current lane midpoint at each y-level
             for (size_t i = 0; i < std::min(leftCurve.size(), rightCurve.size()); i++) {
@@ -312,9 +313,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             cv::putText(allPolylinesViz_, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
 
-            rightCurve = kalmanFilter.predictRightLaneCurve(frame.rows, frame.cols);
+            rightCurve = kalmanFilter.predictRightLaneCurve(frameHeight_, frameWidth_);
 
-            checkPredicedCurve(rightCurve, leftCurve, true, frame.cols);
+            checkPredicedCurve(rightCurve, leftCurve, true);
 
             defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
             kalmanFilter.updateMiddleLaneFilter(midCurve);
@@ -324,9 +325,9 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
             prevRightCurve = rightCurve;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            leftCurve = kalmanFilter.predictLeftLaneCurve(frame.rows, frame.cols);
+            leftCurve = kalmanFilter.predictLeftLaneCurve(frameHeight_, frameWidth_);
 
-            checkPredicedCurve(leftCurve, rightCurve, false, frame.cols);
+            checkPredicedCurve(leftCurve, rightCurve, false);
             
             defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
             kalmanFilter.updateMiddleLaneFilter(midCurve);
@@ -336,7 +337,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         cv::putText(allPolylinesViz_, statusMsg, cv::Point(20, 60), 
                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     } else {
-        midCurve = kalmanFilter.predictMiddleLaneCurve(frame.rows, frame.cols);
+        midCurve = kalmanFilter.predictMiddleLaneCurve(frameHeight_, frameWidth_);
 
         cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
         for (size_t i = 1; i < midCurve.size(); i++) {
@@ -424,7 +425,7 @@ std::vector<std::vector<cv::Point>> LaneDetector::clusterLaneMask(const cv::Mat&
     return lanePolylines;
 }
 
-void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap, int width) {
+void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap) {
     if (lanePolylines.size() <= 1) return;
     
     bool mergePerformed = true;
@@ -510,7 +511,7 @@ void LaneDetector::mergeLaneComponents(std::vector<std::vector<cv::Point>>& lane
         lanePolylines.resize(2);
     }
 
-    float minLaneWidth = width * 0.1f; // At least 20% of frame width
+    float minLaneWidth = frameWidth_ * 0.1f; // At least 20% of frame width
     
     if (lanePolylines.size() == 2) {
         if (!validateLaneSeparation(lanePolylines, minLaneWidth)) {
@@ -599,10 +600,10 @@ bool LaneDetector::validateLaneSeparation(const std::vector<std::vector<cv::Poin
     return avgDistance >= minLaneWidth;
 }
 
-void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane, int width) {
+void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
-    float expectedHalfWidth = width * 0.50f; // Approximately lane width
+    float expectedHalfWidth = frameWidth_ * 0.50f; // Approximately lane width
     float expectedMiddleX = 0;
 
     // Calculate average X positions
@@ -624,7 +625,7 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
     
     float error = std::abs(avgMiddleX - expectedMiddleX);
     
-    if (error > width * 0.05f) {
+    if (error > frameWidth_ * 0.05f) {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset", 
                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         
@@ -730,7 +731,7 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat
 
 bool LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
     cv::Point lowestPoint(-1, -1);
-    int centerX = frame.cols / 2;
+    int centerX = frameWidth_ / 2;
     float avgX = 0;
     
     // Find lowest point and average X position
@@ -748,7 +749,7 @@ bool LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &la
     bool hasValidLeftMemory = (currentFrame - leftLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
     bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
     bool isLeftLane;
-    
+
     // If we have previous lanes, use them to identify current lane
     if (hasValidLeftMemory || hasValidRightMemory) {
         
