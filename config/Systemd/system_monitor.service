@@ -1,0 +1,18 @@
+[Unit]
+Description=System Monitor Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=team02
+WorkingDirectory=/opt/vehicle/tools/system_monitor
+ExecStartPre=/bin/sleep 2
+ExecStart=/opt/vehicle/tools/system_monitor/system_monitor /opt/vehicle/tools/system_monitor/monitor_config.json
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
