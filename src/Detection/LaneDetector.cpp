@@ -302,22 +302,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         leftLaneLastUpdatedFrame = currentFrame;
         rightLaneLastUpdatedFrame = currentFrame;
     } else if (lanePolylines.size() == 1) {
-        cv::Point lowestPoint(-1, -1);
-        int centerX = frame.cols / 2;
-        float avgX = 0;
-        
-        // Find lowest point and average X position
-        for (const auto& pt : lanePolylines[0]) {
-            if (pt.y > lowestPoint.y) {
-                lowestPoint = pt;
-            }
-            avgX += pt.x;
-        }
-        avgX /= lanePolylines[0].size();
-        
-        // Draw detected lane's lowest point
-        cv::circle(allPolylinesViz_, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
-        
         bool isLeftLane = checkIfLeftLane(lanePolylines);
         
         if (isLeftLane) {
@@ -744,11 +728,27 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat
     }
 }
 
-void LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
+bool LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
+    cv::Point lowestPoint(-1, -1);
+    int centerX = frame.cols / 2;
+    float avgX = 0;
+    
+    // Find lowest point and average X position
+    for (const auto& pt : lanePolylines[0]) {
+        if (pt.y > lowestPoint.y) {
+            lowestPoint = pt;
+        }
+        avgX += pt.x;
+    }
+    avgX /= lanePolylines[0].size();
+    
+    // Draw detected lane's lowest point
+    cv::circle(allPolylinesViz_, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
+    
     bool hasValidLeftMemory = (currentFrame - leftLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
     bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
     bool isLeftLane;
-
+    
     // If we have previous lanes, use them to identify current lane
     if (hasValidLeftMemory || hasValidRightMemory) {
         
