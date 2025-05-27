@@ -765,7 +765,6 @@ void LaneDetector::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, co
         cv::putText(allPolylinesViz, "Invalid curve prediction - using offset", 
                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
         
-        // Create synthetic middle lane
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
         if (isLeftLane) {
