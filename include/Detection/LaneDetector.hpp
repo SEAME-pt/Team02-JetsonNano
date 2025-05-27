@@ -82,7 +82,7 @@ class LaneDetector
     bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
     void checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane);
     void defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
-    void createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat frame);
+    void createMidPointError(std::vector<cv::Point>& midCurve);
     
     void createExecutionContext(const std::string& enginePath);
 };

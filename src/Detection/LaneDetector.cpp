@@ -310,8 +310,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
 
             prevLeftCurve = leftCurve;
             leftLaneLastUpdatedFrame = currentFrame;
-            cv::putText(allPolylinesViz_, "Left Lane (Detected)", lowestPoint + cv::Point(10, 10), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
 
             rightCurve = kalmanFilter.predictRightLaneCurve(frameHeight_, frameWidth_);
 
@@ -669,10 +667,10 @@ void LaneDetector::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::
     }
 }
 
-void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat frame) {
+void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve) {
     cv::Point midPoint;
-    int height = frame.rows;
-    int width  = frame.cols;
+    int height = frameHeight_;
+    int width  = frameWidth_;
 
     if (!midCurve.empty()) {
         int targetY = height - (1.5 * height / 3); // 1/3 up from bottom
