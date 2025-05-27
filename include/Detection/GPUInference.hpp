@@ -38,11 +38,11 @@ class GPUInference
     float* outputData;
 
   public:
-    GPUInference();
+    GPUInference(const std::string &enginePath);
     ~GPUInference();
 
-    void init()
-    void inference(cv::Mat& frame);
+    void init();
+    void inference(cv::Mat& frame, cv::Mat& binary_mask);
 
   private:
     void createExecutionContext(const std::string& enginePath);

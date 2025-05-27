@@ -14,7 +14,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
     try {
-        this->gpuInference = new GPUInference();
+        this->gpuInference = new GPUInference(enginePath_);
         this->gpuInference->init(); 
     }
     catch (const std::exception& e)
@@ -82,18 +82,19 @@ LaneDetector::~LaneDetector()
 
 void LaneDetector::detect(cv::Mat& frame)
 {
+    cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
+    
     preProcess(frame);
 
-    gpuInference->inference(frame);
+    gpuInference->inference(frame, binary_mask);
     
-    postProcess(frame);
+    postProcess(frame, binary_mask);
 }
 
 void LaneDetector::preProcess(const cv::Mat& frame)
 {
     // Create static GPU matrices
     static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
-    static cv::Mat cpu_rgb_image(HEIGHT, WIDTH, CV_8UC3);
 
     // Upload input frame to GPU
     d_frame.upload(frame);
@@ -106,36 +107,14 @@ void LaneDetector::preProcess(const cv::Mat& frame)
     cv::cuda::cvtColor(d_resized, d_rgb_image, cv::COLOR_BGR2RGB, 0, cv_stream);
 
     // Download the result back to CPU
-    d_rgb_image.download(cpu_rgb_image, cv_stream);
+    d_rgb_image.download(frame, cv_stream);
 
     // Wait for CUDA operations to complete
     cv_stream.waitForCompletion();
-
-    // Continue with existing channel reordering code
-    const int plane_size      = HEIGHT * WIDTH;
-    const uint8_t* frame_data = cpu_rgb_image.data;
-
-    for (int c = 0; c < 3; c++)
-    {
-        for (int i = 0; i < plane_size; i++)
-        {
-            inputData[c * plane_size + i] = frame_data[i * 3 + c] / 255.0f;
-        }
-    }
 }
 
-void LaneDetector::postProcess(cv::Mat& frame)
+void LaneDetector::postProcess(cv::Mat& frame, cv::Mat& binary_mask)
 {
-    static cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
-    const int total_pixels = HEIGHT * WIDTH;
-
-    for (int i = 0; i < total_pixels; i++) {
-        int y = i / WIDTH;
-        int x = i % WIDTH;
-        uchar value = (outputData[i] > 0.5) ? 127 : 0;
-        binary_mask.at<uchar>(y, x) = value;
-    }
-
     // Apply IPM to mask and frame
     cv::Mat ipm_mask = ipm->applyIPM(binary_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
