@@ -93,7 +93,7 @@ void LaneDetector::detect(cv::Mat& frame)
     postProcess(frame, binary_mask);
 }
 
-void LaneDetector::preProcess(const cv::Mat& frame)
+void LaneDetector::preProcess(cv::Mat& frame)
 {
     // Create static GPU matrices
     static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
