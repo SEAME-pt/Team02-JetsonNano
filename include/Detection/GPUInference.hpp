@@ -41,6 +41,7 @@ class GPUInference
     GPUInference();
     ~GPUInference();
 
+    void init()
     void inference();
 
   private:
