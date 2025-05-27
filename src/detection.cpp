@@ -14,9 +14,6 @@ using namespace std;
 using namespace zenoh;
 
 std::atomic<bool> running(true);
-std::queue<std::shared_ptr<SharedFrameData>> processed_queue;
-std::mutex processed_mutex;
-std::condition_variable processed_condition;
 
 struct SharedFrameData {
     int frame_id;
@@ -64,6 +61,10 @@ public:
         return frame_data;
     }
 };
+
+std::queue<std::shared_ptr<SharedFrameData>> processed_queue;
+std::mutex processed_mutex;
+std::condition_variable processed_condition;
 
 void signalHandler(int signum) {
     std::cout << "Interrupt signal (" << signum << ") received.\n";
