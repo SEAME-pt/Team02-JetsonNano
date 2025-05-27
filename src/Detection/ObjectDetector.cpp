@@ -15,7 +15,7 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
 
     try {
-        this->gpuInference = new GPUInference(enginePath, 3, 1);
+        this->gpuInference = new GPUInference(enginePath, 3, 7);
         this->gpuInference->init(); 
     }
     catch (const std::exception& e)

@@ -16,9 +16,10 @@
 #include <deque>
 #include <cmath>
 #include <sys/time.h>
-#include "Logger.hpp"
 
+#include "Logger.hpp"
 #include "CAN.hpp"
+#include "GPUInference.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
