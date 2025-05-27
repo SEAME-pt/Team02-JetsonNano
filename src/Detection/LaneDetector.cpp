@@ -223,7 +223,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
     std::vector<cv::Point> midCurve;
 
     if (lanePolylines.size() == 2) {
-        // Find the lowest point (highest y-value) in each polyline
         cv::Point lowestPoint1(-1, -1);
         cv::Point lowestPoint2(-1, -1);
         
@@ -289,7 +288,6 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
                     rightCurve[rightIdx].x -= adjustment;
                 }
             }
-            
         }
 
         kalmanFilter.updateLeftLaneFilter(leftCurve);
@@ -320,60 +318,7 @@ void LaneDetector::createLanes(cv::Mat& binary_mask, cv::Mat& frame)
         // Draw detected lane's lowest point
         cv::circle(allPolylinesViz_, lowestPoint, 8, cv::Scalar(255, 0, 255), -1);
         
-        // Determine if it's a left or right lane based on position
-        bool isLeftLane = false;
-
-        bool hasValidLeftMemory = (currentFrame - leftLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
-        bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
-        
-        // If we have previous lanes, use them to identify current lane
-        if (hasValidLeftMemory || hasValidRightMemory) {
-            
-            float leftDistance = hasValidLeftMemory ? 
-                        calculateLaneDistance(lanePolylines[0], prevLeftCurve) : 
-                        FLT_MAX;
-    
-            float rightDistance = hasValidRightMemory ? 
-                                calculateLaneDistance(lanePolylines[0], prevRightCurve) : 
-                                FLT_MAX;
-
-            if (hasValidLeftMemory) {
-                float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
-                leftDistance *= leftStaleness;
-            }
-            
-            if (hasValidRightMemory) {
-                float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
-                rightDistance *= rightStaleness;
-            }
-            
-            // Lower (adjusted) distance means better match
-            isLeftLane = leftDistance < rightDistance;
-            
-            std::string debugMsg = "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") + 
-                                  " (L:" + std::to_string(leftDistance).substr(0,5) + 
-                                  "/R:" + std::to_string(rightDistance).substr(0,5) + ")";
-            cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
-            
-            // Add staleness information
-            std::string staleMsg = "Staleness - L:" + std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
-                                  " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
-            cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100), 
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
-        }
-        else {
-            // Fallback to position-based detection
-            isLeftLane = avgX < centerX;
-            
-            if (!hasValidLeftMemory || !hasValidRightMemory) {
-                cv::putText(allPolylinesViz_, "Memory expired - using position", cv::Point(20, 80), 
-                           cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
-            } else {
-                cv::putText(allPolylinesViz_, "Position-based detection", cv::Point(20, 80), 
-                           cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
-            }
-        }
+        bool isLeftLane = checkIfLeftLane(lanePolylines);
         
         if (isLeftLane) {
             leftCurve = lanePolylines[0];
@@ -797,5 +742,58 @@ void LaneDetector::createMidPointError(std::vector<cv::Point>& midCurve, cv::Mat
         cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 20), 
                 cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     }
+}
 
+void LaneDetector::checkIfLeftLane(const std::vector<std::vector<cv::Point>> &lanePolylines) {
+    bool hasValidLeftMemory = (currentFrame - leftLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
+    bool hasValidRightMemory = (currentFrame - rightLaneLastUpdatedFrame) < MAX_LANE_MEMORY_FRAMES;
+    bool isLeftLane;
+
+    // If we have previous lanes, use them to identify current lane
+    if (hasValidLeftMemory || hasValidRightMemory) {
+        
+        float leftDistance = hasValidLeftMemory ? 
+                    calculateLaneDistance(lanePolylines[0], prevLeftCurve) : 
+                    FLT_MAX;
+
+        float rightDistance = hasValidRightMemory ? 
+                            calculateLaneDistance(lanePolylines[0], prevRightCurve) : 
+                            FLT_MAX;
+
+        if (hasValidLeftMemory) {
+            float leftStaleness = 1.0f + 0.05f * (currentFrame - leftLaneLastUpdatedFrame);
+            leftDistance *= leftStaleness;
+        }
+        
+        if (hasValidRightMemory) {
+            float rightStaleness = 1.0f + 0.05f * (currentFrame - rightLaneLastUpdatedFrame);
+            rightDistance *= rightStaleness;
+        }
+        
+        isLeftLane = leftDistance < rightDistance;
+        
+        std::string debugMsg = "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") + 
+                                " (L:" + std::to_string(leftDistance).substr(0,5) + 
+                                "/R:" + std::to_string(rightDistance).substr(0,5) + ")";
+        cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+        
+        std::string staleMsg = "Staleness - L:" + std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
+                                " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
+        cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
+    } else {
+        // Fallback to position-based detection
+        isLeftLane = avgX < centerX;
+        
+        if (!hasValidLeftMemory || !hasValidRightMemory) {
+            cv::putText(allPolylinesViz_, "Memory expired - using position", cv::Point(20, 80), 
+                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        } else {
+            cv::putText(allPolylinesViz_, "Position-based detection", cv::Point(20, 80), 
+                        cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+        }
+    }
+
+    return (isLeftLane);
 }
