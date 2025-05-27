@@ -14,6 +14,9 @@ using namespace std;
 using namespace zenoh;
 
 std::atomic<bool> running(true);
+std::queue<std::shared_ptr<SharedFrameData>> processed_queue;
+std::mutex processed_mutex;
+std::condition_variable processed_condition;
 
 struct SharedFrameData {
     int frame_id;
@@ -191,9 +194,6 @@ int main(int argc, char** argv)
             "appsink";
 
         FrameQueue input_queue;
-        std::queue<std::shared_ptr<SharedFrameData>> processed_queue;
-        std::mutex processed_mutex;
-        std::condition_variable processed_condition;
     
         Camera camera(pipeline, "calibration.yml");
         LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine", session);
