@@ -14,7 +14,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, std::shared_ptr<zenoh:
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
     try {
-        this->gpuInference = new GPUInference(enginePath_);
+        this->gpuInference = new GPUInference(enginePath);
         this->gpuInference->init(); 
     }
     catch (const std::exception& e)

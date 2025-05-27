@@ -29,6 +29,7 @@ class GPUInference
 {
   private:
     std::shared_ptr<nvinfer1::IExecutionContext> context;
+    std::string enginePath_;
     cudaEvent_t start;
     cudaEvent_t stop;
     cudaStream_t stream;
