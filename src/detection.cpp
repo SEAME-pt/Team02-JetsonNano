@@ -18,17 +18,17 @@ void signalHandler(int signum) {
 }
 
 void laneDetectionThread(LaneDetector* detector, Camera* camera) {
-    // cv::namedWindow("Lane Detection", cv::WINDOW_NORMAL);
-    // cv::setWindowProperty("Lane Detection", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+    cv::namedWindow("Lane Detection", cv::WINDOW_NORMAL);
+    cv::setWindowProperty("Lane Detection", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
     while (running) {
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
             detector->detect(frame);
-            // cv::imshow("Lane Detection", frame);
+            cv::imshow("Lane Detection", frame);
             detector->publisher_->publishCameraFrame(frame);
-            // cv::waitKey(1);
+            cv::waitKey(1);
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

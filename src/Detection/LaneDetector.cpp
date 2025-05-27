@@ -86,8 +86,6 @@ void LaneDetector::detect(cv::Mat& frame)
     
     preProcess(frame);
 
-    std::cout << "Aqui" << std::endl;
-
     gpuInference->inference(frame, binary_mask);
     
     postProcess(frame, binary_mask);
@@ -117,7 +115,6 @@ void LaneDetector::preProcess(cv::Mat& frame)
 
 void LaneDetector::postProcess(cv::Mat& frame, cv::Mat& binary_mask)
 {
-    // Apply IPM to mask and frame
     cv::Mat ipm_mask = ipm->applyIPM(binary_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
     
