@@ -690,42 +690,89 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
 
 void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask)
 {
-    // Define danger zone (lower-center portion of the image)
-    const int zone_width  = WIDTH * 0.2;              // 60% of image width
-    const int zone_height = HEIGHT * 0.3;             // 40% of image height
-    const int zone_x      = (WIDTH - zone_width) / 2; // Center horizontally
-    const int zone_y      = HEIGHT - zone_height;     // Bottom of image
-
-    // Count pixels in danger zone by class
+    const int zoneWidth = WIDTH * 0.15;  // Width of zone around trajectory
     int total_pixels = 0;
-    int road_pixels  = 0;
-
-    for (int y = zone_y; y < HEIGHT; y++)
-    {
-        for (int x = zone_x; x < zone_x + zone_width; x++)
-        {
-            total_pixels++;
-            cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
-
-            if (pixel == cv::Vec3b(128, 64, 128))
-            {
-                road_pixels++;
+    int road_pixels = 0;
+    
+    // Create polygon points for the trajectory zone
+    std::vector<cv::Point> polygonPoints;
+    
+    // Calculate left and right boundaries of the trajectory zone
+    for (size_t i = 0; i < midCurve.size(); i += 2) { // Skip points for efficiency
+        // Only check lower half of the curve (close to the vehicle)
+        if (midCurve[i].y < HEIGHT * 0.7) continue;
+        
+        // Calculate direction vector between points
+        cv::Point direction;
+        if (i > 0) {
+            direction = midCurve[i] - midCurve[i-1];
+        } else if (i < midCurve.size() - 1) {
+            direction = midCurve[i+1] - midCurve[i];
+        } else {
+            direction = cv::Point(0, 1); // Default vertical
+        }
+        
+        // Normalize direction
+        float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+        if (length > 0) {
+            direction.x = direction.x / length;
+            direction.y = direction.y / length;
+        }
+        
+        // Create perpendicular vector for width
+        cv::Point perpendicular(-direction.y, direction.x);
+        
+        // Left and right boundary points
+        polygonPoints.push_back(cv::Point(
+            midCurve[i].x - perpendicular.x * zoneWidth / 2,
+            midCurve[i].y - perpendicular.y * zoneWidth / 2
+        ));
+        
+        // Store right points separately to create a complete polygon later
+        rightPoints.push_back(cv::Point(
+            midCurve[i].x + perpendicular.x * zoneWidth / 2,
+            midCurve[i].y + perpendicular.y * zoneWidth / 2
+        ));
+    }
+    
+    // Add right points in reverse order to complete the polygon
+    for (int i = rightPoints.size() - 1; i >= 0; i--) {
+        polygonPoints.push_back(rightPoints[i]);
+    }
+    
+    // Create a mask for the polygon
+    cv::Mat polygonMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC1);
+    std::vector<std::vector<cv::Point>> contours = { polygonPoints };
+    cv::fillPoly(polygonMask, contours, cv::Scalar(255));
+    
+    // Count road pixels in the polygon
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            // Only check pixels inside the polygon
+            if (polygonMask.at<uchar>(y, x) > 0) {
+                total_pixels++;
+                cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
+                
+                if (pixel == cv::Vec3b(128, 64, 128)) {  // Road color
+                    road_pixels++;
+                }
             }
         }
     }
-
-    // Calculate percentage of road in danger zone
+    
+    // Draw the polygon for visualization
+    cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
+    
+    // Calculate road percentage and check for danger
     float road_percentage = static_cast<float>(road_pixels) / total_pixels;
-
-    const float SAFE_ROAD_THRESHOLD = 0.5; // 70% of zone should be road
-    bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
-
-    // Draw danger zone on frame (green if safe, red if danger)
-    cv::Scalar zone_color =
-        danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0);
-    cv::rectangle(segmentation_mask,
-                  cv::Rect(zone_x, zone_y, zone_width, zone_height), zone_color,
-                  2);
+    const float SAFE_ROAD_THRESHOLD = 0.5; // 50% of zone should be road
+    bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
+    
+    // Display road percentage
+    std::string roadText = "Road: " + std::to_string(int(road_percentage * 100)) + "%";
+    cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120), 
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0), 2);
 
     if (danger_detected)
     {
