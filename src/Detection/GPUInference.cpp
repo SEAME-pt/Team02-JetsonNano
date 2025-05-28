@@ -82,7 +82,12 @@ void GPUInference::inference() {
     cudaEventSynchronize(stop);
 
     cudaEventElapsedTime(&milliseconds, start, stop);
-    std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
+
+    if (outputChannels_ == 1) {
+        std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
+    } else {
+        std::cout << "Inference time in object detection: " << milliseconds << "ms\n";
+    }
 }
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
