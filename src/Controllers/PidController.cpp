@@ -206,8 +206,8 @@ PidController::PidController(const std::string& configFile,
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            std::cout << "Active Autonomy Level: " << activeAutonomyLevel
-                      << std::endl;
+            // std::cout << "Active Autonomy Level: " << activeAutonomyLevel
+                    //   << std::endl;
             setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));
@@ -388,9 +388,12 @@ void PidController::run()
         if (sae_level.find("SAE_5") != std::string::npos ||
             sae_level == "SAE_4")
         {
-            std::cout << "Speed :" << current_speed_ << std::endl;
             updateControl(cameraError_, current_time);
-            publisher_->publishSpeed(speedPidController_->speedPID(140 - current_speed_, current_time));
+            if (!speed_lock_) {
+                publisher_->publishSpeed(speedPidController_->speedPID(105 - current_speed_, current_time));
+            } else {
+                publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
         }
@@ -422,7 +425,13 @@ void PidController::run()
                 if (!speed_lock_)
                     publisher_->publishSpeed(manual_speed);
                 else
-                    publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+                {
+                    if (manual_speed <= 0) {
+                        publisher_->publishSpeed(manual_speed);
+                    } else {
+                        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+                    }
+                }
             }
         }
     }
