@@ -94,7 +94,7 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
-    // (void) class_mask;
+    (void) class_mask;
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
