@@ -15,145 +15,203 @@ using namespace zenoh;
 
 std::atomic<bool> running(true);
 
-struct SharedFrameData {
-    int frame_id;
-    cv::Mat original_frame;
-    cv::Mat lane_binary_mask;
-    cv::Mat object_class_mask;
-    std::mutex mutex;
-    std::atomic<bool> lane_processed{false};
-    std::atomic<bool> object_processed{false};
-    std::atomic<bool> trajectory_processed{false};
-};
-
-// Frame queue management
-class FrameQueue {
+class SynchronizedProcessor {
 private:
-    std::queue<std::shared_ptr<SharedFrameData>> frames;
-    std::mutex queue_mutex;
-    std::condition_variable data_condition;
-    int next_frame_id = 0;
+    std::mutex sync_mutex;
+    std::condition_variable inference_cv;
+    std::condition_variable trajectory_cv;
+    std::condition_variable camera_cv;
+    
+    cv::Mat current_frame;
+    std::shared_ptr<SharedFrameData> frame_data;
+    
+    bool lane_ready = true;
+    bool object_ready = true;
+    bool trajectory_done = true;
+    bool new_frame_available = false;
+    int frame_id = 0;
     
 public:
-    void push(const cv::Mat& frame) {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        auto frame_data = std::make_shared<SharedFrameData>();
-        frame_data->frame_id = next_frame_id++;
+    // Camera thread calls this when both inference threads are ready
+    void setNewFrame(const cv::Mat& frame) {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Wait until both inference threads are ready and trajectory is done
+        camera_cv.wait(lock, [this]() { 
+            return lane_ready && object_ready && trajectory_done; 
+        });
+        
+        // Set new frame data
+        frame.copyTo(current_frame);
+        frame_data = std::make_shared<SharedFrameData>();
+        frame_data->frame_id = frame_id++;
         frame.copyTo(frame_data->original_frame);
-        frames.push(frame_data);
-        data_condition.notify_all();
+        
+        // Reset flags
+        lane_ready = false;
+        object_ready = false;
+        new_frame_available = true;
+        
+        // Notify inference threads
+        inference_cv.notify_all();
     }
     
-    std::shared_ptr<SharedFrameData> pop() {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        data_condition.wait(lock, [this] { return !frames.empty(); });
-        auto frame_data = frames.front();
-        frames.pop();
+    // Lane detection thread calls this
+    cv::Mat getLaneFrame() {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Wait for new frame
+        inference_cv.wait(lock, [this]() { return new_frame_available && !lane_ready; });
+        
+        return current_frame.clone();
+    }
+    
+    // Object detection thread calls this
+    cv::Mat getObjectFrame() {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Wait for new frame
+        inference_cv.wait(lock, [this]() { return new_frame_available && !object_ready; });
+        
+        return current_frame.clone();
+    }
+    
+    // Lane thread calls this when done
+    void laneDone(const cv::Mat& result) {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Store result
+        result.copyTo(frame_data->lane_binary_mask);
+        lane_ready = true;
+        frame_data->lane_processed = true;
+        
+        // Check if both are done
+        checkBothDone();
+    }
+    
+    // Object thread calls this when done
+    void objectDone(const cv::Mat& result) {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Store result
+        result.copyTo(frame_data->object_class_mask);
+        object_ready = true;
+        frame_data->object_processed = true;
+        
+        // Check if both are done
+        checkBothDone();
+    }
+    
+    // Trajectory thread calls this to get processing data
+    std::shared_ptr<SharedFrameData> getProcessingData() {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Wait for both inference results
+        trajectory_cv.wait(lock, [this]() { 
+            return lane_ready && object_ready && !trajectory_done && frame_data->lane_processed && frame_data->object_processed; 
+        });
+        
         return frame_data;
     }
+    
+    // Trajectory thread calls this when done
+    void trajectoryDone() {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        trajectory_done = true;
+        
+        // Allow camera to get next frame
+        camera_cv.notify_one();
+    }
+    
+private:
+    void checkBothDone() {
+        if (lane_ready && object_ready) {
+            // Both inference threads are done, notify trajectory
+            trajectory_done = false;
+            new_frame_available = false;
+            trajectory_cv.notify_one();
+        }
+    }
 };
-
-std::queue<std::shared_ptr<SharedFrameData>> processed_queue;
-std::mutex processed_mutex;
-std::condition_variable processed_condition;
 
 void signalHandler(int signum) {
     std::cout << "Interrupt signal (" << signum << ") received.\n";
     running = false;
 }
 
-void cameraThread(Camera* camera, FrameQueue *input_queue) {
+void cameraThreadFunction(Camera* camera, SynchronizedProcessor* processor) {
     while (running) {
+        // Get latest frame from camera
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
-            input_queue->push(frame);
+            // Pass to synchronized processor
+            processor->setNewFrame(frame);
         }
-
+        
+        // Small sleep to prevent busy waiting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
-void laneDetectionThread(LaneDetector* detector, FrameQueue *input_queue) {
+void laneDetectionThreadFunction(LaneDetector* detector, SynchronizedProcessor* processor) {
     while (running) {
-        std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
-
-        cv::Mat lane_frame;
-        frame_data->original_frame.copyTo(lane_frame);
+        // Get frame for processing (blocks until ready)
+        cv::Mat frame = processor->getLaneFrame();
         
-        detector->detect(lane_frame);
-
-        {
-            std::lock_guard<std::mutex> lock(frame_data->mutex);
-            lane_frame.copyTo(frame_data->lane_binary_mask);
-            frame_data->lane_processed = true;
-        }
+        // Process frame
+        cv::Mat result;
+        detector->detect(frame, result);
         
-        // Add to processed queue if both detectors have finished
-        if (frame_data->object_processed) {
-            std::lock_guard<std::mutex> lock(processed_mutex);
-            processed_queue.push(frame_data);
-            processed_condition.notify_one();
-        }
+        // Signal completion
+        processor->laneDone(result);
     }
 }
 
-void objectDetectionThread(ObjectDetector* detector, FrameQueue *input_queue) {
+void objectDetectionThreadFunction(ObjectDetector* detector, SynchronizedProcessor* processor) {
     while (running) {
-        std::shared_ptr<SharedFrameData> frame_data = input_queue->pop();
-
-        cv::Mat obj_frame;
-        frame_data->original_frame.copyTo(obj_frame);
+        // Get frame for processing (blocks until ready)
+        cv::Mat frame = processor->getObjectFrame();
         
-        detector->detect(obj_frame);
-
-        {
-            std::lock_guard<std::mutex> lock(frame_data->mutex);
-            obj_frame.copyTo(frame_data->object_class_mask);
-            frame_data->object_processed = true;
-        }
+        // Process frame
+        cv::Mat result;
+        detector->detect(frame, result);
         
-        if (frame_data->lane_processed) {
-            std::lock_guard<std::mutex> lock(processed_mutex);
-            processed_queue.push(frame_data);
-            processed_condition.notify_one();
-        }
+        // Signal completion
+        processor->objectDone(result);
     }
 }
 
-void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition) {
-    cv::namedWindow("Trajectory Definition", cv::WINDOW_NORMAL);
-    cv::setWindowProperty("Trajectory Definition", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef, SynchronizedProcessor* processor) {
+    cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
+    cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
     while (running) {
-        std::shared_ptr<SharedFrameData> frame_data;
-        {
-            std::unique_lock<std::mutex> lock(processed_mutex);
-            processed_condition.wait(lock, [&] {
-                return !processed_queue.empty(); 
-            });
-            frame_data = processed_queue.front();
-            processed_queue.pop();
-        }
+        // Get processing data when both inferences are done
+        auto data = processor->getProcessingData();
         
-        // Process combined results
+        // Create output frame
         cv::Mat output_frame;
-        frame_data->original_frame.copyTo(output_frame);
+        data->original_frame.copyTo(output_frame);
         
-        // Now process with trajectory definition, which uses both masks
-        trajectoryDefinition->process(output_frame, 
-                                    frame_data->lane_binary_mask, 
-                                    frame_data->object_class_mask);
+        // Process trajectory
+        trajectoryDef->process(output_frame, data->lane_binary_mask, data->object_class_mask);
+        
         // Display result
-        cv::imshow("Trajectory Definition", output_frame);
+        cv::imshow("Trajectory", output_frame);
         cv::waitKey(1);
         
-        frame_data->trajectory_processed = true;
+        // Signal completion
+        processor->trajectoryDone();
     }
+    
+    cv::destroyWindow("Trajectory");
 }
 
 int main(int argc, char** argv)
 {   
+    signal(SIGINT, signalHandler);
+
     try
     {
         std::shared_ptr<zenoh::Session> session;
@@ -178,7 +236,7 @@ int main(int argc, char** argv)
             "videoconvert ! video/x-raw, format=BGR ! "
             "appsink";
 
-        FrameQueue input_queue;
+        SynchronizedProcessor processor;
     
         Camera camera(pipeline, "calibration.yml");
         LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine", session);
@@ -187,10 +245,10 @@ int main(int argc, char** argv)
 
         camera.startCapture();
 
-        thread camThread(cameraThread, &camera, &input_queue);
-        thread laneThread(laneDetectionThread, &laneDetector, &input_queue);
-        thread objThread(objectDetectionThread, &objDetector, &input_queue);
-        thread trajecThread(trajectoryDefinitionThread, &trajectoryDefinition);
+        std::thread camThread(cameraThreadFunction, &camera, &processor);
+        std::thread laneThread(laneDetectionThreadFunction, &laneDetector, &processor);
+        std::thread objThread(objectDetectionThreadFunction, &objDetector, &processor);
+        std::thread trajThread(trajectoryThreadFunction, &trajectoryDefinition, &processor);
 
         if (camThread.joinable()) {
             camThread.join();
@@ -207,9 +265,7 @@ int main(int argc, char** argv)
 
         camera.stopCapture();
         
-        cv::destroyAllWindows();
-    }
-    catch (const std::exception& e)
+    } catch (const std::exception& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
         return -1;
