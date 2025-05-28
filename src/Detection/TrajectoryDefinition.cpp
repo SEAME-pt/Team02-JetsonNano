@@ -729,7 +729,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     if (danger_detected)
     {
          cv::putText(allPolylinesViz_, "OBSTACLE DETECTED!",
-                    cv::Point(frame.cols / 2 - 150, frame.rows / 2),
+                    cv::Point(allPolylinesViz_.cols / 2 - 150, allPolylinesViz_.rows / 2),
                     cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 3);
 
         std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
