@@ -691,8 +691,8 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
 void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask)
 {
     // Define danger zone (lower-center portion of the image)
-    const int zone_width  = WIDTH * 0.3;              // 60% of image width
-    const int zone_height = HEIGHT * 0.4;             // 40% of image height
+    const int zone_width  = WIDTH * 0.2;              // 60% of image width
+    const int zone_height = HEIGHT * 0.3;             // 40% of image height
     const int zone_x      = (WIDTH - zone_width) / 2; // Center horizontally
     const int zone_y      = HEIGHT - zone_height;     // Bottom of image
 
@@ -717,7 +717,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // Calculate percentage of road in danger zone
     float road_percentage = static_cast<float>(road_pixels) / total_pixels;
 
-    const float SAFE_ROAD_THRESHOLD = 0.7; // 70% of zone should be road
+    const float SAFE_ROAD_THRESHOLD = 0.5; // 70% of zone should be road
     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     // Draw danger zone on frame (green if safe, red if danger)
