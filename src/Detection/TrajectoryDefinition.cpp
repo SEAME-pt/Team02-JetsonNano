@@ -234,7 +234,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
 
     createMidPointError(midCurve);
 
-    checkForwardCollision(class_mask);
+    checkForwardCollision(class_mask, midCurve);
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -688,13 +688,18 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
     return (isLeftLane);
 }
 
-void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, cv::Mat& midCurve)
+void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, cv::Mat& midCurveMat)
 {
     const int zoneWidth = WIDTH * 0.15;  // Width of zone around trajectory
     int total_pixels = 0;
     int road_pixels = 0;
+
+    std::vector<cv::Point> midCurve;
+    for (int i = 0; i < midCurveMat.rows; i++) {
+        midCurve.push_back(cv::Point(midCurveMat.at<float>(i, 0), midCurveMat.at<float>(i, 1)));
+    }
     
-    // Create polygon points for the trajectory zone
+    std::vector<cv::Point> rightPoints;
     std::vector<cv::Point> polygonPoints;
     
     // Calculate left and right boundaries of the trajectory zone
