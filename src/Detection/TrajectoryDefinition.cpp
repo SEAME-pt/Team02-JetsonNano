@@ -690,7 +690,7 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
 
 void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
-    const int zoneWidth = WIDTH * 0.15;  // Width of zone around trajectory
+    const int zoneWidth = WIDTH * 0.20;  // Width of zone around trajectory
     int total_pixels = 0;
     int road_pixels = 0;
     
@@ -698,9 +698,9 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     std::vector<cv::Point> polygonPoints;
     
     // Calculate left and right boundaries of the trajectory zone
-    for (size_t i = 0; i < midCurve.size(); i += 2) { // Skip points for efficiency
+    for (size_t i = 0; i < midCurve.size() - 2; i += 2) { // Skip points for efficiency
         // Only check lower half of the curve (close to the vehicle)
-        if (midCurve[i].y < HEIGHT * 0.8) continue;
+        if (midCurve[i].y < HEIGHT * 0.9) continue;
         
         // Calculate direction vector between points
         cv::Point direction;
@@ -753,7 +753,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
                 total_pixels++;
                 cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
                 
-                if (pixel == cv::Vec3b(128, 64, 128) || pixel == cv::Vec3b(0, 0, 0) || y < HEIGHT * 0.3) {
+                if (pixel == cv::Vec3b(128, 64, 128) || pixel == cv::Vec3b(0, 0, 0)) {
                     road_pixels++;
                 }
             }
@@ -765,7 +765,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     
     // Calculate road percentage and check for danger
     float road_percentage = static_cast<float>(road_pixels) / total_pixels;
-    const float SAFE_ROAD_THRESHOLD = 0.5; // 50% of zone should be road
+    const float SAFE_ROAD_THRESHOLD = 0.7; // 50% of zone should be road
     bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
     
     // Display road percentage
