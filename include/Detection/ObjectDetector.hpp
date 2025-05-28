@@ -16,9 +16,10 @@
 #include <deque>
 #include <cmath>
 #include <sys/time.h>
-#include "Logger.hpp"
 
+#include "Logger.hpp"
 #include "CAN.hpp"
+#include "GPUInference.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -26,37 +27,15 @@
 class ObjectDetector
 {
   private:
-    std::shared_ptr<zenoh::Session> session_;
-    std::optional<zenoh::PosixShmProvider> provider_;
-    std::optional<zenoh::Publisher> speed_lock_publisher_;
-
-    std::shared_ptr<nvinfer1::IExecutionContext> context;
-    cudaEvent_t start;
-    cudaEvent_t stop;
-    cudaStream_t stream;
     cv::cuda::Stream cv_stream;
-    void* inputDevice;
-    void* outputDevice;
-    float* inputData;
-    float* outputData;
-
-    bool is_emergency_stop = false;
-
-    CAN* canBus;
+    GPUInference* gpuInference;
 
   public:
-    ObjectDetector(const std::string& enginePath,
-                   std::shared_ptr<zenoh::Session> session);
+    ObjectDetector(const std::string& enginePath);
     ~ObjectDetector();
 
-    void detect(cv::Mat& frame);
+    void detect(cv::Mat& frame, cv::Mat& result);
 
   private:
-    void preProcess(const cv::Mat& frame);
-    void postProcess(cv::Mat& frame);
-    void createExecutionContext(const std::string& enginePath);
-
-    bool checkForwardCollision(const cv::Mat& segmentation_mask);
-
-    void publishSpeedLock(const std::string &value_str);
+    void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
 };
