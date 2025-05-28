@@ -78,15 +78,12 @@ void Camera::captureLoop()
             continue;
         }
 
-        if (frame_count % FRAME_SKIP == 0)
-        {
-            cv::Mat undistorted;
-            remap(frame, undistorted, map1, map2, INTER_LINEAR);
+        cv::Mat undistorted;
+        remap(frame, undistorted, map1, map2, INTER_LINEAR);
 
-            std::lock_guard<std::mutex> lock(frameMutex);
-            currentFrame = undistorted.clone();
-        }
-        frame_count++;
+        std::lock_guard<std::mutex> lock(frameMutex);
+        currentFrame = undistorted.clone();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
