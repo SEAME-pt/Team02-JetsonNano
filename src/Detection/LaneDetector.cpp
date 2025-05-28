@@ -80,7 +80,7 @@ LaneDetector::~LaneDetector()
     delete ipm;
 }
 
-void LaneDetector::detect(cv::Mat& frame)
+void LaneDetector::detect(cv::Mat& frame, cv::Mat& result)
 {
     cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
@@ -91,11 +91,7 @@ void LaneDetector::detect(cv::Mat& frame)
     gpuInference->inference();
     gpuInference->copyToCPUBinaryOutput(binary_mask);
     
-    cv::Mat rgb_mask;
-    cv::cvtColor(binary_mask, rgb_mask, cv::COLOR_GRAY2BGR);
-
-    rgb_mask.copyTo(frame);
-    // postProcess(frame, binary_mask);
+    binary_mask.copyTo(result);
 }
 
 void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)

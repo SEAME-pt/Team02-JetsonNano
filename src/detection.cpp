@@ -155,9 +155,10 @@ void laneDetectionThreadFunction(LaneDetector* detector, SynchronizedProcessor* 
     while (running) {
         cv::Mat frame = processor->getLaneFrame();
         
-        detector->detect(frame);
+        cv::Mat result;
+        detector->detect(frame, result);
         
-        processor->laneDone(frame);
+        processor->laneDone(result);
     }
 }
 
@@ -165,9 +166,10 @@ void objectDetectionThreadFunction(ObjectDetector* detector, SynchronizedProcess
     while (running) {
         cv::Mat frame = processor->getObjectFrame();
         
-        detector->detect(frame);
+        cv::Mat result;
+        detector->detect(frame, result);
         
-        processor->objectDone(frame);
+        processor->objectDone(result);
     }
 }
 
