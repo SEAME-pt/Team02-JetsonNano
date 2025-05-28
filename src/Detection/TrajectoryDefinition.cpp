@@ -105,8 +105,6 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
     frameWidth_ = frame.cols;
     frameHeight_ = frame.rows;
 
-    checkForwardCollision(class_mask);
-
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frameWidth_ * 0.15; // 15% of frame width
@@ -235,6 +233,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
     }
 
     createMidPointError(midCurve);
+
+    checkForwardCollision(class_mask);
 
     allPolylinesViz_.copyTo(frame);
 }
