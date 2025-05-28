@@ -23,8 +23,10 @@ private:
     std::condition_variable trajectory_cv;
     std::condition_variable camera_cv;
     
+    // Just store the frames directly
     cv::Mat current_frame;
-    std::shared_ptr<SharedFrameData> frame_data;
+    cv::Mat lane_binary_mask;
+    cv::Mat object_class_mask;
     
     bool lane_ready = true;
     bool object_ready = true;
@@ -42,11 +44,8 @@ public:
             return lane_ready && object_ready && trajectory_done; 
         });
         
-        // Set new frame data
+        // Set new frame data - just copy the frame directly
         frame.copyTo(current_frame);
-        frame_data = std::make_shared<SharedFrameData>();
-        frame_data->frame_id = frame_id++;
-        frame.copyTo(frame_data->original_frame);
         
         // Reset flags
         lane_ready = false;
@@ -67,24 +66,13 @@ public:
         return current_frame.clone();
     }
     
-    // Object detection thread calls this
-    cv::Mat getObjectFrame() {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-        
-        // Wait for new frame
-        inference_cv.wait(lock, [this]() { return new_frame_available && !object_ready; });
-        
-        return current_frame.clone();
-    }
-    
     // Lane thread calls this when done
     void laneDone(const cv::Mat& result) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Store result
-        result.copyTo(frame_data->lane_binary_mask);
+        // Store result directly in the processor
+        result.copyTo(lane_binary_mask);
         lane_ready = true;
-        frame_data->lane_processed = true;
         
         // Check if both are done
         checkBothDone();
@@ -94,25 +82,27 @@ public:
     void objectDone(const cv::Mat& result) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Store result
-        result.copyTo(frame_data->object_class_mask);
+        // Store result directly in the processor
+        result.copyTo(object_class_mask);
         object_ready = true;
-        frame_data->object_processed = true;
         
         // Check if both are done
         checkBothDone();
     }
     
-    // Trajectory thread calls this to get processing data
-    std::shared_ptr<SharedFrameData> getProcessingData() {
+    // Trajectory thread gets frames directly
+    void getProcessingData(cv::Mat& original, cv::Mat& lane_mask, cv::Mat& object_mask) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
         // Wait for both inference results
         trajectory_cv.wait(lock, [this]() { 
-            return lane_ready && object_ready && !trajectory_done && frame_data->lane_processed && frame_data->object_processed; 
+            return lane_ready && object_ready && !trajectory_done; 
         });
         
-        return frame_data;
+        // Copy data out
+        current_frame.copyTo(original);
+        lane_binary_mask.copyTo(lane_mask);
+        object_class_mask.copyTo(object_mask);
     }
     
     // Trajectory thread calls this when done
@@ -176,19 +166,17 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef, SynchronizedP
     cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
     cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
+    cv::Mat original_frame, lane_mask, object_mask;
+    
     while (running) {
-        // Get processing data when both inferences are done
-        auto data = processor->getProcessingData();
-        
-        // Create output frame
-        cv::Mat output_frame;
-        data->original_frame.copyTo(output_frame);
+        // Get processing data directly as parameters
+        processor->getProcessingData(original_frame, lane_mask, object_mask);
         
         // Process trajectory
-        trajectoryDef->process(output_frame, data->lane_binary_mask, data->object_class_mask);
+        trajectoryDef->process(original_frame, lane_mask, object_mask);
         
         // Display result
-        cv::imshow("Trajectory", output_frame);
+        cv::imshow("Trajectory", original_frame);
         cv::waitKey(1);
         
         // Signal completion
