@@ -690,6 +690,14 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
 
 void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
+    if (midCurve.empty()) {
+        // Draw a message when no trajectory is available
+        cv::putText(allPolylinesViz_, "No trajectory available for collision check", 
+                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                    cv::Scalar(0, 0, 255), 2);
+        return;
+    }
+
     const int zoneWidth = WIDTH * 0.20;  // Width of zone around trajectory
     int total_pixels = 0;
     int road_pixels = 0;
@@ -734,6 +742,14 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
             midCurve[i].y + perpendicular.y * zoneWidth / 2
         ));
     }
+
+    if (polygonPoints.size() < 3 || rightPoints.empty()) {
+        // Not enough points to create a polygon
+        cv::putText(allPolylinesViz_, "Insufficient trajectory points for collision check", 
+                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                    cv::Scalar(0, 0, 255), 2);
+        return;
+    }
     
     // Add right points in reverse order to complete the polygon
     for (int i = rightPoints.size() - 1; i >= 0; i--) {
@@ -743,6 +759,14 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // Create a mask for the polygon
     cv::Mat polygonMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC1);
     std::vector<std::vector<cv::Point>> contours = { polygonPoints };
+
+    if (polygonPoints.empty()) {
+        cv::putText(allPolylinesViz_, "Empty polygon - cannot check for collision", 
+                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                    cv::Scalar(0, 0, 255), 2);
+        return ; 
+    }
+    
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
     
     // Count road pixels in the polygon
