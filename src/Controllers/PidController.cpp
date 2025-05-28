@@ -390,7 +390,7 @@ void PidController::run()
         {
             updateControl(cameraError_, current_time);
             if (!speed_lock_) {
-                publisher_->publishSpeed(speedPidController_->speedPID(120 - current_speed_, current_time));
+                publisher_->publishSpeed(speedPidController_->speedPID(105 - current_speed_, current_time));
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
