@@ -422,7 +422,13 @@ void PidController::run()
                 if (!speed_lock_)
                     publisher_->publishSpeed(manual_speed);
                 else
-                    publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+                {
+                    if (manual_speed < 0) {
+                        publisher_->publishSpeed(manual_speed);
+                    } else {
+                        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+                    }
+                }
             }
         }
     }
