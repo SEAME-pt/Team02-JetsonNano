@@ -700,7 +700,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // Calculate left and right boundaries of the trajectory zone
     for (size_t i = 0; i < midCurve.size(); i += 2) { // Skip points for efficiency
         // Only check lower half of the curve (close to the vehicle)
-        if (midCurve[i].y < HEIGHT * 0.4) continue;
+        if (midCurve[i].y < HEIGHT * 0.8) continue;
         
         // Calculate direction vector between points
         cv::Point direction;
