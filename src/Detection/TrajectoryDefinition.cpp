@@ -89,16 +89,17 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
     resized_ipm_frame.copyTo(frame);
 
     createLanes(frame, resized_ipm_binary_mask, resized_ipm_class_mask);
+    checkForwardCollision(resized_ipm_class_mask);
+    cv::addWeighted(frame, 0.7, resized_ipm_class_mask, 0.3, 0, frame);
 }
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
+    (void) class_mask;
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
     std::vector<std::vector<cv::Point>> lanePolylines;
-
-   checkForwardCollision(class_mask);
 
     currentFrame++;
     allPolylinesViz_ = frame.clone();
