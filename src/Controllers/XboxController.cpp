@@ -40,30 +40,6 @@ XboxController::XboxController()
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
-    speed_lock_subscriber_.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Lock",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string value_str = sample.get_payload().as_string();
-
-            // Convert string to boolean
-            bool lock_value = false;
-            if (value_str.find("1") != std::string::npos)
-            {
-                lock_value = true;
-                manual_speed_.store(0);
-            }
-
-            speed_lock_ = lock_value;
-
-            std::cout << "Speed lock "
-                      << (lock_value ? "activated" : "deactivated")
-                      << std::endl;
-        },
-        zenoh::closures::none));
-
-    speed_lock_ = false;
-
     std::cout << "Remote controller created!" << std::endl;
 }
 
@@ -231,24 +207,22 @@ void XboxController::run()
                     {
                         float speed = -this->axes[axis]->y * 100 / 32767;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
-                        if (!speed_lock_)
+                        
+                        if (speed < -5)
                         {
-                            if (speed < -5)
-                            {
-                                publisher_->publishCurrentGear(-1);
-                            }
-                            else if (speed > 5)
-                            {
-                                publisher_->publishCurrentGear(1);
-                            }
-                            else
-                            {
-                                publisher_->publishCurrentGear(0);
-                            }
-                            // publisher_->publishSpeed(speed);
-                            manual_speed_.store(speed);
-                            std::cout << "Speed" << std::endl;
+                            publisher_->publishCurrentGear(-1);
                         }
+                        else if (speed > 5)
+                        {
+                            publisher_->publishCurrentGear(1);
+                        }
+                        else
+                        {
+                            publisher_->publishCurrentGear(0);
+                        }
+                        // publisher_->publishSpeed(speed);
+                        manual_speed_.store(speed);
+                        std::cout << "Speed" << std::endl;
                         break;
                     }
                     case (AXIS_RIGHT_STICK):
