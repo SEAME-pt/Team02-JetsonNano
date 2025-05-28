@@ -700,7 +700,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // Calculate left and right boundaries of the trajectory zone
     for (size_t i = 0; i < midCurve.size(); i += 2) { // Skip points for efficiency
         // Only check lower half of the curve (close to the vehicle)
-        if (midCurve[i].y < HEIGHT * 0.7) continue;
+        if (midCurve[i].y < HEIGHT * 0.4) continue;
         
         // Calculate direction vector between points
         cv::Point direction;
@@ -753,7 +753,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
                 total_pixels++;
                 cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
                 
-                if (pixel == cv::Vec3b(128, 64, 128)) {  // Road color
+                if (pixel == cv::Vec3b(128, 64, 128) || pixel == cv::Vec3b(0, 0, 0) || y < HEIGHT * 0.3) {
                     road_pixels++;
                 }
             }
