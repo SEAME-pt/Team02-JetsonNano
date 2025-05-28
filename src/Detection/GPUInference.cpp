@@ -126,7 +126,7 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask) {
 void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask) {
     const int total_pixels = HEIGHT * WIDTH;
     const cv::Scalar color_map[] = {
-        cv::Scalar(0, 0, 0),      // Background
+        cv::Scalar(0, 0, 10),      // Background
         cv::Scalar(128, 64, 128), // Road
         cv::Scalar(0, 0, 142),    // Car
         cv::Scalar(250, 170, 30), // Traffic Light
