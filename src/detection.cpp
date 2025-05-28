@@ -143,7 +143,7 @@ void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition) {
         std::shared_ptr<SharedFrameData> frame_data;
         {
             std::unique_lock<std::mutex> lock(processed_mutex);
-            processed_condition.wait(lock, [&] { 
+            processed_condition.wait(lock, [&] {
                 return !processed_queue.empty(); 
             });
             frame_data = processed_queue.front();
