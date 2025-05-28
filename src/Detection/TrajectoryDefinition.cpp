@@ -94,7 +94,7 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
-    (void) class_mask;
+    // (void) class_mask;
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
@@ -105,7 +105,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
     frameWidth_ = frame.cols;
     frameHeight_ = frame.rows;
 
-    checkForwardCollision(resized_ipm_class_mask);
+    checkForwardCollision(class_mask);
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
