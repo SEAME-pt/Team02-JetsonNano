@@ -23,7 +23,6 @@ private:
     std::condition_variable trajectory_cv;
     std::condition_variable camera_cv;
     
-    // Just store the frames directly
     cv::Mat current_frame;
     cv::Mat lane_binary_mask;
     cv::Mat object_class_mask;
@@ -35,24 +34,19 @@ private:
     int frame_id = 0;
     
 public:
-    // Camera thread calls this when both inference threads are ready
     void setNewFrame(const cv::Mat& frame) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Wait until both inference threads are ready and trajectory is done
         camera_cv.wait(lock, [this]() { 
             return lane_ready && object_ready && trajectory_done; 
         });
         
-        // Set new frame data - just copy the frame directly
         frame.copyTo(current_frame);
         
-        // Reset flags
         lane_ready = false;
         object_ready = false;
         new_frame_available = true;
         
-        // Notify inference threads
         inference_cv.notify_all();
     }
     
@@ -60,7 +54,6 @@ public:
     cv::Mat getLaneFrame() {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Wait for new frame
         inference_cv.wait(lock, [this]() { return new_frame_available && !lane_ready; });
         
         return current_frame.clone();
@@ -69,21 +62,17 @@ public:
     cv::Mat getObjectFrame() {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Wait for new frame
         inference_cv.wait(lock, [this]() { return new_frame_available && !object_ready; });
         
         return current_frame.clone();
     }
     
-    // Lane thread calls this when done
     void laneDone(const cv::Mat& result) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Store result directly in the processor
         result.copyTo(lane_binary_mask);
         lane_ready = true;
         
-        // Check if both are done
         checkBothDone();
     }
     
@@ -91,42 +80,34 @@ public:
     void objectDone(const cv::Mat& result) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Store result directly in the processor
         result.copyTo(object_class_mask);
         object_ready = true;
         
-        // Check if both are done
         checkBothDone();
     }
     
-    // Trajectory thread gets frames directly
     void getProcessingData(cv::Mat& original, cv::Mat& lane_mask, cv::Mat& object_mask) {
         std::unique_lock<std::mutex> lock(sync_mutex);
         
-        // Wait for both inference results
         trajectory_cv.wait(lock, [this]() { 
             return lane_ready && object_ready && !trajectory_done; 
         });
         
-        // Copy data out
         current_frame.copyTo(original);
         lane_binary_mask.copyTo(lane_mask);
         object_class_mask.copyTo(object_mask);
     }
     
-    // Trajectory thread calls this when done
     void trajectoryDone() {
         std::unique_lock<std::mutex> lock(sync_mutex);
         trajectory_done = true;
         
-        // Allow camera to get next frame
         camera_cv.notify_one();
     }
     
 private:
     void checkBothDone() {
         if (lane_ready && object_ready) {
-            // Both inference threads are done, notify trajectory
             trajectory_done = false;
             new_frame_available = false;
             trajectory_cv.notify_one();
