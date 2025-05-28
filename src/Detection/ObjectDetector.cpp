@@ -39,7 +39,7 @@ ObjectDetector::~ObjectDetector()
     delete canBus;
 }
 
-void ObjectDetector::detect(cv::Mat& frame)
+void ObjectDetector::detect(cv::Mat& frame, cv::Mat& result)
 {
     cv::Mat class_mask(HEIGHT, WIDTH, CV_8UC3);
     cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
@@ -50,8 +50,7 @@ void ObjectDetector::detect(cv::Mat& frame)
     gpuInference->inference();
     gpuInference->copyToCPUClassOutput(class_mask);
     
-    class_mask.copyTo(frame);
-    // postProcess(frame, class_mask);
+    class_mask.copyTo(result);
 }
 
 void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)

@@ -59,7 +59,7 @@ class LaneDetector
     LaneDetector(const std::string& enginePath,
                    std::shared_ptr<zenoh::Session> session);
     ~LaneDetector();
-    void detect(cv::Mat& frame);
+    void detect(cv::Mat& frame, cv::Mat& result);
 
   private:
     void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);

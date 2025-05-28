@@ -44,7 +44,7 @@ class ObjectDetector
                    std::shared_ptr<zenoh::Session> session);
     ~ObjectDetector();
 
-    void detect(cv::Mat& frame);
+    void detect(cv::Mat& frame, cv::Mat& result);
 
   private:
     void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
