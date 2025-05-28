@@ -33,19 +33,10 @@ private:
     std::mutex queue_mutex;
     std::condition_variable data_condition;
     int next_frame_id = 0;
-    size_t max_size = 2; // Only keep 2 frames at most
     
 public:
     void push(const cv::Mat& frame) {
         std::lock_guard<std::mutex> lock(queue_mutex);
-        
-        // If queue is full, drop oldest frame
-        if (frames.size() >= max_size) {
-            frames.pop(); // Remove oldest frame
-            std::cout << "Warning: Dropping frame due to processing lag" << std::endl;
-        }
-        
-        // Add new frame
         auto frame_data = std::make_shared<SharedFrameData>();
         frame_data->frame_id = next_frame_id++;
         frame.copyTo(frame_data->original_frame);
