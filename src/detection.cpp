@@ -70,7 +70,7 @@ void cameraThread(Camera* camera, FrameQueue *input_queue) {
             input_queue->push(frame);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
@@ -95,8 +95,6 @@ void laneDetectionThread(LaneDetector* detector, FrameQueue *input_queue) {
             processed_queue.push(frame_data);
             processed_condition.notify_one();
         }
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -120,8 +118,6 @@ void objectDetectionThread(ObjectDetector* detector, FrameQueue *input_queue) {
             processed_queue.push(frame_data);
             processed_condition.notify_one();
         }
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -153,8 +149,6 @@ void trajectoryDefinitionThread(TrajectoryDefinition* trajectoryDefinition) {
         cv::waitKey(1);
         
         frame_data->trajectory_processed = true;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
