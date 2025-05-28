@@ -8,7 +8,7 @@
 #include <queue>              // Add this
 #include <memory>             // Add this
 #include <iostream> 
-#include <signal> 
+#include <csignal> 
 
 using namespace cv;
 using namespace std;
