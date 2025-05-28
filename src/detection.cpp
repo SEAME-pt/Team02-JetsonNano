@@ -205,8 +205,8 @@ int main(int argc, char** argv)
         SynchronizedProcessor processor;
     
         Camera camera(pipeline, "calibration.yml");
-        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine", session);
-        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine", session);
+        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
+        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
         camera.startCapture();
