@@ -33,7 +33,7 @@ private:
     std::mutex queue_mutex;
     std::condition_variable data_condition;
     int next_frame_id = 0;
-    size_t max_size = 1; // Only keep 2 frames at most
+    size_t max_size = 2; // Only keep 2 frames at most
     
 public:
     void push(const cv::Mat& frame) {
@@ -124,7 +124,6 @@ void objectDetectionThread(ObjectDetector* detector, FrameQueue *input_queue) {
             frame_data->object_processed = true;
         }
         
-        // Add to processed queue if both detectors have finished
         if (frame_data->lane_processed) {
             std::lock_guard<std::mutex> lock(processed_mutex);
             processed_queue.push(frame_data);
