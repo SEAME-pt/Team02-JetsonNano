@@ -65,6 +65,15 @@ public:
         
         return current_frame.clone();
     }
+
+    cv::Mat getObjectFrame() {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        
+        // Wait for new frame
+        inference_cv.wait(lock, [this]() { return new_frame_available && !object_ready; });
+        
+        return current_frame.clone();
+    }
     
     // Lane thread calls this when done
     void laneDone(const cv::Mat& result) {
