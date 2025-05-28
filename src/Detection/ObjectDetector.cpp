@@ -50,7 +50,8 @@ void ObjectDetector::detect(cv::Mat& frame)
     gpuInference->inference();
     gpuInference->copyToCPUClassOutput(class_mask);
     
-    postProcess(frame, class_mask);
+    class_mask.copyTo(frame);
+    // postProcess(frame, class_mask);
 }
 
 void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
