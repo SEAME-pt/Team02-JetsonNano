@@ -51,6 +51,9 @@ class TrajectoryDefinition
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 25;
 
+    std::optional<zenoh::Publisher> speed_lock_publisher_;
+    bool is_emergency_stop = false;
+
   public:
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
@@ -70,5 +73,8 @@ class TrajectoryDefinition
     bool validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth);
     void checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane);
     void defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
-    void createMidPointError(std::vector<cv::Point>& midCurve);    
+    void createMidPointError(std::vector<cv::Point>& midCurve);  
+    
+    void checkForwardCollision(const cv::Mat& segmentation_mask)
+    void publishSpeedLock(const std::string &value_str);
 };

@@ -27,30 +27,15 @@
 class ObjectDetector
 {
   private:
-    std::shared_ptr<zenoh::Session> session_;
-    std::optional<zenoh::PosixShmProvider> provider_;
-    std::optional<zenoh::Publisher> speed_lock_publisher_;
-
     cv::cuda::Stream cv_stream;
-
     GPUInference* gpuInference;
-    CAN* canBus;
-
-    bool is_emergency_stop = false;
-
 
   public:
-    ObjectDetector(const std::string& enginePath,
-                   std::shared_ptr<zenoh::Session> session);
+    ObjectDetector(const std::string& enginePath);
     ~ObjectDetector();
 
     void detect(cv::Mat& frame, cv::Mat& result);
 
   private:
     void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
-    void postProcess(cv::Mat& frame, cv::Mat& class_mask);
-
-    bool checkForwardCollision(const cv::Mat& segmentation_mask);
-
-    void publishSpeedLock(const std::string &value_str);
 };
