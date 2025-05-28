@@ -234,7 +234,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
 
     createMidPointError(midCurve);
 
-    checkForwardCollision(class_mask);
+    // checkForwardCollision(class_mask);
 
     allPolylinesViz_.copyTo(frame);
 }
