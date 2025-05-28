@@ -688,16 +688,11 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
     return (isLeftLane);
 }
 
-void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, cv::Mat& midCurveMat)
+void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
     const int zoneWidth = WIDTH * 0.15;  // Width of zone around trajectory
     int total_pixels = 0;
     int road_pixels = 0;
-
-    std::vector<cv::Point> midCurve;
-    for (int i = 0; i < midCurveMat.rows; i++) {
-        midCurve.push_back(cv::Point(midCurveMat.at<float>(i, 0), midCurveMat.at<float>(i, 1)));
-    }
     
     std::vector<cv::Point> rightPoints;
     std::vector<cv::Point> polygonPoints;
