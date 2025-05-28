@@ -688,7 +688,7 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
     return (isLeftLane);
 }
 
-void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask)
+void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, cv::Mat& midCurve)
 {
     const int zoneWidth = WIDTH * 0.15;  // Width of zone around trajectory
     int total_pixels = 0;
