@@ -89,7 +89,6 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
     resized_ipm_frame.copyTo(frame);
 
     createLanes(frame, resized_ipm_binary_mask, resized_ipm_class_mask);
-    checkForwardCollision(resized_ipm_class_mask);
     cv::addWeighted(frame, 0.7, resized_ipm_class_mask, 0.3, 0, frame);
 }
 
@@ -105,6 +104,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
     allPolylinesViz_ = frame.clone();
     frameWidth_ = frame.cols;
     frameHeight_ = frame.rows;
+
+    checkForwardCollision(resized_ipm_class_mask);
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
