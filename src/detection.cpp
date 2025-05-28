@@ -8,6 +8,7 @@
 #include <queue>              // Add this
 #include <memory>             // Add this
 #include <iostream> 
+#include <signal> 
 
 using namespace cv;
 using namespace std;
@@ -141,44 +142,33 @@ void signalHandler(int signum) {
 
 void cameraThreadFunction(Camera* camera, SynchronizedProcessor* processor) {
     while (running) {
-        // Get latest frame from camera
         cv::Mat frame = camera->getFrame();
         
         if (!frame.empty()) {
-            // Pass to synchronized processor
             processor->setNewFrame(frame);
         }
         
-        // Small sleep to prevent busy waiting
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
 void laneDetectionThreadFunction(LaneDetector* detector, SynchronizedProcessor* processor) {
     while (running) {
-        // Get frame for processing (blocks until ready)
         cv::Mat frame = processor->getLaneFrame();
         
-        // Process frame
-        cv::Mat result;
-        detector->detect(frame, result);
+        detector->detect(frame);
         
-        // Signal completion
-        processor->laneDone(result);
+        processor->laneDone(frame);
     }
 }
 
 void objectDetectionThreadFunction(ObjectDetector* detector, SynchronizedProcessor* processor) {
     while (running) {
-        // Get frame for processing (blocks until ready)
         cv::Mat frame = processor->getObjectFrame();
         
-        // Process frame
-        cv::Mat result;
-        detector->detect(frame, result);
+        detector->detect(frame);
         
-        // Signal completion
-        processor->objectDone(result);
+        processor->objectDone(frame);
     }
 }
 
@@ -259,12 +249,12 @@ int main(int argc, char** argv)
         if (objThread.joinable()) {
             objThread.join();
         }
-        if (trajecThread.joinable()) {
-            trajecThread.join();
+        if (trajThread.joinable()) {
+            trajThread.join();
         }
 
         camera.stopCapture();
-        
+
     } catch (const std::exception& e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
