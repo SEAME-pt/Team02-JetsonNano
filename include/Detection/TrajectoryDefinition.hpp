@@ -75,6 +75,6 @@ class TrajectoryDefinition
     void defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void createMidPointError(std::vector<cv::Point>& midCurve);  
     
-    void checkForwardCollision(const cv::Mat& segmentation_mask)
+    void checkForwardCollision(const cv::Mat& segmentation_mask);
     void publishSpeedLock(const std::string &value_str);
 };
