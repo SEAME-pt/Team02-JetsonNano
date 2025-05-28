@@ -716,7 +716,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // Calculate percentage of road in danger zone
     float road_percentage = static_cast<float>(road_pixels) / total_pixels;
 
-    const float SAFE_ROAD_THRESHOLD = 0.4; // 70% of zone should be road
+    const float SAFE_ROAD_THRESHOLD = 0.7; // 70% of zone should be road
     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     // Draw danger zone on frame (green if safe, red if danger)
