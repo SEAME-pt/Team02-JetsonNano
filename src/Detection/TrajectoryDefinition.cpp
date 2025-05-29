@@ -876,6 +876,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     
     // Display road percentage
     std::string roadText = "Road: " + std::to_string(int(road_percentage * 100)) + "%";
+    std::string roadText += " Total: " + std::to_string(total_pixels) + "%";
     cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120), 
                 cv::FONT_HERSHEY_SIMPLEX, 0.7, 
                 danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0), 2);
