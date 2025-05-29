@@ -600,7 +600,7 @@ void TrajectoryDefinition::defineTrajectoryCurve(std::vector<cv::Point>& midCurv
         midCurve.clear();
         
         // Sample more points along the polynomial for a smoother curve
-        int numSamples = frameHeight_ / 5;  // Sample every 5 pixels in y-direction
+        int numSamples = frameHeight_ / 100;  // Sample every 5 pixels in y-direction
         for (int y = 0; y < frameHeight_; y += numSamples) {
             // if (y > frameHeight_ * 0.5) {  // Only use lower half of screen for trajectory
                 // Evaluate polynomial: x = a + by + cy² + dy³
