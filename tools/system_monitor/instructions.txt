@@ -2,7 +2,7 @@
 temporary instructions see readme for better help.
 
 Notes/improvements:
-this system_monitor executable should be runing with the zenoh router runing (with the prpoper config file) - monitor_config.yml
+this system_monitor executable should be running with the zenoh router running (with the proper config file) - monitor_config.json
 and the zenoh-router should be runing with the updated config file - zenoh.json5
 we should look int tegrastats results in the car terminal to compare them with the ones we get from this program
 we should be adding more of them maybe.
