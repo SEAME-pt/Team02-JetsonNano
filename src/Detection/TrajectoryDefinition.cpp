@@ -839,6 +839,22 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
 
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
     
+    // Overlay the polygon in green on the visualization
+    cv::Mat overlay = allPolylinesViz_.clone();
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (polygonMask.at<uchar>(y, x) > 0) {
+                // Full green with some transparency
+                overlay.at<cv::Vec3b>(y, x)[0] = 0;               // B
+                overlay.at<cv::Vec3b>(y, x)[1] = 255;             // G
+                overlay.at<cv::Vec3b>(y, x)[2] = 0;               // R
+            }
+        }
+    }
+
+    // Blend with original image (60% original, 40% overlay)
+    cv::addWeighted(allPolylinesViz_, 0.6, overlay, 0.4, 0, allPolylinesViz_);
+
     // Count road pixels in the polygon
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
