@@ -77,21 +77,6 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
     cv::Mat ipm_class_mask = ipm->applyIPM(class_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
 
-    // // Create a filtered binary mask that only keeps lane points on road surfaces
-    // cv::Mat filtered_binary_mask = cv::Mat::zeros(ipm_binary_mask.size(), ipm_binary_mask.type());
-    
-    // // For each pixel in the binary mask
-    // for (int y = 0; y < ipm_binary_mask.rows; y++) {
-    //     for (int x = 0; x < ipm_binary_mask.cols; x++) {
-    //         if (ipm_binary_mask.at<uchar>(y, x) > 0) {
-    //             cv::Vec3b class_pixel = ipm_class_mask.at<cv::Vec3b>(y, x);
-    //             if (class_pixel == cv::Vec3b(128, 64, 128) || class_pixel == cv::Vec3b(0, 0, 0)) {
-    //                 filtered_binary_mask.at<uchar>(y, x) = ipm_binary_mask.at<uchar>(y, x);
-    //             }
-    //         }
-    //     }
-    // }
-    
     cv::Mat resized_ipm_binary_mask;
     cv::resize(ipm_binary_mask, resized_ipm_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
 
@@ -556,69 +541,14 @@ void TrajectoryDefinition::checkPredicedCurve(std::vector<cv::Point>& predictedC
 void TrajectoryDefinition::defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
     // Make sure we have equal length curves by resampling if needed
     int numPoints = std::min(leftCurve.size(), rightCurve.size());
-    std::vector<cv::Point> rawMidPoints;
-    
-    // Calculate raw midpoints between left and right curves
-    for (int i = 0; i < numPoints; i++) {
-        size_t leftIdx = i * leftCurve.size() / numPoints;
+    for (int i = 0; i < numPoints; i++)
+    {
+        size_t leftIdx  = i * leftCurve.size() / numPoints;
         size_t rightIdx = i * rightCurve.size() / numPoints;
 
         int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
         int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
-        rawMidPoints.push_back(cv::Point(midX, midY));
-    }
-    
-    // Sort points by y coordinate (from top to bottom)
-    std::sort(rawMidPoints.begin(), rawMidPoints.end(), 
-              [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
-    
-    // Prepare data for polynomial fitting
-    std::vector<double> x_values, y_values;
-    for (const auto& pt : rawMidPoints) {
-        y_values.push_back(static_cast<double>(pt.y));
-        x_values.push_back(static_cast<double>(pt.x));
-    }
-    
-    // Fit a 3rd degree polynomial to the points
-    cv::Mat coeffs;
-    if (x_values.size() >= 4) {  // Need at least 4 points for 3rd degree polynomial
-        cv::Mat y_mat(y_values), x_mat;
-        
-        // Create Vandermonde matrix for polynomial fitting
-        x_mat.create(y_values.size(), 4, CV_64F);
-        for (int i = 0; i < x_mat.rows; i++) {
-            x_mat.at<double>(i, 0) = 1.0;
-            x_mat.at<double>(i, 1) = y_values[i];
-            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
-            x_mat.at<double>(i, 3) = y_values[i] * y_values[i] * y_values[i];
-        }
-        
-        // Solve for polynomial coefficients using least squares
-        cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
-        
-        // Clear existing midCurve and create smooth curve from polynomial
-        midCurve.clear();
-        
-        // Sample more points along the polynomial for a smoother curve
-        int numSamples = frameHeight_ / 100;  // Sample every 5 pixels in y-direction
-        for (int y = 0; y < frameHeight_; y += numSamples) {
-            // if (y > frameHeight_ * 0.5) {  // Only use lower half of screen for trajectory
-                // Evaluate polynomial: x = a + by + cy² + dy³
-                double yVal = static_cast<double>(y);
-                double xVal = coeffs.at<double>(0) + 
-                              coeffs.at<double>(1) * yVal + 
-                              coeffs.at<double>(2) * yVal * yVal + 
-                              coeffs.at<double>(3) * yVal * yVal * yVal;
-                
-                // Constrain x within frame boundaries
-                xVal = std::max(0.0, std::min(static_cast<double>(frameWidth_), xVal));
-                
-                midCurve.push_back(cv::Point(static_cast<int>(xVal), y));
-            // }
-        }
-    } else {
-        // Fallback to raw midpoints if not enough data for polynomial fit
-        midCurve = rawMidPoints;
+        midCurve.push_back(cv::Point(midX, midY));
     }
 
     // Draw middle lane curve with white color and thicker line
