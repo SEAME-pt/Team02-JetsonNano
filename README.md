@@ -12,12 +12,6 @@ The Vehicle Control System integrates multiple components that work together to 
 - **Middleware**: Sensor data processing and signal conversion
 - **Combined Controller**: Intelligent control switching between manual and autonomous modes
 
-## Architecture
-
-The system follows a modular architecture based on automotive domain standards:
-
-![Architecture Diagram](./docs/architecture.png)
-
 ### Key Components:
 
 1. **Vehicle System**
@@ -180,8 +174,8 @@ The system depends on several external libraries:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Team
 
-This project is developed by Team02 at SEAME Polytechnic Singapore.
+This project is developed by Team02 at SEAME Portugal 2025.
