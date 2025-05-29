@@ -22,7 +22,7 @@ Change the $projectDir with your folder name
         -t final-app .
 
 
-this to remove previous iteations skip if doing this for the first time:
+this to remove previous iterations skip if doing this for the first time:
 
 docker rm -f tmpapp
 
