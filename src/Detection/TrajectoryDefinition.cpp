@@ -837,23 +837,19 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
         return ; 
     }
 
+    // After creating the polygon mask
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
-    
-    // Overlay the polygon in green on the visualization
-    cv::Mat overlay = allPolylinesViz_.clone();
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if (polygonMask.at<uchar>(y, x) > 0) {
-                // Full green with some transparency
-                overlay.at<cv::Vec3b>(y, x)[0] = 0;               // B
-                overlay.at<cv::Vec3b>(y, x)[1] = 255;             // G
-                overlay.at<cv::Vec3b>(y, x)[2] = 0;               // R
-            }
-        }
-    }
 
-    // Blend with original image (60% original, 40% overlay)
-    cv::addWeighted(allPolylinesViz_, 0.6, overlay, 0.4, 0, allPolylinesViz_);
+    // Create a more visible green overlay
+    cv::Mat colorMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC3);
+    // Fill with bright green
+    cv::fillPoly(colorMask, contours, cv::Scalar(0, 255, 0)); 
+
+    // Blend with original image using a higher alpha for visibility
+    cv::addWeighted(allPolylinesViz_, 0.7, colorMask, 0.5, 0, allPolylinesViz_);
+
+    // Draw the polygon boundary with a contrasting color
+    cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
 
     // Count road pixels in the polygon
     for (int y = 0; y < HEIGHT; y++) {
