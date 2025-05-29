@@ -390,7 +390,7 @@ void PidController::run()
         {
             updateControl(cameraError_, current_time);
             if (!speed_lock_) {
-                publisher_->publishSpeed(speedPidController_->speedPID(135 - current_speed_, current_time));
+                publisher_->publishSpeed(speedPidController_->speedPID(120 - current_speed_, current_time));
             } else {
                 publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
             }
