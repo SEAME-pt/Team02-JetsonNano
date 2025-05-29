@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - 65-task-actions-workflow-update
 
 jobs:
   format:
