@@ -840,6 +840,9 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // After creating the polygon mask
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
 
+    int nonZeroCount = cv::countNonZero(polygonMask);
+    std::cout << "Polygon mask non-zero pixels: " << nonZeroCount << std::endl;
+
     // Create a more visible green overlay
     cv::Mat colorMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC3);
     // Fill with bright green
@@ -855,7 +858,7 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
             // Only check pixels inside the polygon
-            if (polygonMask.at<uchar>(y, x) > 0) {
+            if (polygonMask.at<uchar>(y, x) > cv::Scalar(0)) {
                 total_pixels++;
                 cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
                 
