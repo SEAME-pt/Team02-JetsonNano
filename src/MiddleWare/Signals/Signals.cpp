@@ -18,9 +18,18 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            uint8_t value[8];
-            memcpy(value, &activeAutonomyLevel, sizeof(value));
-            this->canBus->writeMessage(0x400, value, sizeof(value));
+            if (activeAutonomyLevel.find("SAE_5") != std::string::npos)
+            {
+                uint8_t value[8];
+                memcpy(value, &activeAutonomyLevel, sizeof(value));
+                this->canBus->writeMessage(0x405, value, sizeof(value));
+            }
+            else if (activeAutonomyLevel.find("SAE_0") != std::string::npos)
+            {
+                uint8_t value[8];
+                memcpy(value, &activeAutonomyLevel, sizeof(value));
+                this->canBus->writeMessage(0x400, value, sizeof(value));
+            }
         },
         zenoh::closures::none));
 }
