@@ -38,6 +38,6 @@ docker cp tmpapp:/home/test_shared/system_monitor ./system_monitor
 
 EXTRA:
 
-The zenoh.json5 file is thwe example how the config file for the router should be. This is in other folder and the one in the current directory is not the one being used.
+The zenoh.json5 file is the example how the config file for the router should be. This is in other folder and the one in the current directory is not the one being used.
 
 Our executable should be run with the monitor_config.json so it runs as it is suposed and can integrate fully.
