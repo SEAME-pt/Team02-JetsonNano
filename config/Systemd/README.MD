@@ -16,4 +16,4 @@ The system_monitor folder will be located at opt/vehicle/tools/system_monitor
 
 /opt/vehicle/tools/system_monitor
 ├── system_monitor                 - executble
-└── monitor_config.json            - configuration file required by the executable to establish connectios
+└── monitor_config.json            - configuration file required by the executable to establish connections
