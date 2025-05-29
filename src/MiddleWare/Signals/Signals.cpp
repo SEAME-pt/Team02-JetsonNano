@@ -10,7 +10,7 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
     session_ =
         std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
 
-    publisher_ = std::make_unique<ControllerPublisher>(session_);
+    // publisher_ = std::make_unique<ControllerPublisher>(session_);
 
     activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
