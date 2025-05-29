@@ -76,9 +76,24 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
     cv::Mat ipm_binary_mask = ipm->applyIPM(binary_mask);
     cv::Mat ipm_class_mask = ipm->applyIPM(class_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
+
+    // Create a filtered binary mask that only keeps lane points on road surfaces
+    cv::Mat filtered_binary_mask = cv::Mat::zeros(ipm_binary_mask.size(), ipm_binary_mask.type());
+    
+    // For each pixel in the binary mask
+    for (int y = 0; y < ipm_binary_mask.rows; y++) {
+        for (int x = 0; x < ipm_binary_mask.cols; x++) {
+            if (ipm_binary_mask.at<uchar>(y, x) > 0) {
+                cv::Vec3b class_pixel = ipm_class_mask.at<cv::Vec3b>(y, x);
+                if (class_pixel == cv::Vec3b(128, 64, 128) || class_pixel == cv::Vec3b(0, 0, 0)) {
+                    filtered_binary_mask.at<uchar>(y, x) = ipm_binary_mask.at<uchar>(y, x);
+                }
+            }
+        }
+    }
     
     cv::Mat resized_ipm_binary_mask;
-    cv::resize(ipm_binary_mask, resized_ipm_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::resize(filtered_binary_mask, resized_ipm_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
 
     cv::Mat resized_ipm_class_mask;
     cv::resize(ipm_class_mask, resized_ipm_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
