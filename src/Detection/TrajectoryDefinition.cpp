@@ -840,25 +840,25 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
     // After creating the polygon mask
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
 
-    int nonZeroCount = cv::countNonZero(polygonMask);
-    std::cout << "Polygon mask non-zero pixels: " << nonZeroCount << std::endl;
+    // int nonZeroCount = cv::countNonZero(polygonMask);
+    // std::cout << "Polygon mask non-zero pixels: " << nonZeroCount << std::endl;
 
-    // Create a more visible green overlay
-    cv::Mat colorMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC3);
-    // Fill with bright green
-    cv::fillPoly(colorMask, contours, cv::Scalar(0, 255, 0)); 
+    // // Create a more visible green overlay
+    // cv::Mat colorMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC3);
+    // // Fill with bright green
+    // cv::fillPoly(colorMask, contours, cv::Scalar(0, 255, 0)); 
 
-    // Blend with original image using a higher alpha for visibility
-    cv::addWeighted(allPolylinesViz_, 0.7, colorMask, 0.5, 0, allPolylinesViz_);
+    // // Blend with original image using a higher alpha for visibility
+    // cv::addWeighted(allPolylinesViz_, 0.7, colorMask, 0.5, 0, allPolylinesViz_);
 
-    // Draw the polygon boundary with a contrasting color
-    cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
+    // // Draw the polygon boundary with a contrasting color
+    // cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
 
     // Count road pixels in the polygon
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
+    for (int y = 0; y < polygonMask.rows; y++) {
+        for (int x = 0; x < polygonMask.cols; x++) {
             // Only check pixels inside the polygon
-            if (polygonMask.at<uchar>(y, x) > cv::Scalar(0)) {
+            if (polygonMask.at<uchar>(y, x) > 0) {
                 total_pixels++;
                 cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
                 
