@@ -9,6 +9,8 @@
 #include "VSSSubscriber.hpp"
 #include "VSSQueryable.hpp"
 #include "SensoringPublisher.hpp"
+#include "ControllerPublisher.hpp"
+#include <zenoh.hxx>
 
 using namespace zenoh;
 
