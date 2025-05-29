@@ -1,5 +1,6 @@
 
 #include "Signals.hpp"
+#define SESSION_OPEN zenoh::Session::open
 
 Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
 {
