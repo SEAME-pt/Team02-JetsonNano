@@ -32,7 +32,7 @@ This to create the new:
 docker create --name tmpapp final-app
 
 
-this to copy the executable back to you (named acording to you cmakelists.txt)
+this to copy the executable back to you (named according to you cmakelists.txt)
 docker cp tmpapp:/home/test_shared/system_monitor ./system_monitor
 
 
