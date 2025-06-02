@@ -4,58 +4,64 @@ KalmanFilter::KalmanFilter() {}
 
 KalmanFilter::~KalmanFilter() {}
 
-void KalmanFilter::init() {
+void KalmanFilter::init()
+{
     // For each lane, track 3 polynomial coefficients and their derivatives
     // State: [a, b, c, da/dt, db/dt, dc/dt] for y = ax² + bx + c
     const int stateSize = 6;
-    const int measSize = 3;  // We measure polynomial coefficients
+    const int measSize  = 3; // We measure polynomial coefficients
     const int contrSize = 0; // No control input
-    
+
     // Initialize both Kalman filters
-    leftLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
-    rightLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
+    leftLaneKF   = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
+    rightLaneKF  = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
     middleLaneKF = cv::KalmanFilter(stateSize, measSize, contrSize, CV_32F);
-    
+
     // Set transition matrix (constant velocity model for coefficients)
     cv::setIdentity(leftLaneKF.transitionMatrix);
     cv::setIdentity(rightLaneKF.transitionMatrix);
     cv::setIdentity(middleLaneKF.transitionMatrix);
-    
+
     // Add velocity components
-    for (int i = 0; i < 3; i++) {
-        leftLaneKF.transitionMatrix.at<float>(i, i+3) = 1.0;
-        rightLaneKF.transitionMatrix.at<float>(i, i+3) = 1.0;
-        middleLaneKF.transitionMatrix.at<float>(i, i+3) = 1.0;
+    for (int i = 0; i < 3; i++)
+    {
+        leftLaneKF.transitionMatrix.at<float>(i, i + 3)   = 1.0;
+        rightLaneKF.transitionMatrix.at<float>(i, i + 3)  = 1.0;
+        middleLaneKF.transitionMatrix.at<float>(i, i + 3) = 1.0;
     }
-    
-    // Set measurement matrix (we only measure coefficients, not their derivatives)
-    leftLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
+
+    // Set measurement matrix (we only measure coefficients, not their
+    // derivatives)
+    leftLaneKF.measurementMatrix  = cv::Mat::zeros(measSize, stateSize, CV_32F);
     rightLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
-    middleLaneKF.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
-    
-    for (int i = 0; i < measSize; i++) {
-        leftLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
-        rightLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
+    middleLaneKF.measurementMatrix =
+        cv::Mat::zeros(measSize, stateSize, CV_32F);
+
+    for (int i = 0; i < measSize; i++)
+    {
+        leftLaneKF.measurementMatrix.at<float>(i, i)   = 1.0f;
+        rightLaneKF.measurementMatrix.at<float>(i, i)  = 1.0f;
         middleLaneKF.measurementMatrix.at<float>(i, i) = 1.0f;
     }
-    
+
     // Lower process noise for polynomials (they change more slowly)
     cv::setIdentity(leftLaneKF.processNoiseCov, cv::Scalar(1e-3));
     cv::setIdentity(rightLaneKF.processNoiseCov, cv::Scalar(1e-3));
     cv::setIdentity(middleLaneKF.processNoiseCov, cv::Scalar(1e-3));
-    
+
     // Measurement noise
     cv::setIdentity(leftLaneKF.measurementNoiseCov, cv::Scalar(0.01));
     cv::setIdentity(rightLaneKF.measurementNoiseCov, cv::Scalar(0.01));
     cv::setIdentity(middleLaneKF.measurementNoiseCov, cv::Scalar(0.01));
-    
+
     // Initial state covariance
     cv::setIdentity(leftLaneKF.errorCovPost, cv::Scalar(1));
     cv::setIdentity(rightLaneKF.errorCovPost, cv::Scalar(1));
     cv::setIdentity(middleLaneKF.errorCovPost, cv::Scalar(1));
 }
 
-cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int degree)
+cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals,
+                              int degree)
 {
     // Check if we have enough points for the requested degree
     if (y_vals.rows < degree + 1)
@@ -119,105 +125,126 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals, int 
     return coeffs;
 }
 
+cv::Mat KalmanFilter::extractPolynomialCoefficients(
+    const std::vector<cv::Point>& laneCurve)
+{
+    if (laneCurve.size() < 3)
+        return cv::Mat();
 
-cv::Mat KalmanFilter::extractPolynomialCoefficients(const std::vector<cv::Point>& laneCurve) {
-    if (laneCurve.size() < 3) return cv::Mat();
-    
     // Prepare data for polyfit
     cv::Mat xVals(laneCurve.size(), 1, CV_64F);
     cv::Mat yVals(laneCurve.size(), 1, CV_64F);
-    
-    for (size_t i = 0; i < laneCurve.size(); i++) {
+
+    for (size_t i = 0; i < laneCurve.size(); i++)
+    {
         xVals.at<double>(i) = laneCurve[i].x;
         yVals.at<double>(i) = laneCurve[i].y;
     }
-    
+
     // Fit polynomial (y = ax² + bx + c)
     // Note: We're fitting x as a function of y since lanes are more vertical
     return polyfit(yVals, xVals, 2);
 }
 
-std::vector<cv::Point> KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height, int width) {
+std::vector<cv::Point>
+KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height,
+                                              int width)
+{
     std::vector<cv::Point> curve;
-    
+
     // Generate points along the polynomial curve
-    for (int y = 0; y < height; y += 10) {
+    for (int y = 0; y < height; y += 10)
+    {
         double a = coeffs.at<float>(0);
         double b = coeffs.at<float>(1);
         double c = coeffs.at<float>(2);
-        
+
         // x = ay² + by + c
-        int x = static_cast<int>(a*y*y + b*y + c);
-        
+        int x = static_cast<int>(a * y * y + b * y + c);
+
         // Ensure point is within frame
-        if (x >= 0 && x < width) {
+        if (x >= 0 && x < width)
+        {
             curve.push_back(cv::Point(x, y));
         }
     }
-    
+
     return curve;
 }
 
-void KalmanFilter::updateLeftLaneFilter(const std::vector<cv::Point>& lane) {
+void KalmanFilter::updateLeftLaneFilter(const std::vector<cv::Point>& lane)
+{
     // Extract polynomial coefficients
     cv::Mat coeffs = extractPolynomialCoefficients(lane);
-    
-    if (coeffs.empty()) return;
-    
+
+    if (coeffs.empty())
+        return;
+
     // Convert to measurement format
     cv::Mat measurement(3, 1, CV_32F);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         measurement.at<float>(i) = static_cast<float>(coeffs.at<double>(i));
     }
-    
+
     // Update Kalman filter
     leftLaneKF.correct(measurement);
 }
 
-
-void KalmanFilter::updateRightLaneFilter(const std::vector<cv::Point>& lane) {
+void KalmanFilter::updateRightLaneFilter(const std::vector<cv::Point>& lane)
+{
     // Extract polynomial coefficients
     cv::Mat coeffs = extractPolynomialCoefficients(lane);
-    
-    if (coeffs.empty()) return;
-    
+
+    if (coeffs.empty())
+        return;
+
     // Convert to measurement format
     cv::Mat measurement(3, 1, CV_32F);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         measurement.at<float>(i) = static_cast<float>(coeffs.at<double>(i));
     }
-    
+
     // Update Kalman filter
     rightLaneKF.correct(measurement);
 }
 
-void KalmanFilter::updateMiddleLaneFilter(const std::vector<cv::Point>& lane) {
+void KalmanFilter::updateMiddleLaneFilter(const std::vector<cv::Point>& lane)
+{
     // Extract polynomial coefficients
     cv::Mat coeffs = extractPolynomialCoefficients(lane);
-    
-    if (coeffs.empty()) return;
-    
+
+    if (coeffs.empty())
+        return;
+
     // Convert to measurement format
     cv::Mat measurement(3, 1, CV_32F);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         measurement.at<float>(i) = static_cast<float>(coeffs.at<double>(i));
     }
-    
+
     // Update Kalman filter
     middleLaneKF.correct(measurement);
 }
 
-std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve(int height, int width) {
+std::vector<cv::Point> KalmanFilter::predictLeftLaneCurve(int height, int width)
+{
     cv::Mat leftPrediction = leftLaneKF.predict();
     return (reconstructLaneFromCoefficients(leftPrediction, height, width));
 }
 
-std::vector<cv::Point> KalmanFilter::predictRightLaneCurve(int height, int width) {
+std::vector<cv::Point> KalmanFilter::predictRightLaneCurve(int height,
+                                                           int width)
+{
     cv::Mat rightPrediction = rightLaneKF.predict();
     return (reconstructLaneFromCoefficients(rightPrediction, height, width));
 }
 
-std::vector<cv::Point> KalmanFilter::predictMiddleLaneCurve(int height, int width) {
+std::vector<cv::Point> KalmanFilter::predictMiddleLaneCurve(int height,
+                                                            int width)
+{
     cv::Mat middlePrediction = middleLaneKF.predict();
     return (reconstructLaneFromCoefficients(middlePrediction, height, width));
 }

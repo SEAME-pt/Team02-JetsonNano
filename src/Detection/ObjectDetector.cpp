@@ -6,9 +6,10 @@ using namespace zenoh;
 
 ObjectDetector::ObjectDetector(const std::string& enginePath)
 {
-    try {
+    try
+    {
         this->gpuInference = new GPUInference(enginePath, 3, 7);
-        this->gpuInference->init(); 
+        this->gpuInference->init();
     }
     catch (const std::exception& e)
     {
@@ -25,13 +26,13 @@ void ObjectDetector::detect(cv::Mat& frame, cv::Mat& result)
 {
     cv::Mat class_mask(HEIGHT, WIDTH, CV_8UC3);
     cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
-    
+
     preProcess(frame, preprocessedFrame);
 
     gpuInference->copyToGPU(preprocessedFrame);
     gpuInference->inference();
     gpuInference->copyToCPUClassOutput(class_mask);
-    
+
     class_mask.copyTo(result);
 }
 
