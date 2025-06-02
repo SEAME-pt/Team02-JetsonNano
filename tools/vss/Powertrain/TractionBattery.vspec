@@ -1,0 +1,51 @@
+# Copyright (c) 2016 Contributors to COVESA
+#
+# This program and the accompanying materials are made available under the
+# terms of the Mozilla Public License 2.0 which is available at
+# https://www.mozilla.org/en-US/MPL/2.0/
+#
+# SPDX-License-Identifier: MPL-2.0
+
+#
+# Signals and attributes related to the traction battery in vehicles with electrical powertrain.
+# For some vehicles the traction battery is referred to as the high voltage battery.
+#
+
+
+StateOfCharge:
+  type: branch
+  description: Information on the state of charge of the vehicle's high voltage battery.
+
+StateOfCharge.Displayed:
+  type: sensor
+  datatype: float
+  unit: percent
+  min: 0
+  max: 100.00
+  description: State of charge displayed to the customer.
+
+MaxVoltage:
+  datatype: uint16
+  type: attribute
+  unit: V
+  description: Max allowed voltage of the battery, e.g. during charging.
+
+CurrentVoltage:
+  datatype: float
+  type: sensor
+  unit: V
+  description: Current Voltage of the battery.
+
+CurrentCurrent:
+  datatype: float
+  type: sensor
+  unit: A
+  description: Current current flowing in/out of battery. Positive = Current flowing in to battery, e.g. during charging.
+               Negative = Current flowing out of battery, e.g. during driving.
+
+CurrentPower:
+  datatype: float
+  type: sensor
+  unit: W
+  description: Current electrical energy flowing in/out of battery. Positive = Energy flowing in to battery, e.g. during charging.
+               Negative = Energy flowing out of battery, e.g. during driving.
