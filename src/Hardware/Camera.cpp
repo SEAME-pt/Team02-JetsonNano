@@ -4,7 +4,8 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(const std::string& pipeline, const std::string& calibrationFile) : FRAME_SKIP(3), frame_count(0)
+Camera::Camera(const std::string& pipeline, const std::string& calibrationFile)
+    : FRAME_SKIP(3), frame_count(0)
 {
     cap.open(pipeline, cv::CAP_GSTREAMER);
 
@@ -15,7 +16,8 @@ Camera::Camera(const std::string& pipeline, const std::string& calibrationFile) 
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     cap >> currentFrame;
-    if (currentFrame.empty()) {
+    if (currentFrame.empty())
+    {
         cv::destroyAllWindows();
         throw std::runtime_error("Error reading initial frame");
     }
@@ -23,9 +25,8 @@ Camera::Camera(const std::string& pipeline, const std::string& calibrationFile) 
     this->setCalibrationParameters(calibrationFile);
 
     Size imageSize = currentFrame.size();
-    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                            cameraMatrix, imageSize, CV_16SC2, map1, map2);
-
+    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(), cameraMatrix,
+                            imageSize, CV_16SC2, map1, map2);
 }
 
 Camera::~Camera()
@@ -51,8 +52,9 @@ void Camera::setCalibrationParameters(const std::string& calibrationFile)
 
 void Camera::startCapture()
 {
-    if (!running) {
-        running = true;
+    if (!running)
+    {
+        running       = true;
         captureThread = std::thread(&Camera::captureLoop, this);
     }
 }
@@ -60,7 +62,8 @@ void Camera::startCapture()
 void Camera::stopCapture()
 {
     running = false;
-    if (captureThread.joinable()) {
+    if (captureThread.joinable())
+    {
         captureThread.join();
     }
 }
@@ -72,7 +75,8 @@ void Camera::captureLoop()
         Mat frame;
         cap >> frame;
 
-        if (frame.empty()) {
+        if (frame.empty())
+        {
             std::cerr << "Empty frame encountered" << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;

@@ -40,14 +40,13 @@ PidController::PidController(XboxController* xbox_controller)
     ki_ = 0.0f;
     kd_ = 0.0f;
 
-    fixed_delta_time_ = 0.02f;
-    autonomousDrive_  = "SAE_0";
-    xboxController_   = xbox_controller;
-    current_speed_    = 0.0f;
-    speed_lock_       = false;
+    fixed_delta_time_   = 0.02f;
+    autonomousDrive_    = "SAE_0";
+    xboxController_     = xbox_controller;
+    current_speed_      = 0.0f;
+    speed_lock_         = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.12f, 1.3f, 0.01f,
-                               fixed_delta_time_);
+    speedPidController_->init(0.12f, 1.3f, 0.01f, fixed_delta_time_);
 
     auto config = zenoh::Config::create_default();
     session_ =
@@ -130,7 +129,7 @@ PidController::PidController(XboxController* xbox_controller)
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
-            float speed = std::stof(sample.get_payload().as_string());
+            float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
         },
         zenoh::closures::none));
@@ -153,14 +152,13 @@ PidController::PidController(const std::string& configFile,
     ki_ = 0.0f;
     kd_ = 0.0f;
 
-    fixed_delta_time_ = 0.02f;
-    autonomousDrive_  = "SAE_0";
-    xboxController_   = xbox_controller;
-    current_speed_    = 0.0f;
-    speed_lock_       = false;
+    fixed_delta_time_   = 0.02f;
+    autonomousDrive_    = "SAE_0";
+    xboxController_     = xbox_controller;
+    current_speed_      = 0.0f;
+    speed_lock_         = false;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.000001f, 0.000f, 0.00005f,
-                               fixed_delta_time_);
+    speedPidController_->init(0.000001f, 0.000f, 0.00005f, fixed_delta_time_);
 
     auto config = zenoh::Config::from_file(configFile);
     session_ =
@@ -207,7 +205,7 @@ PidController::PidController(const std::string& configFile,
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             // std::cout << "Active Autonomy Level: " << activeAutonomyLevel
-                    //   << std::endl;
+            //   << std::endl;
             setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));
@@ -237,7 +235,7 @@ PidController::PidController(const std::string& configFile,
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
-            float speed = std::stof(sample.get_payload().as_string());
+            float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
         },
         zenoh::closures::none));
@@ -245,7 +243,8 @@ PidController::PidController(const std::string& configFile,
     std::cout << "PID controller created!" << std::endl;
 }
 
-PidController::~PidController() {
+PidController::~PidController()
+{
     delete speedPidController_;
     session_->close();
 }
@@ -325,8 +324,8 @@ void PidController::LKASControl(float lane_error, double current_time,
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
     else
-        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
-
+        publisher_->publishSpeed(
+            speedPidController_->speedPID(0 - current_speed_, current_time));
 }
 
 void PidController::adaptiveCruiseControl(float lane_error, double current_time,
@@ -389,10 +388,15 @@ void PidController::run()
             sae_level == "SAE_4")
         {
             updateControl(cameraError_, current_time);
-            if (!speed_lock_) {
-                publisher_->publishSpeed(speedPidController_->speedPID(105 - current_speed_, current_time));
-            } else {
-                publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+            if (!speed_lock_)
+            {
+                publisher_->publishSpeed(speedPidController_->speedPID(
+                    105 - current_speed_, current_time));
+            }
+            else
+            {
+                publisher_->publishSpeed(speedPidController_->speedPID(
+                    0 - current_speed_, current_time));
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
@@ -426,10 +430,14 @@ void PidController::run()
                     publisher_->publishSpeed(manual_speed);
                 else
                 {
-                    if (manual_speed <= 0) {
+                    if (manual_speed <= 0)
+                    {
                         publisher_->publishSpeed(manual_speed);
-                    } else {
-                        publisher_->publishSpeed(speedPidController_->speedPID(0 - current_speed_, current_time));
+                    }
+                    else
+                    {
+                        publisher_->publishSpeed(speedPidController_->speedPID(
+                            0 - current_speed_, current_time));
                     }
                 }
             }

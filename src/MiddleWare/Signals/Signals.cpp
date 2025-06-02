@@ -7,7 +7,7 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
     this->canBus = new CAN();
     publisher_   = publisher;
 
-        auto config = zenoh::Config::create_default();
+    auto config = zenoh::Config::create_default();
     session_ =
         std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
 
