@@ -8,4 +8,4 @@ Each of the Folders ind this Directory contains the README.MD file with the corr
 - Data colection (system monitor).
 - Zenoh Router (comunication).
 - InfluxDB - data storage and treatment and alerts.
-- VSS
+- VSS  Standardized vehicle signal specification for data exchange
