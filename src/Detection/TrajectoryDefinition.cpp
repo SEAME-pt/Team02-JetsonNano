@@ -482,17 +482,15 @@ float TrajectoryDefinition::calculateLaneDistance(const std::vector<cv::Point>& 
 bool TrajectoryDefinition::validateLaneSeparation(const std::vector<std::vector<cv::Point>>& lanePolylines, float minLaneWidth) {
     if (lanePolylines.size() < 2) return true;
     
-    // Calculate average distance between the two lanes
     float avgDistance = calculateLaneDistance(lanePolylines[0], lanePolylines[1]);
     
-    // If lanes are too close, they're likely the same lane detected twice
     return avgDistance >= minLaneWidth;
 }
 
 void TrajectoryDefinition::checkPredicedCurve(std::vector<cv::Point>& predictedCurve, const std::vector<cv::Point>& realLane, bool isLeftLane) {
     float avgMiddleX = 0;
     float avgDetectedX = 0;
-    float expectedHalfWidth = frameWidth_ * 0.50f; // Approximately lane width
+    float expectedHalfWidth = frameWidth_ * 0.50f;
     float expectedMiddleX = 0;
 
     // Calculate average X positions
