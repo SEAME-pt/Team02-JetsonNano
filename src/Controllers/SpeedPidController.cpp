@@ -26,7 +26,7 @@ SpeedPidController::SpeedPidController()
     integral_    = 0.0f;
     last_time_   = 0.0f;
 
-    max_speed_ = 90.0f;
+    max_speed_    = 90.0f;
     max_throttle_ = 100.0f;
 
     kp_ = 1.0f;
@@ -40,8 +40,7 @@ SpeedPidController::SpeedPidController()
 
 SpeedPidController::~SpeedPidController() {}
 
-void SpeedPidController::init(float kp, float ki, float kd,
-                         float delta_time)
+void SpeedPidController::init(float kp, float ki, float kd, float delta_time)
 {
     kp_               = kp;
     ki_               = ki;
@@ -51,8 +50,8 @@ void SpeedPidController::init(float kp, float ki, float kd,
     prev_error_ = 0.0f;
     integral_   = 0.0f;
 
-    std::cout << "SpeedPID Controller initialized with Kp=" << kp_ << ", Ki=" << ki_
-              << ", Kd=" << kd_
+    std::cout << "SpeedPID Controller initialized with Kp=" << kp_
+              << ", Ki=" << ki_ << ", Kd=" << kd_
               << ", dt=" << fixed_delta_time_ << std::endl;
 }
 
@@ -76,14 +75,14 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // Adjust steering
     float outputThrottle = p_term + i_term + d_term;
-    float throttle = outputThrottle;
+    float throttle       = outputThrottle;
     if (throttle > max_throttle_)
     {
         throttle = max_throttle_;
     }
-    else if (throttle < - max_throttle_)
+    else if (throttle < -max_throttle_)
     {
-        throttle = - max_throttle_;
+        throttle = -max_throttle_;
     }
 
     prev_error_ = error;
