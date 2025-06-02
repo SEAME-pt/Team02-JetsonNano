@@ -94,7 +94,6 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
-    // (void) class_mask;
     std::vector<cv::Point> leftCurve;
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
@@ -108,7 +107,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv:
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
     float maxHorizontalDistance = frameWidth_ * 0.15; // 15% of frame width
-    float maxVerticalGap = frameHeight_ * 0.35;       // 35% of frame height
+    float maxVerticalGap = frameHeight_ * 0.40;       // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
@@ -556,6 +555,65 @@ void TrajectoryDefinition::defineTrajectoryCurve(std::vector<cv::Point>& midCurv
     }
 }
 
+
+void TrajectoryDefinition::defineTrajectoryPolyline(std::vector<cv::Point>& midCurve) {
+    // Sort points by y coordinate (from top to bottom)
+    std::sort(midCurve.begin(), midCurve.end(), 
+              [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
+    
+    // Prepare data for polynomial fitting
+    std::vector<double> x_values, y_values;
+    for (const auto& pt : midCurve) {
+        y_values.push_back(static_cast<double>(pt.y));
+        x_values.push_back(static_cast<double>(pt.x));
+    }
+    
+    // Fit a 3rd degree polynomial to the points
+    cv::Mat coeffs;
+    if (x_values.size() >= 4) {  // Need at least 4 points for 3rd degree polynomial
+        cv::Mat y_mat(y_values), x_mat;
+        
+        // Create Vandermonde matrix for polynomial fitting
+        x_mat.create(y_values.size(), 4, CV_64F);
+        for (int i = 0; i < x_mat.rows; i++) {
+            x_mat.at<double>(i, 0) = 1.0;
+            x_mat.at<double>(i, 1) = y_values[i];
+            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
+            x_mat.at<double>(i, 3) = y_values[i] * y_values[i] * y_values[i];
+        }
+        
+        // Solve for polynomial coefficients using least squares
+        cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
+        
+        // Clear existing midCurve and create smooth curve from polynomial
+        midCurve.clear();
+        
+        // Sample more points along the polynomial for a smoother curve
+        int numSamples = frameHeight_ / 100;  // Sample every 5 pixels in y-direction
+        for (int y = 0; y < frameHeight_; y += numSamples) {
+            // if (y > frameHeight_ * 0.5) {  // Only use lower half of screen for trajectory
+                // Evaluate polynomial: x = a + by + cy² + dy³
+                double yVal = static_cast<double>(y);
+                double xVal = coeffs.at<double>(0) + 
+                              coeffs.at<double>(1) * yVal + 
+                              coeffs.at<double>(2) * yVal * yVal + 
+                              coeffs.at<double>(3) * yVal * yVal * yVal;
+                
+                // Constrain x within frame boundaries
+                xVal = std::max(0.0, std::min(static_cast<double>(frameWidth_), xVal));
+                
+                midCurve.push_back(cv::Point(static_cast<int>(xVal), y));
+            // }
+        }
+    }
+
+    // Draw middle lane curve with white color and thicker line
+    cv::Scalar midCurveColor = cv::Scalar(255, 255, 255); // White
+    for (size_t i = 1; i < midCurve.size(); i++) {
+        cv::line(allPolylinesViz_, midCurve[i-1], midCurve[i], midCurveColor, 3);
+    }
+}
+
 void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve) {
     cv::Point midPoint;
     int height = frameHeight_;
@@ -686,6 +744,8 @@ bool TrajectoryDefinition::checkIfLeftLane(const std::vector<std::vector<cv::Poi
     return (isLeftLane);
 }
 
+
+
 void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
     if (midCurve.empty()) {
@@ -695,6 +755,8 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
                     cv::Scalar(0, 0, 255), 2);
         return;
     }
+
+    defineTrajectoryPolyline(midCurve);
 
     const int zoneWidth = WIDTH * 0.20;  // Width of zone around trajectory
     int total_pixels = 0;
@@ -767,20 +829,6 @@ void TrajectoryDefinition::checkForwardCollision(const cv::Mat& segmentation_mas
 
     // After creating the polygon mask
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
-
-    // int nonZeroCount = cv::countNonZero(polygonMask);
-    // std::cout << "Polygon mask non-zero pixels: " << nonZeroCount << std::endl;
-
-    // // Create a more visible green overlay
-    // cv::Mat colorMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC3);
-    // // Fill with bright green
-    // cv::fillPoly(colorMask, contours, cv::Scalar(0, 255, 0)); 
-
-    // // Blend with original image using a higher alpha for visibility
-    // cv::addWeighted(allPolylinesViz_, 0.7, colorMask, 0.5, 0, allPolylinesViz_);
-
-    // // Draw the polygon boundary with a contrasting color
-    // cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
 
     // Count road pixels in the polygon
     for (int y = 0; y < polygonMask.rows; y++) {
