@@ -9,6 +9,8 @@
 #include "VSSSubscriber.hpp"
 #include "VSSQueryable.hpp"
 #include "SensoringPublisher.hpp"
+#include "ControllerPublisher.hpp"
+#include <zenoh.hxx>
 
 using namespace zenoh;
 
@@ -39,7 +41,9 @@ class Signals
 {
   private:
     CAN* canBus;
+    std::shared_ptr<zenoh::Session> session_;
     std::shared_ptr<SensoringPublisher> publisher_;
+    std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
 
   public:
     Signals(std::shared_ptr<SensoringPublisher> publisher);
