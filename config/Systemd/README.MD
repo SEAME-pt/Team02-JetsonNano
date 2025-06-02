@@ -23,18 +23,18 @@
 │   └── system_monitor
 │       ├── monitor_config.json
 │       └── system_monitor
-└── zenoh-router
-    ├── docker-compose.yml
-    └── zenoh-docker
-        ├── config
-        │   └── zenoh.json5
-        └── lib
-            ├── libzenoh_backend_fs.so
-            ├── libzenoh_backend_influxdb.so
-            ├── libzenoh_backend_influxdb2.so
-            ├── libzenoh_plugin_rest.so
-            └── libzenoh_plugin_storage_manager.so
-
+│      └── zenoh-router
+│           ├── docker-compose.yml
+│           └── zenoh-docker
+│               ├── config
+│               │   └── zenoh.json5
+│               └── lib
+│                   ├── libzenoh_backend_fs.so
+│                   ├── libzenoh_backend_influxdb.so
+│                   ├── libzenoh_backend_influxdb2.so
+│                   ├── libzenoh_plugin_rest.so
+│                   └── libzenoh_plugin_storage_manager.so
+└── vss ...
 
 ## Zenoh Router Notes
 
