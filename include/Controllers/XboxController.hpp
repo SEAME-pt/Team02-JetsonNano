@@ -109,9 +109,6 @@ class XboxController
     std::atomic<float> manual_steering_{90.0f};
     std::atomic<float> manual_speed_{0.0f};
 
-    std::optional<zenoh::Subscriber<void>> speed_lock_subscriber_;
-    bool speed_lock_;
-
   public:
     std::vector<struct axis_state*> axes;
     struct js_event event;
