@@ -21,6 +21,7 @@ TrajectoryDefinition::TrajectoryDefinition(std::shared_ptr<zenoh::Session> sessi
     }
     catch (const std::exception& e)
     {
+        this->canBus = NULL;
         std::cerr << "Error initializing CAN" << e.what() << std::endl;
     }
 
@@ -76,8 +77,10 @@ TrajectoryDefinition::TrajectoryDefinition(std::shared_ptr<zenoh::Session> sessi
 
 TrajectoryDefinition::~TrajectoryDefinition()
 {
+    if (canBus) {
+        delete canBus;
+    }
     delete kalmanFilter;
-    // delete canBus;
     delete ipm;
 }
 
