@@ -21,6 +21,8 @@ private:
 
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::Subscriber<void>> carla_frame;
+
+    bool useZenohSubscription = true;
     
     void captureLoop();
 
