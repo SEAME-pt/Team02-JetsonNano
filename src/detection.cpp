@@ -156,7 +156,7 @@ void objectDetectionThreadFunction(ObjectDetector* detector, SynchronizedProcess
 
 void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef, SynchronizedProcessor* processor) {
     cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
-    cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+    // cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
     cv::Mat original_frame, lane_mask, object_mask;
     
@@ -204,9 +204,9 @@ int main(int argc, char** argv)
 
         SynchronizedProcessor processor;
     
-        Camera camera(pipeline, "calibration.yml");
-        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
-        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
+        Camera camera(pipeline, "calibration.yml", session);
+        LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
+        ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
         camera.startCapture();
