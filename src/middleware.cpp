@@ -30,11 +30,8 @@ int main(int argc, char** argv)
     }
 
     auto publisher = std::make_shared<SensoringPublisher>(session);
-    BatterySensor jetsonBat(publisher);
-    Signals allSigs(publisher);
-
-    jetsonBat.init("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
-    allSigs.init("/dev/spidev0.0");
+    BatterySensor jetsonBat(publisher, "/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
+    Signals allSigs(publisher, "/dev/spidev0.0");
 
     std::thread batteryThread(&BatterySensor::run, &jetsonBat);
     std::thread signalsThread(&Signals::run, &allSigs);

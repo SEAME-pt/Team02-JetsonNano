@@ -47,9 +47,8 @@ class Signals
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
 
   public:
-    Signals(std::shared_ptr<SensoringPublisher> publisher);
+    Signals(std::shared_ptr<SensoringPublisher> publisher, const std::string& canDevice);
     ~Signals();
 
-    void init(const std::string& canDevice);
     void run();
 };
