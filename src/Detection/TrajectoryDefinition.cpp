@@ -56,8 +56,8 @@ TrajectoryDefinition::TrajectoryDefinition(
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.5f;       // meters
-        float farDistance = 20.0f;       // meters
-        float laneWidth = 4.5f;          // meters
+        float farDistance = 15.0f;       // meters
+        float laneWidth = 5.0f;          // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
 
@@ -87,7 +87,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
     delete ipm;
 }
 
-void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
+cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
                                    cv::Mat& class_mask)
 {
     cv::Mat resized_binary_mask;
@@ -102,8 +102,12 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::addWeighted(ipm_frame, 0.7, ipm_class_mask, 0.3, 0.0, ipm_frame);
-    ipm_frame.copyTo(frame);
+    cv::Size size(800 * 5 / 15, 800);
+
+    cv::Mat res_frame;
+    cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
+
+    return (res_frame);
 }
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
@@ -122,7 +126,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
     float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.40; // 35% of frame height
+    float maxVerticalGap        = frameHeight_ * 0.50; // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
