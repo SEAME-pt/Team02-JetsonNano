@@ -1076,7 +1076,7 @@ void TrajectoryDefinition::checkForwardCollision(
 
         is_emergency_stop = true;
 
-        publishSpeedLock("1");
+        // publishSpeedLock("1");
         try
         {
             uint8_t value[8];
