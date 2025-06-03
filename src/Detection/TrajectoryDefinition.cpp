@@ -290,7 +290,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     createMidPointError(midCurve);
 
-    checkForwardCollision(class_mask, midCurve);
+    // checkForwardCollision(class_mask, midCurve);
+
+    (void) class_mask;
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -776,7 +778,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = height - (1.5 * height / 3); // 1/3 up from bottom
+        int targetY = height - (0.5 * height / 3); // 1/3 up from bottom
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -1076,7 +1078,7 @@ void TrajectoryDefinition::checkForwardCollision(
 
         is_emergency_stop = true;
 
-        // publishSpeedLock("1");
+        publishSpeedLock("1");
         try
         {
             uint8_t value[8];
