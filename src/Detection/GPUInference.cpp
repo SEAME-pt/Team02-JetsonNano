@@ -1,12 +1,15 @@
 #include "GPUInference.hpp"
 
-GPUInference::GPUInference(const std::string &enginePath, int inputChannels, int outputChannels) {
-    enginePath_ = enginePath;
-    inputChannels_ = inputChannels;
+GPUInference::GPUInference(const std::string& enginePath, int inputChannels,
+                           int outputChannels)
+{
+    enginePath_     = enginePath;
+    inputChannels_  = inputChannels;
     outputChannels_ = outputChannels;
 }
 
-GPUInference::~GPUInference() {
+GPUInference::~GPUInference()
+{
     cudaFreeHost(inputData);
     cudaFreeHost(outputData);
     cudaFree(inputDevice);
@@ -14,7 +17,8 @@ GPUInference::~GPUInference() {
     cudaStreamDestroy(stream);
 }
 
-void GPUInference::init() {
+void GPUInference::init()
+{
     createExecutionContext(enginePath_);
 
     // Set highest stream priority
@@ -67,7 +71,8 @@ void GPUInference::createExecutionContext(const std::string& enginePath)
     context.reset(engine->createExecutionContext());
 }
 
-void GPUInference::inference() {
+void GPUInference::inference()
+{
     float milliseconds = 0;
 
     cudaEventRecord(start, stream);
@@ -96,22 +101,29 @@ void GPUInference::inference() {
 
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    if (outputChannels_ == 1) {
-        std::cout << "Inference time in lane detection: " << milliseconds << "ms\n";
-    } else {
-        std::cout << "Inference time in object detection: " << milliseconds << "ms\n";
+    if (outputChannels_ == 1)
+    {
+        std::cout << "Inference time in lane detection: " << milliseconds
+                  << "ms\n";
+    }
+    else
+    {
+        std::cout << "Inference time in object detection: " << milliseconds
+                  << "ms\n";
     }
 }
 
-void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
-    const int plane_size      = HEIGHT * WIDTH;
+void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
+{
+    const int plane_size            = HEIGHT * WIDTH;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
     for (int c = 0; c < inputChannels_; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            inputData[c * plane_size + i] = preprocessedData[i * inputChannels_ + c] / 255.0f;
+            inputData[c * plane_size + i] =
+                preprocessedData[i * inputChannels_ + c] / 255.0f;
         }
     }
 
@@ -121,7 +133,8 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame) {
                     cudaMemcpyHostToDevice, stream);
 }
 
-void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask) {
+void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
+{
     const int total_pixels = HEIGHT * WIDTH;
 
     cudaMemcpyAsync(outputData, outputDevice,
@@ -130,18 +143,20 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask) {
             
     cudaStreamSynchronize(stream);
 
-    for (int i = 0; i < total_pixels; i++) {
-        int y = i / WIDTH;
-        int x = i % WIDTH;
-        uchar value = (outputData[i] > 0.5) ? 127 : 0;
+    for (int i = 0; i < total_pixels; i++)
+    {
+        int y                      = i / WIDTH;
+        int x                      = i % WIDTH;
+        uchar value                = (outputData[i] > 0.5) ? 127 : 0;
         outputMask.at<uchar>(y, x) = value;
     }
 }
 
-void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask) {
-    const int total_pixels = HEIGHT * WIDTH;
+void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
+{
+    const int total_pixels       = HEIGHT * WIDTH;
     const cv::Scalar color_map[] = {
-        cv::Scalar(0, 0, 10),      // Background
+        cv::Scalar(0, 0, 10),     // Background
         cv::Scalar(128, 64, 128), // Road
         cv::Scalar(0, 0, 142),    // Car
         cv::Scalar(250, 170, 30), // Traffic Light
@@ -152,7 +167,7 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask) {
         cv::Scalar(0, 60, 100),   // Bus
         cv::Scalar(0, 0, 230)     // Motorcycle
     };
-    
+
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
                     outputChannels_ * HEIGHT * WIDTH * sizeof(float),
@@ -165,7 +180,8 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask) {
     {
         // Get probability for each class
         float probs[outputChannels_];
-        for (int c = 0; c < outputChannels_; c++) {
+        for (int c = 0; c < outputChannels_; c++)
+        {
             probs[c] = outputData[total_pixels * c + i];
         }
 

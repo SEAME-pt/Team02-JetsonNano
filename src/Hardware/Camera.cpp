@@ -145,8 +145,9 @@ void Camera::setCalibrationParameters(const std::string& calibrationFile)
 
 void Camera::startCapture()
 {
-    if (!running) {
-        running = true;
+    if (!running)
+    {
+        running       = true;
         captureThread = std::thread(&Camera::captureLoop, this);
     }
 }
@@ -154,7 +155,8 @@ void Camera::startCapture()
 void Camera::stopCapture()
 {
     running = false;
-    if (captureThread.joinable()) {
+    if (captureThread.joinable())
+    {
         captureThread.join();
     }
 }
