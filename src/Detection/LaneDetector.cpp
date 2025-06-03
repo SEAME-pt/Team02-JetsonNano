@@ -10,9 +10,10 @@ using namespace zenoh;
 
 LaneDetector::LaneDetector(const std::string& enginePath)
 {
-    try {
+    try
+    {
         this->gpuInference = new GPUInference(enginePath, 3, 1);
-        this->gpuInference->init(); 
+        this->gpuInference->init();
     }
     catch (const std::exception& e)
     {
@@ -31,13 +32,13 @@ void LaneDetector::detect(cv::Mat& frame, cv::Mat& result)
 {
     cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
     cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
-    
+
     preProcess(frame, preprocessedFrame);
 
     gpuInference->copyToGPU(preprocessedFrame);
     gpuInference->inference();
     gpuInference->copyToCPUBinaryOutput(binary_mask);
-    
+
     binary_mask.copyTo(result);
 }
 
