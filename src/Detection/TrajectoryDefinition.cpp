@@ -951,8 +951,9 @@ void TrajectoryDefinition::checkForwardCollision(
     }
 
     // Check if segmentation mask is valid
-    if (segmentation_mask.empty()) {
-        cv::putText(allPolylinesViz_, "Segmentation mask is empty",
+    if (segmentation_mask.empty() || segmentation_mask.channels() != 3) {
+        cv::putText(allPolylinesViz_, "Invalid segmentation mask format: " + 
+                    std::to_string(segmentation_mask.channels()) + " channels",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
         return;
@@ -1046,14 +1047,30 @@ void TrajectoryDefinition::checkForwardCollision(
 
     // Count road pixels in the polygon
     for (int y = 0; y < polygonMask.rows && y < segmentation_mask.rows; y++) {
+        const uchar* maskRow = polygonMask.ptr<uchar>(y);
+        const cv::Vec3b* segRow = segmentation_mask.ptr<cv::Vec3b>(y);
+        
         for (int x = 0; x < polygonMask.cols && x < segmentation_mask.cols; x++) {
             // Only check pixels inside the polygon
-            if (polygonMask.at<uchar>(y, x) > 0) {
+            if (maskRow[x] > 0) {
                 total_pixels++;
-                cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
                 
-                if (pixel == cv::Vec3b(128, 64, 128) ||
-                    pixel == cv::Vec3b(0, 0, 0)) {
+                // Check road pixel using safer comparison
+                cv::Vec3b pixel = segRow[x];
+                
+                // Print the first few pixels to debug
+                if (total_pixels < 10) {
+                    std::cout << "Pixel at (" << x << "," << y << "): " 
+                            << (int)pixel[0] << "," 
+                            << (int)pixel[1] << "," 
+                            << (int)pixel[2] << std::endl;
+                }
+                
+                // Use a more tolerant color comparison
+                if ((std::abs(pixel[0] - 128) < 10 && 
+                    std::abs(pixel[1] - 64) < 10 && 
+                    std::abs(pixel[2] - 128) < 10) || 
+                    (pixel[0] < 10 && pixel[1] < 10 && pixel[2] < 10)) {
                     road_pixels++;
                 }
             }
