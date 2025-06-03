@@ -57,6 +57,7 @@ static std::vector<uint8_t> base64_decode(const std::string& base64_text) {
 Camera::Camera(const std::string& pipeline, const std::string& calibrationFile, std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
+    useZenohSubscription = false;
 
     try {
         std::future<bool> future = std::async(std::launch::async, [&]() {
@@ -87,6 +88,9 @@ Camera::Camera(const std::string& pipeline, const std::string& calibrationFile, 
         initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
                                 cameraMatrix, imageSize, CV_16SC2, map1, map2);
     } catch (const std::runtime_error& e) {
+        std::cerr << "Camera error: " << e.what() << ", switching to Zenoh subscription" << std::endl;
+        useZenohSubscription = true;
+
         carla_frame.emplace(session_->declare_subscriber(
         "carla/frame",
         [this](const zenoh::Sample& sample)
@@ -161,7 +165,7 @@ void Camera::captureLoop()
     {
         Mat frame;
 
-        if (cap.isOpened()) {
+        if (!useZenohSubscription) {
             cap >> frame;
 
             if (frame.empty()) {
