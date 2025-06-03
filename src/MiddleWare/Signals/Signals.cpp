@@ -11,8 +11,6 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
     session_ =
         std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
 
-    // publisher_ = std::make_unique<ControllerPublisher>(session_);
-
     activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
@@ -30,6 +28,16 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher)
                 memcpy(value, &activeAutonomyLevel, sizeof(value));
                 this->canBus->writeMessage(0x400, value, sizeof(value));
             }
+        },
+        zenoh::closures::none));
+
+    carlaSpeed_subscriber.emplace(session_->declare_subscriber(
+        "carla/speed",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string speed_str = sample.get_payload().as_string();
+            
+            publisher_->publishSpeed(std::stof(speed_str));
         },
         zenoh::closures::none));
 }
