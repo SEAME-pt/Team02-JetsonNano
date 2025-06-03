@@ -35,18 +35,28 @@ TrajectoryDefinition::TrajectoryDefinition(std::shared_ptr<zenoh::Session> sessi
 
     try     
     {
-        float cameraHeight = 0.137f;       // meters
-        float cameraPitch = 20.0f;       // degrees down from horizontal
-        float horizontalFOV = 100.0f;     // degrees
-        float img_height = static_cast<float>(HEIGHT);
-        float img_width = static_cast<float>(WIDTH);
+        // float cameraHeight = 0.137f;       // meters
+        // float cameraPitch = 20.0f;       // degrees down from horizontal
+        // float horizontalFOV = 100.0f;     // degrees
+        // float img_height = static_cast<float>(HEIGHT);
+        // float img_width = static_cast<float>(WIDTH);
+        // float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
+        // float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
+        // float nearDistance = 0.01f;       // meters
+        // float farDistance = 0.45f;       // meters
+        // float laneWidth = 1.4f;      // meters
+        float cameraHeight = 1.5f;       // meters
+        float cameraPitch = 15.0f;       // degrees down from horizontal
+        float horizontalFOV = 105.0f;     // degrees
+        float img_height = static_cast<float>(600);
+        float img_width = static_cast<float>(800);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        float nearDistance = 0.01f;       // meters
-        float farDistance = 0.45f;       // meters
-        float laneWidth = 1.4f;      // meters
-        cv::Size bevSize = cv::Size(WIDTH, HEIGHT);
-        cv::Size origSize = cv::Size(WIDTH, HEIGHT);
+        float nearDistance = 1.5f;       // meters
+        float farDistance = 20.0f;       // meters
+        float laneWidth = 4.5f;          // meters
+        cv::Size bevSize = cv::Size(800, 600);
+        cv::Size origSize = cv::Size(800, 600);
 
         this->ipm     = new IPM();
         this->ipm->init(origSize, bevSize);
@@ -67,44 +77,25 @@ TrajectoryDefinition::TrajectoryDefinition(std::shared_ptr<zenoh::Session> sessi
 TrajectoryDefinition::~TrajectoryDefinition()
 {
     delete kalmanFilter;
-    delete canBus;
+    // delete canBus;
     delete ipm;
 }
 
 void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
 {
-    cv::Mat ipm_binary_mask = ipm->applyIPM(binary_mask);
-    cv::Mat ipm_class_mask = ipm->applyIPM(class_mask);
+    cv::Mat resized_binary_mask;
+    cv::resize(binary_mask, resized_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+
+    cv::Mat resized_class_mask;
+    cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+
+    cv::Mat ipm_binary_mask = ipm->applyIPM(resized_binary_mask);
+    cv::Mat ipm_class_mask = ipm->applyIPM(resized_class_mask);
     cv::Mat ipm_frame = ipm->applyIPM(frame);
 
-    // // Create a filtered binary mask that only keeps lane points on road surfaces
-    // cv::Mat filtered_binary_mask = cv::Mat::zeros(ipm_binary_mask.size(), ipm_binary_mask.type());
-    
-    // // For each pixel in the binary mask
-    // for (int y = 0; y < ipm_binary_mask.rows; y++) {
-    //     for (int x = 0; x < ipm_binary_mask.cols; x++) {
-    //         if (ipm_binary_mask.at<uchar>(y, x) > 0) {
-    //             cv::Vec3b class_pixel = ipm_class_mask.at<cv::Vec3b>(y, x);
-    //             if (class_pixel == cv::Vec3b(128, 64, 128) || class_pixel == cv::Vec3b(0, 0, 0)) {
-    //                 filtered_binary_mask.at<uchar>(y, x) = ipm_binary_mask.at<uchar>(y, x);
-    //             }
-    //         }
-    //     }
-    // }
-    
-    cv::Mat resized_ipm_binary_mask;
-    cv::resize(ipm_binary_mask, resized_ipm_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Mat resized_ipm_class_mask;
-    cv::resize(ipm_class_mask, resized_ipm_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
-
-    cv::Mat resized_ipm_frame;
-    cv::resize(ipm_frame, resized_ipm_frame, frame.size(), 0, 0, cv::INTER_NEAREST);
-
-    resized_ipm_frame.copyTo(frame);
-
-    createLanes(frame, resized_ipm_binary_mask, resized_ipm_class_mask);
-    cv::addWeighted(frame, 0.7, resized_ipm_class_mask, 0.3, 0, frame);
+    ipm_frame.copyTo(frame);
 }
 
 void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask)
