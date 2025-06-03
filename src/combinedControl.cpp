@@ -25,8 +25,8 @@ int main(int argc, char** argv)
         // float ki                = 0.000001;
         // float kd                = 10;
         float kp                = 15;
-        float ki                = 0.01;
-        float kd                = 0.5;
+        float ki                = 0.1;
+        float kd                = 3.0;
         float constant_throttle = 0.2;
         float delta_time        = 0.05; // ms
 
