@@ -189,9 +189,9 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
     {
         processor->getProcessingData(original_frame, lane_mask, object_mask);
 
-        trajectoryDef->process(original_frame, lane_mask, object_mask);
+        cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
-        cv::imshow("Trajectory", original_frame);
+        cv::imshow("Trajectory", new_frame);
         cv::waitKey(1);
 
         processor->trajectoryDone();

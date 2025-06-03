@@ -61,7 +61,7 @@ class TrajectoryDefinition
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session);
     ~TrajectoryDefinition();
 
-    void process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
+    cv::Mat process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
   private:
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
