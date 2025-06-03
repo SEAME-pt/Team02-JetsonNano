@@ -102,6 +102,7 @@ void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
+    cv::addWeighted(ipm_frame, 0.7, ipm_class_mask, 0.3, 0.0, ipm_frame);
     ipm_frame.copyTo(frame);
 }
 
