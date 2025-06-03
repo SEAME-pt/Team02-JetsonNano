@@ -57,7 +57,7 @@ TrajectoryDefinition::TrajectoryDefinition(
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.5f;       // meters
         float farDistance = 15.0f;       // meters
-        float laneWidth = 5.0f;          // meters
+        float laneWidth = 4.5f;          // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
 
@@ -107,6 +107,10 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
     cv::Mat res_frame;
     cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
 
+    cv::Mat res_class_mask;
+    cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_NEAREST);
+
+    cv::addWeighted(res_frame, 0.7, res_class_mask, 3.0, 0.0, res_frame);
     return (res_frame);
 }
 
@@ -294,7 +298,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     createMidPointError(midCurve);
 
-    // checkForwardCollision(class_mask, midCurve);
+    checkForwardCollision(class_mask, midCurve);
 
     (void) class_mask;
 
@@ -946,6 +950,14 @@ void TrajectoryDefinition::checkForwardCollision(
         return;
     }
 
+    // Check if segmentation mask is valid
+    if (segmentation_mask.empty()) {
+        cv::putText(allPolylinesViz_, "Segmentation mask is empty",
+                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+        return;
+    }
+
     defineTrajectoryPolyline(midCurve);
 
     const int zoneWidth = WIDTH * 0.20; // Width of zone around trajectory
@@ -1033,19 +1045,15 @@ void TrajectoryDefinition::checkForwardCollision(
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
 
     // Count road pixels in the polygon
-    for (int y = 0; y < polygonMask.rows; y++)
-    {
-        for (int x = 0; x < polygonMask.cols; x++)
-        {
+    for (int y = 0; y < polygonMask.rows && y < segmentation_mask.rows; y++) {
+        for (int x = 0; x < polygonMask.cols && x < segmentation_mask.cols; x++) {
             // Only check pixels inside the polygon
-            if (polygonMask.at<uchar>(y, x) > 0)
-            {
+            if (polygonMask.at<uchar>(y, x) > 0) {
                 total_pixels++;
                 cv::Vec3b pixel = segmentation_mask.at<cv::Vec3b>(y, x);
-
+                
                 if (pixel == cv::Vec3b(128, 64, 128) ||
-                    pixel == cv::Vec3b(0, 0, 0))
-                {
+                    pixel == cv::Vec3b(0, 0, 0)) {
                     road_pixels++;
                 }
             }

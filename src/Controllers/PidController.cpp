@@ -391,7 +391,7 @@ void PidController::run()
             if (!speed_lock_)
             {
                 publisher_->publishSpeed(speedPidController_->speedPID(
-                    250 - current_speed_, current_time));
+                    300 - current_speed_, current_time));
             }
             else
             {
