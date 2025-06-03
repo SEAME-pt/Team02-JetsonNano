@@ -969,8 +969,8 @@ void TrajectoryDefinition::checkForwardCollision(
     std::vector<cv::Point> polygonPoints;
 
     // Calculate left and right boundaries of the trajectory zone
-    for (size_t i = 0; i < midCurve.size() - 2; i += 2)
-    { // Skip points for efficiency
+    for (size_t i = 0; i < midCurve.size(); i++)
+    {
         // Only check lower half of the curve (close to the vehicle)
         if (midCurve[i].y < HEIGHT * 0.7)
             continue;
@@ -1023,6 +1023,7 @@ void TrajectoryDefinition::checkForwardCollision(
         return;
     }
 
+
     // Add right points in reverse order to complete the polygon
     for (int i = rightPoints.size() - 1; i >= 0; i--)
     {
@@ -1057,14 +1058,6 @@ void TrajectoryDefinition::checkForwardCollision(
                 
                 // Check road pixel using safer comparison
                 cv::Vec3b pixel = segRow[x];
-                
-                // Print the first few pixels to debug
-                if (total_pixels < 10) {
-                    std::cout << "Pixel at (" << x << "," << y << "): " 
-                            << (int)pixel[0] << "," 
-                            << (int)pixel[1] << "," 
-                            << (int)pixel[2] << std::endl;
-                }
                 
                 // Use a more tolerant color comparison
                 if ((std::abs(pixel[0] - 128) < 10 && 
