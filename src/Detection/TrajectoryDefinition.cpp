@@ -17,6 +17,8 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
     coeffs_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
+    frame_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Carla/frame/test")));
     try
     {
         this->canBus = new CAN();
