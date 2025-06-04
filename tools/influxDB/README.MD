@@ -49,7 +49,7 @@ This warning can typically be ignored unless you're encountering connectivity or
 ## Future improvements
 
  - use telegraf for faster and less intensive processing of the raw data. (real real time).
- - add the remaining measurments to the dashboard of grafana with corresponding monitoring.
+ - add the remaining measurements to the dashboard of grafana with corresponding monitoring.
  - create a service / script that periodically treats the data on a time interval.
  - Data time consistency, generate logs with timestamps of the last update to make the script run on a bigger interval when there are missing time periods of treated telemetry.
 
