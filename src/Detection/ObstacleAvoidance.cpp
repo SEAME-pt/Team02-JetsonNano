@@ -24,8 +24,6 @@ ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
 //
 void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 {
-    CV_Assert(segmentationMask.type() == CV_8UC3); // Expecting a 3-channel BGR image
-    // Clear previous occupancy
     std::fill(occupancy_.begin(), occupancy_.end(), false);
 
     for (int r = 0; r < gridHeight_; ++r)
