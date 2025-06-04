@@ -366,7 +366,7 @@ void ObstacleAvoidance::visualizeGrid(
             }
         }
     }
-    cv::Size actualSize = (800, static_cast<int>(800.0 * 0.45 / 1.4));
+    cv::Size actualSize = cv::Size(800, static_cast<int>(800.0 * 0.45 / 1.4));;
     cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
