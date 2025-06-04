@@ -365,6 +365,9 @@ void ObstacleAvoidance::visualizeGrid(
                         cv::Scalar(255, 255, 0), 2); // Yellow line
             }
         }
+
+        cv::putText(overlay, "Trajectory", cv::Point(10, 30), 
+                  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
     }
     // cv::Size actualSize = cv::Size(800, static_cast<int>(800.0 * 0.45 / 1.4));
     cv::Size actualSize = cv::Size(800, 600);
