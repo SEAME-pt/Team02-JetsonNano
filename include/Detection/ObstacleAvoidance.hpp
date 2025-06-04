@@ -84,10 +84,10 @@ private:
     std::vector<bool> occupancy_;
 
     // Temporary: store the last collision index and row
-    bool    needBypass_    = false;
-    int     collisionIdx_  = -1;
-    int     collisionRow_  = -1;  // image-row (pixel) of first collision
-    int     bypassX_       = -1;  // image-col for bypass (same row)
+    bool    needBypass_;
+    int     collisionIdx_ ;
+    int     collisionRow_ ;  // image-row (pixel) of first collision
+    int     bypassX_;  // image-col for bypass (same row)
 
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
