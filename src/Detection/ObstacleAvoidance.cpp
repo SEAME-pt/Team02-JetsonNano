@@ -24,7 +24,8 @@ ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
 //
 void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 {
-    cv::resize(segmentationMask, segmentationMask,
+    cv::Mat resizedMask = segmentationMask.clone();
+    cv::resize(segmentationMask, resizedMask,
                  cv::Size(frameWidth_, frameHeight_), 0, 0, cv::INTER_NEAREST);
     std::fill(occupancy_.begin(), occupancy_.end(), false);
 
@@ -43,7 +44,7 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
             {
                 for (int xx = x0; xx < x1; ++xx)
                 {
-                    cv::Vec3b pixel = segmentationMask.at<cv::Vec3b>(yy, xx);
+                    cv::Vec3b pixel = resizedMask.at<cv::Vec3b>(yy, xx);
                     
                     // Check if this is a non-road pixel
                     if (!(pixel == cv::Vec3b(128, 64, 128)))
