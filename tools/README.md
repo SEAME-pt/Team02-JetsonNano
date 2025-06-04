@@ -6,6 +6,6 @@ Each of the Folders in this Directory contains the README.MD file with the corre
 
 - Calibration of the Camera.
 - Data collection (system monitor).
-- Zenoh Router (comunication).
+- Zenoh Router (communication).
 - InfluxDB - data storage and treatment and alerts.
 - VSS  Standardized vehicle signal specification for data exchange
