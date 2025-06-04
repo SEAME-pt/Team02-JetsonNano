@@ -23,6 +23,7 @@
 #include "LaneDetectorPublisher.hpp"
 #include "KalmanFilter.hpp"
 #include "GPUInference.hpp"
+#include "ObstacleAvoidance.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -38,6 +39,7 @@ class TrajectoryDefinition
     CAN* canBus;
     KalmanFilter* kalmanFilter;
     IPM* ipm;
+    ObstacleAvoidance* avoidance;
   
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
@@ -62,6 +64,7 @@ class TrajectoryDefinition
     ~TrajectoryDefinition();
 
     void process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
+
   private:
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
@@ -76,6 +79,8 @@ class TrajectoryDefinition
     void createMidPointError(std::vector<cv::Point>& midCurve);  
     void defineTrajectoryPolyline(std::vector<cv::Point>& midCurve);
     
-    void checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+    bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishSpeedLock(const std::string &value_str);
+
+    void obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
 };
