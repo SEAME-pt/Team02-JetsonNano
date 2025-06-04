@@ -316,10 +316,11 @@ void ObstacleAvoidance::visualizeGrid(
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
 
-            int x0 = c * cellSizePx_;
-            int y0 = r * cellSizePx_;
-            int x1 = std::min(x0 + cellSizePx_, frameWidth_);
-            int y1 = std::min(y0 + cellSizePx_, frameHeight_);
+            int x0 = static_cast<int>(c * cellSizePx_ * scaleX);
+            int y0 = static_cast<int>(r * cellSizePx_ * scaleY);
+            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_) * scaleX);
+            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_) * scaleY);
+            
 
             if (trajectoryGrid[r][c]) {
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
@@ -338,54 +339,54 @@ void ObstacleAvoidance::visualizeGrid(
         }
     }
     
-    // Draw grid lines
+    // Draw grid lines with proper scaling
     if (showGridLines) {
-        // Draw horizontal grid lines
         for (int r = 0; r <= gridHeight_; ++r) {
-            int y = r * cellSizePx_;
-            cv::line(overlay, cv::Point(0, y), cv::Point(frameWidth_, y), 
-            cv::Scalar(255, 255, 255), 1);
+            int y = static_cast<int>(r * cellSizePx_ * scaleY);
+            cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
+                    cv::Scalar(255, 255, 255), 1);
         }
         
-        // Draw vertical grid lines
         for (int c = 0; c <= gridWidth_; ++c) {
-            int x = c * cellSizePx_;
-            cv::line(overlay, cv::Point(x, 0), cv::Point(x, frameHeight_), 
-            cv::Scalar(255, 255, 255), 1);
+            int x = static_cast<int>(c * cellSizePx_ * scaleX);
+            cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
+                    cv::Scalar(255, 255, 255), 1);
         }
     }
 
      // Visualize trajectory if provided
+    // Draw trajectory points and lines (at scaled coordinates)
     if (!trajectory.empty()) {
-        // Draw trajectory points converted to grid coordinates
         std::vector<cv::Point> gridTrajectory;
         
         for (const auto& p : trajectory) {
             int gr, gc;
             if (pixelToGrid(p.x, p.y, gr, gc)) {
-                // Get cell center coordinates
+                // Get cell center coordinates (in original space)
                 int centerX, centerY;
                 gridToPixel(gr, gc, centerX, centerY);
                 
-                // Mark this grid cell with a blue circle
-                cv::circle(overlay, cv::Point(centerX, centerY), cellSizePx_/3, 
-                          cv::Scalar(255, 0, 0), -1); // Blue fill
+                // Scale to target size
+                int scaledX = static_cast<int>(centerX * scaleX);
+                int scaledY = static_cast<int>(centerY * scaleY);
                 
-                gridTrajectory.push_back(cv::Point(centerX, centerY));
+                // Mark with blue circle (scaled size)
+                int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
+                cv::circle(overlay, cv::Point(scaledX, scaledY), circleRadius, 
+                          cv::Scalar(255, 0, 0), -1);
+                
+                gridTrajectory.push_back(cv::Point(scaledX, scaledY));
             }
         }
         
-        // Draw lines connecting trajectory points
+        // Connect trajectory points with lines
         if (gridTrajectory.size() > 1) {
             for (size_t i = 0; i < gridTrajectory.size() - 1; i++) {
                 cv::line(overlay, gridTrajectory[i], gridTrajectory[i+1], 
-                        cv::Scalar(255, 255, 0), 2); // Yellow line
+                        cv::Scalar(255, 255, 0), 2);
             }
         }
     }
-    // cv::Size actualSize = cv::Size(800, static_cast<int>(800.0 * 0.45 / 1.4));
-
-    cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
     if (this->detectFirstCollision(trajectory))
