@@ -287,12 +287,20 @@ void ObstacleAvoidance::visualizeGrid(
     bool showGridLines,
     const std::vector<cv::Point>& trajectory)
 {
-    // Create overlay for the occupancy grid
-    cv::Size overlaySize(frameWidth_, frameHeight_);
-    cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
+    // // Create overlay for the occupancy grid
+    // cv::Size overlaySize(frameWidth_, frameHeight_);
+    // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
 
+    cv::Size actualSize(800, 600);
+    
+    // Calculate scaling factors
+    double scaleX = static_cast<double>(actualSize.width) / frameWidth_;
+    double scaleY = static_cast<double>(actualSize.height) / frameHeight_;
+    
+    // Create overlay at the target size directly
+    cv::Mat overlay = cv::Mat::zeros(actualSize, CV_8UC3);
 
-        std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
+    std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
     
     // Preprocess trajectory points to mark grid cells they pass through
     if (!trajectory.empty()) {
@@ -376,7 +384,7 @@ void ObstacleAvoidance::visualizeGrid(
         }
     }
     // cv::Size actualSize = cv::Size(800, static_cast<int>(800.0 * 0.45 / 1.4));
-    cv::Size actualSize = cv::Size(800, 600);
+
     cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
