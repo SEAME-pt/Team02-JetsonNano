@@ -380,6 +380,17 @@ void ObstacleAvoidance::visualizeGrid(
     cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
+    if (this->detectFirstCollision(midCurve))
+    {
+        cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+    }
+    else
+    {
+        cv::putText(overlay, "No Obstacle Detected", cv::Point(20, 40),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
+    }
+
     cv::imshow("Occupancy Grid", overlay);
     cv::waitKey(1);
 }
