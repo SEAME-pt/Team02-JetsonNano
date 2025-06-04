@@ -8,8 +8,6 @@ int main(int argc, char** argv)
         XboxController* manualController;
         PidController* pidController;
 
-        /*both cointrollers need to run with config files,
-         otherwise no config file will be considered */
         if (argc == 3)
         {
             manualController = new XboxController(argv[1]);
