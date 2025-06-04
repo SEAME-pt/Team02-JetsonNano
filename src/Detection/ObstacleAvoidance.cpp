@@ -283,8 +283,7 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 }
 
 // Add this implementation to ObstacleAvoidance.cpp:
-void ObstacleAvoidance::visualizeGrid(
-    cv::Mat& visualImage, 
+void ObstacleAvoidance::visualizeGrid( 
     bool showGridLines,
     const std::vector<cv::Point>& trajectory)
 {
