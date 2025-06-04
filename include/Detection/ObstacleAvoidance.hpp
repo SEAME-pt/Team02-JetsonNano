@@ -40,8 +40,7 @@ public:
     /// whose pixel lands in an occupied grid cell. Returns true if a collision was found.
     ///   midCurve: vector of (x,y) in image coords.  We assume these are sorted by increasing y.
     ///   outCollisionIdx: index in midCurve of the first obstacle pixel.  -1 if none.
-    bool detectFirstCollision(const std::vector<cv::Point>& midCurve,
-                              int& outCollisionIdx);
+    bool detectFirstCollision(const std::vector<cv::Point>& midCurve);
 
     /// Once you know the “collisionRow” = midCurve[outCollisionIdx].y,
     /// find (on that exact image-row) the nearest free column (x) that is (a) inside drivableMask
