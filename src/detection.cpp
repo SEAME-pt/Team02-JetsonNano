@@ -189,7 +189,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
         std::vector<uchar> buffer;
-        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 85};
+        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 50};
         cv::imencode(".jpg", new_frame, buffer, params);
         
         trajectoryDef->frame_publisher_->put(buffer);
