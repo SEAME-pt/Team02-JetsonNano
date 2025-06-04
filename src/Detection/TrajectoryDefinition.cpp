@@ -1125,13 +1125,22 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
 
 void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
-    (void) midCurve;
     avoidance->buildOccupancy(segmentation_mask);
     // // Get a color frame to use for visualization
     cv::Mat visualization;
     segmentation_mask.copyTo(visualization);
-    
-    std::cout << "Occupancy grid built successfully." << std::endl;
+
     // Visualize the grid
-    avoidance->visualizeGrid(visualization);
+    avoidance->visualizeGrid(visualization, true, midCurve);
+
+    if (avoidance->detectFirstCollision())
+    {
+        cv::putText(visualization, "Obstacle Detected", cv::Point(20, 40),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+    }
+    else
+    {
+        cv::putText(visualization, "No Obstacle Detected", cv::Point(20, 40),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
+    }
 }

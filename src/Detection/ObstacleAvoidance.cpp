@@ -286,7 +286,10 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 }
 
 // Add this implementation to ObstacleAvoidance.cpp:
-void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) const
+void ObstacleAvoidance::visualizeGrid(
+    cv::Mat& visualImage, 
+    bool showGridLines,
+    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>()) const
 {
     (void) visualImage;
     // Create overlay for the occupancy grid
@@ -337,16 +340,39 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
             cv::Scalar(255, 255, 255), 1);
         }
     }
-    // cv::resize(overlay, overlay, visualImage.size());
+
+     // Visualize trajectory if provided
+    if (!trajectory.empty()) {
+        // Draw trajectory points converted to grid coordinates
+        std::vector<cv::Point> gridTrajectory;
+        
+        for (const auto& p : trajectory) {
+            int gr, gc;
+            if (pixelToGrid(p.x, p.y, gr, gc)) {
+                // Get cell center coordinates
+                int centerX, centerY;
+                gridToPixel(gr, gc, centerX, centerY);
+                
+                // Mark this grid cell with a blue circle
+                cv::circle(overlay, cv::Point(centerX, centerY), cellSizePx_/3, 
+                          cv::Scalar(255, 0, 0), -1); // Blue fill
+                
+                gridTrajectory.push_back(cv::Point(centerX, centerY));
+            }
+        }
+        
+        // Draw lines connecting trajectory points
+        if (gridTrajectory.size() > 1) {
+            for (size_t i = 0; i < gridTrajectory.size() - 1; i++) {
+                cv::line(overlay, gridTrajectory[i], gridTrajectory[i+1], 
+                        cv::Scalar(255, 255, 0), 2); // Yellow line
+            }
+        }
+    }
+    cv::Size actualSize = (800, (int)(800.0 * 0.45 / 1.4) );
+    cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
-    // Add text showing grid dimensions
-    std::string gridText = "Grid: " + std::to_string(gridWidth_) + "x" + 
-                           std::to_string(gridHeight_) + " (Cell: " + 
-                           std::to_string(cellSizePx_) + "px)";
-    cv::putText(overlay, gridText, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 
-                0.6, cv::Scalar(255, 255, 255), 2);
-
     cv::imshow("Occupancy Grid", overlay);
     cv::waitKey(1);
 }
