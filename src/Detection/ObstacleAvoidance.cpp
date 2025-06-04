@@ -325,6 +325,7 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
         }
     }
     cv::resize(gridlines, gridlines, visualImage.size());
+    cv::resize(overlay, overlay, visualImage.size());
     cv::addWeighted(gridlines, 0.4, visualImage, 0.6, 0, visualImage);
     cv::addWeighted(overlay, 0.4, visualImage, 0.6, 0, visualImage);
     
