@@ -18,7 +18,7 @@ TrajectoryDefinition::TrajectoryDefinition(
     coeffs_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
     frame_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Carla/frame/test")));
+        session_->declare_publisher(zenoh::KeyExpr("carla/debug")));
     try {
         struct stat buffer;
         if (stat("/dev/spidev0.0", &buffer) != 0) {

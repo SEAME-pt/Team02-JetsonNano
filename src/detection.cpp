@@ -179,10 +179,7 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
 
 void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                               SynchronizedProcessor* processor)
-{
-    // cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
-    // cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    
+{   
     cv::Mat original_frame, lane_mask, object_mask;
 
     while (running)
@@ -192,13 +189,9 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
         trajectoryDef->frame_publisher_->put("hello");
-        // cv::imshow("Trajectory", new_frame);
-        // cv::waitKey(1);
 
         processor->trajectoryDone();
     }
-
-    // cv::destroyWindow("Trajectory");
 }
 
 int main(int argc, char** argv)
@@ -217,7 +210,8 @@ int main(int argc, char** argv)
         else
         {
             auto config = Config::create_default();
-
+            config.insert_json5("listen/endpoints", "[\"tcp/100.117.122.95:7450\"]");
+            config.insert_json5("connect/endpoints", "[\"tcp/100.117.122.95:7447\"]");
             session     = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
