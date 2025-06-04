@@ -180,7 +180,7 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
 void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                               SynchronizedProcessor* processor)
 {
-    cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
+    // cv::namedWindow("Trajectory", cv::WINDOW_NORMAL);
     // cv::setWindowProperty("Trajectory", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
     
     cv::Mat original_frame, lane_mask, object_mask;
@@ -191,13 +191,14 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 
         cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
-        cv::imshow("Trajectory", new_frame);
-        cv::waitKey(1);
+        trajectoryDef->frame_publisher_->put("hello");
+        // cv::imshow("Trajectory", new_frame);
+        // cv::waitKey(1);
 
         processor->trajectoryDone();
     }
 
-    cv::destroyWindow("Trajectory");
+    // cv::destroyWindow("Trajectory");
 }
 
 int main(int argc, char** argv)

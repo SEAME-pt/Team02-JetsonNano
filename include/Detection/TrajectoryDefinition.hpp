@@ -52,6 +52,7 @@ class TrajectoryDefinition
     const int MAX_LANE_MEMORY_FRAMES = 25;
 
     std::optional<zenoh::Publisher> coeffs_publisher_;
+    std::optional<zenoh::Publisher> frame_publisher_;
 
     std::optional<zenoh::Publisher> speed_lock_publisher_;
     bool is_emergency_stop = false;
