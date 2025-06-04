@@ -67,7 +67,7 @@ TrajectoryDefinition::TrajectoryDefinition(
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(WIDTH, HEIGHT, 8);
+        this->avoidance = new ObstacleAvoidance(800, 600, 8);
     }
     catch (const std::exception& e)
     {
