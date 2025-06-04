@@ -1127,13 +1127,14 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     (void) midCurve;
     avoidance->buildOccupancy(segmentation_mask);
     // // Get a color frame to use for visualization
-    // cv::Mat visualization;
-    // cv::cvtColor(segmentation_mask, visualization, cv::COLOR_GRAY2BGR);
+    cv::Mat visualization;
+    segmentation_mask.copyTo(visualization);
     
     std::cout << "Occupancy grid built successfully." << std::endl;
     // Visualize the grid
-    avoidance->visualizeGrid(segmentation_mask);
+    avoidance->visualizeGrid(visualization);
 
     // Show or save the result
-    cv::imshow("Occupancy Grid", segmentation_mask);
+    cv::imshow("Occupancy Grid", visualization);
+    cv::waitKey(1);
 }
