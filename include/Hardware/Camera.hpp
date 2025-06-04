@@ -27,6 +27,7 @@ private:
     void captureLoop();
 
 public:
+    Camera(std::shared_ptr<zenoh::Session> session);
     Camera(const std::string& pipeline, const std::string& calibrationFile, std::shared_ptr<zenoh::Session> session);
     ~Camera();
 

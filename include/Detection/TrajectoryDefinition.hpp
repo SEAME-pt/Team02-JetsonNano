@@ -16,6 +16,7 @@
 #include <deque>
 #include <cmath>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 #include "CAN.hpp"
 #include "Logger.hpp"
@@ -23,6 +24,7 @@
 #include "LaneDetectorPublisher.hpp"
 #include "KalmanFilter.hpp"
 #include "GPUInference.hpp"
+
 
 #define WIDTH 256
 #define HEIGHT 128
