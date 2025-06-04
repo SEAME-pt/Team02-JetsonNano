@@ -62,7 +62,7 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 //   falls inside an occupied grid cell (via pixelToGrid → occupancy) is the collision index.
 //
 bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCurve,
-                                             int& outCollisionIdx) const
+                                             int& outCollisionIdx)
 {
     outCollisionIdx = -1;
     needBypass_     = false;
