@@ -67,7 +67,7 @@ TrajectoryDefinition::TrajectoryDefinition(
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(WIDTH, HEIGHT, 8);
+        this->avoidance = new ObstacleAvoidance(WIDTH, HEIGHT, 4);
     }
     catch (const std::exception& e)
     {
@@ -1134,8 +1134,4 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     std::cout << "Occupancy grid built successfully." << std::endl;
     // Visualize the grid
     avoidance->visualizeGrid(visualization);
-
-    // Show or save the result
-    cv::imshow("Occupancy Grid", visualization);
-    cv::waitKey(1);
 }
