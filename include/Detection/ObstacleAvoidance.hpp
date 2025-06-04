@@ -73,7 +73,6 @@ public:
     int      getCollisionIdx() const { return collisionIdx_; }
 
     void visualizeGrid(
-    cv::Mat& visualImage, 
     bool showGridLines,
     const std::vector<cv::Point>& trajectory = std::vector<cv::Point>());
 
