@@ -288,35 +288,45 @@ void ObstacleAvoidance::visualizeGrid(
     bool showGridLines,
     const std::vector<cv::Point>& trajectory)
 {
-    (void) visualImage;
     // Create overlay for the occupancy grid
     cv::Size overlaySize(frameWidth_, frameHeight_);
     cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
 
+
+        std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
+    
+    // Preprocess trajectory points to mark grid cells they pass through
+    if (!trajectory.empty()) {
+        for (const auto& p : trajectory) {
+            int gr, gc;
+            if (pixelToGrid(p.x, p.y, gr, gc)) {
+                trajectoryGrid[gr][gc] = true;
+            }
+        }
+    }
+
     // Draw each occupied cell
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
-            if (occupancy_[gridIndex(r, c)]) {
-                // Calculate pixel region for this cell
-                int x0 = c * cellSizePx_;
-                int y0 = r * cellSizePx_;
-                int x1 = std::min(x0 + cellSizePx_, frameWidth_);
-                int y1 = std::min(y0 + cellSizePx_, frameHeight_);
-                
-                // Draw filled rectangle for occupied cells
+
+            int x0 = c * cellSizePx_;
+            int y0 = r * cellSizePx_;
+            int x1 = std::min(x0 + cellSizePx_, frameWidth_);
+            int y1 = std::min(y0 + cellSizePx_, frameHeight_);
+
+            if (trajectoryGrid[r][c]) {
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                              cv::Scalar(0, 0, 255), -1); // Red fill
+                          cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
             }
-            else
-            {
-                // Draw empty cell as a white rectangle
-                int x0 = c * cellSizePx_;
-                int y0 = r * cellSizePx_;
-                int x1 = std::min(x0 + cellSizePx_, frameWidth_);
-                int y1 = std::min(y0 + cellSizePx_, frameHeight_);
-                
+            else if (occupancy_[gridIndex(r, c)]) {
+                // Occupied cell (obstacle)
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                              cv::Scalar(0, 255, 0), -1); // Green fill for free cells
+                          cv::Scalar(0, 0, 255), -1); // Red fill
+            }
+            else {
+                // Free cell
+                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                          cv::Scalar(0, 255, 0), -1); // Green fill
             }
         }
     }
@@ -365,9 +375,6 @@ void ObstacleAvoidance::visualizeGrid(
                         cv::Scalar(255, 255, 0), 2); // Yellow line
             }
         }
-
-        cv::putText(overlay, "Trajectory", cv::Point(10, 30), 
-                  cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
     }
     // cv::Size actualSize = cv::Size(800, static_cast<int>(800.0 * 0.45 / 1.4));
     cv::Size actualSize = cv::Size(800, 600);
