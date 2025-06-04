@@ -73,7 +73,10 @@ public:
     int      getCollisionRow() const { return collisionRow_; }
     int      getCollisionIdx() const { return collisionIdx_; }
 
-    void visualizeGrid(cv::Mat& visualImage, bool showGridLines = true) const;
+    void visualizeGrid(
+    cv::Mat& visualImage, 
+    bool showGridLines,
+    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>()) const;
 
 private:
     int frameWidth_,  frameHeight_;
@@ -103,5 +106,5 @@ private:
             return a.f > b.f; // min-heap on f
         }
     };
-    
+
 };
