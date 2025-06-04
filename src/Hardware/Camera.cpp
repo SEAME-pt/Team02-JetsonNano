@@ -44,8 +44,8 @@ Camera::Camera(std::shared_ptr<zenoh::Session> session)
     [this](const zenoh::Sample& sample)
     {
         try {
-            std::string frame = sample.get_payload().as_string();
-            cv::Mat img = cv::imdecode(frame, cv::IMREAD_COLOR);
+            std::vector<uint8_t> data = sample.get_payload().as_vector();
+            cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
             
             if (!img.empty()) {
                 std::lock_guard<std::mutex> lock(frameMutex);
