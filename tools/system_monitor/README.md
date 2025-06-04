@@ -1,6 +1,6 @@
 # System Monitor
 
-This requires the Zenoh-Router active and runing to have access to the values.
+This requires the Zenoh-Router active and running to have access to the values.
 
 ## Overview
 
