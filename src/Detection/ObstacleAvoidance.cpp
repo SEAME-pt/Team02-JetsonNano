@@ -24,7 +24,7 @@ ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
 //
 void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 {
-    CV_Assert(segmentationMask.type() == CV_8UC1);
+    CV_Assert(segmentationMask.type() == CV_8UC3); // Expecting a 3-channel BGR image
     // Clear previous occupancy
     std::fill(occupancy_.begin(), occupancy_.end(), false);
 
@@ -36,22 +36,26 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
         {
             int x0 = c * cellSizePx_;
             int x1 = std::min(x0 + cellSizePx_, frameWidth_);
-            bool anyBlocked = false;
+            bool anyNonRoad = false;
 
             // scan the pixel block (y0..y1-1, x0..x1-1)
-            for (int yy = y0; yy < y1 && !anyBlocked; ++yy)
+            for (int yy = y0; yy < y1 && !anyNonRoad; ++yy)
             {
-                const uchar* rowPtr = segmentationMask.ptr<uchar>(yy);
                 for (int xx = x0; xx < x1; ++xx)
                 {
-                    if (rowPtr[xx] == 0) // sees non-drivable
+                    cv::Vec3b pixel = segmentationMask.at<cv::Vec3b>(yy, xx);
+                    
+                    // Check if this is a non-road pixel
+                    if (!(pixel == cv::Vec3b(128, 64, 128) || pixel == cv::Vec3b(0, 0, 0)))
                     {
-                        anyBlocked = true;
+                        anyNonRoad = true;
                         break;
                     }
                 }
             }
-            occupancy_[gridIndex(r,c)] = anyBlocked;
+            
+            // If any non-road pixel was found, mark cell as occupied
+            occupancy_[gridIndex(r,c)] = anyNonRoad;
         }
     }
 }
