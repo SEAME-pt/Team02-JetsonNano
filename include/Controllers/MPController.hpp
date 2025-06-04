@@ -5,31 +5,44 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
-
+#include <thread>
+#include "XboxController.hpp"
+#include "SpeedPidController.hpp"
+#include "zenoh.hxx"
  
 class ModelPredictiveController {
     public:
-    
-        struct Control
-        {
-            double steering = 0.0;
-            double throttle = 0.0;
-        };
 
-        ModelPredictiveController();
+        ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
         ~ModelPredictiveController();
 
         void init(size_t horizon, double wheelbase, double Ts,
             const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf);
 
-        void run(); // Main control loop
-        Control solve(const Eigen::Vector4d& x0, const std::vector<double>& traj_coeffs);
+        void run();
+        void solve(const Eigen::Vector4d& x0, const std::vector<double>& traj_coeffs);
         void setVehicleState(const Eigen::Vector4d& state);
         Eigen::Vector4d getVehicleState() const { return this->currentState_; }
 
         void setTargetVelocity(double velocity);
 
     private:
+
+        std::shared_ptr<zenoh::Session> session_;
+        std::unique_ptr<ControllerPublisher> publisher_;
+        std::optional<zenoh::Subscriber<void>> coeffs_subscriber;
+        std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
+
+        XboxController* xboxController_;
+        bool speed_lock_;
+        float fixed_delta_time_;
+    
+        SpeedPidController* speedPidController_;
+        float speedKp_;
+        float speedKi_;
+        float speedKd_;
+        float current_speed_;
+        float current_steering_;
 
         Eigen::Vector4d currentState_; // [x, y, psi, v]
         std::string autonomousDrive_;

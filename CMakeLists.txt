@@ -15,6 +15,7 @@ find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include(FetchContent)
 
@@ -101,16 +102,19 @@ target_link_libraries(VehicleSystem
 add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
+    ./src/Controllers/MPController.cpp
     ./src/Controllers/SpeedPidController.cpp
     ./src/Communication/ControllerPublisher.cpp
-    ./src/combinedControl.cpp
+    ./src/combinedControlMPC.cpp
 )
 
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
-    zenohcxx::zenohc)
+    zenohcxx::zenohc
+    Eigen3::Eigen    
+)
 
 add_executable(Detection
     ./src/Detection/ObjectDetector.cpp

@@ -40,8 +40,6 @@ private:
     float kd_; // Derivative gain
     
     SpeedPidController* speedPidController_;
-    // Control parameters
-    float max_speed_; // Maximum speed for the car
     float speedKp_;
     float speedKi_;
     float speedKd_;
@@ -71,8 +69,7 @@ private:
 
 
 public:
-    PidController(XboxController* xbox_controller);
-    PidController(const std::string& configFile, XboxController* xbox_controller);
+    PidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
     ~PidController();
     
     void init(float kp, float ki, float kd, float speed, float delta_time);
