@@ -947,7 +947,7 @@ bool TrajectoryDefinition::checkForwardCollision(
                     "No trajectory available for collision check",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
-        return;
+        return false;
     }
 
     defineTrajectoryPolyline(midCurve);
@@ -1099,6 +1099,7 @@ bool TrajectoryDefinition::checkForwardCollision(
             std::cerr << "Error sending CAN message on Object Detector: "
                       << e.what() << std::endl;
         }
+        return true;
     }
     else if (is_emergency_stop)
     {
@@ -1108,6 +1109,7 @@ bool TrajectoryDefinition::checkForwardCollision(
 
         publishSpeedLock("0");
     }
+    return false;
 }
 
 void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
@@ -1122,14 +1124,14 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
 
 void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
-    avoidance.buildOccupancy(segmentation_mask);
+    avoidance->buildOccupancy(segmentation_mask);
 
     // Get a color frame to use for visualization
     cv::Mat visualization;
-    cv::cvtColor(segmentationMask, visualization, cv::COLOR_GRAY2BGR);
+    cv::cvtColor(segmentation_mask, visualization, cv::COLOR_GRAY2BGR);
 
     // Visualize the grid
-    avoidance.visualizeGrid(visualization);
+    avoidance->visualizeGrid(visualization);
 
     // Show or save the result
     cv::imshow("Occupancy Grid", visualization);

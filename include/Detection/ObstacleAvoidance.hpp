@@ -41,7 +41,7 @@ public:
     ///   midCurve: vector of (x,y) in image coords.  We assume these are sorted by increasing y.
     ///   outCollisionIdx: index in midCurve of the first obstacle pixel.  -1 if none.
     bool detectFirstCollision(const std::vector<cv::Point>& midCurve,
-                              int& outCollisionIdx) const;
+                              int& outCollisionIdx);
 
     /// Once you know the “collisionRow” = midCurve[outCollisionIdx].y,
     /// find (on that exact image-row) the nearest free column (x) that is (a) inside drivableMask
@@ -84,10 +84,10 @@ private:
     std::vector<bool> occupancy_;
 
     // Temporary: store the last collision index and row
-    bool    needBypass_;
-    int     collisionIdx_ ;
-    int     collisionRow_ ;  // image-row (pixel) of first collision
-    int     bypassX_;  // image-col for bypass (same row)
+    bool    needBypass_    = false;
+    int     collisionIdx_  = -1;
+    int     collisionRow_  = -1;  // image-row (pixel) of first collision
+    int     bypassX_       = -1;  // image-col for bypass (same row)
 
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
