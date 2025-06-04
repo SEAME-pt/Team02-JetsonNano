@@ -76,7 +76,7 @@ public:
     void visualizeGrid(
     cv::Mat& visualImage, 
     bool showGridLines,
-    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>()) const;
+    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>());
 
 private:
     int frameWidth_,  frameHeight_;

@@ -289,7 +289,7 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 void ObstacleAvoidance::visualizeGrid(
     cv::Mat& visualImage, 
     bool showGridLines,
-    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>()) const
+    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>())
 {
     (void) visualImage;
     // Create overlay for the occupancy grid
@@ -369,7 +369,7 @@ void ObstacleAvoidance::visualizeGrid(
             }
         }
     }
-    cv::Size actualSize = (800, (int)(800.0 * 0.45 / 1.4) );
+    cv::Size actualSize = (800, (800.0 * 0.45 / 1.4) );
     cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
