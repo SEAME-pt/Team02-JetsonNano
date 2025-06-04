@@ -66,10 +66,8 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 //   Walk down midCurve (assumed sorted by increasing y).  The first midCurve[i] whose pixel
 //   falls inside an occupied grid cell (via pixelToGrid → occupancy) is the collision index.
 //
-bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCurve,
-                                             int& outCollisionIdx)
+bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCurve)
 {
-    outCollisionIdx = -1;
     needBypass_     = false;
     collisionIdx_   = -1;
     collisionRow_   = -1;
@@ -88,7 +86,6 @@ bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCu
         if (occupancy_[gridIndex(gr,gc)])
         {
             // found first collision
-            outCollisionIdx = i;
             collisionIdx_   = i;
             collisionRow_   = p.y;
             needBypass_     = true;
@@ -289,7 +286,7 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 void ObstacleAvoidance::visualizeGrid(
     cv::Mat& visualImage, 
     bool showGridLines,
-    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>())
+    const std::vector<cv::Point>& trajectory)
 {
     (void) visualImage;
     // Create overlay for the occupancy grid
@@ -369,7 +366,7 @@ void ObstacleAvoidance::visualizeGrid(
             }
         }
     }
-    cv::Size actualSize = (800, (800.0 * 0.45 / 1.4) );
+    cv::Size actualSize = (800, static_cast<int>(800.0 * 0.45 / 1.4));
     cv::resize(overlay, overlay, actualSize);
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
