@@ -7,53 +7,6 @@
 using namespace cv;
 using namespace std;
 
-static std::vector<uint8_t> base64_decode(const std::string& base64_text) {
-    static const std::string base64_chars = 
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    
-    std::vector<uint8_t> decoded;
-    int i = 0;
-    int j = 0;
-    uint8_t char_array_4[4], char_array_3[3];
-    
-    for (size_t idx = 0; idx < base64_text.size(); ++idx) {
-        char c = base64_text[idx];
-        if (c == '=' || std::string::npos == base64_chars.find(c)) 
-            continue;
-            
-        char_array_4[i++] = c;
-        if (i == 4) {
-            for (i = 0; i < 4; i++)
-                char_array_4[i] = base64_chars.find(char_array_4[i]);
-                
-            char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-            
-            for (i = 0; i < 3; i++)
-                decoded.push_back(char_array_3[i]);
-            i = 0;
-        }
-    }
-    
-    if (i) {
-        for (j = i; j < 4; j++)
-            char_array_4[j] = 0;
-            
-        for (j = 0; j < 4; j++)
-            char_array_4[j] = base64_chars.find(char_array_4[j]);
-            
-        char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-        char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-        char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-        
-        for (j = 0; j < i - 1; j++)
-            decoded.push_back(char_array_3[j]);
-    }
-    
-    return decoded;
-}
-
 Camera::Camera(const std::string& pipeline, const std::string& calibrationFile, std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
@@ -90,25 +43,11 @@ Camera::Camera(std::shared_ptr<zenoh::Session> session)
     "carla/frame",
     [this](const zenoh::Sample& sample)
     {
-        std::cout << "sub" << std::endl;
         try {
-            // Get payload directly as bytes
-            std::string base64_str = sample.get_payload().as_string();
-            
-            // Output first few bytes for debugging
-            std::cout << "Received " << base64_str.size() << " bytes, first 10: ";
-            for (int i = 0; i < std::min(10, (int)base64_str.size()); i++) {
-                std::cout << (int)(unsigned char)base64_str[i] << " ";
-            }
-
-            // Decode from base64
-            std::vector<uint8_t> img_bytes = base64_decode(base64_str);
-            
-            // Convert to cv::Mat using imdecode
-            cv::Mat img = cv::imdecode(img_bytes, cv::IMREAD_COLOR);
+            std::string frame = sample.get_payload().as_string();
+            cv::Mat img = cv::imdecode(frame, cv::IMREAD_COLOR);
             
             if (!img.empty()) {
-                // Update the current frame
                 std::lock_guard<std::mutex> lock(frameMutex);
                 currentFrame = img.clone();
             } else {
