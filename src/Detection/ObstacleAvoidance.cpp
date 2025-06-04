@@ -24,6 +24,8 @@ ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
 //
 void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 {
+    cv::resize(segmentationMask, segmentationMask,
+                 cv::Size(frameWidth_, frameHeight_), 0, 0, cv::INTER_NEAREST);
     std::fill(occupancy_.begin(), occupancy_.end(), false);
 
     for (int r = 0; r < gridHeight_; ++r)
@@ -285,11 +287,11 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 // Add this implementation to ObstacleAvoidance.cpp:
 void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) const
 {
+    (void) visualImage;
     // Create overlay for the occupancy grid
     cv::Size overlaySize(frameWidth_, frameHeight_);
-    // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
-    cv::Mat overlay = visualImage.clone();
-    cv::resize(overlay, overlay, overlaySize);
+    cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
+
     // Draw each occupied cell
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
@@ -303,6 +305,17 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
                 // Draw filled rectangle for occupied cells
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
                               cv::Scalar(0, 0, 255), -1); // Red fill
+            }
+            else
+            {
+                // Draw empty cell as a white rectangle
+                int x0 = c * cellSizePx_;
+                int y0 = r * cellSizePx_;
+                int x1 = std::min(x0 + cellSizePx_, frameWidth_);
+                int y1 = std::min(y0 + cellSizePx_, frameHeight_);
+                
+                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                              cv::Scalar(0, 255, 0), -1); // Green fill for free cells
             }
         }
     }
@@ -324,13 +337,16 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
         }
     }
     // cv::resize(overlay, overlay, visualImage.size());
-    cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
+    // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
     // Add text showing grid dimensions
     std::string gridText = "Grid: " + std::to_string(gridWidth_) + "x" + 
                            std::to_string(gridHeight_) + " (Cell: " + 
                            std::to_string(cellSizePx_) + "px)";
-    cv::putText(visualImage, gridText, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 
+    cv::putText(overlay, gridText, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 
                 0.6, cv::Scalar(255, 255, 255), 2);
+
+    cv::imshow("Occupancy Grid", overlay);
+    cv::waitKey(1);
 }
 
