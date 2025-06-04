@@ -324,8 +324,8 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
             cv::Scalar(255, 255, 255), 1);
         }
     }
-    cv::resize(overlay, overlay, visualImage.size());
-    cv::addWeighted(overlay, 0.4, visualImage, 0.6, 0, visualImage);
+    // cv::resize(overlay, overlay, visualImage.size());
+    // cv::addWeighted(overlay, 0.4, visualImage, 0.6, 0, visualImage);
     
     // Add text showing grid dimensions
     std::string gridText = "Grid: " + std::to_string(gridWidth_) + "x" + 
