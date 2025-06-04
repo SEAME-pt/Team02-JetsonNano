@@ -63,6 +63,17 @@ TrajectoryDefinition::TrajectoryDefinition(
     {
         std::cerr << "Error initializing IPM" << e.what() << std::endl;
     }
+    
+
+    try
+    {
+        this->avoidance = new ObstacleAvoidance(WIDTH, HEIGHT, 8);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing ObstacleAvoidance" << e.what()
+                  << std::endl;
+    }
 
     // Create an OpenCV CUDA stream
     cv_stream = cv::cuda::Stream();
@@ -75,6 +86,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
     delete kalmanFilter;
     delete canBus;
     delete ipm;
+    delete avoidance;
 }
 
 void TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
@@ -287,6 +299,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     createMidPointError(midCurve);
 
     checkForwardCollision(class_mask, midCurve);
+
+    obstacleAvoidance(class_mask, midCurve);
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -923,7 +937,7 @@ bool TrajectoryDefinition::checkIfLeftLane(
     return (isLeftLane);
 }
 
-void TrajectoryDefinition::checkForwardCollision(
+bool TrajectoryDefinition::checkForwardCollision(
     const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
     if (midCurve.empty())
@@ -997,7 +1011,7 @@ void TrajectoryDefinition::checkForwardCollision(
                     "Insufficient trajectory points for collision check",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
-        return;
+        return true;
     }
 
     // Add right points in reverse order to complete the polygon
@@ -1016,7 +1030,7 @@ void TrajectoryDefinition::checkForwardCollision(
                     "Empty polygon - cannot check for collision",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
-        return;
+        return true;
     }
 
     // After creating the polygon mask
@@ -1104,4 +1118,19 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     speed_lock_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+{
+    avoidance.buildOccupancy(segmentationMask);
+
+    // Get a color frame to use for visualization
+    cv::Mat visualization;
+    cv::cvtColor(segmentationMask, visualization, cv::COLOR_GRAY2BGR);
+
+    // Visualize the grid
+    avoidance.visualizeGrid(visualization);
+
+    // Show or save the result
+    cv::imshow("Occupancy Grid", visualization);
 }
