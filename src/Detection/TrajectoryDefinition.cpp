@@ -1124,6 +1124,7 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
 
 void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
+    (void) midCurve;
     avoidance->buildOccupancy(segmentation_mask);
 
     // Get a color frame to use for visualization
