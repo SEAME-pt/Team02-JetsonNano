@@ -19,15 +19,18 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
     frame_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Carla/frame/test")));
-    try
-    {
-        this->canBus = new CAN();
+    try {
+        struct stat buffer;
+        if (stat("/dev/spidev0.0", &buffer) != 0) {
+            std::cerr << "Can device " << "/dev/spidev0.0" << " does not exist!" << std::endl;
+            this->canBus = NULL;
+            throw std::runtime_error("Error on can device");
+        }
+        this->canBus     = new CAN();
         this->canBus->init("/dev/spidev0.0");
-    }
-    catch (const std::exception& e)
-    {
+    } catch (...) {
+        std::cerr << "Error on initializing can" << std::endl;
         this->canBus = NULL;
-        std::cerr << "Error initializing CAN" << e.what() << std::endl;
     }
 
     try
