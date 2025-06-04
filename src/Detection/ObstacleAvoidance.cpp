@@ -287,8 +287,6 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
 {
     // Create overlay for the occupancy grid
     cv::Mat overlay = visualImage.clone();
-
-    cv::resize(overlay, overlay, visualImage.size());
     
     // Draw each occupied cell
     for (int r = 0; r < gridHeight_; ++r) {
