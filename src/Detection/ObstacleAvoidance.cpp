@@ -307,25 +307,26 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
     }
     
     // Blend with original image
-    
+    cv::Mat gridlines = cv::Mat::zeros(overlaySize, CV_8UC3);
     // Draw grid lines
     if (showGridLines) {
         // Draw horizontal grid lines
         for (int r = 0; r <= gridHeight_; ++r) {
             int y = r * cellSizePx_;
-            cv::line(visualImage, cv::Point(0, y), cv::Point(frameWidth_, y), 
+            cv::line(gridlines, cv::Point(0, y), cv::Point(frameWidth_, y), 
             cv::Scalar(255, 255, 255), 1);
         }
         
         // Draw vertical grid lines
         for (int c = 0; c <= gridWidth_; ++c) {
             int x = c * cellSizePx_;
-            cv::line(visualImage, cv::Point(x, 0), cv::Point(x, frameHeight_), 
+            cv::line(gridlines, cv::Point(x, 0), cv::Point(x, frameHeight_), 
             cv::Scalar(255, 255, 255), 1);
         }
     }
-    // cv::resize(overlay, overlay, visualImage.size());
-    // cv::addWeighted(overlay, 0.4, visualImage, 0.6, 0, visualImage);
+    cv::resize(gridlines, gridlines, visualImage.size());
+    cv::addWeighted(gridlines, 0.4, visualImage, 0.6, 0, visualImage);
+    cv::addWeighted(overlay, 0.4, visualImage, 0.6, 0, visualImage);
     
     // Add text showing grid dimensions
     std::string gridText = "Grid: " + std::to_string(gridWidth_) + "x" + 
