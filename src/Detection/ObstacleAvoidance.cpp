@@ -322,7 +322,7 @@ void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) 
             cv::Scalar(255, 255, 255), 1);
         }
     }
-    cv::resize(overlay, overlay, visualImage.size());
+    // cv::resize(overlay, overlay, visualImage.size());
     cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
     // Add text showing grid dimensions
