@@ -53,7 +53,7 @@ The system uses a sophisticated communication architecture:
    - Camera calibration tools.
    - The System monitor.
    - Zenoh Router.
-   - InfluxDB and Graphana (Database and visualization).
+   - InfluxDB and Grafana (Database and visualization).
 
 ---
 
