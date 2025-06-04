@@ -1130,14 +1130,4 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     // Visualize the grid
     avoidance->visualizeGrid(true, midCurve);
 
-    if (avoidance->detectFirstCollision(midCurve))
-    {
-        cv::putText(visualization, "Obstacle Detected", cv::Point(20, 40),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-    }
-    else
-    {
-        cv::putText(visualization, "No Obstacle Detected", cv::Point(20, 40),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
-    }
 }
