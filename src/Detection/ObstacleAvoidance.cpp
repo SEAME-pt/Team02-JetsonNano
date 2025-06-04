@@ -286,10 +286,10 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
 void ObstacleAvoidance::visualizeGrid(cv::Mat& visualImage, bool showGridLines) const
 {
     // Create overlay for the occupancy grid
-    // cv::Size overlaySize(frameWidth_, frameHeight_);
+    cv::Size overlaySize(frameWidth_, frameHeight_);
     // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
     cv::Mat overlay = visualImage.clone();
-    
+    cv::resize(overlay, overlay, overlaySize);
     // Draw each occupied cell
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
