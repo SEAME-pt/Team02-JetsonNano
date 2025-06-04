@@ -217,21 +217,22 @@ int main(int argc, char** argv)
         else
         {
             auto config = Config::create_default();
+
             session     = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
 
-        const std::string pipeline =
-            "nvarguscamerasrc sensor-id=0 ! "
-            "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
-            "format=NV12, framerate=(fraction)30/1 ! "
-            "nvvidconv ! video/x-raw, format=BGRx ! "
-            "videoconvert ! video/x-raw, format=BGR ! "
-            "appsink";
+        // const std::string pipeline =
+        //     "nvarguscamerasrc sensor-id=0 ! "
+        //     "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
+        //     "format=NV12, framerate=(fraction)30/1 ! "
+        //     "nvvidconv ! video/x-raw, format=BGRx ! "
+        //     "videoconvert ! video/x-raw, format=BGR ! "
+        //     "appsink";
 
         SynchronizedProcessor processor;
     
-        Camera camera(pipeline, "calibration.yml", session);
+        Camera camera(session);
         LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
         ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);

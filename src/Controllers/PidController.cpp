@@ -271,10 +271,10 @@ void PidController::run()
     while (true)
     {
         double current_time   = getCurrentTime();
-        std::string sae_level = getAutonomousDriveState();
-        if (sae_level.find("SAE_5") != std::string::npos ||
-            sae_level == "SAE_4")
-        {
+        // std::string sae_level = getAutonomousDriveState();
+        // if (sae_level.find("SAE_5") != std::string::npos ||
+        //     sae_level == "SAE_4")
+        // {
             updateControl(cameraError_, current_time);
             if (!speed_lock_)
             {
@@ -288,47 +288,47 @@ void PidController::run()
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
-        }
-        else
-        {
-            float manual_steering = xboxController_->getManualSteering();
-            float manual_speed    = xboxController_->getManualSpeed();
-            if (sae_level.find("SAE_1_LKAS") != std::string::npos)
-            {
-                LKASControl(cameraError_, current_time, manual_steering,
-                            manual_speed);
-            }
-            else if (sae_level == "SAE_1_ACC")
-            {
-                adaptiveCruiseControl(cameraError_, current_time,
-                                      manual_steering, manual_speed);
-            }
-            else if (sae_level == "SAE_2")
-            {
-                partialControl(cameraError_, current_time);
-            }
-            else if (sae_level == "SAE_3")
-            {
-                conditionalAutomation(cameraError_, current_time);
-            }
-            else
-            {
-                publisher_->publishSteering(manual_steering);
-                if (!speed_lock_)
-                    publisher_->publishSpeed(manual_speed);
-                else
-                {
-                    if (manual_speed <= 0)
-                    {
-                        publisher_->publishSpeed(manual_speed);
-                    }
-                    else
-                    {
-                        publisher_->publishSpeed(speedPidController_->speedPID(
-                            0 - current_speed_, current_time));
-                    }
-                }
-            }
-        }
+        // }
+        // else
+        // {
+        //     float manual_steering = xboxController_->getManualSteering();
+        //     float manual_speed    = xboxController_->getManualSpeed();
+        //     if (sae_level.find("SAE_1_LKAS") != std::string::npos)
+        //     {
+        //         LKASControl(cameraError_, current_time, manual_steering,
+        //                     manual_speed);
+        //     }
+        //     else if (sae_level == "SAE_1_ACC")
+        //     {
+        //         adaptiveCruiseControl(cameraError_, current_time,
+        //                               manual_steering, manual_speed);
+        //     }
+        //     else if (sae_level == "SAE_2")
+        //     {
+        //         partialControl(cameraError_, current_time);
+        //     }
+        //     else if (sae_level == "SAE_3")
+        //     {
+        //         conditionalAutomation(cameraError_, current_time);
+        //     }
+        //     else
+        //     {
+        //         publisher_->publishSteering(manual_steering);
+        //         if (!speed_lock_)
+        //             publisher_->publishSpeed(manual_speed);
+        //         else
+        //         {
+        //             if (manual_speed <= 0)
+        //             {
+        //                 publisher_->publishSpeed(manual_speed);
+        //             }
+        //             else
+        //             {
+        //                 publisher_->publishSpeed(speedPidController_->speedPID(
+        //                     0 - current_speed_, current_time));
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
