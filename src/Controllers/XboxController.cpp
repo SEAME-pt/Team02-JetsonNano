@@ -15,11 +15,9 @@
 #define device_ioctl ioctl
 #define device_read read
 #define device_write write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
-XboxController::XboxController()
+XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 {
     const char* device = "/dev/input/js0";
     js                 = device_open(device, O_RDONLY);
@@ -34,33 +32,7 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
-    auto config = zenoh::Config::create_default();
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
-
-    publisher_ = std::make_unique<ControllerPublisher>(session_);
-
-    std::cout << "Remote controller created!" << std::endl;
-}
-
-XboxController::XboxController(const std::string& configFile)
-{
-    const char* device = "/dev/input/js0";
-    js                 = device_open(device, O_RDONLY);
-
-    if (js == -1)
-        throw std::exception();
-
-    int numAxes = this->getAxisCount();
-    for (int i = 0; i < numAxes; i++)
-    {
-        struct axis_state* axis = new struct axis_state();
-        axes.push_back(axis);
-    }
-
-    auto config = ZENOH_CONFIG_FROM_FILE;
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
+    session_ = session;
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 

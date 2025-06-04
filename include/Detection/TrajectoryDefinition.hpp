@@ -51,6 +51,8 @@ class TrajectoryDefinition
     int currentFrame = 0;
     const int MAX_LANE_MEMORY_FRAMES = 25;
 
+    std::optional<zenoh::Publisher> coeffs_publisher_;
+
     std::optional<zenoh::Publisher> speed_lock_publisher_;
     bool is_emergency_stop = false;
 
@@ -78,4 +80,5 @@ class TrajectoryDefinition
     
     void checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishSpeedLock(const std::string &value_str);
+    void publishCoeffs(const std::string &value_str);
 };

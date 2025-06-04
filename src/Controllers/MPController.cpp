@@ -3,10 +3,74 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-ModelPredictiveController::ModelPredictiveController()
+ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
-    // this->x0.setZero();
-    autonomousDrive_ = "SAE_0";
+    
+    autonomousDrive_    = "SAE_0";
+    xboxController_     = xbox_controller;
+    fixed_delta_time_   = 0.02f;
+    current_speed_      = 0.0f;
+    current_steering_      = 0.0f;
+    speedKp_ = 0.12f;
+    speedKi_ = 1.3f;
+    speedKd_ = 0.01f;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
+    speed_lock_         = false;
+    
+    session_ = session;
+    
+    publisher_ = std::make_unique<ControllerPublisher>(session_);
+    
+    coeffs_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Coeffs",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string coeffs_str = sample.get_payload().as_string();
+            
+            // Parse the comma-separated string into a vector of doubles
+            std::vector<double> parsed_coeffs;
+            std::stringstream ss(coeffs_str);
+            std::string token;
+            
+            // Split by comma and convert to double
+            while (std::getline(ss, token, ',')) {
+                parsed_coeffs.push_back(std::stod(token));
+            }
+            
+            // Make sure we have all 4 coefficients for a 3rd degree polynomial
+            if (parsed_coeffs.size() == 4) {
+                // Create the initial state vector
+                Eigen::Vector4d x0;
+                x0(0) = 0;
+                x0(1) = 0;
+                x0(2) = current_steering_;
+                x0(3) = current_speed_;
+                
+                // Solve the MPC problem with the new coefficients
+                this->solve(x0, parsed_coeffs);
+                
+                // Debug output
+                std::cout << "Received coefficients: " 
+                          << parsed_coeffs[0] << ", " 
+                          << parsed_coeffs[1] << ", " 
+                          << parsed_coeffs[2] << ", " 
+                          << parsed_coeffs[3] << std::endl;
+            } else {
+                std::cerr << "Invalid number of coefficients: " 
+                          << parsed_coeffs.size() << " (expected 4)" << std::endl;
+            }
+        },
+        zenoh::closures::none));
+    
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+        },
+        zenoh::closures::none));
     std::cout << "MPC controller created!" << std::endl;
 }
 
@@ -34,15 +98,15 @@ void ModelPredictiveController::setVehicleState(const Eigen::Vector4d& state) {
     this->currentState_ = state;
 }
 
-ModelPredictiveController::Control ModelPredictiveController::solve(const Eigen::Vector4d& x0,
+void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                                          const std::vector<double>& traj_coeffs)
 {
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
     double y_ref_current = x0(1);
 
-    double v_start = x0(3);
+    // double v_start = x0(3);
     double v_target = target_velocity_;
-    double v_diff = v_target - v_start;
+    // double v_diff = v_target - v_start;
 
     for (size_t k = 0; k <= N_; ++k)
     {
@@ -107,11 +171,11 @@ ModelPredictiveController::Control ModelPredictiveController::solve(const Eigen:
         }
     }
 
-    Control best_control;
-    best_control.throttle = u_flat(0);
-    best_control.steering = u_flat(1);
-
-    return best_control;
+    // publisher_->publishSpeed(
+    //         speedPidController_->speedPID(u_flat(0) - current_speed_, current_time));
+    publisher_->publishSpeed(u_flat(0));
+    publisher_->publishSteering(u_flat(1));
+    current_steering_ = u_flat(1);
 }
 
 // Forward Euler discretization
@@ -131,6 +195,75 @@ ModelPredictiveController::backwardEuler(const Eigen::Vector4d& x,
 
 void ModelPredictiveController::setTargetVelocity(double velocity) {
     target_velocity_ = velocity;
+}
+
+
+void ModelPredictiveController::run()
+{
+    while (true)
+    {
+        // double current_time   = getCurrentTime();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // std::string sae_level = getAutonomousDriveState();
+        // if (sae_level.find("SAE_5") != std::string::npos ||
+        //     sae_level == "SAE_4")
+        // {
+        //     updateControl(cameraError_, current_time);
+        //     if (!speed_lock_)
+        //     {
+        //         publisher_->publishSpeed(speedPidController_->speedPID(
+        //             250 - current_speed_, current_time));
+        //     }
+        //     else
+        //     {
+        //         publisher_->publishSpeed(speedPidController_->speedPID(
+        //             0 - current_speed_, current_time));
+        //     }
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(
+        //         static_cast<int>(fixed_delta_time_ * 1000)));
+        // }
+        // else
+        // {
+        //     float manual_steering = xboxController_->getManualSteering();
+        //     float manual_speed    = xboxController_->getManualSpeed();
+        //     if (sae_level.find("SAE_1_LKAS") != std::string::npos)
+        //     {
+        //         LKASControl(cameraError_, current_time, manual_steering,
+        //                     manual_speed);
+        //     }
+        //     else if (sae_level == "SAE_1_ACC")
+        //     {
+        //         adaptiveCruiseControl(cameraError_, current_time,
+        //                               manual_steering, manual_speed);
+        //     }
+        //     else if (sae_level == "SAE_2")
+        //     {
+        //         partialControl(cameraError_, current_time);
+        //     }
+        //     else if (sae_level == "SAE_3")
+        //     {
+        //         conditionalAutomation(cameraError_, current_time);
+        //     }
+        //     else
+        //     {
+        //         publisher_->publishSteering(manual_steering);
+        //         if (!speed_lock_)
+        //             publisher_->publishSpeed(manual_speed);
+        //         else
+        //         {
+        //             if (manual_speed <= 0)
+        //             {
+        //                 publisher_->publishSpeed(manual_speed);
+        //             }
+        //             else
+        //             {
+        //                 publisher_->publishSpeed(speedPidController_->speedPID(
+        //                     0 - current_speed_, current_time));
+        //             }
+        //         }
+        //     }
+        // }
+    }
 }
 
 // static std::vector<Eigen::Vector2d>

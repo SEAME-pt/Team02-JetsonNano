@@ -7,16 +7,12 @@
 #define device_ioctl custom_xbox_ioctl
 #define device_read custom_xbox_read
 #define device_write custom_xbox_write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
 #else
 #define device_open open
 #define device_close close
 #define device_ioctl ioctl
 #define device_read read
 #define device_write write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
 double getCurrentTime()
@@ -26,7 +22,7 @@ double getCurrentTime()
     return tv.tv_sec + tv.tv_usec * 1e-6;
 }
 
-PidController::PidController(XboxController* xbox_controller)
+PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
     prev_error_  = 0.0f;
     cameraError_ = 0.0f;
@@ -48,9 +44,7 @@ PidController::PidController(XboxController* xbox_controller)
     speedPidController_ = new SpeedPidController();
     speedPidController_->init(0.12f, 1.3f, 0.01f, fixed_delta_time_);
 
-    auto config = zenoh::Config::create_default();
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
+    session_ = session;
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -100,112 +94,6 @@ PidController::PidController(XboxController* xbox_controller)
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             std::cout << "Active Autonomy Level: " << activeAutonomyLevel
                       << std::endl;
-            setAutonomousDriveState(activeAutonomyLevel);
-        },
-        zenoh::closures::none));
-
-    speed_lock_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Lock",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string value_str = sample.get_payload().as_string();
-
-            // Convert string to boolean
-            bool lock_value = false;
-            if (value_str.find("1") != std::string::npos)
-            {
-                lock_value = true;
-            }
-
-            speed_lock_ = lock_value;
-
-            std::cout << "Speed lock "
-                      << (lock_value ? "activated" : "deactivated")
-                      << std::endl;
-        },
-        zenoh::closures::none));
-
-    currentSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed",
-        [this](const zenoh::Sample& sample)
-        {
-            float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
-        },
-        zenoh::closures::none));
-
-    std::cout << "PID controller created!" << std::endl;
-}
-
-PidController::PidController(const std::string& configFile,
-                             XboxController* xbox_controller)
-{
-    prev_error_  = 0.0f;
-    cameraError_ = 0.0f;
-    integral_    = 0.0f;
-    last_time_   = 0.0f;
-
-    constant_speed_     = 20.0f;
-    max_steering_angle_ = 90.0f;
-
-    kp_ = 1.0f;
-    ki_ = 0.0f;
-    kd_ = 0.0f;
-
-    fixed_delta_time_   = 0.02f;
-    autonomousDrive_    = "SAE_0";
-    xboxController_     = xbox_controller;
-    current_speed_      = 0.0f;
-    speed_lock_         = false;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.000001f, 0.000f, 0.00005f, fixed_delta_time_);
-
-    auto config = zenoh::Config::from_file(configFile);
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
-
-    publisher_ = std::make_unique<ControllerPublisher>(session_);
-
-    kp_subscriber.emplace(session_->declare_subscriber(
-        "pid/kp",
-        [this](const zenoh::Sample& sample)
-        {
-            float kp = std::stof(sample.get_payload().as_string());
-            kp_      = kp;
-        },
-        zenoh::closures::none));
-
-    ki_subscriber.emplace(session_->declare_subscriber(
-        "pid/ki",
-        [this](const zenoh::Sample& sample)
-        {
-            float ki = std::stof(sample.get_payload().as_string());
-            ki_      = ki;
-        },
-        zenoh::closures::none));
-
-    kd_subscriber.emplace(session_->declare_subscriber(
-        "pid/kd",
-        [this](const zenoh::Sample& sample)
-        {
-            float kd = std::stof(sample.get_payload().as_string());
-            kd_      = kd;
-        },
-        zenoh::closures::none));
-
-    cameraError_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/LaneDetection/CameraError",
-        [this](const zenoh::Sample& sample)
-        { cameraError_ = std::stof(sample.get_payload().as_string()); },
-        zenoh::closures::none));
-
-    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/ADAS/ActiveAutonomyLevel",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string activeAutonomyLevel = sample.get_payload().as_string();
-            // std::cout << "Active Autonomy Level: " << activeAutonomyLevel
-            //   << std::endl;
             setAutonomousDriveState(activeAutonomyLevel);
         },
         zenoh::closures::none));

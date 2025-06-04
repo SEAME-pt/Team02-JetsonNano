@@ -113,8 +113,7 @@ class XboxController
     std::vector<struct axis_state*> axes;
     struct js_event event;
 
-    XboxController();
-    XboxController(const std::string& configFile);
+    XboxController(std::shared_ptr<zenoh::Session> session);
     ~XboxController();
 
     int readEvent(void);

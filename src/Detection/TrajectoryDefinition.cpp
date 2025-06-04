@@ -15,6 +15,8 @@ TrajectoryDefinition::TrajectoryDefinition(
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     speed_lock_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
+    coeffs_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
     try
     {
         this->canBus = new CAN();
@@ -745,6 +747,24 @@ void TrajectoryDefinition::defineTrajectoryPolyline(
         // Solve for polynomial coefficients using least squares
         cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
 
+        // Add the following code to convert coefficients to a string and publish them
+        if (!coeffs.empty()) {
+            // Format: a,b,c,d (comma-separated coefficients)
+            std::stringstream ss;
+            for (int i = 0; i < coeffs.rows; i++) {
+                ss << coeffs.at<double>(i);
+                if (i < coeffs.rows - 1) {
+                    ss << ",";
+                }
+            }
+            
+            // Publish the coefficients
+            publishCoeffs(ss.str());
+            
+            // Log to console (optional)
+            std::cout << "Published polynomial coefficients: " << ss.str() << std::endl;
+        }
+        
         // Clear existing midCurve and create smooth curve from polynomial
         midCurve.clear();
 
@@ -1132,4 +1152,14 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     speed_lock_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishCoeffs(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    coeffs_publisher_->put(std::move(buf));
 }
