@@ -1126,7 +1126,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
 {
     (void) midCurve;
     avoidance->buildOccupancy(segmentation_mask);
-
+    std::cout << "Occupancy grid built successfully." << std::endl;
     // Get a color frame to use for visualization
     cv::Mat visualization;
     cv::cvtColor(segmentation_mask, visualization, cv::COLOR_GRAY2BGR);
