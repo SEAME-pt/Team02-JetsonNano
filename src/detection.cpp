@@ -117,8 +117,10 @@ int main(int argc, char** argv)
         SynchronizedProcessor processor;
 
         Camera camera(session);
-        LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
-        ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
+        // LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
+        // ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
+        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
+        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
         if (mode == "local") {
