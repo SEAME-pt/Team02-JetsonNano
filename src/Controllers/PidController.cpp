@@ -14,7 +14,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     integral_    = 0.0f;
     last_time_   = 0.0f;
 
-    constant_speed_     = 250.0f;
+    constant_speed_     = 0.0f;
     max_steering_angle_ = 90.0f;
 
     lane_departure_threshold_ = 0.1f;
@@ -63,7 +63,6 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         {
             std::string value_str = sample.get_payload().as_string();
 
-            // Convert string to boolean
             bool lock_value = false;
             if (value_str.find("1") != std::string::npos)
             {

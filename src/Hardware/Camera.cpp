@@ -7,9 +7,17 @@
 using namespace cv;
 using namespace std;
 
-Camera::Camera(const std::string& pipeline, const std::string& calibrationFile, std::shared_ptr<zenoh::Session> session)
+Camera::Camera(std::shared_ptr<zenoh::Session> session)
 {
     session_ = session;
+}
+
+Camera::~Camera()
+{
+    stopCapture();
+}
+
+void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibrationFile) {
     useZenohSubscription = false;
 
     cap.open(pipeline, cv::CAP_GSTREAMER);
@@ -34,9 +42,7 @@ Camera::Camera(const std::string& pipeline, const std::string& calibrationFile, 
                             cameraMatrix, imageSize, CV_16SC2, map1, map2);
 }
 
-Camera::Camera(std::shared_ptr<zenoh::Session> session)
-{
-    session_ = session;
+void Camera::initCarlaEnv() {
     useZenohSubscription = true;
 
     carla_frame.emplace(session_->declare_subscriber(
@@ -58,11 +64,6 @@ Camera::Camera(std::shared_ptr<zenoh::Session> session)
         }
     },
     zenoh::closures::none));
-}
-
-Camera::~Camera()
-{
-    stopCapture();
 }
 
 void Camera::setCalibrationParameters(const std::string& calibrationFile)
@@ -120,7 +121,7 @@ void Camera::captureLoop()
             std::lock_guard<std::mutex> lock(frameMutex);
             currentFrame = undistorted.clone();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 

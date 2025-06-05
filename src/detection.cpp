@@ -2,11 +2,10 @@
 #include "ObjectDetector.hpp"
 #include "TrajectoryDefinition.hpp"
 #include "Camera.hpp"
+#include "SynchronizedProcessor.hpp"
+#include "utils.hpp"
 #include <thread>
 #include <atomic>
-#include <condition_variable> // Add this
-#include <queue>              // Add this
-#include <memory>             // Add this
 #include <iostream>
 #include <csignal>
 
@@ -15,118 +14,6 @@ using namespace std;
 using namespace zenoh;
 
 std::atomic<bool> running(true);
-
-class SynchronizedProcessor
-{
-  private:
-    std::mutex sync_mutex;
-    std::condition_variable inference_cv;
-    std::condition_variable trajectory_cv;
-    std::condition_variable camera_cv;
-
-    cv::Mat current_frame;
-    cv::Mat lane_binary_mask;
-    cv::Mat object_class_mask;
-
-    bool lane_ready          = true;
-    bool object_ready        = true;
-    bool trajectory_done     = true;
-    bool new_frame_available = false;
-    int frame_id             = 0;
-
-  public:
-    void setNewFrame(const cv::Mat& frame)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        camera_cv.wait(
-            lock,
-            [this]() { return lane_ready && object_ready && trajectory_done; });
-
-        frame.copyTo(current_frame);
-
-        lane_ready          = false;
-        object_ready        = false;
-        new_frame_available = true;
-
-        inference_cv.notify_all();
-    }
-
-    // Lane detection thread calls this
-    cv::Mat getLaneFrame()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        inference_cv.wait(lock, [this]()
-                          { return new_frame_available && !lane_ready; });
-
-        return current_frame.clone();
-    }
-
-    cv::Mat getObjectFrame()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        inference_cv.wait(lock, [this]()
-                          { return new_frame_available && !object_ready; });
-
-        return current_frame.clone();
-    }
-
-    void laneDone(const cv::Mat& result)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        result.copyTo(lane_binary_mask);
-        lane_ready = true;
-
-        checkBothDone();
-    }
-
-    // Object thread calls this when done
-    void objectDone(const cv::Mat& result)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        result.copyTo(object_class_mask);
-        object_ready = true;
-
-        checkBothDone();
-    }
-
-    void getProcessingData(cv::Mat& original, cv::Mat& lane_mask,
-                           cv::Mat& object_mask)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        trajectory_cv.wait(
-            lock, [this]()
-            { return lane_ready && object_ready && !trajectory_done; });
-
-        current_frame.copyTo(original);
-        lane_binary_mask.copyTo(lane_mask);
-        object_class_mask.copyTo(object_mask);
-    }
-
-    void trajectoryDone()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-        trajectory_done = true;
-
-        camera_cv.notify_one();
-    }
-
-  private:
-    void checkBothDone()
-    {
-        if (lane_ready && object_ready)
-        {
-            trajectory_done     = false;
-            new_frame_available = false;
-            trajectory_cv.notify_one();
-        }
-    }
-};
 
 void signalHandler(int signum)
 {
@@ -204,37 +91,53 @@ int main(int argc, char** argv)
 
     try
     {
+        std::string configFile;
+        std::string mode;
+        
+        if (!parseParameters(argc, argv, configFile, mode)) {
+            return -1;
+        }
+
         std::shared_ptr<zenoh::Session> session;
-        if (argc == 2)
-        {
-            auto config = Config::from_file(std::string(argv[1]));
-            session     = std::make_shared<zenoh::Session>(
+        if (!configFile.empty()) {
+            std::cout << "Using configuration from file: " << configFile << std::endl;
+            auto config = Config::from_file(configFile);
+            session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-        else
-        {
+        else {
+            std::cout << "Using default configuration" << std::endl;
             auto config = Config::create_default();
             config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
             config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
-            session     = std::make_shared<zenoh::Session>(
+            session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
 
-        // const std::string pipeline =
-        //     "nvarguscamerasrc sensor-id=0 ! "
-        //     "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
-        //     "format=NV12, framerate=(fraction)30/1 ! "
-        //     "nvvidconv ! video/x-raw, format=BGRx ! "
-        //     "videoconvert ! video/x-raw, format=BGR ! "
-        //     "appsink";
-
         SynchronizedProcessor processor;
-    
+
         Camera camera(session);
         LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
         ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
+        if (mode == "local") {
+            std::cout << "Running in LOCAL mode with physical camera" << std::endl;
+            const std::string pipeline =
+                "nvarguscamerasrc sensor-id=0 ! "
+                "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, "
+                "format=NV12, framerate=(fraction)30/1 ! "
+                "nvvidconv ! video/x-raw, format=BGRx ! "
+                "videoconvert ! video/x-raw, format=BGR ! "
+                "appsink";
+            camera.initLocalEnv(pipeline, "calibration.yml");
+            trajectoryDefinition.initLocalEnv();
+        } else {
+            std::cout << "Running in CARLA mode with simulated camera" << std::endl;
+            camera.initCarlaEnv();
+            trajectoryDefinition.initCarlaEnv();
+        }
+    
         camera.startCapture();
 
         std::thread camThread(cameraThreadFunction, &camera, &processor);

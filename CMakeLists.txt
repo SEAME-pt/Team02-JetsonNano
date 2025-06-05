@@ -38,6 +38,7 @@ include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
 include_directories(include/Detection)
+include_directories(include/utils)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -105,6 +106,7 @@ add_executable(CombinedController
     ./src/Controllers/MPController.cpp
     ./src/Controllers/SpeedPidController.cpp
     ./src/Communication/ControllerPublisher.cpp
+    ./src/utils/utils.cpp
     ./src/combinedControl.cpp
 )
 
@@ -125,6 +127,7 @@ add_executable(Detection
     ./src/Detection/IPM.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/Hardware/Camera.cpp
+    ./src/utils/utils.cpp
     ./src/detection.cpp
 )
 

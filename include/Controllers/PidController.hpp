@@ -22,9 +22,9 @@ private:
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     
-    float kp_; // Proportional gain
-    float ki_; // Integral gain
-    float kd_; // Derivative gain
+    float kp_;
+    float ki_;
+    float kd_;
     
     SpeedPidController* speedPidController_;
     float speedKp_;
