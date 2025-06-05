@@ -1148,9 +1148,10 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     try {
         if (avoidance->detectFirstCollision())
         {
-            avoidance->findBypassInGrid()
+            int bypassGridCol;
+            avoidance->findBypassInGrid();
         }
-        avoidance->visualizeGrid(true, midCurve);
+        avoidance->visualizeGrid();
     }
     catch (const std::exception& e)
     {

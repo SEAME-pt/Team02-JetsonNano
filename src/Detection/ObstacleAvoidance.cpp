@@ -106,12 +106,98 @@ bool ObstacleAvoidance::detectFirstCollision()
     return false;
 }
 
-bool ObstacleAvoidance::findBypassInGrid(
-    const cv::Mat& drivableMask,
-    int laneHalfWidthGridCells,
-    int& outBypassGridCol)
+// bool ObstacleAvoidance::findBypassInGrid()
+// {
+//     outBypassGridCol = -1;
+    
+//     // Start with collision location we already detected
+//     int gridRow = collisionRow_;
+//     int gridCol = collisionCol_;
+    
+//     // Find middle of grid
+//     int centerGridCol = gridWidth_ / 2;
+    
+//     // Check if we're on a valid row
+//     if (gridRow < 0 || gridRow >= gridHeight_)
+//         return false;
+    
+//     // Determine which side to search first based on collision position
+//     bool searchRightFirst = (gridCol < centerGridCol);
+    
+//     // Search with increasing distance from center
+//     for (int offset = 1; offset < gridWidth_/2; ++offset)
+//     {
+//         int leftCol = centerGridCol - laneHalfWidthGridCells - offset;
+//         int rightCol = centerGridCol + laneHalfWidthGridCells + offset;
+        
+//         // Search in optimal direction (away from obstacle)
+//         if (searchRightFirst) {
+//             // Try right side first
+//             if (rightCol < gridWidth_) {
+//                 // Convert grid to pixel to check drivableMask
+//                 int pixelX, pixelY;
+//                 gridToPixel(gridRow, rightCol, pixelX, pixelY);
+                
+//                 // Check if this grid cell is drivable and not occupied
+//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+//                     !occupancy_[gridIndex(gridRow, rightCol)]) {
+//                     outBypassGridCol = rightCol;
+//                     return true;
+//                 }
+//             }
+            
+//             // Then left side
+//             if (leftCol >= 0) {
+//                 int pixelX, pixelY;
+//                 gridToPixel(gridRow, leftCol, pixelX, pixelY);
+                
+//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+//                     !occupancy_[gridIndex(gridRow, leftCol)]) {
+//                     outBypassGridCol = leftCol;
+//                     return true;
+//                 }
+//             }
+//         } else {
+//             // Try left first then right
+//             // [left side check]
+//             // [right side check]
+//             // Identical logic but reversed order
+//             if (leftCol >= 0) {
+//                 int pixelX, pixelY;
+//                 gridToPixel(gridRow, leftCol, pixelX, pixelY);
+                
+//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+//                     !occupancy_[gridIndex(gridRow, leftCol)]) {
+//                     outBypassGridCol = leftCol;
+//                     return true;
+//                 }
+//             }
+            
+//             if (rightCol < gridWidth_) {
+//                 int pixelX, pixelY;
+//                 gridToPixel(gridRow, rightCol, pixelX, pixelY);
+                
+//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+//                     !occupancy_[gridIndex(gridRow, rightCol)]) {
+//                     outBypassGridCol = rightCol;
+//                     return true;
+//                 }
+//             }
+//         }
+//     }
+    
+//     // No bypass found
+//     return false;
+// }
+
+bool ObstacleAvoidance::findBypassInGrid()
 {
-    outBypassGridCol = -1;
+    bypassGridCol_ = -1;
+    bypassGridRow_ = collisionRow_; // Using collision row as the bypass row
     
     // Start with collision location we already detected
     int gridRow = collisionRow_;
@@ -127,66 +213,45 @@ bool ObstacleAvoidance::findBypassInGrid(
     // Determine which side to search first based on collision position
     bool searchRightFirst = (gridCol < centerGridCol);
     
+    // Create a drivable mask for testing
+    cv::Mat drivableMask = cv::Mat::ones(frameHeight_, frameWidth_, CV_8UC1) * 255;
+    
     // Search with increasing distance from center
     for (int offset = 1; offset < gridWidth_/2; ++offset)
     {
-        int leftCol = centerGridCol - laneHalfWidthGridCells - offset;
-        int rightCol = centerGridCol + laneHalfWidthGridCells + offset;
+        int leftCol = centerGridCol - laneHalfWidthGridCells_ - offset;
+        int rightCol = centerGridCol + laneHalfWidthGridCells_ + offset;
         
         // Search in optimal direction (away from obstacle)
         if (searchRightFirst) {
             // Try right side first
             if (rightCol < gridWidth_) {
-                // Convert grid to pixel to check drivableMask
-                int pixelX, pixelY;
-                gridToPixel(gridRow, rightCol, pixelX, pixelY);
-                
-                // Check if this grid cell is drivable and not occupied
-                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-                    !occupancy_[gridIndex(gridRow, rightCol)]) {
-                    outBypassGridCol = rightCol;
+                // Check if this grid cell is not occupied
+                if (!occupancy_[gridIndex(gridRow, rightCol)]) {
+                    bypassGridCol_ = rightCol;
                     return true;
                 }
             }
             
             // Then left side
             if (leftCol >= 0) {
-                int pixelX, pixelY;
-                gridToPixel(gridRow, leftCol, pixelX, pixelY);
-                
-                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-                    !occupancy_[gridIndex(gridRow, leftCol)]) {
-                    outBypassGridCol = leftCol;
+                if (!occupancy_[gridIndex(gridRow, leftCol)]) {
+                    bypassGridCol_ = leftCol;
                     return true;
                 }
             }
         } else {
-            // Try left first then right
-            // [left side check]
-            // [right side check]
-            // Identical logic but reversed order
+            // Try left first then right (same logic, reversed order)
             if (leftCol >= 0) {
-                int pixelX, pixelY;
-                gridToPixel(gridRow, leftCol, pixelX, pixelY);
-                
-                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-                    !occupancy_[gridIndex(gridRow, leftCol)]) {
-                    outBypassGridCol = leftCol;
+                if (!occupancy_[gridIndex(gridRow, leftCol)]) {
+                    bypassGridCol_ = leftCol;
                     return true;
                 }
             }
             
             if (rightCol < gridWidth_) {
-                int pixelX, pixelY;
-                gridToPixel(gridRow, rightCol, pixelX, pixelY);
-                
-                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-                    !occupancy_[gridIndex(gridRow, rightCol)]) {
-                    outBypassGridCol = rightCol;
+                if (!occupancy_[gridIndex(gridRow, rightCol)]) {
+                    bypassGridCol_ = rightCol;
                     return true;
                 }
             }
@@ -366,16 +431,13 @@ void ObstacleAvoidance::visualizeGrid()
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
                     
-        // Try to find a bypass
-        int bypassGridCol;
-        cv::Mat drivableMask = cv::Mat::ones(frameHeight_, frameWidth_, CV_8UC1) * 255; // Simple mask for testing
-        
-        if (findBypassInGrid(drivableMask, 2, bypassGridCol)) {
-            // Draw the bypass point in bright blue
-            int bypassX0 = static_cast<int>(bypassGridCol * cellSizePx_ * scaleX);
-            int bypassY0 = static_cast<int>(collisionRow_ * cellSizePx_ * scaleY);
-            int bypassX1 = static_cast<int>(std::min((bypassGridCol+1) * cellSizePx_, frameWidth_) * scaleX);
-            int bypassY1 = static_cast<int>(std::min((collisionRow_+1) * cellSizePx_, frameHeight_) * scaleY);
+        // Try to find a bypass with no parameters
+        if (findBypassInGrid()) {
+            // Draw the bypass point using member variables
+            int bypassX0 = static_cast<int>(bypassGridCol_ * cellSizePx_);
+            int bypassY0 = static_cast<int>(bypassGridRow_ * cellSizePx_);
+            int bypassX1 = static_cast<int>(std::min((bypassGridCol_+1) * cellSizePx_, frameWidth_));
+            int bypassY1 = static_cast<int>(std::min((bypassGridRow_+1) * cellSizePx_, frameHeight_));
             
             cv::rectangle(overlay, cv::Point(bypassX0, bypassY0), cv::Point(bypassX1, bypassY1), 
                          cv::Scalar(255, 255, 0), -1); // Yellow fill
@@ -388,17 +450,6 @@ void ObstacleAvoidance::visualizeGrid()
             cv::putText(overlay, "BYPASS", 
                        cv::Point(bypassX0, bypassY0 - 5),
                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
-                       
-            // Draw a line from collision to bypass
-            int collisionX0 = static_cast<int>(collisionCol_ * cellSizePx_ * scaleX + (cellSizePx_ * scaleX / 2));
-            int collisionY0 = static_cast<int>(collisionRow_ * cellSizePx_ * scaleY + (cellSizePx_ * scaleY / 2));
-            int bypassCenterX = bypassX0 + (cellSizePx_ * scaleX / 2);
-            int bypassCenterY = bypassY0 + (cellSizePx_ * scaleY / 2);
-            
-            cv::line(overlay, 
-                   cv::Point(collisionX0, collisionY0), 
-                   cv::Point(bypassCenterX, bypassCenterY),
-                   cv::Scalar(0, 255, 255), 2); // Cyan line
         }
         else {
             cv::putText(overlay, "No bypass found!", cv::Point(20, 80),
