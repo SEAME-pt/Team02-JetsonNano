@@ -71,10 +71,18 @@ bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCu
     needBypass_     = false;
     collisionIdx_   = -1;
     collisionRow_   = -1;
+    
+    // Calculate the starting point of the bottom "ignore zone" (5/6 of the height)
+    int ignoreZoneStart = static_cast<int>(frameHeight_ * 5.0 / 6.0);
 
     for (int i = 0; i < (int)midCurve.size(); ++i)
     {
         const cv::Point &p = midCurve[i];
+        
+        // Skip points in the bottom 1/6 of the image
+        if (p.y >= ignoreZoneStart)
+            continue;
+            
         // Make sure the point is in the image
         if (p.x < 0 || p.x >= frameWidth_ || p.y < 0 || p.y >= frameHeight_)
             continue;
@@ -396,6 +404,25 @@ void ObstacleAvoidance::visualizeGrid(
         cv::putText(overlay, "No Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
     }
+
+
+    int ignoreZoneStart = static_cast<int>(frameHeight_ * 5.0 / 6.0);
+    int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart * scaleY);
+    cv::rectangle(overlay, 
+                cv::Point(0, scaledIgnoreZoneStart), 
+                cv::Point(actualSize.width, actualSize.height),
+                cv::Scalar(100, 100, 100), // Gray color
+                -1); // Filled rectangle
+
+    cv::line(overlay, 
+            cv::Point(0, scaledIgnoreZoneStart), 
+            cv::Point(actualSize.width, scaledIgnoreZoneStart),
+            cv::Scalar(255, 0, 255), 2); // Magenta line
+
+    cv::putText(overlay, "Ignore Zone", 
+                cv::Point(20, scaledIgnoreZoneStart + 30),
+                cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                cv::Scalar(255, 255, 255), 2);
 
     cv::imshow("Occupancy Grid", overlay);
     cv::waitKey(1);
