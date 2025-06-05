@@ -24,7 +24,7 @@ ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
 //
 void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 {
-    cv::Mat resizedMask = segmentationMask.clone();
+    cv::Mat resizedMask;
     cv::resize(segmentationMask, resizedMask,
                  cv::Size(frameWidth_, frameHeight_), 0, 0, cv::INTER_NEAREST);
     std::fill(occupancy_.begin(), occupancy_.end(), false);
@@ -361,6 +361,8 @@ void ObstacleAvoidance::visualizeGrid(
         
         for (const auto& p : trajectory) {
             int gr, gc;
+            p.x = static_cast<int>(p.x * scaleX);
+            p.y = static_cast<int>(p.y * scaleY);
             if (pixelToGrid(p.x, p.y, gr, gc)) {
                 // Get cell center coordinates (in original space)
                 int centerX, centerY;
