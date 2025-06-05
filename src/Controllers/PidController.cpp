@@ -109,8 +109,6 @@ void PidController::init(float kp, float ki, float kd, float speed,
     std::cout << "PID Controller initialized with Kp=" << kp_ << ", Ki=" << ki_
               << ", Kd=" << kd_ << ", speed=" << constant_speed_
               << ", dt=" << fixed_delta_time_ << std::endl;
-
-    autonomousDrive_ = "SAE_0";
 }
 
 void PidController::setAutonomousDriveState(std::string current_state)
@@ -260,7 +258,6 @@ void PidController::run()
     while (true)
     {
         if (xboxController_->getPidEnable()) {
-            std::cout << "PID running" << std::endl;
             std::string sae_level = getAutonomousDriveState();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
