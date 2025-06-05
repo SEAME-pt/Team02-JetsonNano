@@ -1149,7 +1149,11 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     try {
         if (avoidance->detectFirstCollision())
         {
-            
+            avoidance->findBypassOnRow()
         }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
     }
 }

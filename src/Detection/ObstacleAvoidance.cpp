@@ -71,6 +71,9 @@ bool ObstacleAvoidance::detectFirstCollision()
     needBypass_ = false;
     collisionIdx_ = -1;
     collisionRow_ = -1;
+    collisionCol_ = -1;  // Add this member variable
+    collisionX_ = -1;    // Add this for pixel X coordinate
+    collisionY_ = -1;    // Add this for pixel Y coordinate
     
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
@@ -84,13 +87,15 @@ bool ObstacleAvoidance::detectFirstCollision()
         for (int c = 0; c < gridWidth_; ++c) {
             // If this cell is on the trajectory AND is occupied, it's a collision
             if (trajectoryGrid_[r][c] && occupancy_[gridIndex(r, c)]) {
-                // Found collision
-                collisionRow_ = r * cellSizePx_ + cellSizePx_ / 2; // Center Y of cell
-                needBypass_ = true;
+                // Found collision - store complete information
+                collisionRow_ = r;
+                collisionCol_ = c;
                 
-                // Since we no longer have the exact index in midCurve,
-                // mark it for later use if needed
-                collisionIdx_ = 0;  // First collision point
+                // Convert grid coordinates back to pixel coordinates (center of the cell)
+                gridToPixel(r, c, collisionX_, collisionY_);
+                
+                needBypass_ = true;
+                collisionIdx_ = 0;  // This will be improved in the next step
                 
                 return true;
             }
