@@ -415,13 +415,13 @@ void ObstacleAvoidance::visualizeGrid()
     
     // Draw grid lines with proper scaling
     for (int r = 0; r <= gridHeight_; ++r) {
-        int y = static_cast<int>(r * cellSizePx_ * scaleY);
+        int y = static_cast<int>(r * cellSizePx_);
         cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
                 cv::Scalar(255, 255, 255), 1);
     }
     
     for (int c = 0; c <= gridWidth_; ++c) {
-        int x = static_cast<int>(c * cellSizePx_ * scaleX);
+        int x = static_cast<int>(c * cellSizePx_);
         cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
                 cv::Scalar(255, 255, 255), 1);
     }
