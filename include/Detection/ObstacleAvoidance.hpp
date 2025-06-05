@@ -59,7 +59,10 @@ private:
     // Temporary: store the last collision index and row
     bool    needBypass_    = false;
     int     collisionIdx_  = -1;
-    int     collisionRow_  = -1;  // image-row (pixel) of first collision
+    int     collisionRow_  = -1;
+    int     collisionCol_  = -1;  // grid column of the collision
+    int     collisionX_    = -1;  // pixel X coordinate of the collision
+    int     collisionY_    = -1;  // pixel Y coordinate of the collision
     int     bypassX_       = -1;  // image-col for bypass (same row)
 
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
