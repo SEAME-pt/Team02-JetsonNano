@@ -6,26 +6,6 @@
 #include <limits>
 #include <opencv2/opencv.hpp>
 
-/*
-  ObstacleAvoidance:
-    - Builds a coarse occupancy grid (drivable vs obstacle) from a binary segmentation mask.
-    - Provides methods to:
-        1) Detect where a given mid-curve (pixel coords) first intersects an obstacle cell.
-        2) Find a lateral “bypass” pixel on that same row (searching left/right in drivable area).
-        3) (Optionally) Run a simple Dijkstra/A* on the grid from (car grid cell) to (bypass grid cell).
-
-  Usage:
-    - Instantiate with image size, grid resolution (in pixels per grid cell), etc.
-    - Every frame, call buildOccupancy(segmentation_mask) → this reconstructs a boolean[] occupancy_.
-    - Then call detectFirstCollision(midCurve, out collisionIdx) → returns the index in midCurve of the first obstacle hit.
-    - Then call findBypassOnRow(collisionRow, out bypassCol) → returns the best bypass pixel column.
-    - If you want the entire path, call computeAstarPath(startGridIdx, bypassGridIdx).
-
-  Internally:
-    - We treat the origin (0,0) of the image as top-left.  Row increases downward (y), col increases rightward (x).
-    - The grid is `gridWidth_ × gridHeight_`, where each cell covers `cellSizePx_ × cellSizePx_` pixels.
-    - occupancy_[r*gridWidth_ + c] == true   → that grid cell is blocked (i.e. not drivable).
-*/
 
 class ObstacleAvoidance
 {
@@ -34,14 +14,8 @@ public:
     ObstacleAvoidance(int frameWidth, int frameHeight, int cellSizePx);
 
 
-    /// Build the internal occupancy grid from a binary segmentation mask.
-    /// segmentationMask: single-channel CV_8UC1 where 255=drivable, 0=not drivable/obstacle.
     void buildOccupancy(const cv::Mat& segmentationMask);
-
-    /// Scan through midCurve (list of image-px points) to find the first index
-    /// whose pixel lands in an occupied grid cell. Returns true if a collision was found.
-    ///   midCurve: vector of (x,y) in image coords.  We assume these are sorted by increasing y.
-    ///   outCollisionIdx: index in midCurve of the first obstacle pixel.  -1 if none.
+    void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
     bool detectFirstCollision(const std::vector<cv::Point>& midCurve);
 
     /// Once you know the “collisionRow” = midCurve[outCollisionIdx].y,
@@ -85,6 +59,7 @@ private:
 
     // occupancy_[r*gridWidth_ + c] == true  → cell is blocked / not drivable
     std::vector<bool> occupancy_;
+    std::vector<std::vector<bool>> trajectoryGrid_;
 
     // Temporary: store the last collision index and row
     bool    needBypass_    = false;

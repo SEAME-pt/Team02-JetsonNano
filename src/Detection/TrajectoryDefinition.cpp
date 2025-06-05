@@ -302,9 +302,6 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     
     checkForwardCollision(class_mask, midCurve);
 
-
-
-
     allPolylinesViz_.copyTo(frame);
 }
 
@@ -1141,6 +1138,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     }
     try {
         avoidance->buildOccupancy(segmentation_mask);
+        avoidance->buildTrajectoryGrid(midCurve);
         avoidance->visualizeGrid(true, midCurve);
     }
     catch (const std::exception& e)
