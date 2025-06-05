@@ -78,7 +78,7 @@ bool ObstacleAvoidance::detectFirstCollision()
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
 
-    for (int r = ignoreZoneRowThreshold; r >= 0; --r) {
+    for (int r = ignoreZoneRowThreshold + 15; r >= 0; --r) {
         for (int c = 0; c < gridWidth_; ++c) {
             // If this cell is on the trajectory
             if (trajectoryGrid_[r][c]) {
