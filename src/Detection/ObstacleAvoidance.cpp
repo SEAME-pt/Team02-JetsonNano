@@ -5,7 +5,10 @@
 //
 // Constructor: initialize grid dimensions
 //
-ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
+ObstacleAvoidance::ObstacleAvoidance()
+{}
+
+ObstacleAvoidance::init(int frameW, int frameH, int cellSizePx)
     : frameWidth_(frameW),
       frameHeight_(frameH),
       cellSizePx_(cellSizePx)
@@ -291,8 +294,7 @@ void ObstacleAvoidance::visualizeGrid(
     // cv::Size overlaySize(frameWidth_, frameHeight_);
     // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
 
-    cv::Size actualSize(800, 600);
-    
+    cv::Size actualSize(800, 600);    
     // Calculate scaling factors
     double scaleX = static_cast<double>(actualSize.width) / frameWidth_;
     double scaleY = static_cast<double>(actualSize.height) / frameHeight_;

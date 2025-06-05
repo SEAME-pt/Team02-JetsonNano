@@ -67,7 +67,7 @@ TrajectoryDefinition::TrajectoryDefinition(
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(WIDTH, HEIGHT, 4);
+        this->avoidance = NULL;
     }
     catch (const std::exception& e)
     {
@@ -299,8 +299,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     createMidPointError(midCurve);
     
     checkForwardCollision(class_mask, midCurve);
-    
-    obstacleAvoidance(class_mask, midCurve);
+
+    obstacleAvoidance(frame, class_mask, midCurve);
 
 
 
@@ -1126,8 +1126,24 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
 
 void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
-    avoidance->buildOccupancy(segmentation_mask);
-    // Visualize the grid
-    avoidance->visualizeGrid(true, midCurve);
-
+    if (!avoidance)
+    {
+        try
+        {
+            this->avoidance =std::make_unique<ObstacleAvoidance>(frameWidth_, frameHeight_, 4);;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error initializing ObstacleAvoidance" << e.what()
+                    << std::endl;
+        }
+    }
+    try {
+        avoidance->buildOccupancy(segmentation_mask);
+        avoidance->visualizeGrid(true, midCurve);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
+    }
 }
