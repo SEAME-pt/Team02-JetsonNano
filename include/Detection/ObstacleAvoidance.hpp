@@ -56,6 +56,8 @@ private:
     int bypassGridRow_ = -1;
     int laneHalfWidthGridCells_ = 2;
 
+    const int proximityRadius_ = 5;
+
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
 

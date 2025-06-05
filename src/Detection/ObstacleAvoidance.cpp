@@ -78,26 +78,44 @@ bool ObstacleAvoidance::detectFirstCollision()
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
 
-    // Check for collisions between trajectoryGrid_ and occupancy_
-    for (int r = 0; r < gridHeight_; ++r) {
-        // Skip checking in the ignore zone
-        if (r > ignoreZoneRowThreshold)
-            continue;
-            
+    for (int r = ignoreZoneRowThreshold; r >= 0; --r) {
         for (int c = 0; c < gridWidth_; ++c) {
-            // If this cell is on the trajectory AND is occupied, it's a collision
-            if (trajectoryGrid_[r][c] && occupancy_[gridIndex(r, c)]) {
-                // Found collision - store complete information
-                collisionRow_ = r;
-                collisionCol_ = c;
-                
-                // Convert grid coordinates back to pixel coordinates (center of the cell)
-                gridToPixel(r, c, collisionX_, collisionY_);
-                
-                needBypass_ = true;
-                collisionIdx_ = 0;  // This will be improved in the next step
-                
-                return true;
+            // If this cell is on the trajectory
+            if (trajectoryGrid_[r][c]) {
+                // Check proximity around the trajectory point
+                for (int dr = -proximityRadius; dr <= proximityRadius; dr++) {
+                    for (int dc = -proximityRadius; dc <= proximityRadius; dc++) {
+                        int checkR = r + dr;
+                        int checkC = c + dc;
+                        
+                        // Bounds checking
+                        if (checkR < 0 || checkR >= gridHeight_ || 
+                            checkC < 0 || checkC >= gridWidth_)
+                            continue;
+                        
+                        // If a nearby cell is occupied, it's a collision
+                        if (occupancy_[gridIndex(checkR, checkC)]) {
+                            // Found collision - store the trajectory point where we need to adjust
+                            collisionRow_ = r;
+                            collisionCol_ = c;
+                            
+                            // Store the location of the actual obstacle too (for visualization)
+                            // obstacleRow_ = checkR;
+                            // obstacleCol_ = checkC;
+                            
+                            // Calculate the distance between trajectory and obstacle
+                            // proximityDistance_ = std::sqrt(dr*dr + dc*dc);
+                            
+                            // Convert grid coordinates back to pixel coordinates
+                            gridToPixel(r, c, collisionX_, collisionY_);
+                            
+                            needBypass_ = true;
+                            collisionIdx_ = 0;
+                            
+                            return true;
+                        }
+                    }
+                }
             }
         }
     }
@@ -106,93 +124,6 @@ bool ObstacleAvoidance::detectFirstCollision()
     return false;
 }
 
-// bool ObstacleAvoidance::findBypassInGrid()
-// {
-//     outBypassGridCol = -1;
-    
-//     // Start with collision location we already detected
-//     int gridRow = collisionRow_;
-//     int gridCol = collisionCol_;
-    
-//     // Find middle of grid
-//     int centerGridCol = gridWidth_ / 2;
-    
-//     // Check if we're on a valid row
-//     if (gridRow < 0 || gridRow >= gridHeight_)
-//         return false;
-    
-//     // Determine which side to search first based on collision position
-//     bool searchRightFirst = (gridCol < centerGridCol);
-    
-//     // Search with increasing distance from center
-//     for (int offset = 1; offset < gridWidth_/2; ++offset)
-//     {
-//         int leftCol = centerGridCol - laneHalfWidthGridCells - offset;
-//         int rightCol = centerGridCol + laneHalfWidthGridCells + offset;
-        
-//         // Search in optimal direction (away from obstacle)
-//         if (searchRightFirst) {
-//             // Try right side first
-//             if (rightCol < gridWidth_) {
-//                 // Convert grid to pixel to check drivableMask
-//                 int pixelX, pixelY;
-//                 gridToPixel(gridRow, rightCol, pixelX, pixelY);
-                
-//                 // Check if this grid cell is drivable and not occupied
-//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-//                     !occupancy_[gridIndex(gridRow, rightCol)]) {
-//                     outBypassGridCol = rightCol;
-//                     return true;
-//                 }
-//             }
-            
-//             // Then left side
-//             if (leftCol >= 0) {
-//                 int pixelX, pixelY;
-//                 gridToPixel(gridRow, leftCol, pixelX, pixelY);
-                
-//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-//                     !occupancy_[gridIndex(gridRow, leftCol)]) {
-//                     outBypassGridCol = leftCol;
-//                     return true;
-//                 }
-//             }
-//         } else {
-//             // Try left first then right
-//             // [left side check]
-//             // [right side check]
-//             // Identical logic but reversed order
-//             if (leftCol >= 0) {
-//                 int pixelX, pixelY;
-//                 gridToPixel(gridRow, leftCol, pixelX, pixelY);
-                
-//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-//                     !occupancy_[gridIndex(gridRow, leftCol)]) {
-//                     outBypassGridCol = leftCol;
-//                     return true;
-//                 }
-//             }
-            
-//             if (rightCol < gridWidth_) {
-//                 int pixelX, pixelY;
-//                 gridToPixel(gridRow, rightCol, pixelX, pixelY);
-                
-//                 if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
-//                     drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
-//                     !occupancy_[gridIndex(gridRow, rightCol)]) {
-//                     outBypassGridCol = rightCol;
-//                     return true;
-//                 }
-//             }
-//         }
-//     }
-    
-//     // No bypass found
-//     return false;
-// }
 
 bool ObstacleAvoidance::findBypassInGrid()
 {
