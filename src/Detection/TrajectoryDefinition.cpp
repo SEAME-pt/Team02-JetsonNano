@@ -300,7 +300,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     
     checkForwardCollision(class_mask, midCurve);
 
-    obstacleAvoidance(frame, class_mask, midCurve);
+    obstacleAvoidance(class_mask, midCurve);
 
 
 
