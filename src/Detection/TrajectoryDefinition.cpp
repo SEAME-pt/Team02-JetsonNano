@@ -164,7 +164,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
     float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.50; // 35% of frame height
+    float maxVerticalGap        = frameHeight_ * 0.35; // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
