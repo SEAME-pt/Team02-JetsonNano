@@ -84,45 +84,41 @@ bool ObstacleAvoidance::detectFirstCollision()
             if (trajectoryGrid_[r][c]) {
                 // Check proximity around the trajectory point
                 for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-                    for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
-                        int checkR = r + dr;
-                        int checkC = c + dc;
+                    int checkR = r + dr;
+                    int checkC = c;
+                    
+                    // Bounds checking
+                    if (checkR < 0 || checkR >= gridHeight_ || 
+                        checkC < 0 || checkC >= gridWidth_)
+                        continue;
+                    
+                    // If a nearby cell is occupied, it's a collision
+                    if (occupancy_[gridIndex(checkR, checkC)]) {
+                        // Found collision - store the trajectory point where we need to adjust
+                        collisionRow_ = r;
+                        collisionCol_ = c;
+                        std::cout << "Collision detected at grid cell: (" 
+                                  << collisionRow_ << ", " << collisionCol_ << ")\n";
                         
-                        // Bounds checking
-                        if (checkR < 0 || checkR >= gridHeight_ || 
-                            checkC < 0 || checkC >= gridWidth_)
-                            continue;
+                        // Store the location of the actual obstacle too (for visualization)
+                        // obstacleRow_ = checkR;
+                        // obstacleCol_ = checkC;
                         
-                        // If a nearby cell is occupied, it's a collision
-                        if (occupancy_[gridIndex(checkR, checkC)]) {
-                            // Found collision - store the trajectory point where we need to adjust
-                            collisionRow_ = r;
-                            collisionCol_ = c;
-
-                            std::cout << "Collision detected at grid cell: (" 
-                                      << collisionRow_ << ", " << collisionCol_ << ")\n";
-                            
-                            // Store the location of the actual obstacle too (for visualization)
-                            // obstacleRow_ = checkR;
-                            // obstacleCol_ = checkC;
-                            
-                            // Calculate the distance between trajectory and obstacle
-                            // proximityDistance_ = std::sqrt(dr*dr + dc*dc);
-                            
-                            // Convert grid coordinates back to pixel coordinates
-                            gridToPixel(r, c, collisionX_, collisionY_);
-                            
-                            needBypass_ = true;
-                            collisionIdx_ = 0;
-                            
-                            return true;
-                        }
+                        // Calculate the distance between trajectory and obstacle
+                        // proximityDistance_ = std::sqrt(dr*dr + dc*dc);
+                        
+                        // Convert grid coordinates back to pixel coordinates
+                        gridToPixel(r, c, collisionX_, collisionY_);
+                        
+                        needBypass_ = true;
+                        collisionIdx_ = 0;
+                        
+                        return true;
                     }
                 }
             }
         }
     }
-
     // No collision
     return false;
 }
