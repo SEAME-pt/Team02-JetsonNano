@@ -105,7 +105,7 @@ add_executable(CombinedController
     ./src/Controllers/MPController.cpp
     ./src/Controllers/SpeedPidController.cpp
     ./src/Communication/ControllerPublisher.cpp
-    ./src/combinedControl.cpp
+    ./src/combinedControlMPC.cpp
 )
 
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
