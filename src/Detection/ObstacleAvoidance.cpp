@@ -304,6 +304,7 @@ void ObstacleAvoidance::visualizeGrid(
     bool showGridLines,
     const std::vector<cv::Point>& trajectory)
 {
+    (void) trajectory;
     // // Create overlay for the occupancy grid
     // cv::Size overlaySize(frameWidth_, frameHeight_);
     // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
