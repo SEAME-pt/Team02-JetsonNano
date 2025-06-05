@@ -66,41 +66,38 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
 //   Walk down midCurve (assumed sorted by increasing y).  The first midCurve[i] whose pixel
 //   falls inside an occupied grid cell (via pixelToGrid → occupancy) is the collision index.
 //
-bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCurve)
+bool ObstacleAvoidance::detectFirstCollision()
 {
-    needBypass_     = false;
-    collisionIdx_   = -1;
-    collisionRow_   = -1;
+    needBypass_ = false;
+    collisionIdx_ = -1;
+    collisionRow_ = -1;
     
-    // Calculate the starting point of the bottom "ignore zone" (5/6 of the height)
-    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
+    // Calculate the starting point of the bottom "ignore zone"
+    int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
 
-    for (int i = 0; i < (int)midCurve.size(); ++i)
-    {
-        const cv::Point &p = midCurve[i];
-        
-        if (p.y >= ignoreZoneStart)
+    // Check for collisions between trajectoryGrid_ and occupancy_
+    for (int r = 0; r < gridHeight_; ++r) {
+        // Skip checking in the ignore zone
+        if (r > ignoreZoneRowThreshold)
             continue;
             
-        // Make sure the point is in the image
-        if (p.x < 0 || p.x >= frameWidth_ || p.y < 0 || p.y >= frameHeight_)
-            continue;
-
-        int gr, gc;
-        if (!pixelToGrid(p.x, p.y, gr, gc))
-            continue;
-
-        if (occupancy_[gridIndex(gr,gc)])
-        {
-            // found first collision
-            collisionIdx_   = i;
-            collisionRow_   = p.y;
-            needBypass_     = true;
-            return true;
+        for (int c = 0; c < gridWidth_; ++c) {
+            // If this cell is on the trajectory AND is occupied, it's a collision
+            if (trajectoryGrid_[r][c] && occupancy_[gridIndex(r, c)]) {
+                // Found collision
+                collisionRow_ = r * cellSizePx_ + cellSizePx_ / 2; // Center Y of cell
+                needBypass_ = true;
+                
+                // Since we no longer have the exact index in midCurve,
+                // mark it for later use if needed
+                collisionIdx_ = 0;  // First collision point
+                
+                return true;
+            }
         }
     }
 
-    // no collision
+    // No collision
     return false;
 }
 
@@ -360,40 +357,7 @@ void ObstacleAvoidance::visualizeGrid(
         }
     }
 
-    //  // Visualize trajectory if provided
-    // // Draw trajectory points and lines (at scaled coordinates)
-    // if (!trajectory.empty()) {
-    //     std::vector<cv::Point> gridTrajectory;
-        
-    //     for (const auto& p : trajectory) {
-    //         int gr, gc;
-    //         int x = static_cast<int>(p.x * scaleX);
-    //         int y = static_cast<int>(p.y * scaleY);
-    //         if (pixelToGrid(x, y, gr, gc)) {
-    //             // Get cell center coordinates (in original space)
-    //             int centerX, centerY;
-    //             gridToPixel(gr, gc, centerX, centerY);
-                
-    //             // Mark with blue circle (scaled size)
-    //             int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
-    //             cv::circle(overlay, cv::Point(centerX, centerY), circleRadius, 
-    //                       cv::Scalar(255, 0, 0), -1);
-                
-    //             gridTrajectory.push_back(cv::Point(centerX, centerY));
-    //         }
-    //     }
-        
-    //     // Connect trajectory points with lines
-    //     if (gridTrajectory.size() > 1) {
-    //         for (size_t i = 0; i < gridTrajectory.size() - 1; i++) {
-    //             cv::line(overlay, gridTrajectory[i], gridTrajectory[i+1], 
-    //                     cv::Scalar(255, 255, 0), 2);
-    //         }
-    //     }
-    // }
-    // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
-    
-    if (this->detectFirstCollision(trajectory))
+    if (this->detectFirstCollision())
     {
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
