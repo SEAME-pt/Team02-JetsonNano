@@ -368,16 +368,12 @@ void ObstacleAvoidance::visualizeGrid(
                 int centerX, centerY;
                 gridToPixel(gr, gc, centerX, centerY);
                 
-                // Scale to target size
-                // int scaledX = static_cast<int>(centerX * scaleX);
-                // int scaledY = static_cast<int>(centerY * scaleY);
-                
                 // Mark with blue circle (scaled size)
                 int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
                 cv::circle(overlay, cv::Point(centerX, centerY), circleRadius, 
                           cv::Scalar(255, 0, 0), -1);
                 
-                gridTrajectory.push_back(cv::Point(scaledX, scaledY));
+                gridTrajectory.push_back(cv::Point(centerX, centerY));
             }
         }
         
