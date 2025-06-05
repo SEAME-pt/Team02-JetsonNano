@@ -1,9 +1,26 @@
 #include "BatterySensor.hpp"
 #include <sys/stat.h>
 
-BatterySensor::BatterySensor(std::shared_ptr<SensoringPublisher> publisher, const std::string& i2cDevice, uint8_t sensorAddress,
-                         const std::string& canDevice)
+BatterySensor::BatterySensor(std::shared_ptr<SensoringPublisher> publisher)
+{   
+    publisher_ = publisher;
+}
+
+BatterySensor::~BatterySensor()
 {
+    if (this->batteryINA) {
+        delete (batteryINA);
+    }
+    if (this->m_I2c) {
+        delete (m_I2c);
+    }
+    if (this->canBus) {
+        delete this->canBus;
+    }
+}
+
+void BatterySensor::initLocalEnv(const std::string& i2cDevice, uint8_t sensorAddress,
+                         const std::string& canDevice) {
     try {
         struct stat buffer;
         if (stat(i2cDevice.c_str(), &buffer) != 0) {
@@ -43,21 +60,12 @@ BatterySensor::BatterySensor(std::shared_ptr<SensoringPublisher> publisher, cons
         std::cerr << "Error on initializing can" << std::endl;
         this->canBus = NULL;
     }
-    
-    publisher_ = publisher;
 }
 
-BatterySensor::~BatterySensor()
-{
-    if (this->batteryINA) {
-        delete (batteryINA);
-    }
-    if (this->m_I2c) {
-        delete (m_I2c);
-    }
-    if (this->canBus) {
-        delete this->canBus;
-    }
+void BatterySensor::initCarlaEnv() {
+    this->canBus = NULL;
+    this->m_I2c = NULL;
+    this->batteryINA = NULL;
 }
 
 void BatterySensor::run(void)

@@ -154,6 +154,7 @@ add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp
     ./src/MiddleWare/BatterySensor/BatterySensor.cpp
     ./src/MiddleWare/Signals/Signals.cpp
+    ./src/utils/utils.cpp
     ./src/middleware.cpp
 )
 
