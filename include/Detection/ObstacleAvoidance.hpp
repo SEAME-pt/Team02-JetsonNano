@@ -33,7 +33,7 @@ public:
 
     ObstacleAvoidance();
 
-    init(int frameWidth, int frameHeight, int cellSizePx);
+    void init(int frameWidth, int frameHeight, int cellSizePx);
 
 
     /// Build the internal occupancy grid from a binary segmentation mask.

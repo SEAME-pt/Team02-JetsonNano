@@ -8,7 +8,7 @@
 ObstacleAvoidance::ObstacleAvoidance()
 {}
 
-ObstacleAvoidance::init(int frameW, int frameH, int cellSizePx)
+void ObstacleAvoidance::init(int frameW, int frameH, int cellSizePx)
     : frameWidth_(frameW),
       frameHeight_(frameH),
       cellSizePx_(cellSizePx)
