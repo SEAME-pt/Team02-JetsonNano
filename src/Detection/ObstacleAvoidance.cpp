@@ -83,8 +83,8 @@ bool ObstacleAvoidance::detectFirstCollision()
             // If this cell is on the trajectory
             if (trajectoryGrid_[r][c]) {
                 // Check proximity around the trajectory point
-                for (int dr = -proximityRadius; dr <= proximityRadius; dr++) {
-                    for (int dc = -proximityRadius; dc <= proximityRadius; dc++) {
+                for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
+                    for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
                         int checkR = r + dr;
                         int checkC = c + dc;
                         
