@@ -14,7 +14,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     integral_    = 0.0f;
     last_time_   = 0.0f;
 
-    constant_speed_     = 20.0f;
+    constant_speed_     = 250.0f;
     max_steering_angle_ = 90.0f;
 
     kp_ = 1.0f;
@@ -23,11 +23,14 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 
     fixed_delta_time_   = 0.02f;
     autonomousDrive_    = "SAE_0";
+    speed_lock_         = false;
     xboxController_     = xbox_controller;
     current_speed_      = 0.0f;
-    speed_lock_         = false;
+    speedKp_ = 0.12f;
+    speedKi_ = 1.3f;
+    speedKd_ = 0.01f;
     speedPidController_ = new SpeedPidController();
-    speedPidController_->init(0.12f, 1.3f, 0.01f, fixed_delta_time_);
+    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
 
     session_ = session;
 
@@ -88,7 +91,6 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 PidController::~PidController()
 {
     delete speedPidController_;
-    session_->close();
 }
 
 void PidController::init(float kp, float ki, float kd, float speed,
@@ -156,8 +158,10 @@ float PidController::steeringPID(float error, double current_time)
 }
 
 // SAE_0
-void PidController::manualControl(float manual_steering, float manual_speed)
+void PidController::manualControl()
 {
+    float manual_steering = xboxController_->getManualSteering();
+    float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
@@ -173,17 +177,20 @@ void PidController::manualControl(float manual_steering, float manual_speed)
                 0 - current_speed_, current_time));
         }
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 // SAE_1_LKAS
-void PidController::LKASControl(float lane_error, double current_time,
-                                float manual_steering, float manual_speed)
+void PidController::LKASControl()
 {
-    // Above threshold, the assistant adjusts slightly the direction
-    if (std::abs(lane_error) > lane_departure_threshold_ &&
-        std::abs(lane_error) < 1)
+    double current_time   = getCurrentTime();
+    float manual_steering = xboxController_->getManualSteering();
+    float manual_speed    = xboxController_->getManualSpeed();
+
+    if (std::abs(cameraError_) > lane_departure_threshold_ &&
+        std::abs(cameraError_) < 1)
     {
-        float direction = manual_steering +(steeringPID(lane_error, current_time) - manual_steering) * 0.5f;
+        float direction = manual_steering +(steeringPID(cameraError_, current_time) - manual_steering) * 0.5f;
         // publisher_->publishAlert("Lane Departure");
         publisher_->publishSteering(direction);
     }
@@ -200,47 +207,39 @@ void PidController::LKASControl(float lane_error, double current_time,
 }
 
 // SAE_1_ACC
-void PidController::adaptiveCruiseControl(float lane_error, double current_time,
-                                          float manual_steering,
-                                          float manual_speed)
+void PidController::adaptiveCruiseControl()
 {
-    (void)lane_error;
-    (void)current_time;
-    (void)manual_steering;
-    (void)manual_speed;
-
-    return;
+    // double current_time   = getCurrentTime();
+    // float manual_steering = xboxController_->getManualSteering();
+    // float manual_speed    = xboxController_->getManualSpeed();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 // SAE_2
-void PidController::partialControl(float lane_error, double current_time)
+void PidController::partialControl()
 {
-    (void)lane_error;
-    (void)current_time;
-
-    return;
+    // double current_time   = getCurrentTime();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 // SAE_3
-void PidController::conditionalAutomation(float lane_error, double current_time)
+void PidController::conditionalAutomation()
 {
-    (void)lane_error;
-    (void)current_time;
-
-    return;
+    // double current_time   = getCurrentTime();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 // SAE_4
-void PidController::autonomousControl(float error, double current_time)
+void PidController::autonomousControl()
 {
-    float direction = steeringPID(
-        error, current_time);
+    double current_time   = getCurrentTime();
+    float direction = steeringPID(cameraError_, current_time);
 
     publisher_->publishSteering(direction);
     if (!this->speed_lock_)
     {
         publisher_->publishSpeed(speedPidController_->speedPID(
-            250 - current_speed_, current_time));
+            constant_speed_ - current_speed_, current_time));
         publisher_->publishCurrentGear(1);
     }
     else
@@ -259,21 +258,18 @@ void PidController::run()
     {
         std::string sae_level = getAutonomousDriveState();
 
-        double current_time   = getCurrentTime();
-        float manual_steering = xboxController_->getManualSteering();
-        float manual_speed    = xboxController_->getManualSpeed();
         if (sae_level.find("SAE_0") != std::string::npos) {
-            manualControl(manual_steering, manual_speed);
+            manualControl();
         } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
-            LKASControl(cameraError_, current_time, manual_steering, manual_speed);
+            LKASControl();
         } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
-            adaptiveCruiseControl(cameraError_, current_time, manual_steering, manual_speed);
+            adaptiveCruiseControl();
         } else if (sae_level.find("SAE_2") != std::string::npos) {
-            partialControl(cameraError_, current_time);
+            partialControl();
         } else if (sae_level.find("SAE_3") != std::string::npos) {
-            conditionalAutomation(cameraError_, current_time);
+            conditionalAutomation();
         } else if (sae_level.find("SAE_4") != std::string::npos) {
-            autonomousControl(cameraError_, current_time);
+            autonomousControl();
         } else {
 
         }
