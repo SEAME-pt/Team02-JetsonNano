@@ -106,74 +106,97 @@ bool ObstacleAvoidance::detectFirstCollision()
     return false;
 }
 
-//
-// findBypassOnRow:
-//   Given an image row (= collisionRow), search left/right from (centerX ± laneHalfWidthPx)
-//   until we find a pixel that is (a) inside the image bounds, (b) drivableMask == 255,
-//   and (c) maps to an unoccupied grid cell.  We return that x as bypassX.
-//
-bool ObstacleAvoidance::findBypassOnRow(int collisionRow,
-                                        const cv::Mat& drivableMask,
-                                        int laneHalfWidthPx,
-                                        int& outBypassX) const
+bool ObstacleAvoidance::findBypassInGrid(
+    const cv::Mat& drivableMask,
+    int laneHalfWidthGridCells,
+    int& outBypassGridCol)
 {
-    outBypassX = -1;
-    if (collisionRow < 0 || collisionRow >= frameHeight_)
+    outBypassGridCol = -1;
+    
+    // Start with collision location we already detected
+    int gridRow = collisionRow_;
+    int gridCol = collisionCol_;
+    
+    // Find middle of grid
+    int centerGridCol = gridWidth_ / 2;
+    
+    // Check if we're on a valid row
+    if (gridRow < 0 || gridRow >= gridHeight_)
         return false;
-
-    int centerX = frameWidth_ / 2;
-    // Search offset from 1 .. until image boundary
-    for (int offset = 1; offset < frameWidth_/2; ++offset)
+    
+    // Determine which side to search first based on collision position
+    bool searchRightFirst = (gridCol < centerGridCol);
+    
+    // Search with increasing distance from center
+    for (int offset = 1; offset < gridWidth_/2; ++offset)
     {
-        // try left candidate
-        int xL = centerX - laneHalfWidthPx - offset;
-        if (xL >= 0)
-        {
-            // check drivableMask at (collisionRow, xL)
-            if (drivableMask.at<uchar>(collisionRow, xL) == 255)
-            {
-                // also check occupancy grid
-                int gr, gc;
-                if (pixelToGrid(xL, collisionRow, gr, gc)
-                    && !occupancy_[gridIndex(gr,gc)])
-                {
-                    outBypassX = xL;
+        int leftCol = centerGridCol - laneHalfWidthGridCells - offset;
+        int rightCol = centerGridCol + laneHalfWidthGridCells + offset;
+        
+        // Search in optimal direction (away from obstacle)
+        if (searchRightFirst) {
+            // Try right side first
+            if (rightCol < gridWidth_) {
+                // Convert grid to pixel to check drivableMask
+                int pixelX, pixelY;
+                gridToPixel(gridRow, rightCol, pixelX, pixelY);
+                
+                // Check if this grid cell is drivable and not occupied
+                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+                    !occupancy_[gridIndex(gridRow, rightCol)]) {
+                    outBypassGridCol = rightCol;
                     return true;
                 }
             }
-        }
-
-        // try right candidate
-        int xR = centerX + laneHalfWidthPx + offset;
-        if (xR < frameWidth_)
-        {
-            if (drivableMask.at<uchar>(collisionRow, xR) == 255)
-            {
-                int gr, gc;
-                if (pixelToGrid(xR, collisionRow, gr, gc)
-                    && !occupancy_[gridIndex(gr,gc)])
-                {
-                    outBypassX = xR;
+            
+            // Then left side
+            if (leftCol >= 0) {
+                int pixelX, pixelY;
+                gridToPixel(gridRow, leftCol, pixelX, pixelY);
+                
+                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+                    !occupancy_[gridIndex(gridRow, leftCol)]) {
+                    outBypassGridCol = leftCol;
+                    return true;
+                }
+            }
+        } else {
+            // Try left first then right
+            // [left side check]
+            // [right side check]
+            // Identical logic but reversed order
+            if (leftCol >= 0) {
+                int pixelX, pixelY;
+                gridToPixel(gridRow, leftCol, pixelX, pixelY);
+                
+                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+                    !occupancy_[gridIndex(gridRow, leftCol)]) {
+                    outBypassGridCol = leftCol;
+                    return true;
+                }
+            }
+            
+            if (rightCol < gridWidth_) {
+                int pixelX, pixelY;
+                gridToPixel(gridRow, rightCol, pixelX, pixelY);
+                
+                if (pixelY < drivableMask.rows && pixelX < drivableMask.cols && 
+                    drivableMask.at<uchar>(pixelY, pixelX) == 255 && 
+                    !occupancy_[gridIndex(gridRow, rightCol)]) {
+                    outBypassGridCol = rightCol;
                     return true;
                 }
             }
         }
     }
-
+    
     // No bypass found
     return false;
 }
 
-//
-// pixelToGrid:
-//   Convert (px,py) in image coords to grid (r,c).  We define:
-//
-//     c = px / cellSizePx_
-//     r = py / cellSizePx_
-//
-//   If that pixel lies outside [0..frameW-1] or [0..frameH-1], or the computed (r,c)
-//   is outside [0..gridHeight_-1]×[0..gridWidth_-1], we return false.
-//
 bool ObstacleAvoidance::pixelToGrid(int px, int py, int& gr, int& gc) const
 {
     if (px < 0 || px >= frameWidth_ || py < 0 || py >= frameHeight_)
@@ -185,25 +208,12 @@ bool ObstacleAvoidance::pixelToGrid(int px, int py, int& gr, int& gc) const
     return true;
 }
 
-//
-// gridToPixel:
-//   Convert a grid cell center (r,c) back to pixel coords (px,py).  We choose the center
-//   of that cell: px = c*cellSizePx + cellSizePx/2,  py = r*cellSizePx + cellSizePx/2.
-//
 void ObstacleAvoidance::gridToPixel(int gridR, int gridC, int& outPx, int& outPy) const
 {
     outPx = gridC * cellSizePx_ + cellSizePx_ / 2;
     outPy = gridR * cellSizePx_ + cellSizePx_ / 2;
 }
 
-//
-// computeAstarPath:
-//   A basic A* on the grid.  We treat each free cell as a node.  8‐connected neighbors
-//   (dx,dy ∈ {−1,0,1}, not both zero).  The cost of a straight neighbor = 1.0, diagonal=1.414.
-//   Heuristic = Euclidean distance to goal.
-//
-//   Returns a vector of (r,c) from (startR,startC) → (goalR,goalC).  Empty if no path.
-//
 std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, int startC,
                                                                      int goalR,  int goalC)
 {
@@ -305,19 +315,9 @@ void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajec
     trajectoryGrid_ = std::move(trajectoryGrid);
 }
 
-void ObstacleAvoidance::visualizeGrid( 
-    bool showGridLines,
-    const std::vector<cv::Point>& trajectory)
+void ObstacleAvoidance::visualizeGrid()
 {
-    (void) trajectory;
-    // // Create overlay for the occupancy grid
-    // cv::Size overlaySize(frameWidth_, frameHeight_);
-    // cv::Mat overlay = cv::Mat::zeros(overlaySize, CV_8UC3);
-
-    cv::Size actualSize(800, 600);    
-    // Calculate scaling factors
-    double scaleX = static_cast<double>(actualSize.width) / frameWidth_;
-    double scaleY = static_cast<double>(actualSize.height) / frameHeight_;
+    cv::Size actualSize(frameWidth_, frameHeight_);    
     
     // Create overlay at the target size directly
     cv::Mat overlay = cv::Mat::zeros(actualSize, CV_8UC3);
@@ -325,10 +325,10 @@ void ObstacleAvoidance::visualizeGrid(
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
 
-            int x0 = static_cast<int>(c * cellSizePx_ * scaleX);
-            int y0 = static_cast<int>(r * cellSizePx_ * scaleY);
-            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_) * scaleX);
-            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_) * scaleY);
+            int x0 = static_cast<int>(c * cellSizePx_);
+            int y0 = static_cast<int>(r * cellSizePx_);
+            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
             
 
             if (trajectoryGrid_[r][c]) {
@@ -349,24 +349,61 @@ void ObstacleAvoidance::visualizeGrid(
     }
     
     // Draw grid lines with proper scaling
-    if (showGridLines) {
-        for (int r = 0; r <= gridHeight_; ++r) {
-            int y = static_cast<int>(r * cellSizePx_ * scaleY);
-            cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
-                    cv::Scalar(255, 255, 255), 1);
-        }
-        
-        for (int c = 0; c <= gridWidth_; ++c) {
-            int x = static_cast<int>(c * cellSizePx_ * scaleX);
-            cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
-                    cv::Scalar(255, 255, 255), 1);
-        }
+    for (int r = 0; r <= gridHeight_; ++r) {
+        int y = static_cast<int>(r * cellSizePx_ * scaleY);
+        cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
+                cv::Scalar(255, 255, 255), 1);
+    }
+    
+    for (int c = 0; c <= gridWidth_; ++c) {
+        int x = static_cast<int>(c * cellSizePx_ * scaleX);
+        cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
+                cv::Scalar(255, 255, 255), 1);
     }
 
     if (this->detectFirstCollision())
     {
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+                    
+        // Try to find a bypass
+        int bypassGridCol;
+        cv::Mat drivableMask = cv::Mat::ones(frameHeight_, frameWidth_, CV_8UC1) * 255; // Simple mask for testing
+        
+        if (findBypassInGrid(drivableMask, 2, bypassGridCol)) {
+            // Draw the bypass point in bright blue
+            int bypassX0 = static_cast<int>(bypassGridCol * cellSizePx_ * scaleX);
+            int bypassY0 = static_cast<int>(collisionRow_ * cellSizePx_ * scaleY);
+            int bypassX1 = static_cast<int>(std::min((bypassGridCol+1) * cellSizePx_, frameWidth_) * scaleX);
+            int bypassY1 = static_cast<int>(std::min((collisionRow_+1) * cellSizePx_, frameHeight_) * scaleY);
+            
+            cv::rectangle(overlay, cv::Point(bypassX0, bypassY0), cv::Point(bypassX1, bypassY1), 
+                         cv::Scalar(255, 255, 0), -1); // Yellow fill
+                         
+            // Draw a border around the bypass cell
+            cv::rectangle(overlay, cv::Point(bypassX0, bypassY0), cv::Point(bypassX1, bypassY1), 
+                         cv::Scalar(0, 255, 255), 2); // Cyan border
+            
+            // Add text indicating the bypass point
+            cv::putText(overlay, "BYPASS", 
+                       cv::Point(bypassX0, bypassY0 - 5),
+                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
+                       
+            // Draw a line from collision to bypass
+            int collisionX0 = static_cast<int>(collisionCol_ * cellSizePx_ * scaleX + (cellSizePx_ * scaleX / 2));
+            int collisionY0 = static_cast<int>(collisionRow_ * cellSizePx_ * scaleY + (cellSizePx_ * scaleY / 2));
+            int bypassCenterX = bypassX0 + (cellSizePx_ * scaleX / 2);
+            int bypassCenterY = bypassY0 + (cellSizePx_ * scaleY / 2);
+            
+            cv::line(overlay, 
+                   cv::Point(collisionX0, collisionY0), 
+                   cv::Point(bypassCenterX, bypassCenterY),
+                   cv::Scalar(0, 255, 255), 2); // Cyan line
+        }
+        else {
+            cv::putText(overlay, "No bypass found!", cv::Point(20, 80),
+                       cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+        }
     }
     else
     {
@@ -376,7 +413,7 @@ void ObstacleAvoidance::visualizeGrid(
 
 
     int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
-    int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart * scaleY);
+    int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
     cv::rectangle(overlay, 
                 cv::Point(0, scaledIgnoreZoneStart), 
                 cv::Point(actualSize.width, actualSize.height),

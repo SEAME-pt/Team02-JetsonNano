@@ -17,23 +17,15 @@ public:
     void buildOccupancy(const cv::Mat& segmentationMask);
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
     bool detectFirstCollision();
-    bool findBypassOnRow(int collisionRow,
-                         const cv::Mat& drivableMask,
-                         int laneHalfWidthPx,
-                         int& outBypassX) const;
+    bool findBypassInGrid(
+        const cv::Mat& drivableMask,
+        int laneHalfWidthGridCells,
+        int& outBypassGridCol)
 
-    /// Convert a pixel (image) coordinate into a grid cell (r,c).
-    /// Returns false if (x,y) is outside the local grid bounds.
     bool pixelToGrid(int px, int py, int& gridR, int& gridC) const;
-
-    /// Convert a grid cell (r,c) back into the pixel coordinate
-    /// at the center of that cell:
     void gridToPixel(int gridR, int gridC, int& outPx, int& outPy) const;
 
-    /// (Optional) Run a simple A* on the occupancy grid from start→goal.
-    ///   startR, startC: grid coords of the vehicle (usually bottom-center cell)
-    ///   goalR,  goalC:  grid coords of the bypass waypoint
-    /// Returns a list of grid cells (r,c) from start→goal (including both).  Empty if no path.
+    
     std::vector<std::pair<int,int>> computeAstarPath(int startR, int startC,
                                                      int goalR,  int goalC);
 
@@ -43,9 +35,7 @@ public:
     int      getCollisionRow() const { return collisionRow_; }
     int      getCollisionIdx() const { return collisionIdx_; }
 
-    void visualizeGrid(
-    bool showGridLines,
-    const std::vector<cv::Point>& trajectory = std::vector<cv::Point>());
+    void visualizeGrid(bool showGridLines);
 
 private:
     int frameWidth_,  frameHeight_;
