@@ -19,13 +19,24 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
     frame_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("carla/debug")));
+
+    // Create an OpenCV CUDA stream
+    cv_stream = cv::cuda::Stream();
+
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+}
+
+TrajectoryDefinition::~TrajectoryDefinition()
+{
+    if (canBus) {
+        delete canBus;
+    }
+    delete kalmanFilter;
+    delete ipm;
+}
+
+void TrajectoryDefinition::initLocalEnv() {
     try {
-        struct stat buffer;
-        if (stat("/dev/spidev0.0", &buffer) != 0) {
-            std::cerr << "Can device " << "/dev/spidev0.0" << " does not exist!" << std::endl;
-            this->canBus = NULL;
-            throw std::runtime_error("Error on can device");
-        }
         this->canBus     = new CAN();
         this->canBus->init("/dev/spidev0.0");
     } catch (...) {
@@ -45,16 +56,46 @@ TrajectoryDefinition::TrajectoryDefinition(
 
     try
     {
-        // float cameraHeight = 0.137f;       // meters
-        // float cameraPitch = 20.0f;       // degrees down from horizontal
-        // float horizontalFOV = 100.0f;     // degrees
-        // float img_height = static_cast<float>(HEIGHT);
-        // float img_width = static_cast<float>(WIDTH);
-        // float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
-        // float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        // float nearDistance = 0.01f;       // meters
-        // float farDistance = 0.45f;       // meters
-        // float laneWidth = 1.4f;      // meters
+        float cameraHeight = 0.137f;       // meters
+        float cameraPitch = 20.0f;       // degrees down from horizontal
+        float horizontalFOV = 100.0f;     // degrees
+        float img_height = static_cast<float>(600);
+        float img_width = static_cast<float>(800);
+        float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
+        float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
+        float nearDistance = 0.01f;       // meters
+        float farDistance = 0.45f;       // meters
+        float laneWidth = 1.4f;      // meters
+        cv::Size bevSize = cv::Size(800, 600);
+        cv::Size origSize = cv::Size(800, 600);
+
+        this->ipm = new IPM();
+        this->ipm->init(origSize, bevSize);
+        this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
+                                       verticalFOV, nearDistance, farDistance,
+                                       laneWidth);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing IPM" << e.what() << std::endl;
+    }
+}
+
+void TrajectoryDefinition::initCarlaEnv() {
+    this->canBus = NULL;
+
+    try
+    {
+        this->kalmanFilter = new ::KalmanFilter();
+        this->kalmanFilter->init();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing KalmanFilter" << e.what() << std::endl;
+    }
+
+    try
+    {
         float cameraHeight = 1.5f;       // meters
         float cameraPitch = 15.0f;       // degrees down from horizontal
         float horizontalFOV = 105.0f;     // degrees
@@ -78,20 +119,6 @@ TrajectoryDefinition::TrajectoryDefinition(
     {
         std::cerr << "Error initializing IPM" << e.what() << std::endl;
     }
-
-    // Create an OpenCV CUDA stream
-    cv_stream = cv::cuda::Stream();
-
-    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
-}
-
-TrajectoryDefinition::~TrajectoryDefinition()
-{
-    if (canBus) {
-        delete canBus;
-    }
-    delete kalmanFilter;
-    delete ipm;
 }
 
 cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,

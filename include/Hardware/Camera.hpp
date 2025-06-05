@@ -28,8 +28,10 @@ private:
 
 public:
     Camera(std::shared_ptr<zenoh::Session> session);
-    Camera(const std::string& pipeline, const std::string& calibrationFile, std::shared_ptr<zenoh::Session> session);
     ~Camera();
+
+    void initLocalEnv(const std::string& pipeline, const std::string& calibrationFile);
+    void initCarlaEnv();
 
     void startCapture();
     void stopCapture();

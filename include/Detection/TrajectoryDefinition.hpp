@@ -66,6 +66,9 @@ class TrajectoryDefinition
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session);
     ~TrajectoryDefinition();
 
+    void initLocalEnv();
+    void initCarlaEnv();
+
     cv::Mat process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
   private:
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
