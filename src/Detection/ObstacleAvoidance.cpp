@@ -73,13 +73,12 @@ bool ObstacleAvoidance::detectFirstCollision(const std::vector<cv::Point>& midCu
     collisionRow_   = -1;
     
     // Calculate the starting point of the bottom "ignore zone" (5/6 of the height)
-    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.0 / 6.0);
+    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
 
     for (int i = 0; i < (int)midCurve.size(); ++i)
     {
         const cv::Point &p = midCurve[i];
         
-        // Skip points in the bottom 1/6 of the image
         if (p.y >= ignoreZoneStart)
             continue;
             
@@ -406,7 +405,7 @@ void ObstacleAvoidance::visualizeGrid(
     }
 
 
-    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.0 / 6.0);
+    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
     int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart * scaleY);
     cv::rectangle(overlay, 
                 cv::Point(0, scaledIgnoreZoneStart), 
