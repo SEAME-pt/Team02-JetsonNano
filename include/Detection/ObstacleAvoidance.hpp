@@ -31,7 +31,11 @@ class ObstacleAvoidance
 {
 public:
 
-    ObstacleAvoidance(int frameW, int frameH, int cellSizePx);
+    ObstacleAvoidance();
+
+    init(int frameWidth, int frameHeight, int cellSizePx);
+
+
     /// Build the internal occupancy grid from a binary segmentation mask.
     /// segmentationMask: single-channel CV_8UC1 where 255=drivable, 0=not drivable/obstacle.
     void buildOccupancy(const cv::Mat& segmentationMask);
