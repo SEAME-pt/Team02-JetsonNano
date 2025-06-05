@@ -3,27 +3,12 @@
 #include <sys/stat.h>
 #define SESSION_OPEN zenoh::Session::open
 
-Signals::Signals(std::shared_ptr<SensoringPublisher> publisher, const std::string& canDevice)
+Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<SensoringPublisher> publisher)
 {
-    try {
-        struct stat buffer;
-        if (stat(canDevice.c_str(), &buffer) != 0) {
-            std::cerr << "Can device " << canDevice << " does not exist!" << std::endl;
-            this->canBus = NULL;
-            throw std::runtime_error("Error on can device");
-        }
-        this->canBus     = new CAN();
-        this->canBus->init(canDevice);
-    } catch (...) {
-        std::cerr << "Error on initializing can" << std::endl;
-        this->canBus = NULL;
-    }
     publisher_   = publisher;
 
-    auto config = zenoh::Config::create_default();
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
-
+    session_ = session;
+    
     activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
@@ -58,6 +43,26 @@ Signals::Signals(std::shared_ptr<SensoringPublisher> publisher, const std::strin
 }
 
 Signals::~Signals() {}
+
+void Signals::initLocalEnv(const std::string& canDevice) {
+    try {
+        struct stat buffer;
+        if (stat(canDevice.c_str(), &buffer) != 0) {
+            std::cerr << "Can device " << canDevice << " does not exist!" << std::endl;
+            this->canBus = NULL;
+            throw std::runtime_error("Error on can device");
+        }
+        this->canBus     = new CAN();
+        this->canBus->init(canDevice);
+    } catch (...) {
+        std::cerr << "Error on initializing can" << std::endl;
+        this->canBus = NULL;
+    }
+}
+
+void Signals::initCarlaEnv() {
+    this->canBus = NULL;
+}
 
 void Signals::run()
 {

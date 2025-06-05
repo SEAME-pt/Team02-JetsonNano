@@ -47,8 +47,12 @@ class Signals
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
 
   public:
-    Signals(std::shared_ptr<SensoringPublisher> publisher, const std::string& canDevice);
+    Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<SensoringPublisher> publisher);
     ~Signals();
+
+    void initLocalEnv(const std::string& canDevice);
+
+    void initCarlaEnv();
 
     void run();
 };
