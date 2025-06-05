@@ -289,7 +289,20 @@ std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, 
     return path;
 }
 
-// Add this implementation to ObstacleAvoidance.cpp:
+void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajectory)
+{
+    std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
+    if (!trajectory.empty()) {
+        for (const auto& p : trajectory) {
+            int gr, gc;
+            if (pixelToGrid(p.x, p.y, gr, gc)) {
+                trajectoryGrid[gr][gc] = true;
+            }
+        }
+    }
+    trajectoryGrid_ = std::move(trajectoryGrid);
+}
+
 void ObstacleAvoidance::visualizeGrid( 
     bool showGridLines,
     const std::vector<cv::Point>& trajectory)
@@ -305,19 +318,6 @@ void ObstacleAvoidance::visualizeGrid(
     
     // Create overlay at the target size directly
     cv::Mat overlay = cv::Mat::zeros(actualSize, CV_8UC3);
-
-    std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
-    
-    // Preprocess trajectory points to mark grid cells they pass through
-    if (!trajectory.empty()) {
-        for (const auto& p : trajectory) {
-            int gr, gc;
-            if (pixelToGrid(p.x, p.y, gr, gc)) {
-                trajectoryGrid[gr][gc] = true;
-            }
-        }
-    }
-
     // Draw each occupied cell
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
@@ -328,7 +328,7 @@ void ObstacleAvoidance::visualizeGrid(
             int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_) * scaleY);
             
 
-            if (trajectoryGrid[r][c]) {
+            if (trajectoryGrid_[r][c]) {
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
                           cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
             }
@@ -360,37 +360,37 @@ void ObstacleAvoidance::visualizeGrid(
         }
     }
 
-     // Visualize trajectory if provided
-    // Draw trajectory points and lines (at scaled coordinates)
-    if (!trajectory.empty()) {
-        std::vector<cv::Point> gridTrajectory;
+    //  // Visualize trajectory if provided
+    // // Draw trajectory points and lines (at scaled coordinates)
+    // if (!trajectory.empty()) {
+    //     std::vector<cv::Point> gridTrajectory;
         
-        for (const auto& p : trajectory) {
-            int gr, gc;
-            int x = static_cast<int>(p.x * scaleX);
-            int y = static_cast<int>(p.y * scaleY);
-            if (pixelToGrid(x, y, gr, gc)) {
-                // Get cell center coordinates (in original space)
-                int centerX, centerY;
-                gridToPixel(gr, gc, centerX, centerY);
+    //     for (const auto& p : trajectory) {
+    //         int gr, gc;
+    //         int x = static_cast<int>(p.x * scaleX);
+    //         int y = static_cast<int>(p.y * scaleY);
+    //         if (pixelToGrid(x, y, gr, gc)) {
+    //             // Get cell center coordinates (in original space)
+    //             int centerX, centerY;
+    //             gridToPixel(gr, gc, centerX, centerY);
                 
-                // Mark with blue circle (scaled size)
-                int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
-                cv::circle(overlay, cv::Point(centerX, centerY), circleRadius, 
-                          cv::Scalar(255, 0, 0), -1);
+    //             // Mark with blue circle (scaled size)
+    //             int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
+    //             cv::circle(overlay, cv::Point(centerX, centerY), circleRadius, 
+    //                       cv::Scalar(255, 0, 0), -1);
                 
-                gridTrajectory.push_back(cv::Point(centerX, centerY));
-            }
-        }
+    //             gridTrajectory.push_back(cv::Point(centerX, centerY));
+    //         }
+    //     }
         
-        // Connect trajectory points with lines
-        if (gridTrajectory.size() > 1) {
-            for (size_t i = 0; i < gridTrajectory.size() - 1; i++) {
-                cv::line(overlay, gridTrajectory[i], gridTrajectory[i+1], 
-                        cv::Scalar(255, 255, 0), 2);
-            }
-        }
-    }
+    //     // Connect trajectory points with lines
+    //     if (gridTrajectory.size() > 1) {
+    //         for (size_t i = 0; i < gridTrajectory.size() - 1; i++) {
+    //             cv::line(overlay, gridTrajectory[i], gridTrajectory[i+1], 
+    //                     cv::Scalar(255, 255, 0), 2);
+    //         }
+    //     }
+    // }
     // cv::addWeighted(overlay, 1, visualImage, 0, 0, visualImage);
     
     if (this->detectFirstCollision(trajectory))
