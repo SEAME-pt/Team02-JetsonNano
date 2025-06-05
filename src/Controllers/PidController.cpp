@@ -260,22 +260,27 @@ void PidController::run()
 {
     while (true)
     {
-        std::string sae_level = getAutonomousDriveState();
+        if (xboxController_->getPidEnable()) {
+            std::cout << "PID running" << std::endl;
+            std::string sae_level = getAutonomousDriveState();
 
-        if (sae_level.find("SAE_0") != std::string::npos) {
-            manualControl();
-        } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
-            LKASControl();
-        } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
-            adaptiveCruiseControl();
-        } else if (sae_level.find("SAE_2") != std::string::npos) {
-            partialControl();
-        } else if (sae_level.find("SAE_3") != std::string::npos) {
-            conditionalAutomation();
-        } else if (sae_level.find("SAE_4") != std::string::npos) {
-            autonomousControl();
+            if (sae_level.find("SAE_0") != std::string::npos) {
+                manualControl();
+            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+                LKASControl();
+            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+                adaptiveCruiseControl();
+            } else if (sae_level.find("SAE_2") != std::string::npos) {
+                partialControl();
+            } else if (sae_level.find("SAE_3") != std::string::npos) {
+                conditionalAutomation();
+            } else if (sae_level.find("SAE_4") != std::string::npos) {
+                autonomousControl();
+            } else {
+
+            }
         } else {
-
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }

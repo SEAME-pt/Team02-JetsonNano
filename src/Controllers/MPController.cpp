@@ -197,7 +197,6 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         }
     }
 
-    publisher_->publishSteering(u_flat(1));
     desired_speed_ = u_flat(0);
     current_steering_ = u_flat(1);
 }
@@ -304,6 +303,7 @@ void ModelPredictiveController::autonomousControl()
 {
     double current_time   = getCurrentTime();
 
+    publisher_->publishSteering(current_steering_);
     if (!this->speed_lock_)
     {
         publisher_->publishSpeed(speedPidController_->speedPID(
@@ -324,22 +324,27 @@ void ModelPredictiveController::run()
 {
     while (true)
     {
-        std::string sae_level = getAutonomousDriveState();
+        if (!xboxController_->getPidEnable()) {
+            std::cout << "Mpc running" << std::endl;
+            std::string sae_level = getAutonomousDriveState();
 
-        if (sae_level.find("SAE_0") != std::string::npos) {
-            manualControl();
-        } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
-            LKASControl();
-        } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
-            adaptiveCruiseControl();
-        } else if (sae_level.find("SAE_2") != std::string::npos) {
-            partialControl();
-        } else if (sae_level.find("SAE_3") != std::string::npos) {
-            conditionalAutomation();
-        } else if (sae_level.find("SAE_4") != std::string::npos) {
-            autonomousControl();
+            if (sae_level.find("SAE_0") != std::string::npos) {
+                manualControl();
+            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+                LKASControl();
+            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+                adaptiveCruiseControl();
+            } else if (sae_level.find("SAE_2") != std::string::npos) {
+                partialControl();
+            } else if (sae_level.find("SAE_3") != std::string::npos) {
+                conditionalAutomation();
+            } else if (sae_level.find("SAE_4") != std::string::npos) {
+                autonomousControl();
+            } else {
+
+            }
         } else {
-
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }

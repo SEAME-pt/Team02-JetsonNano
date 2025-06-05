@@ -7,8 +7,6 @@
 #define device_ioctl custom_xbox_ioctl
 #define device_read custom_xbox_read
 #define device_write custom_xbox_write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
 #else
 #define device_open open
 #define device_close close
@@ -163,6 +161,12 @@ void XboxController::run()
                             std::cout << "Autonomous Driving" << std::endl;
                             break;
                         }
+                        case BUTTON_SELECT:
+                        {
+                            pidEnable_.load() ? pidEnable_.store(false) : pidEnable_.store(true);
+                            std::cout << "Control Type Switch" << std::endl;
+                            break;
+                        }
 
                         default:
                             break;
@@ -192,7 +196,6 @@ void XboxController::run()
                         {
                             publisher_->publishCurrentGear(0);
                         }
-                        // publisher_->publishSpeed(speed);
                         manual_speed_.store(speed);
                         std::cout << "Speed" << std::endl;
                         break;
@@ -233,4 +236,9 @@ float XboxController::getManualSteering() const
 float XboxController::getManualSpeed() const
 {
     return manual_speed_.load();
+}
+
+bool XboxController::getPidEnable() const
+{
+    return pidEnable_.load();
 }

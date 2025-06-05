@@ -108,6 +108,7 @@ class XboxController
 
     std::atomic<float> manual_steering_{90.0f};
     std::atomic<float> manual_speed_{0.0f};
+    std::atomic<bool> pidEnable_{true};
 
   public:
     std::vector<struct axis_state*> axes;
@@ -124,4 +125,5 @@ class XboxController
 
     float getManualSteering() const;
     float getManualSpeed() const;
+    bool getPidEnable() const;
 };
