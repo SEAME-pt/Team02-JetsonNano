@@ -17,10 +17,7 @@ public:
     void buildOccupancy(const cv::Mat& segmentationMask);
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
     bool detectFirstCollision();
-    bool findBypassInGrid(
-        const cv::Mat& drivableMask,
-        int laneHalfWidthGridCells,
-        int& outBypassGridCol)
+    bool findBypassInGrid();
 
     bool pixelToGrid(int px, int py, int& gridR, int& gridC) const;
     void gridToPixel(int gridR, int gridC, int& outPx, int& outPy) const;
@@ -35,7 +32,7 @@ public:
     int      getCollisionRow() const { return collisionRow_; }
     int      getCollisionIdx() const { return collisionIdx_; }
 
-    void visualizeGrid(bool showGridLines);
+    void visualizeGrid();
 
 private:
     int frameWidth_,  frameHeight_;
@@ -54,6 +51,10 @@ private:
     int     collisionX_    = -1;  // pixel X coordinate of the collision
     int     collisionY_    = -1;  // pixel Y coordinate of the collision
     int     bypassX_       = -1;  // image-col for bypass (same row)
+
+    int bypassGridCol_ = -1;
+    int bypassGridRow_ = -1;
+    int laneHalfWidthGridCells_ = 2
 
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
