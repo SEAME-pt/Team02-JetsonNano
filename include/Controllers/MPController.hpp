@@ -21,16 +21,14 @@ class ModelPredictiveController {
 
         void run();
         void solve(const Eigen::Vector4d& x0, const std::vector<double>& traj_coeffs);
-        void setVehicleState(const Eigen::Vector4d& state);
-        Eigen::Vector4d getVehicleState() const { return this->currentState_; }
-
-        void setTargetVelocity(double velocity);
 
     private:
 
         std::shared_ptr<zenoh::Session> session_;
         std::unique_ptr<ControllerPublisher> publisher_;
         std::optional<zenoh::Subscriber<void>> coeffs_subscriber;
+        std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
+        std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
         std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
         XboxController* xboxController_;
@@ -44,7 +42,7 @@ class ModelPredictiveController {
         float current_speed_;
         float current_steering_;
 
-        Eigen::Vector4d currentState_; // [x, y, psi, v]
+        Eigen::Vector4d currentState_;
         std::string autonomousDrive_;
 
         double target_velocity_ = 8.0;
@@ -59,7 +57,9 @@ class ModelPredictiveController {
 
         std::vector<double> trajectoryCoeffs;
 
+private:
         //Backward Euler  discretization - dynamics(front axle development, considering no slip)
         Eigen::Vector4d backwardEuler(const Eigen::Vector4d& x, const Eigen::Vector2d& u);
-
+        void setAutonomousDriveState(std::string current_state);
+        std::string getAutonomousDriveState() const;
 };
