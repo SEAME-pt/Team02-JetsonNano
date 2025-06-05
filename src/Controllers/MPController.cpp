@@ -10,7 +10,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
     xboxController_     = xbox_controller;
     fixed_delta_time_   = 0.02f;
     current_speed_      = 0.0f;
-    current_steering_      = 90.0f;
+    current_steering_      = 0.0f;
     speedKp_ = 0.12f;
     speedKi_ = 1.3f;
     speedKd_ = 0.01f;
