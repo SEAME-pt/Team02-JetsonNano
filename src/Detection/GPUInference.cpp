@@ -89,7 +89,8 @@ void GPUInference::inference()
         //         context->setTensorAddress("output", bindings[1]);
         //     }
         // }
-        context->enqueueV2(stream, bindings, NULL);
+        // context->enqueueV3(stream);
+        context->enqueueV2(bindings, stream, NULL);
     } catch (const std::exception& e) {
         std::cout << "Error infering!" << e.what() << std::endl;
     }
