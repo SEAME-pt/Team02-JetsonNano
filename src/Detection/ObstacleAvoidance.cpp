@@ -361,20 +361,20 @@ void ObstacleAvoidance::visualizeGrid(
         
         for (const auto& p : trajectory) {
             int gr, gc;
-            p.x = static_cast<int>(p.x * scaleX);
-            p.y = static_cast<int>(p.y * scaleY);
-            if (pixelToGrid(p.x, p.y, gr, gc)) {
+            int x = static_cast<int>(p.x * scaleX);
+            int y = static_cast<int>(p.y * scaleY);
+            if (pixelToGrid(x, y, gr, gc)) {
                 // Get cell center coordinates (in original space)
                 int centerX, centerY;
                 gridToPixel(gr, gc, centerX, centerY);
                 
                 // Scale to target size
-                int scaledX = static_cast<int>(centerX * scaleX);
-                int scaledY = static_cast<int>(centerY * scaleY);
+                // int scaledX = static_cast<int>(centerX * scaleX);
+                // int scaledY = static_cast<int>(centerY * scaleY);
                 
                 // Mark with blue circle (scaled size)
                 int circleRadius = static_cast<int>(cellSizePx_ * scaleX / 3);
-                cv::circle(overlay, cv::Point(scaledX, scaledY), circleRadius, 
+                cv::circle(overlay, cv::Point(centerX, centerY), circleRadius, 
                           cv::Scalar(255, 0, 0), -1);
                 
                 gridTrajectory.push_back(cv::Point(scaledX, scaledY));
