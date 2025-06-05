@@ -1,6 +1,6 @@
 #include "PidController.hpp"
 
-double getCurrentTime()
+static double getCurrentTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -16,6 +16,8 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 
     constant_speed_     = 250.0f;
     max_steering_angle_ = 90.0f;
+
+    lane_departure_threshold_ = 0.1f;
 
     kp_ = 1.0f;
     ki_ = 0.0f;
@@ -160,8 +162,10 @@ float PidController::steeringPID(float error, double current_time)
 // SAE_0
 void PidController::manualControl()
 {
+    double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
+
     publisher_->publishSteering(manual_steering);
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);

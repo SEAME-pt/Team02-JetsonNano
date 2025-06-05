@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         float kp                = 15;
         float ki                = 0.1;
         float kd                = 3.0;
-        float constant_throttle = 0.2;
+        float constant_throttle = 250;
         float delta_time        = 0.05; // ms
 
         pidController.init(kp, ki, kd, constant_throttle, delta_time);
@@ -38,6 +38,8 @@ int main(int argc, char** argv)
         std::thread pidThread(&PidController::run, &pidController);
         manualThread.join();
         pidThread.join();
+
+        session->close();
     }
     catch (const std::exception& e)
     {

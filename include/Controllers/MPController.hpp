@@ -10,6 +10,10 @@
 #include "SpeedPidController.hpp"
 #include "zenoh.hxx"
 
+# ifndef M_PI
+# define M_PI 3.14159265358979323846
+# endif
+
 class ModelPredictiveController
 {
 private:
@@ -23,6 +27,8 @@ private:
     XboxController* xboxController_;
     bool speed_lock_;
     float fixed_delta_time_;
+
+    float lane_departure_threshold_;
 
     SpeedPidController* speedPidController_;
     float speedKp_;

@@ -47,7 +47,7 @@ private:
 
     bool speed_lock_;
 
-    float lane_departure_threshold_ = 0.1f;
+    float lane_departure_threshold_;
 
 private:
     //SAE_0

@@ -1,7 +1,11 @@
 #include "MPController.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+
+static double getCurrentTime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
 
 ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
@@ -12,6 +16,9 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
     current_speed_      = 0.0f;
     desired_speed_      = 0.0f;
     current_steering_      = 0.0f;
+
+    lane_departure_threshold_ = 0.1f;
+
     speedKp_ = 0.12f;
     speedKi_ = 1.3f;
     speedKd_ = 0.01f;
@@ -222,6 +229,7 @@ std::string ModelPredictiveController::getAutonomousDriveState() const
 // SAE_0
 void ModelPredictiveController::manualControl()
 {
+    double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
@@ -245,26 +253,26 @@ void ModelPredictiveController::manualControl()
 // SAE_1_LKAS
 void ModelPredictiveController::LKASControl()
 {
-    double current_time   = getCurrentTime();
-    float manual_steering = xboxController_->getManualSteering();
-    float manual_speed    = xboxController_->getManualSpeed();
+    // double current_time   = getCurrentTime();
+    // float manual_steering = xboxController_->getManualSteering();
+    // float manual_speed    = xboxController_->getManualSpeed();
 
-    if (std::abs(cameraError_) > lane_departure_threshold_ &&
-        std::abs(cameraError_) < 1)
-    {
-        float direction = manual_steering +(steeringPID(cameraError_, current_time) - manual_steering) * 0.5f;
-        // publisher_->publishAlert("Lane Departure");
-        publisher_->publishSteering(direction);
-    }
-    else
-    {
-        publisher_->publishSteering(manual_steering);
-    }
-    if (!speed_lock_)
-        publisher_->publishSpeed(manual_speed);
-    else
-        publisher_->publishSpeed(
-            speedPidController_->speedPID(0 - current_speed_, current_time));
+    // if (std::abs(cameraError_) > lane_departure_threshold_ &&
+    //     std::abs(cameraError_) < 1)
+    // {
+    //     float direction = manual_steering +(steeringPID(cameraError_, current_time) - manual_steering) * 0.5f;
+    //     // publisher_->publishAlert("Lane Departure");
+    //     publisher_->publishSteering(direction);
+    // }
+    // else
+    // {
+    //     publisher_->publishSteering(manual_steering);
+    // }
+    // if (!speed_lock_)
+    //     publisher_->publishSpeed(manual_speed);
+    // else
+    //     publisher_->publishSpeed(
+    //         speedPidController_->speedPID(0 - current_speed_, current_time));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
