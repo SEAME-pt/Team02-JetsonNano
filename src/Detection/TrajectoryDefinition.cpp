@@ -1145,4 +1145,8 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     {
         std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
     }
+
+    try {
+        if avoidance->detectFirstCollision();
+    }
 }

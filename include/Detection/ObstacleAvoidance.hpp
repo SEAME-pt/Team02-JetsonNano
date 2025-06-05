@@ -16,12 +16,7 @@ public:
 
     void buildOccupancy(const cv::Mat& segmentationMask);
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
-    bool detectFirstCollision(const std::vector<cv::Point>& midCurve);
-
-    /// Once you know the “collisionRow” = midCurve[outCollisionIdx].y,
-    /// find (on that exact image-row) the nearest free column (x) that is (a) inside drivableMask
-    /// and (b) not in occupancy.  We search left/right from the image-center ± laneHalfWidthPx.
-    /// Returns true if a bypass was found, and sets outBypassX to that column (in pixel coords).
+    bool detectFirstCollision();
     bool findBypassOnRow(int collisionRow,
                          const cv::Mat& drivableMask,
                          int laneHalfWidthPx,
