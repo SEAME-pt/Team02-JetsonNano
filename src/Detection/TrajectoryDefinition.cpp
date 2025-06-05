@@ -1130,7 +1130,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     {
         try
         {
-            this->avoidance =std::make_unique<ObstacleAvoidance>(frameWidth_, frameHeight_, 4);;
+            this->avoidance =new ObstacleAvoidance(frameWidth_, frameHeight_, 4);
         }
         catch (const std::exception& e)
         {
