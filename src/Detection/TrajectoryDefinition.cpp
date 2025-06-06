@@ -170,7 +170,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
     float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.35; // 35% of frame height
+    float maxVerticalGap        = frameHeight_ * 0.40; // 40% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
 
     drawPolyLanes(lanePolylines);
@@ -844,7 +844,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = height - (0.5 * height / 3); // 1/3 up from bottom
+        int targetY = height - (0.5 * height / 3); // 1/6 up from bottom for carla
+        // int targetY = height - (1.5 * height / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
         size_t closestIdx = 0;

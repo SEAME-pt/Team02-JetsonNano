@@ -24,7 +24,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     kd_ = 0.0f;
 
     fixed_delta_time_   = 0.02f;
-    autonomousDrive_    = "SAE_0";
+    autonomousDrive_    = "SAE_4";
     speed_lock_         = false;
     xboxController_     = xbox_controller;
     current_speed_      = 0.0f;
