@@ -1146,7 +1146,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     }
     
     try {
-        if (avoidance->detectFirstCollision())
+        if (avoidance->detectAllCollisions())
         {
             avoidance->findBypassInGrid();
         }

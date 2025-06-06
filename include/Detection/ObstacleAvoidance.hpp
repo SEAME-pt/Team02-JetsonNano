@@ -16,7 +16,7 @@ public:
 
     void buildOccupancy(const cv::Mat& segmentationMask);
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
-    bool detectFirstCollision();
+    bool detectAllCollisions();
     bool findBypassInGrid();
 
     bool pixelToGrid(int px, int py, int& gridR, int& gridC) const;

@@ -61,60 +61,76 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
     }
 }
 
-//
-// detectFirstCollision:
-//   Walk down midCurve (assumed sorted by increasing y).  The first midCurve[i] whose pixel
-//   falls inside an occupied grid cell (via pixelToGrid → occupancy) is the collision index.
-//
-bool ObstacleAvoidance::detectFirstCollision()
+bool ObstacleAvoidance::detectAllCollisions()
 {
     needBypass_ = false;
     collisionIdx_ = -1;
     collisionRow_ = -1;
-    collisionCol_ = -1;  // Add this member variable
-    collisionX_ = -1;    // Add this for pixel X coordinate
-    collisionY_ = -1;    // Add this for pixel Y coordinate
+    collisionCol_ = -1;
+    collisionX_ = -1;
+    collisionY_ = -1;
+    
+    // Clear previous collision points
+    collisionPoints_.clear();
+    searchedCollisionPoints_.clear();
     
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
 
+    // Track whether we found any collisions
+    bool foundCollision = false;
+    
+    // First, search from the bottom up to find the lowest collision
     for (int r = ignoreZoneRowThreshold; r >= 0; --r) {
         for (int c = 0; c < gridWidth_; ++c) {
             // If this cell is on the trajectory
             if (trajectoryGrid_[r][c]) {
                 // Check proximity around the trajectory point
                 for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-                    int checkR = r;
-                    int checkC = c + dr;
-                    
-                    // Bounds checking
-                    if (checkR < 0 || checkR >= gridHeight_ || 
-                        checkC < 0 || checkC >= gridWidth_)
-                        continue;
+                    for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
+                        int checkR = r + dr;
+                        int checkC = c + dc;
+                        
+                        // Bounds checking
+                        if (checkR < 0 || checkR >= gridHeight_ || 
+                            checkC < 0 || checkC >= gridWidth_)
+                            continue;
 
-                    searchedCollisionPoints_.emplace_back(checkR, checkC);
-                    
-                    // If a nearby cell is occupied, it's a collision
-                    if (occupancy_[gridIndex(checkR, checkC)]) {
-                        // Found collision - store the trajectory point where we need to adjust
-                        collisionRow_ = r;
-                        collisionCol_ = c;
-                        std::cout << "Collision detected at grid cell: (" 
-                                  << collisionRow_ << ", " << collisionCol_ << ")\n";
-                        // Convert grid coordinates back to pixel coordinates
-                        gridToPixel(r, c, collisionX_, collisionY_);
+                        searchedCollisionPoints_.emplace_back(checkR, checkC);
                         
-                        needBypass_ = true;
-                        collisionIdx_ = 0;
-                        
-                        return true;
+                        // If a nearby cell is occupied, it's a collision
+                        if (occupancy_[gridIndex(checkR, checkC)]) {
+                            // Store this collision point
+                            collisionPoints_.emplace_back(r, c);
+                            
+                            // If this is the first collision found, set it as the primary one
+                            if (!foundCollision) {
+                                collisionRow_ = r;
+                                collisionCol_ = c;
+                                gridToPixel(r, c, collisionX_, collisionY_);
+                                needBypass_ = true;
+                                foundCollision = true;
+                            }
+                            
+                            // Continue searching for more collisions
+                            continue;
+                        }
                     }
                 }
             }
         }
     }
-    // No collision
-    return false;
+    
+    // Sort collision points by distance from bottom (closest to car first)
+    std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+    
+    if (foundCollision) {
+        std::cout << "Found " << collisionPoints_.size() << " collision points. Lowest at: ("
+                  << collisionRow_ << ", " << collisionCol_ << ")\n";
+    }
+    
+    return foundCollision;
 }
 
 
@@ -368,31 +384,44 @@ void ObstacleAvoidance::visualizeGrid()
                 cv::Scalar(100, 100, 100), 1);
     }
 
-    if (this->detectFirstCollision())
+if (this->detectAllCollisions())  // Changed from detectFirstCollision
     {
-
-        if (collisionRow_ >= 0 && collisionCol_ >= 0) 
-        {
+        cv::putText(overlay, "Obstacles Detected: " + std::to_string(collisionPoints_.size()),
+                    cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
+        
+        // Visualize all collision points
+        for (size_t i = 0; i < collisionPoints_.size(); i++) {
+            int r = collisionPoints_[i].first;
+            int c = collisionPoints_[i].second;
+            
             // Get pixel coordinates for collision cell
-            int collX0 = static_cast<int>(collisionCol_ * cellSizePx_);
-            int collY0 = static_cast<int>(collisionRow_ * cellSizePx_);
-            int collX1 = static_cast<int>(std::min((collisionCol_+1) * cellSizePx_, frameWidth_));
-            int collY1 = static_cast<int>(std::min((collisionRow_+1) * cellSizePx_, frameHeight_));
+            int collX0 = static_cast<int>(c * cellSizePx_);
+            int collY0 = static_cast<int>(r * cellSizePx_);
+            int collX1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+            int collY1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
             
-            // Draw a distinctive red X over the collision cell
-            cv::line(overlay, 
-                    cv::Point(collX0, collY0), 
-                    cv::Point(collX1, collY1), 
-                    cv::Scalar(0, 0, 255), 3); // Red diagonal line
-                    
-            cv::line(overlay, 
-                    cv::Point(collX0, collY1), 
-                    cv::Point(collX1, collY0), 
-                    cv::Scalar(0, 0, 255), 3); // Red diagonal line
+            // Use a color gradient from red to orange based on distance from bottom
+            // First collision (closest to car) is bright red, others fade to orange
+            int blue = 0;
+            int green = std::min(255, static_cast<int>(128.0 * i / collisionPoints_.size()));
+            int red = 255;
             
-            // Draw a border around the collision cell
-            cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
-                        cv::Scalar(0, 0, 255), 2); // Red border
+            // Draw X over collision cell
+            cv::line(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+                    cv::Scalar(blue, green, red), 2);
+            cv::line(overlay, cv::Point(collX0, collY1), cv::Point(collX1, collY0), 
+                    cv::Scalar(blue, green, red), 2);
+            
+            // Highlight the first (lowest) collision with a border
+            if (i == 0) {
+                cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+                            cv::Scalar(0, 0, 255), 2);
+                            
+                // Add text for primary collision
+                cv::putText(overlay, "PRIMARY", 
+                        cv::Point(collX0, collY0 - 5),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+            }
         }
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
