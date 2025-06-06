@@ -137,7 +137,6 @@ bool ObstacleAvoidance::detectAllCollisions()
 // Implementation in ObstacleAvoidance.cpp
 std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv::Point>& originalTrajectory)
 {
-    // If no collision detected, return original trajectory
     if (collisionPoints_.empty()) {
         return originalTrajectory;
     }
@@ -149,12 +148,8 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     safeDistancePx_ = proximityRadius_ * cellSizePx_;
     
     // For each collision point, adjust the trajectory
-    for (size_t i = 0; i < collisionPoints_.size() && i < obstaclePoints_.size(); i++) {
-        // Get the obstacle position in pixel coordinates
-        int obstacleX, obstacleY;
-        gridToPixel(obstaclePoints_[i].first, obstaclePoints_[i].second, obstacleX, obstacleY);
-        
-        // Get the collision point in pixel coordinates
+    for (size_t i = 0; i < collisionPoints_.size(); i++) {
+
         int collisionX, collisionY;
         gridToPixel(collisionPoints_[i].first, collisionPoints_[i].second, collisionX, collisionY);
         
