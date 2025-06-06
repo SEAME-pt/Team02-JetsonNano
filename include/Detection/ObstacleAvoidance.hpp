@@ -63,8 +63,6 @@ private:
     std::vector<std::pair<int, int>> searchedCollisionPoints_; // Points checked during collision detection
     std::vector<std::pair<int, int>> searchedBypassPoints_;    // Points checked when finding bypass
 
-
-    std::vector<std::pair<int, int>> obstaclePoints_; // The actual obstacles detected
     int safeDistancePx_ = 0;  // Will be calculated from proximityRadius_
 
 
