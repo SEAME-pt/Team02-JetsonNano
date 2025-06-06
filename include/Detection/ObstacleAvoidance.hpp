@@ -58,6 +58,9 @@ private:
 
     const int proximityRadius_ = 15;
 
+    std::vector<std::pair<int, int>> searchedCollisionPoints_; // Points checked during collision detection
+    std::vector<std::pair<int, int>> searchedBypassPoints_;    // Points checked when finding bypass
+
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
 

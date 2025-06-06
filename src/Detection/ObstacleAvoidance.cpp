@@ -91,6 +91,8 @@ bool ObstacleAvoidance::detectFirstCollision()
                     if (checkR < 0 || checkR >= gridHeight_ || 
                         checkC < 0 || checkC >= gridWidth_)
                         continue;
+
+                    searchedCollisionPoints_.emplace_back(checkR, checkC);
                     
                     // If a nearby cell is occupied, it's a collision
                     if (occupancy_[gridIndex(checkR, checkC)]) {
@@ -99,14 +101,6 @@ bool ObstacleAvoidance::detectFirstCollision()
                         collisionCol_ = c;
                         std::cout << "Collision detected at grid cell: (" 
                                   << collisionRow_ << ", " << collisionCol_ << ")\n";
-                        
-                        // Store the location of the actual obstacle too (for visualization)
-                        // obstacleRow_ = checkR;
-                        // obstacleCol_ = checkC;
-                        
-                        // Calculate the distance between trajectory and obstacle
-                        // proximityDistance_ = std::sqrt(dr*dr + dc*dc);
-                        
                         // Convert grid coordinates back to pixel coordinates
                         gridToPixel(r, c, collisionX_, collisionY_);
                         
@@ -156,7 +150,7 @@ bool ObstacleAvoidance::findBypassInGrid()
         if (searchRightFirst) {
             // Try right side first
             if (rightCol < gridWidth_) {
-                // Check if this grid cell is not occupied
+                searchedBypassPoints_.emplace_back(gridRow, rightCol);
                 if (!occupancy_[gridIndex(gridRow, rightCol)]) {
                     bypassGridCol_ = rightCol;
                     return true;
@@ -165,6 +159,7 @@ bool ObstacleAvoidance::findBypassInGrid()
             
             // Then left side
             if (leftCol >= 0) {
+                searchedBypassPoints_.emplace_back(gridRow, leftCol);
                 if (!occupancy_[gridIndex(gridRow, leftCol)]) {
                     bypassGridCol_ = leftCol;
                     return true;
@@ -173,6 +168,7 @@ bool ObstacleAvoidance::findBypassInGrid()
         } else {
             // Try left first then right (same logic, reversed order)
             if (leftCol >= 0) {
+                searchedBypassPoints_.emplace_back(gridRow, leftCol);
                 if (!occupancy_[gridIndex(gridRow, leftCol)]) {
                     bypassGridCol_ = leftCol;
                     return true;
@@ -180,6 +176,7 @@ bool ObstacleAvoidance::findBypassInGrid()
             }
             
             if (rightCol < gridWidth_) {
+                searchedBypassPoints_.emplace_back(gridRow, rightCol);
                 if (!occupancy_[gridIndex(gridRow, rightCol)]) {
                     bypassGridCol_ = rightCol;
                     return true;
@@ -187,7 +184,6 @@ bool ObstacleAvoidance::findBypassInGrid()
             }
         }
     }
-    
     // No bypass found
     return false;
 }
@@ -342,7 +338,46 @@ void ObstacleAvoidance::visualizeGrid()
             }
         }
     }
+ 
     
+
+    for (const auto& point : searchedCollisionPoints_) {
+        int r = point.first;
+        int c = point.second;
+        int x = c * cellSizePx_ + cellSizePx_ / 2;
+        int y = r * cellSizePx_ + cellSizePx_ / 2;
+        int radius = cellSizePx_ / 6;  // Smaller than cell size
+        
+        // Use a distinct color to show searched points
+        cv::circle(overlay, cv::Point(x, y), radius, 
+                  cv::Scalar(180, 180, 0), 1); // Yellow outline
+    }
+    
+    // Draw bypass search points
+    for (const auto& point : searchedBypassPoints_) {
+        int r = point.first;
+        int c = point.second;
+        int x = c * cellSizePx_ + cellSizePx_ / 2;
+        int y = r * cellSizePx_ + cellSizePx_ / 2;
+        int radius = cellSizePx_ / 4;  // Larger than collision search points
+        
+        // Use a different color for bypass search points
+        cv::circle(overlay, cv::Point(x, y), radius, 
+                  cv::Scalar(0, 200, 200), 1); // Cyan outline
+        
+        // Draw an X
+        int offset = cellSizePx_ / 6;
+        cv::line(overlay, 
+                cv::Point(x - offset, y - offset), 
+                cv::Point(x + offset, y + offset), 
+                cv::Scalar(0, 200, 200), 1);
+        cv::line(overlay, 
+                cv::Point(x + offset, y - offset), 
+                cv::Point(x - offset, y + offset), 
+                cv::Scalar(0, 200, 200), 1);
+    }
+
+
     // Draw grid lines with proper scaling
     for (int r = 0; r <= gridHeight_; ++r) {
         int y = static_cast<int>(r * cellSizePx_);
