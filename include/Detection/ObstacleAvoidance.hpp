@@ -56,6 +56,8 @@ private:
     int bypassGridRow_ = -1;
     int laneHalfWidthGridCells_ = 2;
 
+    std::vector<std::pair<int, int>> collisionPoints_;
+
     const int proximityRadius_ = 15;
 
     std::vector<std::pair<int, int>> searchedCollisionPoints_; // Points checked during collision detection
