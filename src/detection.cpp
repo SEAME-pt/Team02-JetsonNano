@@ -75,11 +75,29 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 
         cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
-        std::vector<uchar> buffer;
-        std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 50};
-        cv::imencode(".jpg", new_frame, buffer, params);
+        std::vector<uchar> buffer_ipm_frame;
+        std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
+        cv::imencode(".jpg", new_frame, buffer_ipm_frame, params_ipm);
         
-        trajectoryDef->frame_publisher_->put(buffer);
+        trajectoryDef->ipm_frame_publisher_->put(buffer_ipm_frame);
+
+        std::vector<uchar> buffer_original_frame;
+        std::vector<int> params_org_frame = {cv::IMWRITE_JPEG_QUALITY, 20};
+        cv::imencode(".jpg", original_frame, buffer_original_frame, params_org_frame);
+        
+        trajectoryDef->frame_publisher_->put(buffer_original_frame);
+
+        std::vector<uchar> buffer_lane_mask;
+        std::vector<int> params_lane = {cv::IMWRITE_JPEG_QUALITY, 20};
+        cv::imencode(".jpg", lane_mask, buffer_lane_mask, params_lane);
+        
+        trajectoryDef->lane_mask_publisher_->put(buffer_lane_mask);
+
+        std::vector<uchar> buffer_obj_mask;
+        std::vector<int> params_obj = {cv::IMWRITE_JPEG_QUALITY, 20};
+        cv::imencode(".jpg", object_mask, buffer_obj_mask, params_obj);
+        
+        trajectoryDef->class_mask_publisher_->put(buffer_obj_mask);
 
         processor->trajectoryDone();
     }

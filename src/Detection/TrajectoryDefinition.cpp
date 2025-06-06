@@ -17,8 +17,14 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed/Lock")));
     coeffs_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Coeffs")));
+    ipm_frame_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Ipm")));
     frame_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("carla/debug")));
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Frame")));
+    lane_mask_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/LaneMask")));
+    class_mask_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
 
     // Create an OpenCV CUDA stream
     cv_stream = cv::cuda::Stream();
@@ -136,7 +142,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Size size(800 * 1.4 / 0.45, 800);
+    cv::Size size(800 * 4.5 / 15.0, 600);
 
     cv::Mat res_frame;
     cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
