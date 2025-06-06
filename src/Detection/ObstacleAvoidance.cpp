@@ -329,12 +329,12 @@ void ObstacleAvoidance::visualizeGrid()
             else if (occupancy_[gridIndex(r, c)]) {
                 // Occupied cell (obstacle)
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 0, 255), -1); // Red fill
+                          cv::Scalar(0, 0, 100), -1); // Red fill
             }
             else {
                 // Free cell
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 255, 0), -1); // Green fill
+                          cv::Scalar(0, 100, 0), -1); // Green fill
             }
         }
     }
@@ -350,7 +350,7 @@ void ObstacleAvoidance::visualizeGrid()
         
         // Use a distinct color to show searched points
         cv::circle(overlay, cv::Point(x, y), radius, 
-                  cv::Scalar(180, 180, 0), 1); // Yellow outline
+                  cv::Scalar(180, 180, 0), 3); // Yellow outline
     }
     
     // Draw bypass search points
@@ -363,18 +363,18 @@ void ObstacleAvoidance::visualizeGrid()
         
         // Use a different color for bypass search points
         cv::circle(overlay, cv::Point(x, y), radius, 
-                  cv::Scalar(0, 200, 200), 1); // Cyan outline
+                  cv::Scalar(0, 200, 200), 3); // Cyan outline
         
         // Draw an X
         int offset = cellSizePx_ / 6;
         cv::line(overlay, 
                 cv::Point(x - offset, y - offset), 
                 cv::Point(x + offset, y + offset), 
-                cv::Scalar(0, 200, 200), 1);
+                cv::Scalar(0, 200, 200), 3);
         cv::line(overlay, 
                 cv::Point(x + offset, y - offset), 
                 cv::Point(x - offset, y + offset), 
-                cv::Scalar(0, 200, 200), 1);
+                cv::Scalar(0, 200, 200), 3);
     }
 
 
