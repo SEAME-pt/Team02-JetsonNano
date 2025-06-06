@@ -81,7 +81,7 @@ bool ObstacleAvoidance::detectAllCollisions()
     bool foundCollision = false;
     
     // First, search from the bottom up to find the lowest collision
-    for (int r = ignoreZoneRowThreshold; r >= 0; --r) {
+    for (int r = ignoreZoneRowThreshold - proximityRadius_ - 1; r >= 0; --r) {
         for (int c = 0; c < gridWidth_; ++c) {
             // If this cell is on the trajectory
             if (trajectoryGrid_[r][c]) {
@@ -345,12 +345,12 @@ void ObstacleAvoidance::visualizeGrid()
             else if (occupancy_[gridIndex(r, c)]) {
                 // Occupied cell (obstacle)
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 0, 100), -1); // Red fill
+                          cv::Scalar(0, 0, 150), -1); // Red fill
             }
             else {
                 // Free cell
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 100, 0), -1); // Green fill
+                          cv::Scalar(0, 150, 0), -1); // Green fill
             }
         }
     }
@@ -375,13 +375,13 @@ void ObstacleAvoidance::visualizeGrid()
     for (int r = 0; r <= gridHeight_; ++r) {
         int y = static_cast<int>(r * cellSizePx_);
         cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
-                cv::Scalar(100, 100, 100), 1);
+                cv::Scalar(150, 150, 150), 1);
     }
     
     for (int c = 0; c <= gridWidth_; ++c) {
         int x = static_cast<int>(c * cellSizePx_);
         cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
-                cv::Scalar(100, 100, 100), 1);
+                cv::Scalar(150, 150, 150), 1);
     }
 
 if (this->detectAllCollisions())  // Changed from detectFirstCollision
