@@ -395,7 +395,7 @@ void ObstacleAvoidance::visualizeGrid()
                 cv::Scalar(150, 150, 150), 1);
     }
 
-if (this->detectAllCollisions())  // Changed from detectFirstCollision
+    if (this->detectAllCollisions())
     {
         cv::putText(overlay, "Obstacles Detected: " + std::to_string(collisionPoints_.size()),
                     cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
@@ -422,45 +422,9 @@ if (this->detectAllCollisions())  // Changed from detectFirstCollision
                     cv::Scalar(blue, green, red), 2);
             cv::line(overlay, cv::Point(collX0, collY1), cv::Point(collX1, collY0), 
                     cv::Scalar(blue, green, red), 2);
-            
-            // Highlight the first (lowest) collision with a border
-            if (i == 0) {
-                cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
-                            cv::Scalar(0, 0, 255), 2);
-                            
-                // Add text for primary collision
-                cv::putText(overlay, "PRIMARY", 
-                        cv::Point(collX0, collY0 - 5),
-                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
-            }
         }
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-                    
-        // Try to find a bypass with no parameters
-        if (findBypassInGrid()) {
-            // Draw the bypass point using member variables
-            int bypassX0 = static_cast<int>(bypassGridCol_ * cellSizePx_);
-            int bypassY0 = static_cast<int>(bypassGridRow_ * cellSizePx_);
-            int bypassX1 = static_cast<int>(std::min((bypassGridCol_+1) * cellSizePx_, frameWidth_));
-            int bypassY1 = static_cast<int>(std::min((bypassGridRow_+1) * cellSizePx_, frameHeight_));
-            
-            cv::rectangle(overlay, cv::Point(bypassX0, bypassY0), cv::Point(bypassX1, bypassY1), 
-                         cv::Scalar(255, 255, 0), -1); // Yellow fill
-                         
-            // Draw a border around the bypass cell
-            cv::rectangle(overlay, cv::Point(bypassX0, bypassY0), cv::Point(bypassX1, bypassY1), 
-                         cv::Scalar(0, 255, 255), 2); // Cyan border
-            
-            // Add text indicating the bypass point
-            cv::putText(overlay, "BYPASS", 
-                       cv::Point(bypassX0, bypassY0 - 5),
-                       cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
-        }
-        else {
-            cv::putText(overlay, "No bypass found!", cv::Point(20, 80),
-                       cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
-        }
     }
     else
     {
@@ -468,6 +432,23 @@ if (this->detectAllCollisions())  // Changed from detectFirstCollision
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
     }
 
+    if (adjustedTrajectory && !adjustedTrajectory->empty()) {
+        cv::putText(overlay, "Adjusted Trajectory", cv::Point(20, 120),
+                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+        
+        // Connect points with lines
+        for (size_t i = 0; i < adjustedTrajectory->size() - 1; i++) {
+            cv::line(overlay, 
+                    (*adjustedTrajectory)[i], 
+                    (*adjustedTrajectory)[i+1],
+                    cv::Scalar(0, 255, 255), 2); // Cyan line
+        }
+        
+        // Draw points
+        for (const auto& p : *adjustedTrajectory) {
+            cv::circle(overlay, p, 3, cv::Scalar(0, 255, 255), -1);
+        }
+    }
 
     int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
     int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
