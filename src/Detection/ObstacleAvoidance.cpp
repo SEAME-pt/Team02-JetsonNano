@@ -396,13 +396,13 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
 
     if (this->detectAllCollisions())
     {
-        cv::putText(overlay, "Obstacles Detected: " + std::to_string(collisionPoints_.size()),
+        cv::putText(overlay, "Obstacles Detected: " + std::to_string(obstaclePoints_.size()),
                     cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
         
         // Visualize all collision points
-        for (size_t i = 0; i < collisionPoints_.size(); i++) {
-            int r = collisionPoints_[i].first;
-            int c = collisionPoints_[i].second;
+        for (size_t i = 0; i < obstaclePoints_.size(); i++) {
+            int r = obstaclePoints_[i].first;
+            int c = obstaclePoints_[i].second;
             
             // Get pixel coordinates for collision cell
             int collX0 = static_cast<int>(c * cellSizePx_);
@@ -413,7 +413,7 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
             // Use a color gradient from red to orange based on distance from bottom
             // First collision (closest to car) is bright red, others fade to orange
             int blue = 0;
-            int green = std::min(255, static_cast<int>(128.0 * i / collisionPoints_.size()));
+            int green = std::min(255, static_cast<int>(128.0 * i / obstaclePoints_.size()));
             int red = 255;
             
             // Draw X over collision cell
