@@ -1152,7 +1152,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
             // Replace original trajectory with adjusted one
             midCurve = adjustedTrajectory;
         }
-        avoidance->visualizeGrid();
+        avoidance->visualizeGrid(&adjustedTrajectory);
     }
     catch (const std::exception& e)
     {

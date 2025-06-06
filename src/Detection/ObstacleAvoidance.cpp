@@ -162,7 +162,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
         int nearestIdx = -1;
         double minDist = std::numeric_limits<double>::max();
         
-        for (int j = 0; j < adjustedTrajectory.size(); j++) {
+        for (size_t  j = 0; j < adjustedTrajectory.size(); j++) {
             double d = std::hypot(adjustedTrajectory[j].x - collisionX, 
                                  adjustedTrajectory[j].y - collisionY);
             if (d < minDist) {
@@ -333,7 +333,7 @@ void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajec
     trajectoryGrid_ = std::move(trajectoryGrid);
 }
 
-void ObstacleAvoidance::visualizeGrid()
+void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory)
 {
     cv::Size actualSize(frameWidth_, frameHeight_);    
     
