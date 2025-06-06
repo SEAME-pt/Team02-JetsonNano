@@ -32,7 +32,7 @@ public:
     int      getCollisionRow() const { return collisionRow_; }
     int      getCollisionIdx() const { return collisionIdx_; }
 
-    void visualizeGrid();
+    void visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory = nullptr);
 
 private:
     int frameWidth_,  frameHeight_;
@@ -67,7 +67,7 @@ private:
     std::vector<std::pair<int, int>> obstaclePoints_; // The actual obstacles detected
     int safeDistancePx_ = 0;  // Will be calculated from proximityRadius_
 
-    
+
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
 
