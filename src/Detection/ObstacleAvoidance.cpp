@@ -338,44 +338,6 @@ void ObstacleAvoidance::visualizeGrid()
             }
         }
     }
- 
-    
-
-    for (const auto& point : searchedCollisionPoints_) {
-        int r = point.first;
-        int c = point.second;
-        int x = c * cellSizePx_ + cellSizePx_ / 2;
-        int y = r * cellSizePx_ + cellSizePx_ / 2;
-        int radius = cellSizePx_ / 6;  // Smaller than cell size
-        
-        // Use a distinct color to show searched points
-        cv::circle(overlay, cv::Point(x, y), radius, 
-                  cv::Scalar(180, 180, 0), 3); // Yellow outline
-    }
-    
-    // Draw bypass search points
-    for (const auto& point : searchedBypassPoints_) {
-        int r = point.first;
-        int c = point.second;
-        int x = c * cellSizePx_ + cellSizePx_ / 2;
-        int y = r * cellSizePx_ + cellSizePx_ / 2;
-        int radius = cellSizePx_ / 4;  // Larger than collision search points
-        
-        // Use a different color for bypass search points
-        cv::circle(overlay, cv::Point(x, y), radius, 
-                  cv::Scalar(0, 200, 200), 3); // Cyan outline
-        
-        // Draw an X
-        int offset = cellSizePx_ / 6;
-        cv::line(overlay, 
-                cv::Point(x - offset, y - offset), 
-                cv::Point(x + offset, y + offset), 
-                cv::Scalar(0, 200, 200), 3);
-        cv::line(overlay, 
-                cv::Point(x + offset, y - offset), 
-                cv::Point(x - offset, y + offset), 
-                cv::Scalar(0, 200, 200), 3);
-    }
 
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
