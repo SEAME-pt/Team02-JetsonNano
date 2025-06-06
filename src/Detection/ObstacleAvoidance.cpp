@@ -101,7 +101,7 @@ bool ObstacleAvoidance::detectAllCollisions()
                         // If a nearby cell is occupied, it's a collision
                         if (occupancy_[gridIndex(checkR, checkC)]) {
                             // Store this collision point
-                            collisionPoints_.emplace_back(r, c);
+                            collisionPoints_.emplace_back(checkR, checkC);
                             
                             // If this is the first collision found, set it as the primary one
                             if (!foundCollision) {
