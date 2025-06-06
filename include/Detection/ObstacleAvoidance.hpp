@@ -57,6 +57,7 @@ private:
     int laneHalfWidthGridCells_ = 2;
 
     std::vector<std::pair<int, int>> collisionPoints_;
+    std::vector<std::pair<int, int>> obstaclePoints_;
 
     const int proximityRadius_ = 15;
 

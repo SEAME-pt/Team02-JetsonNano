@@ -101,7 +101,8 @@ bool ObstacleAvoidance::detectAllCollisions()
                         // If a nearby cell is occupied, it's a collision
                         if (occupancy_[gridIndex(checkR, checkC)]) {
                             // Store this collision point
-                            collisionPoints_.emplace_back(checkR, checkC);
+                            collisionPoints_.emplace_back(r, c);
+                            obstaclePoints_.emplace_back(checkR, checkC);
                             
                             // If this is the first collision found, set it as the primary one
                             if (!foundCollision) {
@@ -148,11 +149,14 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     safeDistancePx_ = proximityRadius_ * cellSizePx_;
     
     // For each collision point, adjust the trajectory
-    for (size_t i = 0; i < collisionPoints_.size(); i++) {
+    for (size_t i = 0; i < collisionPoints_.size() && i < obstaclePoints_.size(); i++) {
 
         int collisionX, collisionY;
         gridToPixel(collisionPoints_[i].first, collisionPoints_[i].second, collisionX, collisionY);
         
+        int obstacleX, obstacleY;
+        gridToPixel(obstaclePoints_[i].first, obstaclePoints_[i].second, obstacleX, obstacleY);
+
         // Find the nearest point in the trajectory to the collision
         int nearestIdx = -1;
         double minDist = std::numeric_limits<double>::max();
