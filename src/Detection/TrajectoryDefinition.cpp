@@ -1150,7 +1150,15 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
         {
             std::vector<cv::Point> adjustedTrajectory = avoidance->adjustTrajectory(midCurve);        
             // Replace original trajectory with adjusted one
+            midCurve.clear();
             midCurve = adjustedTrajectory;
+
+            cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
+            for (size_t i = 1; i < midCurve.size(); i++)
+            {
+                cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
+                        3);
+            }
         }
             // avoidance->visualizeGrid(&midCurve);
     }
@@ -1158,4 +1166,6 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     {
         std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
     }
+
+
 }
