@@ -377,7 +377,22 @@ void ObstacleAvoidance::visualizeGrid()
                 cv::Scalar(0, 200, 200), 3);
     }
 
+    for (int r = 0; r < gridHeight_; ++r) {
+        for (int c = 0; c < gridWidth_; ++c) {
 
+            int x0 = static_cast<int>(c * cellSizePx_);
+            int y0 = static_cast<int>(r * cellSizePx_);
+            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+            
+
+            if (trajectoryGrid_[r][c]) {
+                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                        cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
+            }
+        }
+    }            
+    
     // Draw grid lines with proper scaling
     for (int r = 0; r <= gridHeight_; ++r) {
         int y = static_cast<int>(r * cellSizePx_);
