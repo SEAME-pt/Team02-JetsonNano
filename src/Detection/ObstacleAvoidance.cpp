@@ -388,11 +388,11 @@ void ObstacleAvoidance::visualizeGrid()
 
             if (trajectoryGrid_[r][c]) {
                 cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                        cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
+                        cv::Scalar(255, 255, 0), -1);
             }
         }
     }            
-    
+
     // Draw grid lines with proper scaling
     for (int r = 0; r <= gridHeight_; ++r) {
         int y = static_cast<int>(r * cellSizePx_);
