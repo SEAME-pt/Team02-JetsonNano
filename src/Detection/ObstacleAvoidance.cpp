@@ -409,28 +409,29 @@ void ObstacleAvoidance::visualizeGrid()
     if (this->detectFirstCollision())
     {
 
-        if (collisionRow_ >= 0 && collisionCol_ >= 0) {
-        // Get pixel coordinates for collision cell
-        int collX0 = static_cast<int>(collisionCol_ * cellSizePx_);
-        int collY0 = static_cast<int>(collisionRow_ * cellSizePx_);
-        int collX1 = static_cast<int>(std::min((collisionCol_+1) * cellSizePx_, frameWidth_));
-        int collY1 = static_cast<int>(std::min((collisionRow_+1) * cellSizePx_, frameHeight_));
-        
-        // Draw a distinctive red X over the collision cell
-        cv::line(overlay, 
-                cv::Point(collX0, collY0), 
-                cv::Point(collX1, collY1), 
-                cv::Scalar(0, 0, 255), 3); // Red diagonal line
-                
-        cv::line(overlay, 
-                cv::Point(collX0, collY1), 
-                cv::Point(collX1, collY0), 
-                cv::Scalar(0, 0, 255), 3); // Red diagonal line
-        
-        // Draw a border around the collision cell
-        cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
-                     cv::Scalar(0, 0, 255), 2); // Red border
-
+        if (collisionRow_ >= 0 && collisionCol_ >= 0) 
+        {
+            // Get pixel coordinates for collision cell
+            int collX0 = static_cast<int>(collisionCol_ * cellSizePx_);
+            int collY0 = static_cast<int>(collisionRow_ * cellSizePx_);
+            int collX1 = static_cast<int>(std::min((collisionCol_+1) * cellSizePx_, frameWidth_));
+            int collY1 = static_cast<int>(std::min((collisionRow_+1) * cellSizePx_, frameHeight_));
+            
+            // Draw a distinctive red X over the collision cell
+            cv::line(overlay, 
+                    cv::Point(collX0, collY0), 
+                    cv::Point(collX1, collY1), 
+                    cv::Scalar(0, 0, 255), 3); // Red diagonal line
+                    
+            cv::line(overlay, 
+                    cv::Point(collX0, collY1), 
+                    cv::Point(collX1, collY0), 
+                    cv::Scalar(0, 0, 255), 3); // Red diagonal line
+            
+            // Draw a border around the collision cell
+            cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+                        cv::Scalar(0, 0, 255), 2); // Red border
+        }
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
                     
