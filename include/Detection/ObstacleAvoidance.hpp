@@ -17,7 +17,7 @@ public:
     void buildOccupancy(const cv::Mat& segmentationMask);
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
     bool detectAllCollisions();
-    bool findBypassInGrid();
+    std::vector<cv::Point> adjustTrajectory(const std::vector<cv::Point>& originalTrajectory);
 
     bool pixelToGrid(int px, int py, int& gridR, int& gridC) const;
     void gridToPixel(int gridR, int gridC, int& outPx, int& outPy) const;
@@ -63,6 +63,11 @@ private:
     std::vector<std::pair<int, int>> searchedCollisionPoints_; // Points checked during collision detection
     std::vector<std::pair<int, int>> searchedBypassPoints_;    // Points checked when finding bypass
 
+
+    std::vector<std::pair<int, int>> obstaclePoints_; // The actual obstacles detected
+    int safeDistancePx_ = 0;  // Will be calculated from proximityRadius_
+
+    
     // internal helper to compute the 1D index in occupancy_[] from (r,c)
     inline int gridIndex(int r, int c) const { return r * gridWidth_ + c; }
 
