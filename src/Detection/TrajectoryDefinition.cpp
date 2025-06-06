@@ -1148,7 +1148,9 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
     try {
         if (avoidance->detectAllCollisions())
         {
-            avoidance->findBypassInGrid();
+            std::vector<cv::Point> adjustedTrajectory = avoidance->adjustTrajectory(midCurve);        
+            // Replace original trajectory with adjusted one
+            midCurve = adjustedTrajectory;
         }
         avoidance->visualizeGrid();
     }

@@ -134,74 +134,85 @@ bool ObstacleAvoidance::detectAllCollisions()
 }
 
 
-bool ObstacleAvoidance::findBypassInGrid()
+// Implementation in ObstacleAvoidance.cpp
+std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv::Point>& originalTrajectory)
 {
-    bypassGridCol_ = -1;
-    bypassGridRow_ = collisionRow_; // Using collision row as the bypass row
+    // If no collision detected, return original trajectory
+    if (collisionPoints_.empty()) {
+        return originalTrajectory;
+    }
     
-    // Start with collision location we already detected
-    int gridRow = collisionRow_;
-    int gridCol = collisionCol_;
+    // Create a copy of the trajectory we'll modify
+    std::vector<cv::Point> adjustedTrajectory = originalTrajectory;
     
-    // Find middle of grid
-    int centerGridCol = gridWidth_ / 2;
+    // Convert proximity radius from grid cells to pixels
+    safeDistancePx_ = proximityRadius_ * cellSizePx_;
     
-    // Check if we're on a valid row
-    if (gridRow < 0 || gridRow >= gridHeight_)
-        return false;
-    
-    // Determine which side to search first based on collision position
-    bool searchRightFirst = (gridCol < centerGridCol);
-    
-    // Create a drivable mask for testing
-    cv::Mat drivableMask = cv::Mat::ones(frameHeight_, frameWidth_, CV_8UC1) * 255;
-    
-    // Search with increasing distance from center
-    for (int offset = 1; offset < gridWidth_/2; ++offset)
-    {
-        int leftCol = centerGridCol - laneHalfWidthGridCells_ - offset;
-        int rightCol = centerGridCol + laneHalfWidthGridCells_ + offset;
+    // For each collision point, adjust the trajectory
+    for (size_t i = 0; i < collisionPoints_.size() && i < obstaclePoints_.size(); i++) {
+        // Get the obstacle position in pixel coordinates
+        int obstacleX, obstacleY;
+        gridToPixel(obstaclePoints_[i].first, obstaclePoints_[i].second, obstacleX, obstacleY);
         
-        // Search in optimal direction (away from obstacle)
-        if (searchRightFirst) {
-            // Try right side first
-            if (rightCol < gridWidth_) {
-                searchedBypassPoints_.emplace_back(gridRow, rightCol);
-                if (!occupancy_[gridIndex(gridRow, rightCol)]) {
-                    bypassGridCol_ = rightCol;
-                    return true;
-                }
-            }
-            
-            // Then left side
-            if (leftCol >= 0) {
-                searchedBypassPoints_.emplace_back(gridRow, leftCol);
-                if (!occupancy_[gridIndex(gridRow, leftCol)]) {
-                    bypassGridCol_ = leftCol;
-                    return true;
-                }
-            }
-        } else {
-            // Try left first then right (same logic, reversed order)
-            if (leftCol >= 0) {
-                searchedBypassPoints_.emplace_back(gridRow, leftCol);
-                if (!occupancy_[gridIndex(gridRow, leftCol)]) {
-                    bypassGridCol_ = leftCol;
-                    return true;
-                }
-            }
-            
-            if (rightCol < gridWidth_) {
-                searchedBypassPoints_.emplace_back(gridRow, rightCol);
-                if (!occupancy_[gridIndex(gridRow, rightCol)]) {
-                    bypassGridCol_ = rightCol;
-                    return true;
-                }
+        // Get the collision point in pixel coordinates
+        int collisionX, collisionY;
+        gridToPixel(collisionPoints_[i].first, collisionPoints_[i].second, collisionX, collisionY);
+        
+        // Find the nearest point in the trajectory to the collision
+        int nearestIdx = -1;
+        double minDist = std::numeric_limits<double>::max();
+        
+        for (int j = 0; j < adjustedTrajectory.size(); j++) {
+            double d = std::hypot(adjustedTrajectory[j].x - collisionX, 
+                                 adjustedTrajectory[j].y - collisionY);
+            if (d < minDist) {
+                minDist = d;
+                nearestIdx = j;
             }
         }
+        
+        if (nearestIdx < 0) continue;
+        
+        // Calculate the displacement vector from obstacle to trajectory
+        double dx = adjustedTrajectory[nearestIdx].x - obstacleX;
+        double dy = adjustedTrajectory[nearestIdx].y - obstacleY;
+        double distance = std::hypot(dx, dy);
+        
+        // If already at a safe distance, no need to adjust
+        if (distance >= safeDistancePx_) continue;
+        
+        // Normalize the vector
+        if (distance > 1e-6) { // Avoid division by zero
+            dx /= distance;
+            dy /= distance;
+        } else {
+            // If obstacle is exactly on trajectory, move perpendicular to road direction
+            // Assuming road is mainly vertical, move horizontally
+            dx = 1.0;
+            dy = 0.0;
+        }
+        
+        // Calculate how much we need to move to maintain safe distance
+        double moveDistance = safeDistancePx_ - distance;
+        
+        // Apply the adjustment to nearby trajectory points with a falloff
+        // Points closest to collision get moved the most, farther points get moved less
+        int window = 20; // Number of points to adjust on either side
+        
+        for (int j = std::max(0, nearestIdx - window); 
+             j <= std::min((int)adjustedTrajectory.size() - 1, nearestIdx + window); j++) {
+            
+            // Calculate falloff factor (1.0 at collision point, decreasing with distance)
+            double falloff = 1.0 - std::abs(j - nearestIdx) / (double)window;
+            if (falloff < 0) falloff = 0;
+            
+            // Apply the adjustment
+            adjustedTrajectory[j].x += dx * moveDistance * falloff;
+            adjustedTrajectory[j].y += dy * moveDistance * falloff;
+        }
     }
-    // No bypass found
-    return false;
+    
+    return adjustedTrajectory;
 }
 
 bool ObstacleAvoidance::pixelToGrid(int px, int py, int& gr, int& gc) const
