@@ -84,8 +84,8 @@ bool ObstacleAvoidance::detectFirstCollision()
             if (trajectoryGrid_[r][c]) {
                 // Check proximity around the trajectory point
                 for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-                    int checkR = r + dr;
-                    int checkC = c;
+                    int checkR = r;
+                    int checkC = c + dr;
                     
                     // Bounds checking
                     if (checkR < 0 || checkR >= gridHeight_ || 
