@@ -108,8 +108,10 @@ int main(int argc, char** argv)
         else {
             std::cout << "Using default configuration" << std::endl;
             auto config = Config::create_default();
-            config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
-            config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
+            config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
+            config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
+            // config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
+            // config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
             session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
@@ -117,10 +119,10 @@ int main(int argc, char** argv)
         SynchronizedProcessor processor;
 
         Camera camera(session);
-        // LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
-        // ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
-        LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
-        ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
+        LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
+        ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
+        // LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
+        // ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
         if (mode == "local") {
