@@ -106,11 +106,14 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 int main(int argc, char** argv)
 {
     signal(SIGINT, signalHandler);
+    std::thread camThread, laneThread, objThread, trajThread;
 
     try
     {
         std::string configFile;
         std::string mode;
+        std::string laneDetectionFile;
+        std::string objDetectionFile;
         
         if (!parseParameters(argc, argv, configFile, mode)) {
             return -1;
@@ -137,10 +140,6 @@ int main(int argc, char** argv)
         SynchronizedProcessor processor;
 
         Camera camera(session);
-        LaneDetector laneDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine");
-        ObjectDetector objDetector("/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine");
-        // LaneDetector laneDetector("/home/team02/Models/engine/lane_Yolo2_epoch_45.engine");
-        // ObjectDetector objDetector("/home/team02/Models/engine/obj_MOB_1_epoch_133.engine");
         TrajectoryDefinition trajectoryDefinition(session);
 
         if (mode == "local") {
@@ -154,36 +153,49 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo2_epoch_45.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_MOB_1_epoch_133.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
+            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine";
+            objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine";
         }
+
+        LaneDetector laneDetector(laneDetectionFile);
+        ObjectDetector objDetector(objDetectionFile);
     
         camera.startCapture();
 
-        std::thread camThread(cameraThreadFunction, &camera, &processor);
-        std::thread laneThread(laneDetectionThreadFunction, &laneDetector,
-                               &processor);
-        std::thread objThread(objectDetectionThreadFunction, &objDetector,
-                              &processor);
-        std::thread trajThread(trajectoryThreadFunction, &trajectoryDefinition,
-                               &processor);
+        camThread = std::thread(cameraThreadFunction, &camera, &processor);
+        laneThread = std::thread(laneDetectionThreadFunction, &laneDetector, &processor);
+        objThread = std::thread(objectDetectionThreadFunction, &objDetector, &processor);
+        trajThread = std::thread(trajectoryThreadFunction, &trajectoryDefinition, &processor);
 
-        if (camThread.joinable())
-        {
+        std::cout << "Running. Press Ctrl+C to exit." << std::endl;
+        while(running) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+        
+        std::cout << "Shutting down..." << std::endl;
+        processor.shutdown(); 
+
+        std::cout << "Waiting for threads to finish..." << std::endl;
+        if (camThread.joinable()) {
+            std::cout << "Joining camera thread..." << std::endl;
             camThread.join();
         }
-        if (laneThread.joinable())
-        {
+        if (laneThread.joinable()) {
+            std::cout << "Joining lane detection thread..." << std::endl;
             laneThread.join();
         }
-        if (objThread.joinable())
-        {
+        if (objThread.joinable()) {
+            std::cout << "Joining object detection thread..." << std::endl;
             objThread.join();
         }
-        if (trajThread.joinable())
-        {
+        if (trajThread.joinable()) {
+            std::cout << "Joining trajectory thread..." << std::endl;
             trajThread.join();
         }
 

@@ -3,6 +3,10 @@
 #include <condition_variable>
 #include <queue>             
 #include <memory>            
+#include "opencv2/opencv.hpp"
+#include <opencv2/cudawarping.hpp>
+#include <opencv2/cudaimgproc.hpp>
+#include <opencv2/core/cuda.hpp>
 
 class SynchronizedProcessor
 {
@@ -23,95 +27,27 @@ class SynchronizedProcessor
     int frame_id             = 0;
 
   public:
-    void setNewFrame(const cv::Mat& frame)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
+    SynchronizedProcessor();
+    ~SynchronizedProcessor();
+    
+    void setNewFrame(const cv::Mat& frame);
 
-        camera_cv.wait(
-            lock,
-            [this]() { return lane_ready && object_ready && trajectory_done; });
+    cv::Mat getLaneFrame();
 
-        frame.copyTo(current_frame);
+    cv::Mat getObjectFrame();
 
-        lane_ready          = false;
-        object_ready        = false;
-        new_frame_available = true;
-
-        inference_cv.notify_all();
-    }
-
-    // Lane detection thread calls this
-    cv::Mat getLaneFrame()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        inference_cv.wait(lock, [this]()
-                          { return new_frame_available && !lane_ready; });
-
-        return current_frame.clone();
-    }
-
-    cv::Mat getObjectFrame()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        inference_cv.wait(lock, [this]()
-                          { return new_frame_available && !object_ready; });
-
-        return current_frame.clone();
-    }
-
-    void laneDone(const cv::Mat& result)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        result.copyTo(lane_binary_mask);
-        lane_ready = true;
-
-        checkBothDone();
-    }
+    void laneDone(const cv::Mat& result);
 
     // Object thread calls this when done
-    void objectDone(const cv::Mat& result)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-
-        result.copyTo(object_class_mask);
-        object_ready = true;
-
-        checkBothDone();
-    }
+    void objectDone(const cv::Mat& result);
 
     void getProcessingData(cv::Mat& original, cv::Mat& lane_mask,
-                           cv::Mat& object_mask)
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
+                           cv::Mat& object_mask);
 
-        trajectory_cv.wait(
-            lock, [this]()
-            { return lane_ready && object_ready && !trajectory_done; });
+    void trajectoryDone();
 
-        current_frame.copyTo(original);
-        lane_binary_mask.copyTo(lane_mask);
-        object_class_mask.copyTo(object_mask);
-    }
-
-    void trajectoryDone()
-    {
-        std::unique_lock<std::mutex> lock(sync_mutex);
-        trajectory_done = true;
-
-        camera_cv.notify_one();
-    }
+    void shutdown();
 
   private:
-    void checkBothDone()
-    {
-        if (lane_ready && object_ready)
-        {
-            trajectory_done     = false;
-            new_frame_available = false;
-            trajectory_cv.notify_one();
-        }
-    }
+    void checkBothDone();
 };
