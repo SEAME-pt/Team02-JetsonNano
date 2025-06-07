@@ -71,9 +71,9 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 
             speed_lock_ = lock_value;
 
-            std::cout << "Speed lock "
-                      << (lock_value ? "activated" : "deactivated")
-                      << std::endl;
+            // std::cout << "Speed lock "
+            //           << (lock_value ? "activated" : "deactivated")
+            //           << std::endl;
         },
         zenoh::closures::none));
 

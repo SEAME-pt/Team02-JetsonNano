@@ -8,8 +8,8 @@ void SynchronizedProcessor::setNewFrame(const cv::Mat& frame)
 {
     std::unique_lock<std::mutex> lock(sync_mutex);
 
-    camera_cv.wait(
-        lock,
+    camera_cv.wait_for(
+        lock, std::chrono::milliseconds(100),
         [this]() { return lane_ready && object_ready && trajectory_done; });
 
     frame.copyTo(current_frame);
@@ -25,7 +25,7 @@ cv::Mat SynchronizedProcessor::getLaneFrame()
 {
     std::unique_lock<std::mutex> lock(sync_mutex);
 
-    inference_cv.wait(lock, [this]()
+    inference_cv.wait_for(lock, std::chrono::milliseconds(100), [this]()
                         { return new_frame_available && !lane_ready; });
 
     return current_frame.clone();
@@ -35,7 +35,7 @@ cv::Mat SynchronizedProcessor::getObjectFrame()
 {
     std::unique_lock<std::mutex> lock(sync_mutex);
 
-    inference_cv.wait(lock, [this]()
+    inference_cv.wait_for(lock, std::chrono::milliseconds(100), [this]()
                         { return new_frame_available && !object_ready; });
 
     return current_frame.clone();
@@ -66,8 +66,8 @@ void SynchronizedProcessor::getProcessingData(cv::Mat& original, cv::Mat& lane_m
 {
     std::unique_lock<std::mutex> lock(sync_mutex);
 
-    trajectory_cv.wait(
-        lock, [this]()
+    trajectory_cv.wait_for(
+        lock, std::chrono::milliseconds(100), [this]()
         { return lane_ready && object_ready && !trajectory_done; });
 
     current_frame.copyTo(original);
@@ -90,5 +90,19 @@ void SynchronizedProcessor::checkBothDone()
         trajectory_done     = false;
         new_frame_available = false;
         trajectory_cv.notify_one();
+    }
+}
+
+void SynchronizedProcessor::shutdown() {
+    {
+        std::unique_lock<std::mutex> lock(sync_mutex);
+        lane_ready = true;
+        object_ready = true;
+        trajectory_done = true;
+        new_frame_available = true;
+        
+        inference_cv.notify_all();
+        trajectory_cv.notify_all();
+        camera_cv.notify_all();
     }
 }
