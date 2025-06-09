@@ -9,7 +9,7 @@ using namespace std;
 using namespace zenoh;
 
 TrajectoryDefinition::TrajectoryDefinition(
-    std::shared_ptr<zenoh::Session> session)
+    std::shared_ptr<zenoh::Session> session, const int height, const int width) : height_(height), width_(width)
 {
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
@@ -1020,7 +1020,7 @@ void TrajectoryDefinition::checkForwardCollision(
 
     defineTrajectoryPolyline(midCurve);
 
-    const int zoneWidth = WIDTH * 0.20; // Width of zone around trajectory
+    const int zoneWidth = frameWidth_ * 0.20; // Width of zone around trajectory
     int total_pixels    = 0;
     int road_pixels     = 0;
 
@@ -1031,7 +1031,7 @@ void TrajectoryDefinition::checkForwardCollision(
     for (size_t i = 0; i < midCurve.size(); i++)
     {
         // Only check lower half of the curve (close to the vehicle)
-        if (midCurve[i].y < HEIGHT * 0.7)
+        if (midCurve[i].y < frameHeight_ * 0.7)
             continue;
 
         // Calculate direction vector between points

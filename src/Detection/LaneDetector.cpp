@@ -8,7 +8,7 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-LaneDetector::LaneDetector(const std::string& enginePath)
+LaneDetector::LaneDetector(const std::string& enginePath, int height, int width) : height_(height), width_(width)
 {
     try
     {
@@ -30,8 +30,8 @@ LaneDetector::~LaneDetector()
 
 void LaneDetector::detect(cv::Mat& frame, cv::Mat& result)
 {
-    cv::Mat binary_mask(HEIGHT, WIDTH, CV_8UC1);
-    cv::Mat preprocessedFrame(HEIGHT, WIDTH, CV_8UC3);
+    cv::Mat binary_mask(height_, width_, CV_8UC1);
+    cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
 
     preProcess(frame, preprocessedFrame);
 
@@ -46,7 +46,7 @@ void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     cv::Mat resized;
     
-    cv::resize(frame, resized, cv::Size(WIDTH, HEIGHT), 0, 0, cv::INTER_NEAREST);
+    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0, cv::INTER_NEAREST);
     
     cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
 }
