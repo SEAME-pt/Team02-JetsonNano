@@ -41,7 +41,7 @@ int main(int argc, char** argv)
             float kp                = 130;
             float ki                = 0.000001;
             float kd                = 10;
-            float constant_throttle = 110;
+            float constant_throttle = 100;
             float delta_time        = 0.05;
 
             // MPC controller values
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
             float kp                = 15;
             float ki                = 0.1;
             float kd                = 3.0;
-            float constant_throttle = 250;
+            float constant_throttle = 100;
             float delta_time        = 0.05;
 
             // MPC controller values

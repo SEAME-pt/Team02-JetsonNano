@@ -108,6 +108,9 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
+    const int height = 128;
+    const int width = 256;
+
     try
     {
         std::string configFile;
@@ -140,7 +143,7 @@ int main(int argc, char** argv)
         SynchronizedProcessor processor;
 
         Camera camera(session);
-        TrajectoryDefinition trajectoryDefinition(session);
+        TrajectoryDefinition trajectoryDefinition(session, height, width);
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
@@ -153,18 +156,18 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo2_epoch_45.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_Carla_epoch_50.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_MOB_1_epoch_133.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
-            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo2_epoch_45.engine";
+            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo_Carla_epoch_50.engine";
             objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine";
         }
 
-        LaneDetector laneDetector(laneDetectionFile);
-        ObjectDetector objDetector(objDetectionFile);
+        LaneDetector laneDetector(laneDetectionFile, height, width);
+        ObjectDetector objDetector(objDetectionFile, height, width);
     
         camera.startCapture();
 

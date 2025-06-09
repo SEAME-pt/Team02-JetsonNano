@@ -12,18 +12,17 @@
 #include "LaneDetectorPublisher.hpp"
 #include "GPUInference.hpp"
 
-#define WIDTH 256
-#define HEIGHT 128
-
 class LaneDetector
 {
   private:
     cv::cuda::Stream cv_stream;
-  
     GPUInference* gpuInference;
 
+    const int height_;
+    const int width_;
+
   public:
-    LaneDetector(const std::string& enginePath);
+    LaneDetector(const std::string& enginePath, int height, int width);
     ~LaneDetector();
     void detect(cv::Mat& frame, cv::Mat& result);
 

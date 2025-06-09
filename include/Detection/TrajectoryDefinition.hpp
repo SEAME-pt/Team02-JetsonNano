@@ -25,10 +25,6 @@
 #include "KalmanFilter.hpp"
 #include "GPUInference.hpp"
 
-
-#define WIDTH 256
-#define HEIGHT 128
-
 class TrajectoryDefinition
 {
   private:
@@ -57,6 +53,9 @@ class TrajectoryDefinition
   
     std::optional<zenoh::Publisher> speed_lock_publisher_;
     bool is_emergency_stop = false;
+
+    const int height_;
+    const int width_;
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;
@@ -66,7 +65,7 @@ class TrajectoryDefinition
     std::shared_ptr<LaneDetectorPublisher> publisher_;
 
   public:
-    TrajectoryDefinition(std::shared_ptr<zenoh::Session> session);
+    TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
     ~TrajectoryDefinition();
 
     void initLocalEnv();
