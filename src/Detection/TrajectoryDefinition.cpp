@@ -200,9 +200,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     
     createMidPointError(midCurve);
 
-    (void) class_mask;
+    // (void) class_mask;
 
-    // checkForwardCollision(class_mask, midCurve);
+    checkForwardCollision(class_mask, midCurve);
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -903,7 +903,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = height - (1.5 * height / 3); // 1/6 up from bottom for carla
+        int targetY = height - (0.5 * height / 3); // 1/6 up from bottom for carla
         // int targetY = height - (1.5 * height / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
@@ -1086,7 +1086,7 @@ void TrajectoryDefinition::checkForwardCollision(
 
     for (size_t i = 0; i < midCurve.size(); i++)
     {
-        if (midCurve[i].y < frameHeight_ * 0.7)
+        if (midCurve[i].y < frameHeight_ * 0.25)
             continue;
 
         cv::Point direction;
