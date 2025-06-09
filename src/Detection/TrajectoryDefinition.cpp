@@ -437,7 +437,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         // kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve = leftCurve;
-        // prevRightCurve = rightCurve;
+        prevRightCurve = rightCurve;
 
         leftLaneLastUpdatedFrame = currentFrame;
         // rightLaneLastUpdatedFrame = currentFrame;
@@ -456,7 +456,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         // kalmanFilter->updateLeftLaneFilter(leftCurve);
         kalmanFilter->updateRightLaneFilter(rightCurve);
 
-        // prevLeftCurve = leftCurve;
+        prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
 
         // leftLaneLastUpdatedFrame = currentFrame;
