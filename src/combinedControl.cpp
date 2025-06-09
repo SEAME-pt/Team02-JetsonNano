@@ -65,10 +65,10 @@ int main(int argc, char** argv)
         } else {
             std::cout << "Running in CARLA mode" << std::endl;
             // PID controller values
-            float kp                = 15;
-            float ki                = 0.1;
-            float kd                = 3.0;
-            float constant_throttle = 100;
+            float kp                = 20;
+            float ki                = 0.2;
+            float kd                = 4.0;
+            float constant_throttle = 5;
             float delta_time        = 0.05;
 
             // MPC controller values
