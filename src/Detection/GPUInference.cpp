@@ -82,13 +82,13 @@ void GPUInference::inference()
     context->enqueueV2(bindings, stream, nullptr);
     
     try {
-        for (int i = 0; i < 2; i++) {
-            if (i == 0) {
-                context->setTensorAddress("input", bindings[0]);
-            } else {
-                context->setTensorAddress("output", bindings[1]);
-            }
-        }
+        // for (int i = 0; i < 2; i++) {
+        //     if (i == 0) {
+        //         context->setTensorAddress("input", bindings[0]);
+        //     } else {
+        //         context->setTensorAddress("output", bindings[1]);
+        //     }
+        // }
         // context->enqueueV3(stream);
         context->enqueueV2(bindings, stream, NULL);
     } catch (const std::exception& e) {
