@@ -447,7 +447,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         prevRightCurve = rightCurve;
 
         leftLaneLastUpdatedFrame = currentFrame;
-        // rightLaneLastUpdatedFrame = currentFrame;
+        rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
                     cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 0, 255), 3);
@@ -465,7 +465,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
 
-        // leftLaneLastUpdatedFrame = currentFrame;
+        leftLaneLastUpdatedFrame = currentFrame;
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
@@ -501,7 +501,7 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
     bool lane0IsLeft = false;
     bool lane1IsLeft = false;
     
-    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.50;
+    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.15;
     
     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
     {
@@ -703,8 +703,6 @@ float TrajectoryDefinition::calculateLaneDistance(
     return (matchCount > 0) ? (totalDist / matchCount) : FLT_MAX;
 }
 
-
-
 float TrajectoryDefinition::calculateHistoricalLaneWidth() {    
     if (recentWidths.empty()) {
         return frameWidth_ * 0.50;
@@ -720,28 +718,14 @@ float TrajectoryDefinition::calculateHistoricalLaneWidth() {
 void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& leftLane, 
                                                 const std::vector<cv::Point>& rightLane) {    
     float avgDistance = calculateLaneDistance(leftLane, rightLane);
-    std::cout << "AvgDistance: " << avgDistance << std::endl;
     
-    if (avgDistance > frameWidth_ * 0.5f && avgDistance < frameWidth_ * 0.95f) {
+    if (avgDistance > frameWidth_ * 0.10f && avgDistance < frameWidth_ * 0.90f) {
         recentWidths.push_back(avgDistance);
         
         if (recentWidths.size() > static_cast<unsigned int>(MAX_WIDTH_HISTORY)) {
             recentWidths.pop_front();
         }
     }
-}
-
-bool TrajectoryDefinition::validateLaneSeparation(
-    const std::vector<std::vector<cv::Point>>& lanePolylines,
-    float minLaneWidth)
-{
-    if (lanePolylines.size() < 2)
-        return true;
-
-    float avgDistance =
-        calculateLaneDistance(lanePolylines[0], lanePolylines[1]);
-
-    return avgDistance >= minLaneWidth;
 }
 
 void TrajectoryDefinition::checkPredicedCurve(
@@ -777,7 +761,7 @@ void TrajectoryDefinition::checkPredicedCurve(
 
     float error = std::abs(avgMiddleX - expectedMiddleX);
 
-    if (error > frameWidth_ * 0.10f)
+    if (error > frameWidth_ * 0.15f)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5,
@@ -793,6 +777,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 predictedCurve.push_back(
                     cv::Point(pt.x + expectedWidth, pt.y));
             }
+            kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
         else
         {
@@ -801,6 +786,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 predictedCurve.push_back(
                     cv::Point(pt.x - expectedWidth, pt.y));
             }
+            kalmanFilter->updateRightLaneFilter(predictedCurve);
         }
 
         defineLanePolyline(predictedCurve);
