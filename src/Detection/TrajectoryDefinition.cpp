@@ -110,7 +110,7 @@ void TrajectoryDefinition::initCarlaEnv() {
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.0f;       // meters
         float farDistance = 8.0f;       // meters
-        float laneWidth = 4.5f;          // meters
+        float laneWidth = 5.0f;          // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
 
@@ -141,7 +141,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Size size(800 * 4.5 / 8.0, 600);
+    cv::Size size(800 * 5.0 / 8.0, 600);
 
     cv::Mat res_frame;
     cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
@@ -358,8 +358,6 @@ void TrajectoryDefinition::mergeLaneComponents(
                     verticalGap = 0;
                 }
 
-                // Also check if they have similar directions (optional but
-                // recommended)
                 bool similarDirection = true;
                 if (!lanePolylines[i].empty() && lanePolylines[i].size() > 1 &&
                     !lanePolylines[j].empty() && lanePolylines[j].size() > 1)
@@ -379,8 +377,6 @@ void TrajectoryDefinition::mergeLaneComponents(
                          0); // Positive dot product means similar direction
                 }
 
-                // Merge if horizontally close AND reasonable vertical gap AND
-                // similar direction
                 if (hDist <= maxHorizontalDist &&
                     verticalGap <= maxVerticalGap && similarDirection)
                 {
@@ -437,16 +433,16 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         // kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve = leftCurve;
-        prevRightCurve = rightCurve;
+        // prevRightCurve = rightCurve;
 
         leftLaneLastUpdatedFrame = currentFrame;
         // rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 1);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 1);
 
         cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 1);
     }
     else
     {
@@ -456,17 +452,17 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         // kalmanFilter->updateLeftLaneFilter(leftCurve);
         kalmanFilter->updateRightLaneFilter(rightCurve);
 
-        prevLeftCurve = leftCurve;
+        // prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
 
         // leftLaneLastUpdatedFrame = currentFrame;
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 1);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 255), 1);
 
         cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 1);
     }
 }
 
@@ -496,7 +492,7 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
     bool lane0IsLeft = false;
     bool lane1IsLeft = false;
     
-    float maxShiftThreshold = frameWidth_ * 0.15f;
+    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.50;
     
     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
     {
@@ -903,7 +899,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = height - (0.5 * height / 3); // 1/6 up from bottom for carla
+        int targetY = height - (1.5 * height / 3); // 1/6 up from bottom for carla
         // int targetY = height - (1.5 * height / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
