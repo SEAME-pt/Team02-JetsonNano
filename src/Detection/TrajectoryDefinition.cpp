@@ -1219,25 +1219,24 @@ bool TrajectoryDefinition::checkForwardCollision(
                 memcpy(value, "DANGER", sizeof(value));
 
             this->canBus->writeMessage(0x200, value, sizeof(value));
-
-        }
-        catch (const std::exception& e)
-        {
-            std::cerr << "Error sending CAN message on Object Detector: "
-                      << e.what() << std::endl;
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "Error sending CAN message on Object Detector: "
+                        << e.what() << std::endl;
+            }
         }
         return true;
         }
-        else if (is_emergency_stop)
-        {
-            std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
-                    << std::endl;
-            is_emergency_stop = false;
+    else if (is_emergency_stop)
+    {
+        std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
+                << std::endl;
+        is_emergency_stop = false;
 
-            publishSpeedLock("0");
-        }
-        return false;
+        publishSpeedLock("0");
     }
+    return false;
 }
 
 void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
