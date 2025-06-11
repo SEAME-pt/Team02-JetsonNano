@@ -1076,8 +1076,6 @@ bool TrajectoryDefinition::checkForwardCollision(
         return false;
     }
 
-    defineTrajectoryPolyline(midCurve);
-
     const int zoneWidth = frameWidth_ * 0.20; // Width of zone around trajectory
     int total_pixels    = 0;
     int road_pixels     = 0;
