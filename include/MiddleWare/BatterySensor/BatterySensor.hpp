@@ -57,7 +57,9 @@ class BatterySensor
     BatterySensor(std::shared_ptr<SensoringPublisher> publisher);
     ~BatterySensor();
 
-    void init(const std::string& i2cDevice, uint8_t sensorAddress,
-              const std::string& canDevice);
+    void initLocalEnv(const std::string& i2cDevice, uint8_t sensorAddress,
+                         const std::string& canDevice);
+
+    void initCarlaEnv();
     void run(void);
 };
