@@ -7,19 +7,15 @@
 #define device_ioctl custom_xbox_ioctl
 #define device_read custom_xbox_read
 #define device_write custom_xbox_write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
 #else
 #define device_open open
 #define device_close close
 #define device_ioctl ioctl
 #define device_read read
 #define device_write write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
 #endif
 
-XboxController::XboxController()
+XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 {
     const char* device = "/dev/input/js0";
     js                 = device_open(device, O_RDONLY);
@@ -34,33 +30,7 @@ XboxController::XboxController()
         axes.push_back(axis);
     }
 
-    auto config = zenoh::Config::create_default();
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
-
-    publisher_ = std::make_unique<ControllerPublisher>(session_);
-
-    std::cout << "Remote controller created!" << std::endl;
-}
-
-XboxController::XboxController(const std::string& configFile)
-{
-    const char* device = "/dev/input/js0";
-    js                 = device_open(device, O_RDONLY);
-
-    if (js == -1)
-        throw std::exception();
-
-    int numAxes = this->getAxisCount();
-    for (int i = 0; i < numAxes; i++)
-    {
-        struct axis_state* axis = new struct axis_state();
-        axes.push_back(axis);
-    }
-
-    auto config = ZENOH_CONFIG_FROM_FILE;
-    session_ =
-        std::make_shared<zenoh::Session>(SESSION_OPEN(std::move(config)));
+    session_ = session;
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -187,8 +157,14 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
-                            publisher_->publishActiveAutonomyLevel("SAE_5");
+                            publisher_->publishActiveAutonomyLevel("SAE_4");
                             std::cout << "Autonomous Driving" << std::endl;
+                            break;
+                        }
+                        case BUTTON_SELECT:
+                        {
+                            pidEnable_.load() ? pidEnable_.store(false) : pidEnable_.store(true);
+                            std::cout << "Control Type Switch" << std::endl;
                             break;
                         }
 
@@ -220,7 +196,6 @@ void XboxController::run()
                         {
                             publisher_->publishCurrentGear(0);
                         }
-                        // publisher_->publishSpeed(speed);
                         manual_speed_.store(speed);
                         std::cout << "Speed" << std::endl;
                         break;
@@ -261,4 +236,9 @@ float XboxController::getManualSteering() const
 float XboxController::getManualSpeed() const
 {
     return manual_speed_.load();
+}
+
+bool XboxController::getPidEnable() const
+{
+    return pidEnable_.load();
 }

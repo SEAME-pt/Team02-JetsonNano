@@ -15,6 +15,7 @@ find_package(zenohc REQUIRED)
 find_package(zenohcxx REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include(FetchContent)
 
@@ -37,6 +38,7 @@ include_directories(include/Vehicle/MotionManagement)
 include_directories(include/MiddleWare/BatterySensor)
 include_directories(include/MiddleWare/Signals)
 include_directories(include/Detection)
+include_directories(include/utils)
 include_directories(${libs_SOURCE_DIR}/Communication/I2C/include)
 include_directories(${libs_SOURCE_DIR}/Communication/CAN/include)
 include_directories(${libs_SOURCE_DIR}/Peripherals/INA219/include)
@@ -101,8 +103,10 @@ target_link_libraries(VehicleSystem
 add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
+    ./src/Controllers/MPController.cpp
     ./src/Controllers/SpeedPidController.cpp
     ./src/Communication/ControllerPublisher.cpp
+    ./src/utils/utils.cpp
     ./src/combinedControl.cpp
 )
 
@@ -110,7 +114,9 @@ target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
 target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
-    zenohcxx::zenohc)
+    zenohcxx::zenohc
+    Eigen3::Eigen    
+)
 
 add_executable(Detection
     ./src/Detection/ObjectDetector.cpp
@@ -119,9 +125,11 @@ add_executable(Detection
     ./src/Detection/GPUInference.cpp
     ./src/Detection/TrajectoryDefinition.cpp
     ./src/Detection/ObstacleAvoidance.cpp
+    ./src/Detection/SynchronizedProcessor.cpp
     ./src/Detection/IPM.cpp
     ./src/Communication/LaneDetectorPublisher.cpp
     ./src/Hardware/Camera.cpp
+    ./src/utils/utils.cpp
     ./src/detection.cpp
 )
 
@@ -148,6 +156,7 @@ add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp
     ./src/MiddleWare/BatterySensor/BatterySensor.cpp
     ./src/MiddleWare/Signals/Signals.cpp
+    ./src/utils/utils.cpp
     ./src/middleware.cpp
 )
 

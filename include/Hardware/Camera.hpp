@@ -5,12 +5,12 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <zenoh.hxx>
 
 class Camera {
 private:
     cv::VideoCapture cap;
-    const int FRAME_SKIP;
-    int frame_count;
+
     cv::Mat currentFrame;
     cv::Mat cameraMatrix, distCoeffs;
     cv::Mat map1, map2;
@@ -18,12 +18,20 @@ private:
     std::thread captureThread;
     std::atomic<bool> running{false};
     std::mutex frameMutex;
+
+    std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::Subscriber<void>> carla_frame;
+
+    bool useZenohSubscription = true;
     
     void captureLoop();
 
 public:
-    Camera(const std::string& pipeline, const std::string& calibrationFile = "calibration.yml");
+    Camera(std::shared_ptr<zenoh::Session> session);
     ~Camera();
+
+    void initLocalEnv(const std::string& pipeline, const std::string& calibrationFile);
+    void initCarlaEnv();
 
     void startCapture();
     void stopCapture();

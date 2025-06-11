@@ -1,24 +1,5 @@
 #include "SpeedPidController.hpp"
 
-#ifdef TEST_MODE
-// Define custom function names for testing
-#define device_open custom_xbox_open
-#define device_close custom_xbox_close
-#define device_ioctl custom_xbox_ioctl
-#define device_read custom_xbox_read
-#define device_write custom_xbox_write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::create_default()
-#else
-#define device_open open
-#define device_close close
-#define device_ioctl ioctl
-#define device_read read
-#define device_write write
-#define SESSION_OPEN zenoh::Session::open
-#define ZENOH_CONFIG_FROM_FILE zenoh::Config::from_file(configFile)
-#endif
-
 SpeedPidController::SpeedPidController()
 {
     prev_error_  = 0.0f;

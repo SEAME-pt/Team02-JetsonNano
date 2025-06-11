@@ -21,17 +21,17 @@
 #include "CAN.hpp"
 #include "GPUInference.hpp"
 
-#define WIDTH 256
-#define HEIGHT 128
-
 class ObjectDetector
 {
   private:
     cv::cuda::Stream cv_stream;
     GPUInference* gpuInference;
 
+    const int height_;
+    const int width_;
+
   public:
-    ObjectDetector(const std::string& enginePath);
+    ObjectDetector(const std::string& enginePath, int height, int width);
     ~ObjectDetector();
 
     void detect(cv::Mat& frame, cv::Mat& result);
