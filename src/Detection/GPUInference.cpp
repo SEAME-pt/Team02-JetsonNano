@@ -79,7 +79,7 @@ void GPUInference::inference()
 
     // Run inference with optimization flags
     void* bindings[] = {inputDevice, outputDevice};
-    // context->enqueueV2(bindings, stream, nullptr);
+    context->enqueueV2(bindings, stream, nullptr);
     
     try {
         for (int i = 0; i < 2; i++) {
@@ -89,8 +89,8 @@ void GPUInference::inference()
                 context->setTensorAddress("output", bindings[1]);
             }
         }
-        context->enqueueV3(stream);
-        // context->enqueueV2(bindings, stream, NULL);
+        // context->enqueueV3(stream);
+        context->enqueueV2(bindings, stream, NULL);
     } catch (const std::exception& e) {
         std::cout << "Error infering!" << e.what() << std::endl;
     }
