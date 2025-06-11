@@ -777,7 +777,10 @@ void TrajectoryDefinition::defineTrajectoryCurve(
         int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
         int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
         midCurve.push_back(cv::Point(midX, midY));
+
     }
+    
+    publishCoeffs(midCurve);
 }
 
 void TrajectoryDefinition::drawCurves(
@@ -1249,14 +1252,55 @@ void TrajectoryDefinition::publishSpeedLock(const std::string& value_str)
     speed_lock_publisher_->put(std::move(buf));
 }
 
-void TrajectoryDefinition::publishCoeffs(const std::string& value_str)
+void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
 {
-    const auto len = value_str.size() + 1;
-    auto alloc_result =
-        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
-    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
-    memcpy(buf.data(), value_str.c_str(), len);
-    coeffs_publisher_->put(std::move(buf));
+    std::sort(curve.begin(), curve.end(),
+              [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
+
+    std::vector<double> x_values, y_values;
+    for (const auto& pt : curve)
+    {
+        y_values.push_back(static_cast<double>(pt.y));
+        x_values.push_back(static_cast<double>(pt.x));
+    }
+
+    cv::Mat coeffs;
+    if (x_values.size() >= 4)
+    {
+        cv::Mat y_mat(y_values), x_mat;
+
+        // Create Vandermonde matrix for polynomial fitting
+        x_mat.create(y_values.size(), 4, CV_64F);
+        for (int i = 0; i < x_mat.rows; i++)
+        {
+            x_mat.at<double>(i, 0) = 1.0;
+            x_mat.at<double>(i, 1) = y_values[i];
+            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
+            x_mat.at<double>(i, 3) = y_values[i] * y_values[i] * y_values[i];
+        }
+
+        cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
+        std::ostringstream oss;
+        for (int i = 0; i < coeffs.rows; ++i)
+        {
+            oss << coeffs.at<double>(i);
+            if (i < coeffs.rows - 1)
+                oss << ",";
+        }
+        std::string coeffs_str = oss.str();
+
+        const auto len = coeffs_str.size() + 1;
+        auto alloc_result =
+            provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+        zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+        memcpy(buf.data(), coeffs_str.c_str(), len);
+        coeffs_publisher_->put(std::move(buf));
+    }
+    else
+    {
+        std::cerr << "Not enough points to calculate coefficients" << std::endl;
+        return;
+    }
 }
 
 void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)

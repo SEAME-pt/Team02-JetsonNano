@@ -105,5 +105,5 @@ class TrajectoryDefinition
     void publishSpeedLock(const std::string &value_str);
 
     void obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
-    void publishCoeffs(const std::string &value_str);
+    void publishCoeffs(std::vector<cv::Point>& curve);
 };
