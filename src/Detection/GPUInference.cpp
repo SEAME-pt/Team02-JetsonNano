@@ -82,7 +82,7 @@ void GPUInference::inference()
     context->enqueueV2(bindings, stream, nullptr);
     
     try {
-        // for (int i = 0; i < 2; i++) {
+````````````````````````````````````````````````````        // for (int i = 0; i < 2; i++) {
         //     if (i == 0) {
         //         context->setTensorAddress("input", bindings[0]);
         //     } else {
