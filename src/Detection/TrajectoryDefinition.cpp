@@ -501,7 +501,7 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
     bool lane0IsLeft = false;
     bool lane1IsLeft = false;
     
-    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.15;
+    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.50;
     
     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
     {
