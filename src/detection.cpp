@@ -141,13 +141,10 @@ int main(int argc, char** argv)
             session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-        std::cout << "Zenoh session created successfully." << std::endl;
+        
         SynchronizedProcessor processor;
-        std::cout << "SynchronizedProcessor initialized." << std::endl;
         Camera camera(session);
-        std::cout << "Camera initialized." << std::endl;
         TrajectoryDefinition trajectoryDefinition(session, height, width);
-        std::cout << "TrajectoryDefinition initialized." << std::endl;
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;

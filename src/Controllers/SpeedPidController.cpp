@@ -38,7 +38,7 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time)
 
 float SpeedPidController::speedPID(float error, double current_time)
 {
-    std::cout << "Error in speed PID: " << error << std::endl;
+    // std::cout << "Error in speed PID: " << error << std::endl;
     // dt
     double dt = current_time - last_time_;
 
@@ -68,6 +68,6 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     prev_error_ = error;
     last_time_  = current_time;
-    std::cout << "Throttle output: " << throttle << std::endl;
+    // std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
 }
