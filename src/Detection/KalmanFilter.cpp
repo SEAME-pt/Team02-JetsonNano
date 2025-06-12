@@ -151,6 +151,7 @@ KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height,
                                               int width)
 {
     std::vector<cv::Point> curve;
+    (void)width;
 
     // Generate points along the polynomial curve
     for (int y = 0; y < height; y += 10)
@@ -162,11 +163,7 @@ KalmanFilter::reconstructLaneFromCoefficients(const cv::Mat& coeffs, int height,
         // x = ay² + by + c
         int x = static_cast<int>(a * y * y + b * y + c);
 
-        // Ensure point is within frame
-        if (x >= 0 && x < width)
-        {
-            curve.push_back(cv::Point(x, y));
-        }
+        curve.push_back(cv::Point(x, y));
     }
 
     return curve;
