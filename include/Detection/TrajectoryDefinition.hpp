@@ -1,9 +1,9 @@
 #pragma once
 
 #include "opencv2/opencv.hpp"
-#include <opencv2/cudawarping.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/core/cuda.hpp>
+// #include <opencv2/cudawarping.hpp>
+// #include <opencv2/cudaimgproc.hpp>
+// #include <opencv2/core/cuda.hpp>
 #include "cuda.h"
 #include "NvInfer.h"
 #include "NvOnnxParser.h"
@@ -35,7 +35,7 @@ class TrajectoryDefinition
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
 
-    cv::cuda::Stream cv_stream;
+    // cv::cuda::Stream cv_stream;
   
     CAN* canBus;
     KalmanFilter* kalmanFilter;

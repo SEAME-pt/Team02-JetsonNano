@@ -26,7 +26,7 @@ TrajectoryDefinition::TrajectoryDefinition(
     class_mask_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
 
-    cv_stream = cv::cuda::Stream();
+    // cv_stream = cv::cuda::Stream();
 
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 }

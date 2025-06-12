@@ -132,18 +132,22 @@ int main(int argc, char** argv)
         else {
             std::cout << "Using default configuration" << std::endl;
             auto config = Config::create_default();
-            config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
-            config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
+            config.insert_json5("listen/endpoints", "[\"udp/100.73.255.97:7450\"]");
+            config.insert_json5("connect/endpoints", "[\"udp/100.73.255.97:7447\"]");
+            // config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
+            // config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
             // config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
             // config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
             session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-
+        std::cout << "Zenoh session created successfully." << std::endl;
         SynchronizedProcessor processor;
-
+        std::cout << "SynchronizedProcessor initialized." << std::endl;
         Camera camera(session);
+        std::cout << "Camera initialized." << std::endl;
         TrajectoryDefinition trajectoryDefinition(session, height, width);
+        std::cout << "TrajectoryDefinition initialized." << std::endl;
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
@@ -162,8 +166,8 @@ int main(int argc, char** argv)
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
-            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo_Carla_epoch_50.engine";
-            objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine";
+            laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla_epoch_50.engine";
+            objDetectionFile = "/home/jorge/Downloads/obj_MOB_1_epoch_133.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, height, width);
