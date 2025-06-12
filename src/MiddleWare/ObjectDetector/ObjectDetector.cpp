@@ -27,7 +27,7 @@ ObjectDetector::ObjectDetector(const std::string& enginePath,
                                  greatestPriority);
 
     // Create an OpenCV CUDA stream (with default flags)
-    cv_stream = cv::cuda::Stream();
+    // cv_stream = cv::cuda::Stream();
 
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -194,7 +194,7 @@ void ObjectDetector::run()
 void ObjectDetector::preProcess(const cv::Mat& frame)
 {
     // Create static GPU matrices
-    static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
+    // static cv::cuda::GpuMat d_frame, d_resized, d_rgb_image;
     static cv::Mat cpu_rgb_image(HEIGHT, WIDTH, CV_8UC3);
 
     // Upload input frame to GPU
