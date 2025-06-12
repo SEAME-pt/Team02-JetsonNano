@@ -35,7 +35,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         "carla/speed",
         [this](const zenoh::Sample& sample)
         {
-            std::cout << "Signal debug" << std::endl;
             std::string speed_str = sample.get_payload().as_string();
             publisher_->publishSpeed(std::stof(speed_str));
         },
