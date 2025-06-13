@@ -130,8 +130,8 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 128;
-    const int width = 256;
+    const int height = 512;
+    const int width = 1024;
 
     try
     {
@@ -184,8 +184,8 @@ int main(int argc, char** argv)
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
-            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo_Carla2_epoch_50.engine";
-            objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_MOB_1_epoch_133.engine";
+            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo_Carla3_epoch_16.engine";
+            objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_YOLO_Carla1_epoch_75.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, height, width);
