@@ -27,7 +27,10 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
     cv::Mat resizedMask;
     cv::resize(segmentationMask, resizedMask,
                  cv::Size(frameWidth_, frameHeight_), 0, 0, cv::INTER_NEAREST);
+    std::cout << "Resized mask to: " << resizedMask.size() << std::endl;
     std::fill(occupancy_.begin(), occupancy_.end(), false);
+    std::cout << "Building occupancy grid with dimensions: "
+              << gridWidth_ << "x" << gridHeight_ << std::endl;
 
     for (int r = 0; r < gridHeight_; ++r)
     {
@@ -126,10 +129,10 @@ bool ObstacleAvoidance::detectAllCollisions()
     std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
               [](const auto& a, const auto& b) { return a.first > b.first; });
     
-    if (foundCollision) {
-        std::cout << "Found " << collisionPoints_.size() << " collision points. Lowest at: ("
-                  << collisionRow_ << ", " << collisionCol_ << ")\n";
-    }
+    // if (foundCollision) {
+    //     std::cout << "Found " << collisionPoints_.size() << " collision points. Lowest at: ("
+    //               << collisionRow_ << ", " << collisionCol_ << ")\n";
+    // }
     
     return foundCollision;
 }
@@ -332,7 +335,7 @@ void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajec
     trajectoryGrid_ = std::move(trajectoryGrid);
 }
 
-void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory)
+void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, cv::Mat& outputImage)
 {
     cv::Size actualSize(frameWidth_, frameHeight_);    
     
@@ -382,17 +385,17 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     }            
 
     // Draw grid lines with proper scaling
-    for (int r = 0; r <= gridHeight_; ++r) {
-        int y = static_cast<int>(r * cellSizePx_);
-        cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
-                cv::Scalar(150, 150, 150), 1);
-    }
+    // for (int r = 0; r <= gridHeight_; ++r) {
+    //     int y = static_cast<int>(r * cellSizePx_);
+    //     cv::line(overlay, cv::Point(0, y), cv::Point(actualSize.width, y), 
+    //             cv::Scalar(150, 150, 150), 1);
+    // }
     
-    for (int c = 0; c <= gridWidth_; ++c) {
-        int x = static_cast<int>(c * cellSizePx_);
-        cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
-                cv::Scalar(150, 150, 150), 1);
-    }
+    // for (int c = 0; c <= gridWidth_; ++c) {
+    //     int x = static_cast<int>(c * cellSizePx_);
+    //     cv::line(overlay, cv::Point(x, 0), cv::Point(x, actualSize.height), 
+    //             cv::Scalar(150, 150, 150), 1);
+    // }
 
     if (this->detectAllCollisions())
     {
@@ -400,28 +403,28 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
                     cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
         
         // Visualize all collision points
-        for (size_t i = 0; i < obstaclePoints_.size(); i++) {
-            int r = obstaclePoints_[i].first;
-            int c = obstaclePoints_[i].second;
+        // for (size_t i = 0; i < obstaclePoints_.size(); i++) {
+        //     int r = obstaclePoints_[i].first;
+        //     int c = obstaclePoints_[i].second;
             
-            // Get pixel coordinates for collision cell
-            int collX0 = static_cast<int>(c * cellSizePx_);
-            int collY0 = static_cast<int>(r * cellSizePx_);
-            int collX1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
-            int collY1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+        //     // Get pixel coordinates for collision cell
+        //     int collX0 = static_cast<int>(c * cellSizePx_);
+        //     int collY0 = static_cast<int>(r * cellSizePx_);
+        //     int collX1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+        //     int collY1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
             
-            // Use a color gradient from red to orange based on distance from bottom
-            // First collision (closest to car) is bright red, others fade to orange
-            int blue = 0;
-            int green = std::min(255, static_cast<int>(128.0 * i / obstaclePoints_.size()));
-            int red = 255;
+        //     // Use a color gradient from red to orange based on distance from bottom
+        //     // First collision (closest to car) is bright red, others fade to orange
+        //     int blue = 0;
+        //     int green = std::min(255, static_cast<int>(128.0 * i / obstaclePoints_.size()));
+        //     int red = 255;
             
-            // Draw X over collision cell
-            cv::line(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
-                    cv::Scalar(blue, green, red), 2);
-            cv::line(overlay, cv::Point(collX0, collY1), cv::Point(collX1, collY0), 
-                    cv::Scalar(blue, green, red), 2);
-        }
+        //     // Draw X over collision cell
+        //     cv::line(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+        //             cv::Scalar(blue, green, red), 2);
+        //     cv::line(overlay, cv::Point(collX0, collY1), cv::Point(collX1, collY0), 
+        //             cv::Scalar(blue, green, red), 2);
+        // }
         cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
     }
@@ -467,7 +470,6 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
                 cv::FONT_HERSHEY_SIMPLEX, 0.7, 
                 cv::Scalar(255, 255, 255), 2);
 
-    cv::imshow("Occupancy Grid", overlay);
-    cv::waitKey(1);
+    overlay.copyTo(outputImage);
 }
 

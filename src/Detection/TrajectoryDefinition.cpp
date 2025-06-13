@@ -29,6 +29,34 @@ TrajectoryDefinition::TrajectoryDefinition(
     // cv_stream = cv::cuda::Stream();
 
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+
+    mpc_trajectory_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/MPC/Trajectory",
+        [this](const zenoh::Sample& sample)
+        {
+            
+            std::string traj_str = sample.get_payload().as_string();
+            std::vector<cv::Point> points;
+            std::stringstream ss(traj_str);
+            std::string point_str;
+            while (std::getline(ss, point_str, ';')) {
+                std::stringstream point_ss(point_str);
+                std::string x_str, y_str;
+                if (std::getline(point_ss, x_str, ',') && std::getline(point_ss, y_str, ',')) {
+                    double x = std::stod(x_str);
+                    double y = std::stod(y_str);
+                    // Convert from MPC coordinates to image coordinates if needed
+                    int x_img = static_cast<int>(x + 400);      // Undo x shift
+                    int y_img = static_cast<int>(600.0 - y);    // Undo y flip/shift
+                    points.emplace_back(x_img, y_img);
+                }
+            }
+            // Store for use in visualization
+            mpcPoints_ = points;
+            std::cout << "Received MPC trajectory with " << points.size() << " points." << std::endl;
+        },
+        zenoh::closures::none));
+
 }
 
 TrajectoryDefinition::~TrajectoryDefinition()
@@ -38,6 +66,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
     }
     delete kalmanFilter;
     delete ipm;
+    delete avoidance;
 }
 
 void TrajectoryDefinition::initLocalEnv() {
@@ -84,6 +113,15 @@ void TrajectoryDefinition::initLocalEnv() {
     {
         std::cerr << "Error initializing IPM" << e.what() << std::endl;
     }
+
+    try
+    {
+        this->avoidance = new ObstacleAvoidance(800, 600, 4);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing ObstacleAvoidance" << e.what() << std::endl;
+    }
 }
 
 void TrajectoryDefinition::initCarlaEnv() {
@@ -123,6 +161,15 @@ void TrajectoryDefinition::initCarlaEnv() {
     catch (const std::exception& e)
     {
         std::cerr << "Error initializing IPM" << e.what() << std::endl;
+    }
+
+    try
+    {
+        this->avoidance = new ObstacleAvoidance(800, 600, 8);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing ObstacleAvoidance" << e.what() << std::endl;
     }
 }
 
@@ -168,7 +215,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
     
-    float maxHorizontalDistance = frameWidth_ * 0.10;  // 15% of frame width
+    float maxHorizontalDistance = frameWidth_ * 0.05;  // 15% of frame width
     float maxVerticalGap        = frameHeight_ * 0.35; // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
@@ -202,12 +249,20 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
     drawCurves(midCurve, leftCurve, rightCurve);
-    
-    obstacleAvoidance(class_mask, midCurve);
+    (void) class_mask;
+    // obstacleAvoidance(class_mask, midCurve);
    
     createMidPointError(midCurve);
     
     // checkForwardCollision(class_mask, midCurve);
+
+    // Draw the predicted trajectory as a green polyline
+    if (mpcPoints_.size() > 1) {
+        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
+            std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
+            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
+        }
+    }
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -475,159 +530,6 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     }
 }
 
-void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
-    cv::Point lowestPoint1(-1, -1);
-    cv::Point lowestPoint2(-1, -1);
-
-    for (const auto& pt : lanePolylines[0])
-    {
-        if (pt.y > lowestPoint1.y)
-        {
-            lowestPoint1 = pt;
-        }
-    }
-
-    for (const auto& pt : lanePolylines[1])
-    {
-        if (pt.y > lowestPoint2.y)
-        {
-            lowestPoint2 = pt;
-        }
-    }
-    
-    bool keepLane0 = true;
-    bool keepLane1 = true;
-    
-    bool lane0IsLeft = false;
-    bool lane1IsLeft = false;
-    
-    float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.15;
-    
-    if (!prevLeftCurve.empty() && !prevRightCurve.empty())
-    {
-        float dist0ToLeft = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
-        
-        float dist0ToRight = calculateLaneDistance(lanePolylines[0], prevRightCurve);
-            
-        float dist1ToLeft = calculateLaneDistance(lanePolylines[1], prevLeftCurve);
-            
-        float dist1ToRight = calculateLaneDistance(lanePolylines[1], prevRightCurve);
-        
-        lane0IsLeft = (dist0ToLeft < dist0ToRight);
-        lane1IsLeft = (dist1ToLeft < dist1ToRight);
-        
-        if (lane0IsLeft) {
-            if (dist0ToLeft > maxShiftThreshold) {
-                keepLane0 = false;
-                cv::putText(allPolylinesViz_, "Lane0: too far from LEFT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-                std::cout << "Lane0: too far from LEFT" << std::endl;
-            }
-        } else {
-            if (dist0ToRight > maxShiftThreshold) {
-                keepLane0 = false;
-                cv::putText(allPolylinesViz_, "Lane0: too far from RIGHT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-                std::cout << "Lane0: too far from RIGHT" << std::endl;
-            }
-        }
-        
-        if (lane1IsLeft) {
-            if (dist1ToLeft > maxShiftThreshold) {
-                keepLane1 = false;
-                cv::putText(allPolylinesViz_, "Lane1: too far from LEFT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-                std::cout << "Lane1: too far from LEFT" << std::endl;
-            }
-        } else {
-            if (dist1ToRight > maxShiftThreshold) {
-                keepLane1 = false;
-                cv::putText(allPolylinesViz_, "Lane1: too far from RIGHT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-                std::cout << "Lane1: too far from RIGHT" << std::endl;
-            }
-        }
-
-        if (lane0IsLeft == lane1IsLeft && keepLane0 && keepLane1) {
-            cv::putText(allPolylinesViz_, "Inconsistent lane config: discarding worse match", 
-                      cv::Point(20, 170), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
-            
-            if (lane0IsLeft) {
-                if (dist0ToLeft < dist1ToLeft) {
-                    keepLane1 = false;
-                } else {
-                    keepLane0 = false;
-                }
-            } else {
-                if (dist0ToRight < dist1ToRight) {
-                    keepLane1 = false;
-                } else {
-                    keepLane0 = false;
-                }
-            }
-        }
-    }
-    else
-    {
-        lane0IsLeft = lowestPoint1.x < lowestPoint2.x;
-        lane1IsLeft = lowestPoint2.x < lowestPoint1.x;
-        
-        cv::putText(allPolylinesViz_, "No memory - using position",
-                  cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.2, 
-                  cv::Scalar(0, 0, 255), 1);
-    }
-
-    if (keepLane0 && keepLane1) {
-        if (lane0IsLeft && !lane1IsLeft) {
-            leftCurve = lanePolylines[0];
-            rightCurve = lanePolylines[1];
-        } else if (!lane0IsLeft && lane1IsLeft) {
-            leftCurve = lanePolylines[1];
-            rightCurve = lanePolylines[0];
-        } else {
-            if (lowestPoint1.x < lowestPoint2.x) {
-                leftCurve = lanePolylines[0];
-                rightCurve = lanePolylines[1];
-            } else {
-                leftCurve = lanePolylines[1];
-                rightCurve = lanePolylines[0];
-            }
-        }
-        
-        updateLaneWidthHistory(leftCurve, rightCurve);
-        kalmanFilter->updateLeftLaneFilter(leftCurve);
-        kalmanFilter->updateRightLaneFilter(rightCurve);
-
-        prevLeftCurve = leftCurve;
-        prevRightCurve = rightCurve;
-        
-        leftLaneLastUpdatedFrame = currentFrame;
-        rightLaneLastUpdatedFrame = currentFrame;
-    }
-    else if (keepLane0 && !keepLane1) {
-        if (lane0IsLeft) {
-            onePolyline(lanePolylines[0], rightCurve);
-        } else {
-            onePolyline(leftCurve, lanePolylines[0]);
-        }
-    }
-    else if (!keepLane0 && keepLane1) {
-        if (lane1IsLeft) {
-            onePolyline(lanePolylines[1], rightCurve);
-        } else {
-            onePolyline(leftCurve, lanePolylines[1]);
-        }
-    }
-    else {
-        cv::putText(allPolylinesViz_, "WARNING: Both lanes invalid, using position",
-                  cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, 
-                  cv::Scalar(0, 0, 255), 1);
-        
-        leftCurve = prevLeftCurve;
-        rightCurve = prevRightCurve;
-    }
-}
-
 // void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
 //     cv::Point lowestPoint1(-1, -1);
 //     cv::Point lowestPoint2(-1, -1);
@@ -647,25 +549,179 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
 //             lowestPoint2 = pt;
 //         }
 //     }
-
-//     if (lowestPoint1.x < lowestPoint2.x) {
-//         leftCurve = lanePolylines[0];
-//         rightCurve = lanePolylines[1];
-//     } else {
-//         leftCurve = lanePolylines[1];
-//         rightCurve = lanePolylines[0];
-//     }
-        
-//     updateLaneWidthHistory(leftCurve, rightCurve);
-//     kalmanFilter->updateLeftLaneFilter(leftCurve);
-//     kalmanFilter->updateRightLaneFilter(rightCurve);
-
-//     prevLeftCurve = leftCurve;
-//     prevRightCurve = rightCurve;
     
-//     leftLaneLastUpdatedFrame = currentFrame;
-//     rightLaneLastUpdatedFrame = currentFrame;
+//     bool keepLane0 = true;
+//     bool keepLane1 = true;
+    
+//     bool lane0IsLeft = false;
+//     bool lane1IsLeft = false;
+    
+//     float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.15;
+    
+//     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
+//     {
+//         float dist0ToLeft = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
+        
+//         float dist0ToRight = calculateLaneDistance(lanePolylines[0], prevRightCurve);
+            
+//         float dist1ToLeft = calculateLaneDistance(lanePolylines[1], prevLeftCurve);
+            
+//         float dist1ToRight = calculateLaneDistance(lanePolylines[1], prevRightCurve);
+        
+//         lane0IsLeft = (dist0ToLeft < dist0ToRight);
+//         lane1IsLeft = (dist1ToLeft < dist1ToRight);
+        
+//         if (lane0IsLeft) {
+//             if (dist0ToLeft > maxShiftThreshold) {
+//                 keepLane0 = false;
+//                 cv::putText(allPolylinesViz_, "Lane0: too far from LEFT", cv::Point(20, 130),
+//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+//                 std::cout << "Lane0: too far from LEFT" << std::endl;
+//             }
+//         } else {
+//             if (dist0ToRight > maxShiftThreshold) {
+//                 keepLane0 = false;
+//                 cv::putText(allPolylinesViz_, "Lane0: too far from RIGHT", cv::Point(20, 130),
+//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+//                 std::cout << "Lane0: too far from RIGHT" << std::endl;
+//             }
+//         }
+        
+//         if (lane1IsLeft) {
+//             if (dist1ToLeft > maxShiftThreshold) {
+//                 keepLane1 = false;
+//                 cv::putText(allPolylinesViz_, "Lane1: too far from LEFT", cv::Point(20, 130),
+//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+//                 std::cout << "Lane1: too far from LEFT" << std::endl;
+//             }
+//         } else {
+//             if (dist1ToRight > maxShiftThreshold) {
+//                 keepLane1 = false;
+//                 cv::putText(allPolylinesViz_, "Lane1: too far from RIGHT", cv::Point(20, 130),
+//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+//                 std::cout << "Lane1: too far from RIGHT" << std::endl;
+//             }
+//         }
+
+//         if (lane0IsLeft == lane1IsLeft && keepLane0 && keepLane1) {
+//             cv::putText(allPolylinesViz_, "Inconsistent lane config: discarding worse match", 
+//                       cv::Point(20, 170), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
+            
+//             if (lane0IsLeft) {
+//                 if (dist0ToLeft < dist1ToLeft) {
+//                     keepLane1 = false;
+//                 } else {
+//                     keepLane0 = false;
+//                 }
+//             } else {
+//                 if (dist0ToRight < dist1ToRight) {
+//                     keepLane1 = false;
+//                 } else {
+//                     keepLane0 = false;
+//                 }
+//             }
+//         }
+//     }
+//     else
+//     {
+//         lane0IsLeft = lowestPoint1.x < lowestPoint2.x;
+//         lane1IsLeft = lowestPoint2.x < lowestPoint1.x;
+        
+//         cv::putText(allPolylinesViz_, "No memory - using position",
+//                   cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.2, 
+//                   cv::Scalar(0, 0, 255), 1);
+//     }
+
+//     if (keepLane0 && keepLane1) {
+//         if (lane0IsLeft && !lane1IsLeft) {
+//             leftCurve = lanePolylines[0];
+//             rightCurve = lanePolylines[1];
+//         } else if (!lane0IsLeft && lane1IsLeft) {
+//             leftCurve = lanePolylines[1];
+//             rightCurve = lanePolylines[0];
+//         } else {
+//             if (lowestPoint1.x < lowestPoint2.x) {
+//                 leftCurve = lanePolylines[0];
+//                 rightCurve = lanePolylines[1];
+//             } else {
+//                 leftCurve = lanePolylines[1];
+//                 rightCurve = lanePolylines[0];
+//             }
+//         }
+        
+//         updateLaneWidthHistory(leftCurve, rightCurve);
+//         kalmanFilter->updateLeftLaneFilter(leftCurve);
+//         kalmanFilter->updateRightLaneFilter(rightCurve);
+
+//         prevLeftCurve = leftCurve;
+//         prevRightCurve = rightCurve;
+        
+//         leftLaneLastUpdatedFrame = currentFrame;
+//         rightLaneLastUpdatedFrame = currentFrame;
+//     }
+//     else if (keepLane0 && !keepLane1) {
+//         if (lane0IsLeft) {
+//             onePolyline(lanePolylines[0], rightCurve);
+//         } else {
+//             onePolyline(leftCurve, lanePolylines[0]);
+//         }
+//     }
+//     else if (!keepLane0 && keepLane1) {
+//         if (lane1IsLeft) {
+//             onePolyline(lanePolylines[1], rightCurve);
+//         } else {
+//             onePolyline(leftCurve, lanePolylines[1]);
+//         }
+//     }
+//     else {
+//         cv::putText(allPolylinesViz_, "WARNING: Both lanes invalid, using position",
+//                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, 
+//                   cv::Scalar(0, 0, 255), 1);
+        
+//         leftCurve = prevLeftCurve;
+//         rightCurve = prevRightCurve;
+//     }
 // }
+
+void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+    cv::Point lowestPoint1(-1, -1);
+    cv::Point lowestPoint2(-1, -1);
+
+    for (const auto& pt : lanePolylines[0])
+    {
+        if (pt.y > lowestPoint1.y)
+        {
+            lowestPoint1 = pt;
+        }
+    }
+
+    for (const auto& pt : lanePolylines[1])
+    {
+        if (pt.y > lowestPoint2.y)
+        {
+            lowestPoint2 = pt;
+        }
+    }
+
+    if (lowestPoint1.x < lowestPoint2.x) {
+        leftCurve = lanePolylines[0];
+        rightCurve = lanePolylines[1];
+    } else {
+        leftCurve = lanePolylines[1];
+        rightCurve = lanePolylines[0];
+    }
+        
+    updateLaneWidthHistory(leftCurve, rightCurve);
+    kalmanFilter->updateLeftLaneFilter(leftCurve);
+    kalmanFilter->updateRightLaneFilter(rightCurve);
+
+    prevLeftCurve = leftCurve;
+    prevRightCurve = rightCurve;
+    
+    leftLaneLastUpdatedFrame = currentFrame;
+    rightLaneLastUpdatedFrame = currentFrame;
+}
+
 
 float TrajectoryDefinition::calculateLaneDistance(
     const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2)
@@ -1284,27 +1340,31 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
               [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
 
     std::vector<double> x_values, y_values;
-    for (const auto& pt : curve)
-    {
-        y_values.push_back(static_cast<double>(pt.y));
-        x_values.push_back(static_cast<double>(pt.x));
-    }
 
     cv::Mat coeffs;
+    for (const auto& pt : curve)
+    {
+        double y_prime = 600.0 - static_cast<double>(pt.y);   // Flip and shift y
+        double x_prime = static_cast<double>(pt.x) - 400;   // Shift x
+        y_values.push_back(y_prime);
+        x_values.push_back(x_prime);
+    }
+    
     if (x_values.size() >= 4)
     {
         cv::Mat y_mat(y_values), x_mat;
 
         // Create Vandermonde matrix for polynomial fitting
+
         x_mat.create(y_values.size(), 4, CV_64F);
         for (int i = 0; i < x_mat.rows; i++)
         {
+            double y_prime = y_values[i];
             x_mat.at<double>(i, 0) = 1.0;
-            x_mat.at<double>(i, 1) = y_values[i];
-            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
-            x_mat.at<double>(i, 3) = y_values[i] * y_values[i] * y_values[i];
+            x_mat.at<double>(i, 1) = y_prime;
+            x_mat.at<double>(i, 2) = y_prime * y_prime;
+            x_mat.at<double>(i, 3) = y_prime * y_prime * y_prime;
         }
-
         cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
         std::ostringstream oss;
         for (int i = 0; i < coeffs.rows; ++i)
@@ -1314,6 +1374,7 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
                 oss << ",";
         }
         std::string coeffs_str = oss.str();
+        // std::cout << "Coefficients: " << coeffs_str << std::endl;
 
         const auto len = coeffs_str.size() + 1;
         auto alloc_result =
@@ -1329,27 +1390,15 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
     }
 }
 
-void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
-    if (!avoidance)
-    {
-        try
-        {
-            this->avoidance =new ObstacleAvoidance(frameWidth_, frameHeight_, 4);
-        }
-        catch (const std::exception& e)
-        {
-            std::cerr << "Error initializing ObstacleAvoidance" << e.what()
-                    << std::endl;
-        }
-    }
     try {
         avoidance->buildOccupancy(segmentation_mask);
         avoidance->buildTrajectoryGrid(midCurve);
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
+        std::cerr << "Error in obstacle avoidance lalala: " << e.what() << std::endl;
     }
     
     try {
@@ -1367,7 +1416,7 @@ void TrajectoryDefinition::obstacleAvoidance(const cv::Mat& segmentation_mask, s
                         3);
             }
         }
-            // avoidance->visualizeGrid(&midCurve);
+        avoidance->visualizeGrid(&midCurve, segmentation_mask);
     }
     catch (const std::exception& e)
     {

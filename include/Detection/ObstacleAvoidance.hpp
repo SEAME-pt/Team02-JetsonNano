@@ -32,7 +32,8 @@ public:
     int      getCollisionRow() const { return collisionRow_; }
     int      getCollisionIdx() const { return collisionIdx_; }
 
-    void visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory = nullptr);
+    void visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, 
+                       cv::Mat& outputImage);
 
 private:
     int frameWidth_,  frameHeight_;
