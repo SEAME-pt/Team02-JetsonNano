@@ -141,7 +141,8 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Size size(width_ * 0.45 / 1.4, height_);
+    // cv::Size size(width_ * 6.0 / 8.0, height_);
+    cv::Size size(width_ * 1.4 / 0.45, height_);
 
     cv::Mat res_frame;
     cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
