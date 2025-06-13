@@ -22,9 +22,6 @@
 #include "LaneDetectorPublisher.hpp"
 #include "KalmanFilter.hpp"
 
-#define WIDTH 256
-#define HEIGHT 128
-
 class GPUInference
 {
   private:
@@ -39,9 +36,11 @@ class GPUInference
     float* outputData;
     int inputChannels_;
     int outputChannels_;
+    int height_;
+    int width_;
 
   public:
-    GPUInference(const std::string &enginePath, int inputChannels, int outputChannels);
+    GPUInference(const std::string &enginePath, int inputChannels, int outputChannels, int height, int width);
     ~GPUInference();
 
     void init();

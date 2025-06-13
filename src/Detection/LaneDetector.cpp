@@ -12,7 +12,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, int height, int width)
 {
     try
     {
-        this->gpuInference = new GPUInference(enginePath, 3, 1);
+        this->gpuInference = new GPUInference(enginePath, 3, 1, height_, width_);
         this->gpuInference->init();
     }
     catch (const std::exception& e)
