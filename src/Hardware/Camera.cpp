@@ -45,6 +45,11 @@ void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibr
 void Camera::initCarlaEnv() {
     useZenohSubscription = true;
 
+    {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        currentFrame = cv::Mat();
+    }
+
     carla_frame.emplace(session_->declare_subscriber(
     "carla/frame",
     [this](const zenoh::Sample& sample)

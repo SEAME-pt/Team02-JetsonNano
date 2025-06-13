@@ -8,7 +8,7 @@ ObjectDetector::ObjectDetector(const std::string& enginePath, int height, int wi
 {
     try
     {
-        this->gpuInference = new GPUInference(enginePath, 3, 7);
+        this->gpuInference = new GPUInference(enginePath, 3, 8, height_, width_);
         this->gpuInference->init();
     }
     catch (const std::exception& e)

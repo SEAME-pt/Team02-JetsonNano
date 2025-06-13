@@ -43,10 +43,18 @@ void laneDetectionThreadFunction(LaneDetector* detector,
     {
         cv::Mat frame = processor->getLaneFrame();
 
-        cv::Mat result;
-        detector->detect(frame, result);
+        if (!frame.empty())
+        {
+            cv::Mat result;
+            std::cout << "Lane before Detected" << std::endl;
+            detector->detect(frame, result);
+            std::cout << "Lane Detected" << std::endl;
 
-        processor->laneDone(result);
+            processor->laneDone(result);
+        }
+        else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
     }
 }
 
@@ -57,10 +65,18 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
     {
         cv::Mat frame = processor->getObjectFrame();
 
-        cv::Mat result;
-        detector->detect(frame, result);
+        if (!frame.empty())
+        {
+            cv::Mat result;
+            std::cout << "Obj before Detected" << std::endl;
+            detector->detect(frame, result);
+            std::cout << "Obj Detected" << std::endl;
 
-        processor->objectDone(result);
+            processor->objectDone(result);
+        }   
+        else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
     }
 }
 
@@ -73,33 +89,39 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
     {
         processor->getProcessingData(original_frame, lane_mask, object_mask);
 
-        cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
 
-        std::vector<uchar> buffer_ipm_frame;
-        std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
-        cv::imencode(".jpg", new_frame, buffer_ipm_frame, params_ipm);
-        
-        trajectoryDef->ipm_frame_publisher_->put(buffer_ipm_frame);
-
-        std::vector<uchar> buffer_original_frame;
-        std::vector<int> params_org_frame = {cv::IMWRITE_JPEG_QUALITY, 20};
-        cv::imencode(".jpg", original_frame, buffer_original_frame, params_org_frame);
-        
-        trajectoryDef->frame_publisher_->put(buffer_original_frame);
-
-        std::vector<uchar> buffer_lane_mask;
-        std::vector<int> params_lane = {cv::IMWRITE_JPEG_QUALITY, 20};
-        cv::imencode(".jpg", lane_mask, buffer_lane_mask, params_lane);
-        
-        trajectoryDef->lane_mask_publisher_->put(buffer_lane_mask);
-
-        std::vector<uchar> buffer_obj_mask;
-        std::vector<int> params_obj = {cv::IMWRITE_JPEG_QUALITY, 20};
-        cv::imencode(".jpg", object_mask, buffer_obj_mask, params_obj);
-        
-        trajectoryDef->class_mask_publisher_->put(buffer_obj_mask);
-
-        processor->trajectoryDone();
+        if (!original_frame.empty() && !lane_mask.empty() && !object_mask.empty()) 
+        {
+            cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
+    
+            std::vector<uchar> buffer_ipm_frame;
+            std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
+            cv::imencode(".jpg", new_frame, buffer_ipm_frame, params_ipm);
+            
+            trajectoryDef->ipm_frame_publisher_->put(buffer_ipm_frame);
+    
+            std::vector<uchar> buffer_original_frame;
+            std::vector<int> params_org_frame = {cv::IMWRITE_JPEG_QUALITY, 20};
+            cv::imencode(".jpg", original_frame, buffer_original_frame, params_org_frame);
+            
+            trajectoryDef->frame_publisher_->put(buffer_original_frame);
+    
+            std::vector<uchar> buffer_lane_mask;
+            std::vector<int> params_lane = {cv::IMWRITE_JPEG_QUALITY, 20};
+            cv::imencode(".jpg", lane_mask, buffer_lane_mask, params_lane);
+            
+            trajectoryDef->lane_mask_publisher_->put(buffer_lane_mask);
+    
+            std::vector<uchar> buffer_obj_mask;
+            std::vector<int> params_obj = {cv::IMWRITE_JPEG_QUALITY, 20};
+            cv::imencode(".jpg", object_mask, buffer_obj_mask, params_obj);
+            
+            trajectoryDef->class_mask_publisher_->put(buffer_obj_mask);
+    
+            processor->trajectoryDone();
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
     }
 }
 
@@ -108,8 +130,8 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 128;
-    const int width = 256;
+    const int height = 512;
+    const int width = 1024;
 
     try
     {
