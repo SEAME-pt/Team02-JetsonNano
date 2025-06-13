@@ -1,4 +1,6 @@
-# System Monitor for Autonomous Vehicles
+# System Monitor
+
+This requires the Zenoh-Router active and running to have access to the values.
 
 ## Overview
 
@@ -85,7 +87,7 @@ The provided `deploy` folder contains scripts for cross-compiling the `system_mo
 5.  **Copy the compiled executable (`system_monitor`) from the container back to your local machine:**
 
     ```bash
-    docker cp tmpapp:/home/test_shared/system_monitor ./system_monitor
+    docker cp tmpapp:/home/tools/system_monitor/system_monitor ./system_monitor
     ```
 
     The executable will be located in your project's root directory.

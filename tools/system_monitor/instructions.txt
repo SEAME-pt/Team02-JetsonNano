@@ -1,5 +1,5 @@
 
-temporary instructions see readme for better help.
+Basic instructions notes, see readme for better help.
 
 Notes/improvements:
 this system_monitor executable should be running with the zenoh router running (with the proper config file) - monitor_config.json

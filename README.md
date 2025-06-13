@@ -12,12 +12,6 @@ The Vehicle Control System integrates multiple components that work together to 
 - **Middleware**: Sensor data processing and signal conversion
 - **Combined Controller**: Intelligent control switching between manual and autonomous modes
 
-## Architecture
-
-The system follows a modular architecture based on automotive domain standards:
-
-![Architecture Diagram](./docs/architecture.png)
-
 ### Key Components:
 
 1. **Vehicle System**
@@ -52,6 +46,16 @@ The system uses a sophisticated communication architecture:
 - **Zenoh Router**: Connects vehicle systems to cloud services
 - **CAN Bus**: Communication with vehicle hardware components (Micro Controller and Raspberry Pi)
 - **VSS**: Standardized vehicle signal specification for data exchange
+
+## Tools
+   In this directory you can find:
+   - VSS files.
+   - Camera calibration tools.
+   - The System monitor.
+   - Zenoh Router.
+   - InfluxDB and Grafana (Database and visualization).
+
+---
 
 ## Building and Running
 
@@ -180,8 +184,8 @@ The system depends on several external libraries:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Team
 
-This project is developed by Team02 at SEAME Polytechnic Singapore.
+This project is developed by Team02 at SEAME Portugal 2025.
