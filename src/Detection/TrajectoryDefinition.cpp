@@ -109,8 +109,8 @@ void TrajectoryDefinition::initCarlaEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.0f;       // meters
-        float farDistance = 8.0f;       // meters
-        float laneWidth = 6.0f;          // meters
+        float farDistance = 16.0f;       // meters
+        float laneWidth = 14.0f;          // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
 
@@ -141,7 +141,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Size size(width_ * 6.0 / 8.0, height_);
+    cv::Size size(width_ * 10.0 / 16.0, height_);
     // cv::Size size(800 * 1.4 / 0.45, 600);
 
     cv::Mat res_frame;
@@ -168,12 +168,13 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameHeight_     = frame.rows;
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
+
+    drawPolyLanes(lanePolylines);
     
-    float maxHorizontalDistance = frameWidth_ * 0.10;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.35; // 35% of frame height
+    float maxHorizontalDistance = frameWidth_ * 0.05;  // 15% of frame width
+    float maxVerticalGap        = frameHeight_ * 0.15; // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
-    // drawPolyLanes(lanePolylines);
 
     if (lanePolylines.size() == 2)
     {
@@ -451,9 +452,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 3);
         cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     }
     else
     {
@@ -470,9 +471,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 255, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 3);
         cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     }
 }
 
@@ -521,14 +522,14 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
             if (dist0ToLeft > maxShiftThreshold) {
                 keepLane0 = false;
                 cv::putText(allPolylinesViz_, "Lane0: too far from LEFT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+                          cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
                 std::cout << "Lane0: too far from LEFT" << std::endl;
             }
         } else {
             if (dist0ToRight > maxShiftThreshold) {
                 keepLane0 = false;
                 cv::putText(allPolylinesViz_, "Lane0: too far from RIGHT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+                          cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
                 std::cout << "Lane0: too far from RIGHT" << std::endl;
             }
         }
@@ -537,14 +538,14 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
             if (dist1ToLeft > maxShiftThreshold) {
                 keepLane1 = false;
                 cv::putText(allPolylinesViz_, "Lane1: too far from LEFT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+                          cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
                 std::cout << "Lane1: too far from LEFT" << std::endl;
             }
         } else {
             if (dist1ToRight > maxShiftThreshold) {
                 keepLane1 = false;
                 cv::putText(allPolylinesViz_, "Lane1: too far from RIGHT", cv::Point(20, 130),
-                          cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
+                          cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
                 std::cout << "Lane1: too far from RIGHT" << std::endl;
             }
         }
@@ -843,36 +844,24 @@ void TrajectoryDefinition::drawPolyLanes(
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),   // Blue
         cv::Scalar(0, 255, 0),   // Green
-        cv::Scalar(0, 0, 255),   // Red
         cv::Scalar(255, 255, 0), // Cyan
         cv::Scalar(255, 0, 255), // Magenta
-        cv::Scalar(0, 255, 255)  // Yellow
+        cv::Scalar(0, 255, 255),  // Yellow
+        cv::Scalar(0, 0, 255)   // Red
     };
 
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
+        defineLanePolyline(lanePolylines[i]);
+
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
         {
             cv::line(allPolylinesViz_, lanePolylines[i][j - 1],
-                     lanePolylines[i][j], color, 10);
-        }
-
-        // Add a label for each polyline
-        if (!lanePolylines[i].empty())
-        {
-            std::string label = "Lane " + std::to_string(i + 1);
-            cv::putText(allPolylinesViz_, label, lanePolylines[i][0],
-                        cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+                     lanePolylines[i][j], color, 3);
         }
     }
-
-    // Display the number of polylines found
-    std::string countText =
-        "Polylines: " + std::to_string(lanePolylines.size());
-    cv::putText(allPolylinesViz_, countText, cv::Point(20, 30),
-                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 }
 
 void TrajectoryDefinition::defineLanePolyline(
@@ -988,7 +977,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
         std::string statusMsg =
             "Error: " + std::to_string(lateralError).substr(0, 6);
         cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 40),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 2);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
     }
 }
 
@@ -1217,20 +1206,20 @@ void TrajectoryDefinition::checkForwardCollision(
     const float SAFE_ROAD_THRESHOLD = 0.7;      // 70% of zone should be road
     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
 
-    // Display road percentage
-    std::string roadText =
-        "Road: " + std::to_string(int(road_percentage * 100)) + "%" +
-        " Total: " + std::to_string(total_pixels);
-    cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120),
-                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0),
-                2);
+    // // Display road percentage
+    // std::string roadText =
+    //     "Road: " + std::to_string(int(road_percentage * 100)) + "%" +
+    //     " Total: " + std::to_string(total_pixels);
+    // cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120),
+    //             cv::FONT_HERSHEY_SIMPLEX, 0.5,
+    //             danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0),
+    //             2);
 
     if (danger_detected)
     {
         cv::putText(allPolylinesViz_, "OBSTACLE DETECTED!",
                     cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
 
         std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
                      "VEHICLE ***\033[0m"

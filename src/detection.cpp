@@ -46,9 +46,7 @@ void laneDetectionThreadFunction(LaneDetector* detector,
         if (!frame.empty())
         {
             cv::Mat result;
-            std::cout << "Lane before Detected" << std::endl;
             detector->detect(frame, result);
-            std::cout << "Lane Detected" << std::endl;
 
             processor->laneDone(result);
         }
@@ -68,9 +66,7 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
         if (!frame.empty())
         {
             cv::Mat result;
-            std::cout << "Obj before Detected" << std::endl;
             detector->detect(frame, result);
-            std::cout << "Obj Detected" << std::endl;
 
             processor->objectDone(result);
         }   
@@ -130,8 +126,8 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 512;
-    const int width = 256;
+    const int height = 256;
+    const int width = 512;
 
     try
     {
