@@ -171,7 +171,7 @@ int main(int argc, char** argv)
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
             const std::string pipeline =
                 "nvarguscamerasrc sensor-id=0 ! "
-                "video/x-raw(memory:NVMM), width=(int)256, height=(int)128, "
+                "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, "
                 "format=NV12, framerate=(fraction)30/1 ! "
                 "nvvidconv ! video/x-raw, format=BGRx ! "
                 "videoconvert ! video/x-raw, format=BGR ! "
