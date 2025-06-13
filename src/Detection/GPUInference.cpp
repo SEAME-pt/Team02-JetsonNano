@@ -115,15 +115,22 @@ void GPUInference::inference()
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
 {
-    const int plane_size            = height_ * width_;
+    const int plane_size = height_ * width_;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
+    // Match Python's preprocessing: normalize with ImageNet means and stds
+    float means[3] = {0.485f, 0.456f, 0.406f}; // RGB order
+    float stds[3] = {0.229f, 0.224f, 0.225f};  // RGB order
+    
     for (int c = 0; c < inputChannels_; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            inputData[c * plane_size + i] =
-                preprocessedData[i * inputChannels_ + c] / 255.0f;
+            // Convert to [0,1] by dividing by 255
+            float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ - 1 - c)] / 255.0f;
+            
+            // Apply normalization using ImageNet stats (matching Python's transform_pipeline)
+            inputData[c * plane_size + i] = (pixelValue - means[c]) / stds[c];
         }
     }
 
@@ -147,7 +154,7 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
     {
         int y                      = i / width_;
         int x                      = i % width_;
-        uchar value                = (outputData[i] > 0.5) ? 127 : 0;
+        uchar value                = (outputData[i] > 0.5) ? 255 : 0;
         outputMask.at<uchar>(y, x) = value;
     }
 }
