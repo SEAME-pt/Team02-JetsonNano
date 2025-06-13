@@ -62,6 +62,8 @@ public:
 
     void run();
 
+    std::vector<Eigen::Vector4d> predicted_trajectory_;
+
 private:
     //SAE_0
     void manualControl();

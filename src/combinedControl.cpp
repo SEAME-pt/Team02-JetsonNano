@@ -14,6 +14,16 @@ int main(int argc, char** argv)
             return -1;
         }
 
+        double Qx = 1.0, Qy = 1.0, Qpsi = 2.0, Qv = 0.1, Rthrottle = 0.01, Rsteer = 0.1;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "--Qx" && i+1 < argc) Qx = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qy" && i+1 < argc) Qy = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qpsi" && i+1 < argc) Qpsi = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qv" && i+1 < argc) Qv = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rthrottle" && i+1 < argc) Rthrottle = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rsteer" && i+1 < argc) Rsteer = std::stod(argv[++i]);
+        }
+
         std::shared_ptr<zenoh::Session> session;
         if (!configFile.empty()) {
             std::cout << "Using configuration from file: " << configFile << std::endl;
@@ -50,16 +60,16 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = 100.0;
-            Q(1,1) = 100.0;
-            Q(2,2) = 10.0;
-            Q(3,3) = 1.0;
+            Q(0,0) = Qx;
+            Q(1,1) = Qy;
+            Q(2,2) = Qpsi;
+            Q(3,3) = Qv;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = 0.1;
-            R(1,1) = 10.0;       
+            R(0,0) = Rthrottle;
+            R(1,1) = Rsteer;
             
-            Eigen::Matrix4d Qf = Q;
+            Eigen::Matrix4d Qf = 2 * Q;
             pidController.init(kp, ki, kd, constant_throttle, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf);
         } else {
@@ -77,16 +87,16 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = 100.0;
-            Q(1,1) = 100.0;
-            Q(2,2) = 10.0;
-            Q(3,3) = 1.0;
+            Q(0,0) = 1.0 / (25.0 * 25.0);   // x error, expect up to 25 units
+            Q(1,1) = 1.0 / (10.0 * 10.0);   // y error, expect up to 10 units
+            Q(2,2) = 1.0 / (0.05 * 0.05);     // psi error, expect up to 0.5 rad
+            Q(3,3) = 1.0 / (8.0 * 8.0);     // v error, expect up to 8 m/s
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = 0.1;
-            R(1,1) = 10.0;       
-            
-            Eigen::Matrix4d Qf = Q;
+            R(0,0) = 1.0 / (1.0 * 1.0);     // throttle, expect up to 1.0
+            R(1,1) = 1.0 / (0.2 * 0.2);     // steering, expect up to 0.2 rad
+
+            Eigen::Matrix4d Qf = Q * 10;       // Terminal cost, more aggressive
             pidController.init(kp, ki, kd, constant_throttle, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf);
         }

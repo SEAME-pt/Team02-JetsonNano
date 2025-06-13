@@ -64,6 +64,8 @@ class TrajectoryDefinition
 
     const int height_;
     const int width_;
+
+    std::vector<cv::Point> mpcPoints_;
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;
@@ -71,6 +73,7 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
+    std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
 
   public:
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
@@ -104,6 +107,6 @@ class TrajectoryDefinition
     bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishSpeedLock(const std::string &value_str);
 
-    void obstacleAvoidance(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+    void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishCoeffs(std::vector<cv::Point>& curve);
 };

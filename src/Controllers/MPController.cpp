@@ -48,7 +48,8 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(0) = 0;
                 x0(1) = 0;
                 x0(2) = current_steering_;
-                x0(3) = current_speed_;
+                x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+                
                 
                 this->solve(x0, parsed_coeffs);
                 
@@ -120,6 +121,7 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     Q_ = Q;
     R_ = R;
     Qf_ = Qf;
+    desired_speed_ = 8.0;
     
     std::cout << "MPC initialized with horizon=" << N_ 
               << ", wheelbase=" << L_ 
@@ -129,31 +131,53 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
 void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                                          const std::vector<double>& traj_coeffs)
 {
+    static int solve_count = 0;
+    solve_count++;
+    if (solve_count >= 5) exit(0);
+    // Conversion factors
+    const double mx = 6.0 / 800.0; // meters per pixel in x
+    const double my = 7.0 / 600.0; // meters per pixel in y
+
+    // Convert pixel-space coeffs to meter-space coeffs for MPC
+    std::vector<double> meter_coeffs(4);
+    meter_coeffs[0] = mx * traj_coeffs[0];
+    meter_coeffs[1] = mx * traj_coeffs[1] / my;
+    meter_coeffs[2] = mx * traj_coeffs[2] / (my * my);
+    meter_coeffs[3] = mx * traj_coeffs[3] / (my * my * my);
+
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
     double y_ref_current = x0(1);
 
     double v_target = target_velocity_;
 
+    // Reference trajectory in meters
     for (size_t k = 0; k <= N_; ++k)
     {
-        double y = y_ref_current + k * x0(3) * Ts_;
-        double x = traj_coeffs[0] + traj_coeffs[1] * y +
-                   traj_coeffs[2] * y * y + traj_coeffs[3] * y * y * y;
-        double dx_dy = traj_coeffs[1] + 2 * traj_coeffs[2] * y +
-                       3 * traj_coeffs[3] * y * y;
-        double psi = std::atan(dx_dy) +
-                     M_PI / 2.0; // Adjust heading because Y is perpendicular
-        x_ref[k] << x, y, psi, v_target;
+        double v_ref = x0(3) + (v_target - x0(3)) * (static_cast<double>(k) / N_);
+        double y = y_ref_current + k * v_ref * Ts_;
+        double x = meter_coeffs[0] + meter_coeffs[1] * y +
+                   meter_coeffs[2] * y * y + meter_coeffs[3] * y * y * y;
+        double dx_dy = meter_coeffs[1] + 2 * meter_coeffs[2] * y +
+                       3 * meter_coeffs[3] * y * y;
+        double psi = std::atan(dx_dy);
+        x_ref[k] << x, y, psi, v_ref;
     }
-
+    std::cout << "Reference state at step " << N_ << ": "
+              << x_ref[N_].transpose() << std::endl;
+    
     Eigen::VectorXd u_flat = Eigen::VectorXd::Zero(2 * N_);
+
+    for (size_t k = 0; k < N_; ++k) {
+        u_flat(2 * k) = 1;
+        u_flat(2 * k + 1) = 0;
+    }
     double alpha           = 0.1;
-    const int max_iter     = 20;
+    const int max_iter     = 30;
     const double tol       = 1e-4;
 
+    std::vector<Eigen::Vector4d> x_seq(N_ + 1);
     for (int iter = 0; iter < max_iter; ++iter)
     {
-        std::vector<Eigen::Vector4d> x_seq(N_ + 1);
         x_seq[0] = x0;
 
         for (size_t k = 0; k < N_; ++k)
@@ -168,10 +192,13 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         for (size_t k = 0; k < N_; ++k)
         {
             Eigen::Vector4d dx = x_seq[k] - x_ref[k];
+            std::cout << "Error at step " << k << ": "
+                      << dx.transpose() << std::endl;
             grad(2 * k) += 2 * (R_(0, 0) * u_flat(2 * k) + Q_(3, 3) * dx(3));
-            grad(2 * k + 1) +=
-                2 * (R_(1, 1) * u_flat(2 * k + 1) + Q_(2, 2) * dx(2) +
-                     Q_(0, 0) * dx(0) + Q_(1, 1) * dx(1));
+            // grad(2 * k + 1) +=
+            //     2 * (R_(1, 1) * u_flat(2 * k + 1) + Q_(2, 2) * dx(2) +
+            //          Q_(0, 0) * dx(0) + Q_(1, 1) * dx(1));
+            grad(2 * k + 1) += 2 * (R_(1, 1) * u_flat(2 * k + 1) + Q_(2, 2) * dx(2) + Q_(1, 1) * dx(1));
         }
 
         Eigen::Vector4d dxN = x_seq[N_] - x_ref[N_];
@@ -182,23 +209,54 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
         if (grad.norm() < tol)
             break;
-
+        // std::cout << "Iteration " << iter << ", gradient norm: "
+        //           << grad.norm() << std::endl;
         u_flat -= alpha * grad;
+        // std::cout << "Iteration " << iter << ", gradient norm: "
+        //           << u_flat << std::endl;
 
         for (size_t k = 0; k < N_; ++k)
         {
             u_flat(2 * k) =
-                std::max(0.0, std::min(1.0, u_flat(2 * k))); // throttle [0, 1]
+                std::max(0.0, std::min(10.0, u_flat(2 * k)));
             u_flat(2 * k + 1) = std::max(
                 -0.7854,
                 std::min(
                     0.7854,
-                    u_flat(2 * k + 1))); // steering [-45deg, +45deg] in radians
+                    u_flat(2 * k + 1)));
         }
     }
+    predicted_trajectory_ = x_seq;
+
+    // Publish trajectory in pixel coordinates for visualization
+    std::ostringstream oss;
+    for (size_t i = 0; i < x_seq.size(); ++i) {
+        // Convert meters back to pixels
+        double x_pix = x_seq[i](0) / mx;
+        double y_pix = x_seq[i](1) / my;
+        oss << x_pix << "," << y_pix;
+        if (i != x_seq.size() - 1)
+            oss << ";";
+    }
+    std::string trajectory_str = oss.str();
+
+    publisher_->publishMpcTrajectory(trajectory_str);
 
     desired_speed_ = u_flat(0);
     current_steering_ = u_flat(1);
+
+    // std::cout << "MPC solved with desired speed: " 
+    //           << desired_speed_ << ", steering: " 
+    //           << current_steering_ << std::endl;
+
+    double total_error = 0.0;
+    for (size_t k = 0; k < N_; ++k) {
+        Eigen::Vector4d dx = x_seq[k] - x_ref[k];
+        total_error += dx.squaredNorm();
+    }
+    std::cout << "[MPC_SUMMARY] Q=" << Q_(0,0) << "," << Q_(1,1) << "," << Q_(2,2) << "," << Q_(3,3)
+            << " R=" << R_(0,0) << "," << R_(1,1)
+            << " total_error=" << total_error << std::endl;
 }
 
 // Forward Euler discretization
@@ -206,13 +264,23 @@ Eigen::Vector4d
 ModelPredictiveController::backwardEuler(const Eigen::Vector4d& x,
                                          const Eigen::Vector2d& u)
 {
-    double v_next   = x(3) + Ts_ * u(0);
-    double psi_next = x(2) + Ts_ * (v_next / L_) * std::tan(u(1));
-    double Xf_next  = x(0) + Ts_ * v_next * std::cos(psi_next);
-    double Yf_next  = x(1) + Ts_ * v_next * std::sin(psi_next);
+    // double v_next   = x(3) + Ts_ * u(0);
+    // double psi_next = x(2) + Ts_ * (v_next / L_) * std::tan(u(1));
+    // double Xf_next  = x(0) + Ts_ * v_next * std::cos(psi_next);
+    // double Yf_next  = x(1) + Ts_ * v_next * std::sin(psi_next);
+
+
+    double v = x(3);
+    double psi = x(2);
+
+    double v_next   = u(0);
+    double psi_next = psi + Ts_ * (v / L_) * std::tan(u(1));
+    double Xf_next  = x(0) - Ts_ * v * std::sin(psi);
+    double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
 
     Eigen::Vector4d x_next;
     x_next << Xf_next, Yf_next, psi_next, v_next;
+
     return x_next;
 }
 
@@ -316,6 +384,9 @@ void ModelPredictiveController::autonomousControl()
             0 - current_speed_, current_time));
         publisher_->publishCurrentGear(0);
     }
+    std::cout << "MPC control - "
+              << "Current speed: " << current_speed_
+              << ", Steering: " << current_steering_ << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }
