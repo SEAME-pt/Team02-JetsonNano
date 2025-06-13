@@ -1,7 +1,7 @@
 #include "GPUInference.hpp"
 
 GPUInference::GPUInference(const std::string& enginePath, int inputChannels,
-                           int outputChannels)
+                           int outputChannels, int height, int width) : height_(height), width_(width)
 {
     enginePath_     = enginePath;
     inputChannels_  = inputChannels;
@@ -33,19 +33,19 @@ void GPUInference::init()
     // Pin memory for faster transfers
     void* input_ptr;
     void* output_ptr;
-    cudaHostAlloc(&input_ptr, inputChannels_ * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&input_ptr, inputChannels_ * height_ * width_ * sizeof(float),
                   cudaHostAllocMapped);
-    cudaHostAlloc(&output_ptr, outputChannels_ * HEIGHT * WIDTH * sizeof(float),
+    cudaHostAlloc(&output_ptr, outputChannels_ * height_ * width_ * sizeof(float),
                   cudaHostAllocMapped);
     inputData  = static_cast<float*>(input_ptr);
     outputData = static_cast<float*>(output_ptr);
 
     // Allocate GPU memory
     size_t pitch;
-    cudaMallocPitch(&inputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * inputChannels_);
-    cudaMallocPitch(&outputDevice, &pitch, WIDTH * sizeof(float),
-                    HEIGHT * outputChannels_);
+    cudaMallocPitch(&inputDevice, &pitch, width_ * sizeof(float),
+                    height_ * inputChannels_);
+    cudaMallocPitch(&outputDevice, &pitch, width_ * sizeof(float),
+                    height_ * outputChannels_);
 }
 
 void GPUInference::createExecutionContext(const std::string& enginePath)
@@ -115,7 +115,7 @@ void GPUInference::inference()
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
 {
-    const int plane_size            = HEIGHT * WIDTH;
+    const int plane_size            = height_ * width_;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
     for (int c = 0; c < inputChannels_; c++)
@@ -129,24 +129,24 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
 
     // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
-                    inputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    inputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
 }
 
 void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
 {
-    const int total_pixels = HEIGHT * WIDTH;
+    const int total_pixels = height_ * width_;
 
     cudaMemcpyAsync(outputData, outputDevice,
-                    outputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    outputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
             
     cudaStreamSynchronize(stream);
 
     for (int i = 0; i < total_pixels; i++)
     {
-        int y                      = i / WIDTH;
-        int x                      = i % WIDTH;
+        int y                      = i / width_;
+        int x                      = i % width_;
         uchar value                = (outputData[i] > 0.5) ? 127 : 0;
         outputMask.at<uchar>(y, x) = value;
     }
@@ -154,7 +154,7 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
 
 void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
 {
-    const int total_pixels       = HEIGHT * WIDTH;
+    const int total_pixels       = height_ * width_;
     const cv::Scalar color_map[] = {
         cv::Scalar(0, 0, 10),     // Background
         cv::Scalar(128, 64, 128), // Road
@@ -170,7 +170,7 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
 
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
-                    outputChannels_ * HEIGHT * WIDTH * sizeof(float),
+                    outputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
 
     cudaStreamSynchronize(stream);
@@ -198,8 +198,8 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
         }
 
         // Map pixel coordinates (i) back to x,y
-        int y = i / WIDTH;
-        int x = i % WIDTH;
+        int y = i / width_;
+        int x = i % width_;
 
         // Set pixel color based on class
         outputMask.at<cv::Vec3b>(y, x) =
