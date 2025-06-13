@@ -1,6 +1,10 @@
 #include "SynchronizedProcessor.hpp"
 
-SynchronizedProcessor::SynchronizedProcessor() {}
+SynchronizedProcessor::SynchronizedProcessor() 
+{
+    std::lock_guard<std::mutex> lock(sync_mutex);
+    current_frame = cv::Mat();
+}
 
 SynchronizedProcessor::~SynchronizedProcessor() {}
 
