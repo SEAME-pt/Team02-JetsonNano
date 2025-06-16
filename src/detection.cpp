@@ -126,8 +126,10 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 256;
-    const int width = 512;
+    // const int height = 512;
+    // const int width = 1024;
+    const int height = 128;
+    const int width = 256;
 
     try
     {
@@ -150,16 +152,17 @@ int main(int argc, char** argv)
         else {
             std::cout << "Using default configuration" << std::endl;
             auto config = Config::create_default();
-            config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
-            config.insert_json5("connect/endpoints", "[\"udp/127.0.0.1:7447\"]");
-            // config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
-            // config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
+            // config.insert_json5("listen/endpoints", "[\"udp/100.73.255.97:7450\"]");
+            // config.insert_json5("connect/endpoints", "[\"udp/100.73.255.97:7447\"]");
+            // config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
+            // config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
+            config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
+            config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
             session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
-
+        
         SynchronizedProcessor processor;
-
         Camera camera(session);
         TrajectoryDefinition trajectoryDefinition(session, height, width);
 
@@ -174,14 +177,14 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo2_epoch_45.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob1_epoch_48.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_MOB_1_epoch_133.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
-            laneDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/LaneDetection/Models/engine/lane_Yolo_Carla4_epoch_25.engine";
-            objDetectionFile = "/home/luis_t2/SEAME/Team02-Course/MachineLearning/ObjectDetection/Models/engine/obj_YOLO_Carla2_epoch_95.engine";
+            laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla3_epoch_16.engine";
+            objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, height, width);
