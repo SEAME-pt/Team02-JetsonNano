@@ -52,6 +52,10 @@ private:
     Eigen::Matrix4d Qf_; //terminal cost (outside steps)
 
     std::vector<double> trajectoryCoeffs;
+    Eigen::VectorXd last_u_flat_;    // size = 2*N_
+    double tau_v_ = 1.0;
+    
+    double w_ddelta_base_ = 250.0; // base weight for steering changes
 
 public:
     ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);

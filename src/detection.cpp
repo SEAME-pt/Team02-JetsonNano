@@ -185,8 +185,8 @@ int main(int argc, char** argv)
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
-            laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla_epoch_50.engine";
-            objDetectionFile = "/home/jorge/Downloads/obj_MOB_1_epoch_133.engine";
+            laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla3_epoch_16.engine";
+            objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, height, width);
