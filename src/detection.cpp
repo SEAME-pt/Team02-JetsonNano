@@ -95,6 +95,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             cv::imencode(".jpg", new_frame, buffer_ipm_frame, params_ipm);
             
             // trajectoryDef->publishIPMFrame(std::string(buffer_ipm_frame.begin(), buffer_ipm_frame.end()));
+            trajectoryDef->ipm_frame_publisher_->put(buffer_ipm_frame);
     
             std::vector<uchar> buffer_original_frame;
             std::vector<int> params_org_frame = {cv::IMWRITE_JPEG_QUALITY, 20};
