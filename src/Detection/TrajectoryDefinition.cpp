@@ -46,8 +46,8 @@ TrajectoryDefinition::TrajectoryDefinition(
                     double x = std::stod(x_str);
                     double y = std::stod(y_str);
                     // Convert from MPC coordinates to image coordinates if needed
-                    int x_img = static_cast<int>(x + 400);      // Undo x shift
-                    int y_img = static_cast<int>(600.0 - y);    // Undo y flip/shift
+                    int x_img = static_cast<int>(x + width_/2);      // Undo x shift
+                    int y_img = static_cast<int>(height_ - y);    // Undo y flip/shift
                     points.emplace_back(x_img, y_img);
                 }
             }
@@ -165,7 +165,7 @@ void TrajectoryDefinition::initCarlaEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(800, 600, 8);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 8);
     }
     catch (const std::exception& e)
     {
@@ -257,12 +257,12 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     // checkForwardCollision(class_mask, midCurve);
 
     // Draw the predicted trajectory as a green polyline
-    // if (mpcPoints_.size() > 1) {
-    //     for (size_t i = 1; i < mpcPoints_.size(); ++i) {
-    //         std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
-    //         cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
-    //     }
-    // }
+    if (mpcPoints_.size() > 1) {
+        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
+            std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
+            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
+        }
+    }
 
     allPolylinesViz_.copyTo(frame);
 }
@@ -1344,8 +1344,8 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
     cv::Mat coeffs;
     for (const auto& pt : curve)
     {
-        double y_prime = 600.0 - static_cast<double>(pt.y);   // Flip and shift y
-        double x_prime = static_cast<double>(pt.x) - 400;   // Shift x
+        double y_prime = height_ - static_cast<double>(pt.y);   // Flip and shift y
+        double x_prime = static_cast<double>(pt.x) - width_/2;   // Shift x
         y_values.push_back(y_prime);
         x_values.push_back(x_prime);
     }
