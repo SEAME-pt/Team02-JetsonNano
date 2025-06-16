@@ -1,9 +1,9 @@
 #pragma once
 
 #include "opencv2/opencv.hpp"
-#include <opencv2/cudawarping.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/core/cuda.hpp>
+// #include <opencv2/cudawarping.hpp>
+// #include <opencv2/cudaimgproc.hpp>
+// #include <opencv2/core/cuda.hpp>
 #include "cuda.h"
 #include "NvInfer.h"
 #include "NvOnnxParser.h"
@@ -24,6 +24,10 @@
 #include "LaneDetectorPublisher.hpp"
 #include "KalmanFilter.hpp"
 #include "GPUInference.hpp"
+#include "ObstacleAvoidance.hpp"
+
+#define WIDTH 256
+#define HEIGHT 128
 
 class TrajectoryDefinition
 {
@@ -31,11 +35,12 @@ class TrajectoryDefinition
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
 
-    cv::cuda::Stream cv_stream;
+    // cv::cuda::Stream cv_stream;
   
     CAN* canBus;
     KalmanFilter* kalmanFilter;
     IPM* ipm;
+    ObstacleAvoidance* avoidance;
   
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
@@ -59,6 +64,8 @@ class TrajectoryDefinition
 
     const int height_;
     const int width_;
+
+    std::vector<cv::Point> mpcPoints_;
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;
@@ -66,6 +73,7 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
+    std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
 
   public:
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
@@ -100,7 +108,9 @@ class TrajectoryDefinition
     void createMidPointError(std::vector<cv::Point>& midCurve);  
     void defineLanePolyline(std::vector<cv::Point>& curve);
     
-    void checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+    bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishSpeedLock(const std::string &value_str);
-    void publishCoeffs(const std::string &value_str);
+
+    void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+    void publishCoeffs(std::vector<cv::Point>& curve);
 };

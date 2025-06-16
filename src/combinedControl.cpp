@@ -13,6 +13,16 @@ int main(int argc, char** argv)
         if (!parseParameters(argc, argv, configFile, mode)) {
             return -1;
         }
+        
+        double Qx = 100.0, Qy = 250.0, Qpsi = 50.0, Qv = 250.0, Rthrottle = 20.0, Rsteer = 200.0;
+        for (int i = 1; i < argc; ++i) {
+            if (std::string(argv[i]) == "--Qx" && i+1 < argc) Qx = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qy" && i+1 < argc) Qy = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qpsi" && i+1 < argc) Qpsi = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qv" && i+1 < argc) Qv = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rthrottle" && i+1 < argc) Rthrottle = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rsteer" && i+1 < argc) Rsteer = std::stod(argv[++i]);
+        }
 
         std::shared_ptr<zenoh::Session> session;
         if (!configFile.empty()) {
@@ -50,16 +60,16 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = 100.0;
-            Q(1,1) = 100.0;
-            Q(2,2) = 10.0;
-            Q(3,3) = 1.0;
+            Q(0,0) = Qx;
+            Q(1,1) = Qy;
+            Q(2,2) = Qpsi;
+            Q(3,3) = Qv;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = 0.1;
-            R(1,1) = 10.0;       
+            R(0,0) = Rthrottle;
+            R(1,1) = Rsteer;
             
-            Eigen::Matrix4d Qf = Q;
+            Eigen::Matrix4d Qf = 5 * Q;
             pidController.init(kp, ki, kd, constant_throttle, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf);
         } else {
@@ -77,16 +87,16 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = 100.0;
-            Q(1,1) = 100.0;
-            Q(2,2) = 10.0;
-            Q(3,3) = 1.0;
+            Q(0,0) = Qx;
+            Q(1,1) = Qy;
+            Q(2,2) = Qpsi;
+            Q(3,3) = Qv;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = 0.1;
-            R(1,1) = 10.0;       
-            
-            Eigen::Matrix4d Qf = Q;
+            R(0,0) = Rthrottle;
+            R(1,1) = Rsteer;
+
+            Eigen::Matrix4d Qf = Q * 5;       // Terminal cost, more aggressive
             pidController.init(kp, ki, kd, constant_throttle, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf);
         }

@@ -9,7 +9,7 @@ static double getCurrentTime()
 
 ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
-    fixed_delta_time_   = 0.02f;
+    fixed_delta_time_   = 0.05f;
     autonomousDrive_    = "SAE_0";
     speed_lock_         = false;
     xboxController_     = xbox_controller;
@@ -48,7 +48,8 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(0) = 0;
                 x0(1) = 0;
                 x0(2) = current_steering_;
-                x0(3) = current_speed_;
+                x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+                
                 
                 this->solve(x0, parsed_coeffs);
                 
@@ -120,99 +121,213 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     Q_ = Q;
     R_ = R;
     Qf_ = Qf;
+    desired_speed_ = 8.0;
+
+    last_u_flat_.setConstant(2*N_, 0.0);
     
     std::cout << "MPC initialized with horizon=" << N_ 
               << ", wheelbase=" << L_ 
               << ", timestep=" << Ts_ << std::endl;
 }
 
+
+
 void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                                          const std::vector<double>& traj_coeffs)
 {
+    // static int solve_count = 0;
+    // if (++solve_count >= 2) exit(0);
+
+    // Conversion factors
+    const double mx         = 6.0 / 1024.0;  // meters per pixel in x
+    const double my         = 7.0 / 512.0;   // meters per pixel in y
+
+    // Convert pixel-space trajectory coeffs to meter-space
+    std::vector<double> meter_coeffs(4);
+
+    // const double image_width_px = 1024.0;
+    // const double center_x_px = image_width_px / 2.0;
+    // meter_coeffs[0] = mx * (traj_coeffs[0] - center_x_px);
+    meter_coeffs[0] = mx * traj_coeffs[0];
+    meter_coeffs[1] = mx * traj_coeffs[1] / my;
+    meter_coeffs[2] = mx * traj_coeffs[2] / (my * my);
+    meter_coeffs[3] = mx * traj_coeffs[3] / (my * my * my);
+
+    // Build reference trajectory in meter-space
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
-    double y_ref_current = x0(1);
-
-    double v_target = target_velocity_;
-
-    for (size_t k = 0; k <= N_; ++k)
-    {
-        double y = y_ref_current + k * x0(3) * Ts_;
-        double x = traj_coeffs[0] + traj_coeffs[1] * y +
-                   traj_coeffs[2] * y * y + traj_coeffs[3] * y * y * y;
-        double dx_dy = traj_coeffs[1] + 2 * traj_coeffs[2] * y +
-                       3 * traj_coeffs[3] * y * y;
-        double psi = std::atan(dx_dy) +
-                     M_PI / 2.0; // Adjust heading because Y is perpendicular
-        x_ref[k] << x, y, psi, v_target;
+    const double v_init = x0(3);
+    for (size_t k = 0; k <= N_; ++k) {
+        double v_ref = v_init + (target_velocity_ - v_init) * double(k) / N_;
+        double y_ref = x0(1) + k * v_ref * Ts_;
+        double x_ref_m = meter_coeffs[0]
+                       + meter_coeffs[1] * y_ref
+                       + meter_coeffs[2] * y_ref * y_ref
+                       + meter_coeffs[3] * y_ref * y_ref * y_ref;
+        double dx_dy = meter_coeffs[1] + 2 * meter_coeffs[2] * y_ref +
+               3 * meter_coeffs[3] * y_ref * y_ref;
+        double psi_ref = std::atan(dx_dy);
+        x_ref[k] << x_ref_m, y_ref, psi_ref, v_ref;
     }
+    // std::cout << "Reference state at step " << N_ << ": "
+    //           << x_ref[N_].transpose() << std::endl;
 
-    Eigen::VectorXd u_flat = Eigen::VectorXd::Zero(2 * N_);
-    double alpha           = 0.1;
-    const int max_iter     = 20;
-    const double tol       = 1e-4;
+    // 3.1) warm‐start u_flat from last cycle:
+    Eigen::VectorXd u_flat(2*N_);
+    // shift everything by one step
+    for (size_t k = 0; k < N_-1; ++k) {
+        u_flat(2*k)     = last_u_flat_(2*(k+1));
+        u_flat(2*k + 1) = last_u_flat_(2*(k+1) + 1);
+    }
+    // append [v_target, 0]
+    u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
+    u_flat(2*(N_-1) + 1) = 0.0;
 
-    for (int iter = 0; iter < max_iter; ++iter)
-    {
-        std::vector<Eigen::Vector4d> x_seq(N_ + 1);
+    // lambda to compute cost for any u_try
+    auto computeCost = [&](const Eigen::VectorXd& u_try) {
+        // rollout with backwardEuler and sum dxᵀQdx + uᵀRu
+        std::vector<Eigen::Vector4d> x_seq(N_+1);
         x_seq[0] = x0;
+        double J = 0.0;
+        
+        for (size_t k = 0; k < N_; ++k) {
+            Eigen::Vector2d uk; uk << u_try(2*k), u_try(2*k+1);
+            x_seq[k+1] = backwardEuler(x_seq[k], uk);
 
-        for (size_t k = 0; k < N_; ++k)
-        {
-            Eigen::Vector2d u_k;
-            u_k << u_flat(2 * k), u_flat(2 * k + 1);
-            x_seq[k + 1] = backwardEuler(x_seq[k], u_k);
-        }
-
-        Eigen::VectorXd grad = Eigen::VectorXd::Zero(2 * N_);
-
-        for (size_t k = 0; k < N_; ++k)
-        {
             Eigen::Vector4d dx = x_seq[k] - x_ref[k];
-            grad(2 * k) += 2 * (R_(0, 0) * u_flat(2 * k) + Q_(3, 3) * dx(3));
-            grad(2 * k + 1) +=
-                2 * (R_(1, 1) * u_flat(2 * k + 1) + Q_(2, 2) * dx(2) +
-                     Q_(0, 0) * dx(0) + Q_(1, 1) * dx(1));
-        }
+            J += dx.transpose()*Q_*dx;
+            J += uk.transpose()*R_*uk;
+            
+            // add Δu cost:
+            Eigen::Vector2d uk_prev = (k==0)
+            ? Eigen::Vector2d{x0(3), current_steering_}
+            : Eigen::Vector2d{u_try(2*(k-1)), u_try(2*(k-1)+1)};
+            
+            // compute Δu
+            Eigen::Vector2d du = uk - uk_prev;
+            
+            // compute speed‐adaptive steering smoothness weight:
+            double v_k       = x_seq[k][3];   // predicted speed at step k
+            // std::cout << "v_k: " << v_k << std::endl;
+            double speed_frac = std::clamp(v_k / 10 * 500, 0.0, 700.0);
+            // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
+            double w_dv     = 1 + speed_frac;   // keep throttle pretty free
+            double w_ddelta  = w_ddelta_base_ + speed_frac;
+            // std::cout << "w_ddelta: " << w_ddelta << std::endl;
 
+            // add the Δu cost:
+            J += w_dv     * du(0) * du(0)
+                + w_ddelta * du(1) * du(1);
+        }
+        // terminal cost
         Eigen::Vector4d dxN = x_seq[N_] - x_ref[N_];
-        grad(2 * (N_ - 1)) +=
-            2 * (Qf_(3, 3) * dxN(3) + Qf_(0, 0) * dxN(0) + Qf_(1, 1) * dxN(1));
-        grad(2 * (N_ - 1) + 1) +=
-            2 * (Qf_(2, 2) * dxN(2) + Qf_(0, 0) * dxN(0) + Qf_(1, 1) * dxN(1));
+        J += dxN.transpose()*Qf_*dxN;
+        return J;
+    };
 
-        if (grad.norm() < tol)
-            break;
+    // 3.2) gradient‐descent with backtracking line-search
+    const double tol = 1e-4;
+    const int    max_iter = 20;
+    double alpha0 = 0.1, beta = 0.5;
+    Eigen::VectorXd grad(2*N_);
 
-        u_flat -= alpha * grad;
+    // initial cost
+    double J_curr = computeCost(u_flat);
 
-        for (size_t k = 0; k < N_; ++k)
-        {
-            u_flat(2 * k) =
-                std::max(0.0, std::min(1.0, u_flat(2 * k))); // throttle [0, 1]
-            u_flat(2 * k + 1) = std::max(
-                -0.7854,
-                std::min(
-                    0.7854,
-                    u_flat(2 * k + 1))); // steering [-45deg, +45deg] in radians
+    for (int iter=0; iter<max_iter; ++iter) {
+        // finite-difference gradient
+        const double eps = 1e-3;
+        for (int i=0; i<2*(int)N_; ++i) {
+        Eigen::VectorXd up = u_flat, um = u_flat;
+        up(i) += eps;  um(i) -= eps;
+        grad(i) = (computeCost(up) - computeCost(um)) / (2*eps);
         }
+        if (grad.norm()<tol) break;
+
+        // backtracking line-search
+        double alpha = alpha0;
+        Eigen::VectorXd u_next(2*N_);
+        double J_next;
+        while (true) {
+        u_next = u_flat - alpha * grad;
+        // clamp
+        for (size_t k=0; k<N_; ++k) {
+            u_next(2*k)     = std::clamp(u_next(2*k),     0.0, 10.0);
+            u_next(2*k+1)   = std::clamp(u_next(2*k+1),  -0.7854, 0.7854);
+        }
+        J_next = computeCost(u_next);
+        if (J_next < J_curr || alpha < 1e-6) break;
+        alpha *= beta;
+        }
+        u_flat = u_next;
+        J_curr = J_next;
     }
 
-    desired_speed_ = u_flat(0);
-    current_steering_ = u_flat(1);
+    // store for next warm‐start
+    last_u_flat_ = u_flat;
+
+    // final rollout for predicted trajectory
+    std::vector<Eigen::Vector4d> x_seq(N_ + 1);
+    x_seq[0] = x0;
+    for (size_t k = 0; k < N_; ++k) {
+        Eigen::Vector2d u_k;
+        u_k << u_flat(2*k), u_flat(2*k+1);
+        x_seq[k+1] = backwardEuler(x_seq[k], u_k);
+    }
+    predicted_trajectory_ = x_seq;
+
+    // publish trajectory in pixel coordinates
+    std::ostringstream oss;
+    for (size_t i = 0; i < x_seq.size(); ++i) {
+        double x_pix = x_seq[i](0) / mx;
+        double y_pix = x_seq[i](1) / my;
+        oss << x_pix << "," << y_pix;
+        if (i + 1 < x_seq.size()) oss << ";";
+    }
+    publisher_->publishMpcTrajectory(oss.str());
+
+    // set outputs
+    desired_speed_     = u_flat(0);
+    current_steering_  = u_flat(1);
+
+    std::cout << "Speed: " << desired_speed_
+              << ", Steering: " << current_steering_ << std::endl;
+
+    // summary
+    // double total_error = 0.0;
+    // for (size_t k = 0; k < N_; ++k) {
+    //     Eigen::Vector4d dx = x_seq[k] - x_ref[k];
+    //     total_error += dx.squaredNorm();
+    // }
+    // std::cout << "[MPC_SUMMARY] Q="
+    //           << Q_(0,0) << "," << Q_(1,1) << ","
+    //           << Q_(2,2) << "," << Q_(3,3)
+    //           << " R=" << R_(0,0) << "," << R_(1,1)
+    //           << " total_error=" << total_error << std::endl;
 }
 
-// Forward Euler discretization
+
+// // Forward Euler discretization
 Eigen::Vector4d
 ModelPredictiveController::backwardEuler(const Eigen::Vector4d& x,
                                          const Eigen::Vector2d& u)
 {
-    double v_next   = x(3) + Ts_ * u(0);
-    double psi_next = x(2) + Ts_ * (v_next / L_) * std::tan(u(1));
-    double Xf_next  = x(0) + Ts_ * v_next * std::cos(psi_next);
-    double Yf_next  = x(1) + Ts_ * v_next * std::sin(psi_next);
+    // double v_next   = x(3) + Ts_ * u(0);
+    // double psi_next = x(2) + Ts_ * (v_next / L_) * std::tan(u(1));
+    // double Xf_next  = x(0) + Ts_ * v_next * std::cos(psi_next);
+    // double Yf_next  = x(1) + Ts_ * v_next * std::sin(psi_next);
+
+
+    double v = x(3);
+    double psi = x(2);
+
+    double v_next   = u(0);
+    double psi_next = psi + Ts_ * (v / L_) * std::tan(u(1));
+    double Xf_next  = x(0) + Ts_ * v * std::sin(psi);
+    double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
 
     Eigen::Vector4d x_next;
     x_next << Xf_next, Yf_next, psi_next, v_next;
+
     return x_next;
 }
 
@@ -232,6 +347,10 @@ void ModelPredictiveController::manualControl()
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
+    std::cout << "Manual control - "
+              << "Current speed: " << current_speed_
+              << ", Steering: " << manual_steering
+              << ", Manual speed: " << manual_speed << std::endl;
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
     else
@@ -302,8 +421,9 @@ void ModelPredictiveController::conditionalAutomation()
 void ModelPredictiveController::autonomousControl()
 {
     double current_time   = getCurrentTime();
+    double steering = current_steering_ *180 / M_PI + 90;
 
-    publisher_->publishSteering(current_steering_);
+    publisher_->publishSteering(steering);
     if (!this->speed_lock_)
     {
         publisher_->publishSpeed(speedPidController_->speedPID(
@@ -316,6 +436,9 @@ void ModelPredictiveController::autonomousControl()
             0 - current_speed_, current_time));
         publisher_->publishCurrentGear(0);
     }
+    std::cout << "MPC control - "
+              << "Current speed: " << current_speed_
+              << ", Steering: " << steering << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }

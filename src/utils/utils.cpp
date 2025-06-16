@@ -33,11 +33,11 @@ bool parseParameters(int argc, char** argv, std::string& configFile, std::string
                 return false;
             }
         }
-        else {
-            std::cerr << "Unknown argument: " << arg << std::endl;
-            std::cerr << "Usage: " << argv[0] << " [--config/-C <config_file>] [--mode/-M <local|carla>]" << std::endl;
-            return false;
-        }
+        // else {
+        //     std::cerr << "Unknown argument: " << arg << std::endl;
+        //     std::cerr << "Usage: " << argv[0] << " [--config/-C <config_file>] [--mode/-M <local|carla>]" << std::endl;
+        //     return false;
+        // }
     }
     
     return true;

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "opencv2/opencv.hpp"
-#include <opencv2/cudawarping.hpp>
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/core/cuda.hpp>
+// #include <opencv2/cudawarping.hpp>
+// #include <opencv2/cudaimgproc.hpp>
+// #include <opencv2/core/cuda.hpp>
 #include "cuda.h"
 #include <iostream>
 #include <memory>
@@ -15,7 +15,7 @@
 class LaneDetector
 {
   private:
-    cv::cuda::Stream cv_stream;
+    // cv::cuda::Stream cv_stream;
     GPUInference* gpuInference;
 
     const int height_;

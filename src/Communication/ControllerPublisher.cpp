@@ -33,6 +33,9 @@ ControllerPublisher::ControllerPublisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/Transmission/CurrentGear")));
     activeAutonomyLevel_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/ActiveAutonomyLevel")));
+
+    mpcTrajectory_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/ADAS/MPC/Trajectory")));
 }
 
 void ControllerPublisher::publishSpeed(float speed)
@@ -187,4 +190,16 @@ void ControllerPublisher::publishActiveAutonomyLevel(std::string level)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     activeAutonomyLevel_pub->put(std::move(buf));
+}
+
+void ControllerPublisher::publishMpcTrajectory(
+    const std::string trajectory)
+{
+    std::string value_str = trajectory;
+    const auto len        = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    mpcTrajectory_pub->put(std::move(buf));
 }

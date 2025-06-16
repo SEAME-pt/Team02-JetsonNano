@@ -44,6 +44,7 @@ class ControllerPublisher
     void publishDirectionIndicatorRight(bool isSignaling);
     void publishCurrentGear(int gear);
     void publishActiveAutonomyLevel(std::string level);
+    void publishMpcTrajectory(const std::string trajectory);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
@@ -62,4 +63,5 @@ class ControllerPublisher
     std::optional<zenoh::Publisher> directionIndicatorRight_pub;
     std::optional<zenoh::Publisher> currentGear_pub;
     std::optional<zenoh::Publisher> activeAutonomyLevel_pub;
+    std::optional<zenoh::Publisher> mpcTrajectory_pub;
 };
