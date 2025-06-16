@@ -15,6 +15,14 @@ using namespace zenoh;
 
 std::atomic<bool> running(true);
 
+
+static double getCurrentTime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
 void signalHandler(int signum)
 {
     std::cout << "Interrupt signal (" << signum << ") received.\n";
@@ -83,9 +91,10 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 
     while (running)
     {
+        double time = getCurrentTime();
         processor->getProcessingData(original_frame, lane_mask, object_mask);
-
-
+        std::cout << "1: " << getCurrentTime() - time << std::endl;
+        double time = getCurrentTime();
         if (!original_frame.empty() && !lane_mask.empty() && !object_mask.empty()) 
         {
             cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
@@ -119,6 +128,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
+        std::cout << "2: " << getCurrentTime() - time << std::endl;
     }
 }
 
