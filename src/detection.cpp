@@ -130,8 +130,10 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 512;
-    const int width = 1024;
+    // const int height = 512;
+    // const int width = 1024;
+    const int height = 128;
+    const int width = 256;
 
     try
     {
