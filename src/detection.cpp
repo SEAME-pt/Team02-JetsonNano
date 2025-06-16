@@ -179,8 +179,8 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_Carla3_epoch_16.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_YOLO_Carla1_epoch_75.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo2_epoch_45.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_MOB_1_epoch_133.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
