@@ -237,18 +237,19 @@ void PidController::autonomousControl()
     float direction = steeringPID(cameraError_, current_time);
 
     publisher_->publishSteering(direction);
-    if (!this->speed_lock_)
-    {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            constant_speed_ - current_speed_, current_time));
-        publisher_->publishCurrentGear(1);
-    }
-    else
-    {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            0 - current_speed_, current_time));
-        publisher_->publishCurrentGear(0);
-    }
+    publisher_->publishSpeed(xboxController_->getManualSpeed());
+    // if (!this->speed_lock_)
+    // {
+    //     publisher_->publishSpeed(speedPidController_->speedPID(
+    //         constant_speed_ - current_speed_, current_time));
+    //     publisher_->publishCurrentGear(1);
+    // }
+    // else
+    // {
+    //     publisher_->publishSpeed(speedPidController_->speedPID(
+    //         0 - current_speed_, current_time));
+    //     publisher_->publishCurrentGear(0);
+    // }
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }
