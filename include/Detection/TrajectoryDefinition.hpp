@@ -83,6 +83,10 @@ class TrajectoryDefinition
     void initCarlaEnv();
 
     cv::Mat process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
+    void publishIPMFrame(const std::string& value_str);
+    void publishOrigFrame(const std::string& value_str);
+    void publishBinMask(const std::string& value_str);
+    void publishClassMask(const std::string& value_str);
   private:
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
