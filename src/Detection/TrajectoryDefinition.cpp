@@ -441,7 +441,7 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 100)
+        if (lanePolylines[i].size() < 10)
             lanePolylines.erase(lanePolylines.begin() + i);
     }
 
