@@ -154,12 +154,12 @@ int main(int argc, char** argv)
         else {
             std::cout << "Using default configuration" << std::endl;
             auto config = Config::create_default();
-            config.insert_json5("listen/endpoints", "[\"udp/100.73.255.97:7450\"]");
-            config.insert_json5("connect/endpoints", "[\"udp/100.73.255.97:7447\"]");
+            // config.insert_json5("listen/endpoints", "[\"udp/100.73.255.97:7450\"]");
+            // config.insert_json5("connect/endpoints", "[\"udp/100.73.255.97:7447\"]");
             // config.insert_json5("listen/endpoints", "[\"udp/100.117.122.95:7450\"]");
             // config.insert_json5("connect/endpoints", "[\"udp/100.117.122.95:7447\"]");
-            // config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
-            // config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
+            config.insert_json5("listen/endpoints", "[\"udp/100.119.72.83:7450\"]");
+            config.insert_json5("connect/endpoints", "[\"udp/100.119.72.83:7447\"]");
             session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
         }
