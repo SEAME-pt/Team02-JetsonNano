@@ -93,15 +93,15 @@ void TrajectoryDefinition::initLocalEnv() {
         float cameraHeight = 0.137f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
         float horizontalFOV = 100.0f;     // degrees
-        float img_height = static_cast<float>(height_);
-        float img_width = static_cast<float>(width_);
+        float img_height = static_cast<float>(600);
+        float img_width = static_cast<float>(800);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 0.01f;       // meters
         float farDistance = 0.45f;       // meters
         float laneWidth = 1.4f;      // meters
-        cv::Size bevSize = cv::Size(width_, height_);
-        cv::Size origSize = cv::Size(width_, height_);
+        cv::Size bevSize = cv::Size(800, 600);
+        cv::Size origSize = cv::Size(800, 600);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
@@ -147,7 +147,7 @@ void TrajectoryDefinition::initCarlaEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.0f;       // meters
-        float farDistance = 8.0f;       // meters
+        float farDistance = 12.0f;       // meters
         float laneWidth = 6.0f;          // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
@@ -214,12 +214,13 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameHeight_     = frame.rows;
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
+
+    // drawPolyLanes(lanePolylines);
     
     float maxHorizontalDistance = frameWidth_ * 0.05;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.35; // 35% of frame height
+    float maxVerticalGap        = frameHeight_ * 0.15; // 35% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
-    // drawPolyLanes(lanePolylines);
 
     if (lanePolylines.size() == 2)
     {
@@ -505,9 +506,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 3);
         cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     }
     else
     {
@@ -524,9 +525,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 255, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 3);
         cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     }
 }
 
@@ -901,36 +902,24 @@ void TrajectoryDefinition::drawPolyLanes(
     std::vector<cv::Scalar> colors = {
         cv::Scalar(255, 0, 0),   // Blue
         cv::Scalar(0, 255, 0),   // Green
-        cv::Scalar(0, 0, 255),   // Red
         cv::Scalar(255, 255, 0), // Cyan
         cv::Scalar(255, 0, 255), // Magenta
-        cv::Scalar(0, 255, 255)  // Yellow
+        cv::Scalar(0, 255, 255),  // Yellow
+        cv::Scalar(0, 0, 255)   // Red
     };
 
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
+        defineLanePolyline(lanePolylines[i]);
+
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
         {
             cv::line(allPolylinesViz_, lanePolylines[i][j - 1],
-                     lanePolylines[i][j], color, 10);
-        }
-
-        // Add a label for each polyline
-        if (!lanePolylines[i].empty())
-        {
-            std::string label = "Lane " + std::to_string(i + 1);
-            cv::putText(allPolylinesViz_, label, lanePolylines[i][0],
-                        cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
+                     lanePolylines[i][j], color, 3);
         }
     }
-
-    // Display the number of polylines found
-    std::string countText =
-        "Polylines: " + std::to_string(lanePolylines.size());
-    cv::putText(allPolylinesViz_, countText, cv::Point(20, 30),
-                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
 }
 
 void TrajectoryDefinition::defineLanePolyline(
@@ -1046,7 +1035,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
         std::string statusMsg =
             "Error: " + std::to_string(lateralError).substr(0, 6);
         cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 40),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 2);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
     }
 }
 
@@ -1275,20 +1264,20 @@ bool TrajectoryDefinition::checkForwardCollision(
     const float SAFE_ROAD_THRESHOLD = 0.7;      // 70% of zone should be road
     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
 
-    // Display road percentage
-    std::string roadText =
-        "Road: " + std::to_string(int(road_percentage * 100)) + "%" +
-        " Total: " + std::to_string(total_pixels);
-    cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120),
-                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0),
-                2);
+    // // Display road percentage
+    // std::string roadText =
+    //     "Road: " + std::to_string(int(road_percentage * 100)) + "%" +
+    //     " Total: " + std::to_string(total_pixels);
+    // cv::putText(allPolylinesViz_, roadText, cv::Point(20, 120),
+    //             cv::FONT_HERSHEY_SIMPLEX, 0.5,
+    //             danger_detected ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0),
+    //             2);
 
     if (danger_detected)
     {
         cv::putText(allPolylinesViz_, "OBSTACLE DETECTED!",
                     cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
 
         std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
                      "VEHICLE ***\033[0m"
@@ -1424,4 +1413,84 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
     }
 
 
+}
+
+void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    ipm_frame_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishOrigFrame(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    frame_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishBinMask(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    lane_mask_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishClassMask(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    class_mask_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    ipm_frame_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishOrigFrame(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    frame_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishBinMask(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    lane_mask_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishClassMask(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    class_mask_publisher_->put(std::move(buf));
 }
