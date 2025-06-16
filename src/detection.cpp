@@ -94,7 +94,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         double time = getCurrentTime();
         processor->getProcessingData(original_frame, lane_mask, object_mask);
         std::cout << "1: " << getCurrentTime() - time << std::endl;
-        double time = getCurrentTime();
+        time = getCurrentTime();
         if (!original_frame.empty() && !lane_mask.empty() && !object_mask.empty()) 
         {
             cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
