@@ -207,12 +207,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             
             // compute speed‐adaptive steering smoothness weight:
             double v_k       = x_seq[k][3];   // predicted speed at step k
-            std::cout << "v_k: " << v_k << std::endl;
+            // std::cout << "v_k: " << v_k << std::endl;
             double speed_frac = std::clamp(v_k / 10 * 500, 0.0, 700.0);
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
             double w_ddelta  = w_ddelta_base_ + speed_frac;
-            std::cout << "w_ddelta: " << w_ddelta << std::endl;
+            // std::cout << "w_ddelta: " << w_ddelta << std::endl;
 
             // add the Δu cost:
             J += w_dv     * du(0) * du(0)
