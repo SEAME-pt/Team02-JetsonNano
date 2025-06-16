@@ -447,47 +447,12 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     if (lanePolylines.size() > 2)
     {
-        if (!prevLeftCurve.empty() && !prevRightCurve.empty())
-        {
-            std::vector<std::tuple<int, float>> laneScores;
-            laneScores.reserve(lanePolylines.size());
-            
-            for (size_t i = 0; i < lanePolylines.size(); i++)
-            {
-                float distToLeft = calculateLaneDistance(lanePolylines[i], prevLeftCurve);
-                float distToRight = calculateLaneDistance(lanePolylines[i], prevRightCurve);
-                
-                float score = std::min(distToLeft, distToRight);
-                laneScores.push_back(std::make_tuple(i, score));
-                
-            }
-            
-            std::sort(laneScores.begin(), laneScores.end(),
-                    [](const std::tuple<int, float>& a, const std::tuple<int, float>& b) {
-                        return std::get<1>(a) < std::get<1>(b);
-                    });
-            
-            std::vector<std::vector<cv::Point>> bestLanes;
-            bestLanes.reserve(2);
-            
-            // Take the best 2 lanes
-            for (size_t i = 0; i < 2 && i < laneScores.size(); i++)
-            {
-                int laneIdx = std::get<0>(laneScores[i]);
-                bestLanes.push_back(lanePolylines[laneIdx]);
-            }
-            
-            lanePolylines = std::move(bestLanes);
-        }
-        else
-        {
-            lanePolylines.resize(2);
-            
-            cv::putText(allPolylinesViz_, "No memory - keeping leftmost 2 lanes", 
-                    cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
-                    0.5, cv::Scalar(0, 0, 255), 1);
-            std::cout << "No memory - keeping leftmost 2 lanes" << std::endl;
-        }
+        lanePolylines.resize(2);
+        
+        cv::putText(allPolylinesViz_, "No memory - keeping leftmost 2 lanes", 
+                cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
+                0.5, cv::Scalar(0, 0, 255), 1);
+        std::cout << "No memory - keeping leftmost 2 lanes" << std::endl;
     }
 }
 
