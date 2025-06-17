@@ -878,7 +878,7 @@ void TrajectoryDefinition::drawPolyLanes(
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
-        // defineLanePolyline(lanePolylines[i]);
+        defineLanePolyline(lanePolylines[i]);
 
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
@@ -892,6 +892,10 @@ void TrajectoryDefinition::drawPolyLanes(
 void TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
+    if (curve.size() < 100) {
+        std::cout << "curve less than 100 on defineLanePolyline function" << std::endl;
+        return ;
+    }
     std::sort(curve.begin(), curve.end(),
               [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
 
