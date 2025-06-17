@@ -126,10 +126,10 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    // const int height = 512;
-    // const int width = 1024;
-    const int height = 128;
-    const int width = 256;
+    const int heightCameraFrame = 480;
+    const int widthCameraFrame = 640;
+    const int heightModelInf = 128;
+    const int widthModelInf = 256;
 
     try
     {
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
         
         SynchronizedProcessor processor;
         Camera camera(session);
-        TrajectoryDefinition trajectoryDefinition(session, height, width);
+        TrajectoryDefinition trajectoryDefinition(session, heightCameraFrame, widthCameraFrame);
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
@@ -187,8 +187,8 @@ int main(int argc, char** argv)
             objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
         }
 
-        LaneDetector laneDetector(laneDetectionFile, height, width);
-        ObjectDetector objDetector(objDetectionFile, height, width);
+        LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
+        ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
     
         camera.startCapture();
 

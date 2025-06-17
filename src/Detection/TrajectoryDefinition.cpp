@@ -941,13 +941,11 @@ void TrajectoryDefinition::defineLanePolyline(
 void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 {
     cv::Point midPoint;
-    int height = frameHeight_;
-    int width  = frameWidth_;
 
     if (!midCurve.empty())
     {
-        int targetY = height - (1.0 * height / 3); // 1/6 up from bottom for carla
-        // int targetY = height - (1.0 * height / 3); // 2/5 up from bottom for local
+        int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 1/6 up from bottom for carla
+        // int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -968,8 +966,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
         cv::circle(allPolylinesViz_, midPoint, 8, cv::Scalar(255, 0, 255), -1);
 
-        float centerX  = width / 2;
-        float rawError = (midPoint.x - centerX) / (width / 2.0f);
+        float centerX  = frameWidth_ / 2;
+        float rawError = (midPoint.x - centerX) / (frameWidth_ / 2.0f);
 
         // Apply rate limiting to error changes
         static float prevError       = 0.0f;
