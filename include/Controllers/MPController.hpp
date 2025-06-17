@@ -38,6 +38,9 @@ private:
     float desired_speed_;
     float current_steering_;
 
+    int height_; // Height of the image
+    int width_; // Width of the image
+
     Eigen::Vector4d currentState_;
     std::string autonomousDrive_;
 
@@ -62,7 +65,7 @@ public:
     ~ModelPredictiveController();
 
     void init(size_t horizon, double wheelbase, double Ts,
-        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf);
+        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf, int height, int width, double target_velocity);
 
     void run();
 

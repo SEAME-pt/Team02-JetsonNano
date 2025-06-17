@@ -50,7 +50,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(2) = current_steering_;
                 x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
                 
-                // this->solve(x0, parsed_coeffs);
+                this->solve(x0, parsed_coeffs);
 
             } else {
                 std::cerr << "Invalid number of coefficients: " 
@@ -107,7 +107,7 @@ ModelPredictiveController::~ModelPredictiveController() {
 void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts,
                              const Eigen::Matrix4d& Q,
                              const Eigen::Matrix2d& R,
-                             const Eigen::Matrix4d& Qf)
+                             const Eigen::Matrix4d& Qf, int height, int width, double target_velocity)
 {
     N_ = horizon;
     L_ = wheelbase;
@@ -115,7 +115,10 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     Q_ = Q;
     R_ = R;
     Qf_ = Qf;
-    desired_speed_ = 8.0;
+    desired_speed_ = target_velocity;
+    target_velocity_ = target_velocity;
+    height_ = height;
+    width_ = width;
 
     last_u_flat_.setConstant(2*N_, 0.0);
     
@@ -134,8 +137,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     double time = getCurrentTime();
     // Conversion factors
-    const double mx         = 6.0 / 1024.0;  // meters per pixel in x
-    const double my         = 7.0 / 512.0;   // meters per pixel in y
+    const double mx         = 6.0 / width_;  // meters per pixel in x
+    const double my         = 11.0 / height_;   // meters per pixel in y
     double time2 = getCurrentTime();
     std::cout << "Time for conversion factors: " << (time2 - time) << " s" << std::endl;
     // Convert pixel-space trajectory coeffs to meter-space
@@ -208,7 +211,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             // compute speed‐adaptive steering smoothness weight:
             double v_k       = x_seq[k][3];   // predicted speed at step k
             // std::cout << "v_k: " << v_k << std::endl;
-            double speed_frac = std::clamp(v_k / 10 * 500, 0.0, 700.0);
+            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
             double w_ddelta  = w_ddelta_base_ + speed_frac;
@@ -226,7 +229,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // 3.2) gradient‐descent with backtracking line-search
     const double tol = 1e-4;
-    const int    max_iter = 15;
+    const int    max_iter = 20;
     double alpha0 = 0.1, beta = 0.5;
     Eigen::VectorXd grad(2*N_);
 
@@ -280,6 +283,23 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
             lambda[k] = Q_ * (x_seq[k] - x_ref[k]) + A.transpose() * lambda[k+1];
             grad.segment<2>(2*k) = 2.0 * R_ * u_seq[k] + B.transpose() * lambda[k+1];
+
+            Eigen::Vector2d uk = u_seq[k];
+            Eigen::Vector2d uk_prev = (k==0)
+                ? Eigen::Vector2d{x0(3), current_steering_}
+                : u_seq[k-1];
+            Eigen::Vector2d du = uk - uk_prev;
+            double v_k = x_seq[k][3];
+            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            double w_dv = 1 + speed_frac;
+            double w_ddelta = w_ddelta_base_ + speed_frac;
+
+            // Gradient w.r.t. uk
+            grad.segment<2>(2*k) += 2.0 * Eigen::Vector2d(w_dv * du(0), w_ddelta * du(1));
+            // Gradient w.r.t. uk_prev (if k > 0)
+            if (k > 0) {
+                grad.segment<2>(2*(k-1)) -= 2.0 * Eigen::Vector2d(w_dv * du(0), w_ddelta * du(1));
+            }
         }
 
         if (grad.norm() < tol) break;
