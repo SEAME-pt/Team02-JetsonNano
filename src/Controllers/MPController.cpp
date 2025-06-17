@@ -239,7 +239,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     for (int iter=0; iter<max_iter; ++iter) {
         // finite-difference gradient
-        const double eps = 1e-2;
+        // const double eps = 1e-2;
         for (int i=0; i<2*(int)N_; ++i) {
             std::vector<Eigen::Vector4d> x_seq(N_+1);
             std::vector<Eigen::Vector2d> u_seq(N_);
@@ -268,12 +268,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                 A(1,3) = Ts_ * std::cos(psi);
 
                 A(2,2) = 1.0;
-                A(2,3) = Ts_ / L_ * std::tan(u(1));
+                A(2,3) = Ts_ / L_ * std::tan(delta);
                 Eigen::Matrix<double, 4, 2> B = Eigen::Matrix<double, 4, 2>::Zero();
                 // dXf_next/du
                 // dYf_next/du
                 // dpsi_next/du
-                B(2,1) = Ts_ * v / (L_ * std::cos(u(1)) * std::cos(u(1)));
+                B(2,1) = Ts_ * v / (L_ * std::cos(delta) * std::cos(delta));
                 // dv_next/du
                 B(3,0) = 1.0;
 
