@@ -30,32 +30,32 @@ TrajectoryDefinition::TrajectoryDefinition(
 
     publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
 
-    mpc_trajectory_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/ADAS/MPC/Trajectory",
-        [this](const zenoh::Sample& sample)
-        {
+    // mpc_trajectory_subscriber.emplace(session_->declare_subscriber(
+    //     "Vehicle/1/ADAS/MPC/Trajectory",
+    //     [this](const zenoh::Sample& sample)
+    //     {
             
-            std::string traj_str = sample.get_payload().as_string();
-            std::vector<cv::Point> points;
-            std::stringstream ss(traj_str);
-            std::string point_str;
-            while (std::getline(ss, point_str, ';')) {
-                std::stringstream point_ss(point_str);
-                std::string x_str, y_str;
-                if (std::getline(point_ss, x_str, ',') && std::getline(point_ss, y_str, ',')) {
-                    double x = std::stod(x_str);
-                    double y = std::stod(y_str);
-                    // Convert from MPC coordinates to image coordinates if needed
-                    int x_img = static_cast<int>(x + width_/2);      // Undo x shift
-                    int y_img = static_cast<int>(height_ - y);    // Undo y flip/shift
-                    points.emplace_back(x_img, y_img);
-                }
-            }
-            // Store for use in visualization
-            mpcPoints_ = points;
-            std::cout << "Received MPC trajectory with " << points.size() << " points." << std::endl;
-        },
-        zenoh::closures::none));
+    //         std::string traj_str = sample.get_payload().as_string();
+    //         std::vector<cv::Point> points;
+    //         std::stringstream ss(traj_str);
+    //         std::string point_str;
+    //         while (std::getline(ss, point_str, ';')) {
+    //             std::stringstream point_ss(point_str);
+    //             std::string x_str, y_str;
+    //             if (std::getline(point_ss, x_str, ',') && std::getline(point_ss, y_str, ',')) {
+    //                 double x = std::stod(x_str);
+    //                 double y = std::stod(y_str);
+    //                 // Convert from MPC coordinates to image coordinates if needed
+    //                 int x_img = static_cast<int>(x + width_/2);      // Undo x shift
+    //                 int y_img = static_cast<int>(height_ - y);    // Undo y flip/shift
+    //                 points.emplace_back(x_img, y_img);
+    //             }
+    //         }
+    //         // Store for use in visualization
+    //         mpcPoints_ = points;
+    //         std::cout << "Received MPC trajectory with " << points.size() << " points." << std::endl;
+    //     },
+    //     zenoh::closures::none));
 
 }
 
@@ -256,12 +256,12 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     // checkForwardCollision(class_mask, midCurve);
 
     // Draw the predicted trajectory as a green polyline
-    if (mpcPoints_.size() > 1) {
-        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
-            std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
-            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
-        }
-    }
+    // if (mpcPoints_.size() > 1) {
+    //     for (size_t i = 1; i < mpcPoints_.size(); ++i) {
+    //         std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
+    //         cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
+    //     }
+    // }
 
     allPolylinesViz_.copyTo(frame);
 }
