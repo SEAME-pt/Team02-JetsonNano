@@ -98,8 +98,8 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 0.01f;       // meters
-        float farDistance = 0.6f;       // meters
-        float laneWidth = 0.5f;      // meters
+        float farDistance = 1.0f;       // meters
+        float laneWidth = 1.0f;      // meters
         cv::Size bevSize = cv::Size(640, 480);
         cv::Size origSize = cv::Size(640, 480);
 
@@ -147,7 +147,7 @@ void TrajectoryDefinition::initCarlaEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.0f;       // meters
-        float farDistance = 12.0f;       // meters
+        float farDistance = 1.0f;       // meters
         float laneWidth = 6.0f;          // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
@@ -438,7 +438,7 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 100)
+        if (lanePolylines[i].size() < 150)
             lanePolylines.erase(lanePolylines.begin() + i);
         defineLanePolyline(lanePolylines[i]);
     }
