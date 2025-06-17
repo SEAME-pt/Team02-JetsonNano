@@ -51,7 +51,8 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
                 
                 
-                this->solve(x0, parsed_coeffs);
+                // this->solve(x0, parsed_coeffs);
+
                 
                 // std::cout << "Received coefficients: " 
                 //           << parsed_coeffs[0] << ", " 
