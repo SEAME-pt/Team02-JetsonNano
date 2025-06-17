@@ -50,7 +50,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(2) = current_steering_;
                 x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
                 
-                this->solve(x0, parsed_coeffs);
+                // this->solve(x0, parsed_coeffs);
 
             } else {
                 std::cerr << "Invalid number of coefficients: " 
@@ -240,49 +240,48 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     for (int iter=0; iter<max_iter; ++iter) {
         // finite-difference gradient
         // const double eps = 1e-2;
-        for (int i=0; i<2*(int)N_; ++i) {
-            std::vector<Eigen::Vector4d> x_seq(N_+1);
-            std::vector<Eigen::Vector2d> u_seq(N_);
-            x_seq[0] = x0;
-            for (size_t k = 0; k < N_; ++k) {
-                u_seq[k] = Eigen::Vector2d(u_flat(2*k), u_flat(2*k+1));
-                x_seq[k+1] = backwardEuler(x_seq[k], u_seq[k]);
-            }
+        // for (int i=0; i<2*(int)N_; ++i) {
+        //     Eigen::VectorXd up = u_flat, um = u_flat;
+        //     up(i) += eps;  um(i) -= eps;
+        //     grad(i) = (computeCost(up) - computeCost(um)) / (2*eps);
+        // }
 
-            // 2. Backward pass: compute costate (lambda) and gradient
-            std::vector<Eigen::Vector4d> lambda(N_+1);
-            lambda[N_] = Qf_ * (x_seq[N_] - x_ref[N_]);
-            for (int k = N_-1; k >= 0; --k) {
-                double v = x_seq[k](3);
-                double psi = x_seq[k](2);
-                double delta = u_seq[k](1);
-                // Linearize dynamics: x_{k+1} = f(x_k, u_k)
-                // Compute A = df/dx, B = df/du at (x_seq[k], u_seq[k])
-                Eigen::Matrix4d A = Eigen::Matrix4d::Zero();
-                A(0,0) = 1.0;
-                A(0,2) = Ts_ * v * std::cos(psi);
-                A(0,3) = Ts_ * std::sin(psi);
-
-                A(1,1) = 1.0;
-                A(1,2) = -Ts_ * v * std::sin(psi);
-                A(1,3) = Ts_ * std::cos(psi);
-
-                A(2,2) = 1.0;
-                A(2,3) = Ts_ / L_ * std::tan(delta);
-                Eigen::Matrix<double, 4, 2> B = Eigen::Matrix<double, 4, 2>::Zero();
-                // dXf_next/du
-                // dYf_next/du
-                // dpsi_next/du
-                B(2,1) = Ts_ * v / (L_ * std::cos(delta) * std::cos(delta));
-                // dv_next/du
-                B(3,0) = 1.0;
-
-                lambda[k] = Q_ * (x_seq[k] - x_ref[k]) + A.transpose() * lambda[k+1];
-
-                // Gradient for u_k: dJ/du_k = 2*R*u_k + B^T * lambda_{k+1}
-                grad.segment<2>(2*k) = 2.0 * R_ * u_seq[k] + B.transpose() * lambda[k+1];
-            }
+        std::vector<Eigen::Vector4d> x_seq(N_+1);
+        std::vector<Eigen::Vector2d> u_seq(N_);
+        x_seq[0] = x0;
+        for (size_t k = 0; k < N_; ++k) {
+            u_seq[k] = Eigen::Vector2d(u_flat(2*k), u_flat(2*k+1));
+            x_seq[k+1] = backwardEuler(x_seq[k], u_seq[k]);
         }
+
+        // Backward pass
+        std::vector<Eigen::Vector4d> lambda(N_+1);
+        lambda[N_] = Qf_ * (x_seq[N_] - x_ref[N_]);
+        for (int k = N_-1; k >= 0; --k) {
+            double v = x_seq[k](3);
+            double psi = x_seq[k](2);
+            double delta = u_seq[k](1);
+
+            Eigen::Matrix4d A = Eigen::Matrix4d::Zero();
+            A(0,0) = 1.0;
+            A(0,2) = Ts_ * v * std::cos(psi);
+            A(0,3) = Ts_ * std::sin(psi);
+
+            A(1,1) = 1.0;
+            A(1,2) = -Ts_ * v * std::sin(psi);
+            A(1,3) = Ts_ * std::cos(psi);
+
+            A(2,2) = 1.0;
+            A(2,3) = Ts_ / L_ * std::tan(delta);
+
+            Eigen::Matrix<double, 4, 2> B = Eigen::Matrix<double, 4, 2>::Zero();
+            B(2,1) = Ts_ * v / (L_ * std::cos(delta) * std::cos(delta));
+            B(3,0) = 1.0;
+
+            lambda[k] = Q_ * (x_seq[k] - x_ref[k]) + A.transpose() * lambda[k+1];
+            grad.segment<2>(2*k) = 2.0 * R_ * u_seq[k] + B.transpose() * lambda[k+1];
+        }
+
         if (grad.norm() < tol) break;
 
         // backtracking line-search
