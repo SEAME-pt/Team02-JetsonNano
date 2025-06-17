@@ -142,15 +142,15 @@ void TrajectoryDefinition::initCarlaEnv() {
         float cameraHeight = 1.5f;       // meters
         float cameraPitch = 15.0f;       // degrees down from horizontal
         float horizontalFOV = 105.0f;     // degrees
-        float img_height = static_cast<float>(600);
-        float img_width = static_cast<float>(800);
+        float img_height = static_cast<float>(512);
+        float img_width = static_cast<float>(1024);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 1.0f;       // meters
         float farDistance = 12.0f;       // meters
         float laneWidth = 6.0f;          // meters
-        cv::Size bevSize = cv::Size(800, 600);
-        cv::Size origSize = cv::Size(800, 600);
+        cv::Size bevSize = cv::Size(1024, 512);
+        cv::Size origSize = cv::Size(1024, 512);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
@@ -188,8 +188,8 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    // cv::Size size(800 * 6.0 / 8.0, 600);
-    cv::Size size(800 * 1.0 / 1.0 , 600);
+    cv::Size size(1024 * 6.0 / 8.0, 512);
+    // cv::Size size(800 * 1.0 / 1.0 , 600);
 
 
     cv::Mat res_frame;
