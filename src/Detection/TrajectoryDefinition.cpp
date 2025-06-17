@@ -93,15 +93,15 @@ void TrajectoryDefinition::initLocalEnv() {
         float cameraHeight = 0.137f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
         float horizontalFOV = 105.0f;     // degrees
-        float img_height = static_cast<float>(480);
-        float img_width = static_cast<float>(640);
+        float img_height = static_cast<float>(height_);
+        float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        float nearDistance = 0.01f;       // meters
-        float farDistance = 1.0f;       // meters
-        float laneWidth = 1.0f;      // meters
-        cv::Size bevSize = cv::Size(640, 480);
-        cv::Size origSize = cv::Size(640, 480);
+        nearDistance_ = 0.01f;       // meters
+        farDistance_ = 1.0f;       // meters
+        laneWidth_ = 1.0f;      // meters
+        cv::Size bevSize = cv::Size(width_, height_);
+        cv::Size origSize = cv::Size(width_, height_);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
@@ -116,7 +116,7 @@ void TrajectoryDefinition::initLocalEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(640, 480, 4);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 4);
     }
     catch (const std::exception& e)
     {
@@ -142,15 +142,15 @@ void TrajectoryDefinition::initCarlaEnv() {
         float cameraHeight = 1.5f;       // meters
         float cameraPitch = 15.0f;       // degrees down from horizontal
         float horizontalFOV = 105.0f;     // degrees
-        float img_height = static_cast<float>(600);
-        float img_width = static_cast<float>(800);
+        float img_height = static_cast<float>(height_);
+        float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        float nearDistance = 1.0f;       // meters
-        float farDistance = 1.0f;       // meters
-        float laneWidth = 6.0f;          // meters
-        cv::Size bevSize = cv::Size(800, 600);
-        cv::Size origSize = cv::Size(800, 600);
+        nearDistance_ = 1.0f;       // meters
+        farDistance_ = 1.0f;       // meters
+        laneWidth_ = 6.0f;          // meters
+        cv::Size bevSize = cv::Size(width_, height_);
+        cv::Size origSize = cv::Size(width_, height_);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
@@ -165,7 +165,7 @@ void TrajectoryDefinition::initCarlaEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(800, 600, 8);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 8);
     }
     catch (const std::exception& e)
     {
@@ -188,8 +188,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    // cv::Size size(800 * 6.0 / 12.0, 600);
-    cv::Size size(640 * 1.0 / 1.0 , 480);
+    cv::Size size(width_ * laneWidth_ / (farDistance_ - nearDistance_), height_);
 
 
     cv::Mat res_frame;
