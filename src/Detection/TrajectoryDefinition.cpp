@@ -226,9 +226,6 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     if (lanePolylines.size() == 2)
     {
-        // defineLanePolyline(lanePolylines[0]);
-        // defineLanePolyline(lanePolylines[1]);
-
         twoPolylines(lanePolylines, leftCurve, rightCurve);
     }
     else if (lanePolylines.size() == 1)
@@ -443,6 +440,7 @@ void TrajectoryDefinition::mergeLaneComponents(
     {
         if (lanePolylines[i].size() < 100)
             lanePolylines.erase(lanePolylines.begin() + i);
+        defineLanePolyline(lanePolylines[i]);
     }
 
     if (lanePolylines.size() > 2)
@@ -878,8 +876,6 @@ void TrajectoryDefinition::drawPolyLanes(
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
-        defineLanePolyline(lanePolylines[i]);
-
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
         {
@@ -950,8 +946,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = height - (1.5 * height / 3); // 1/6 up from bottom for carla
-        // int targetY = height - (1.5 * height / 3); // 2/5 up from bottom for local
+        int targetY = height - (1.0 * height / 3); // 1/6 up from bottom for carla
+        // int targetY = height - (1.0 * height / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
         size_t closestIdx = 0;
