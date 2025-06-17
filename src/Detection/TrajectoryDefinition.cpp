@@ -878,7 +878,7 @@ void TrajectoryDefinition::drawPolyLanes(
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
-        defineLanePolyline(lanePolylines[i]);
+        // defineLanePolyline(lanePolylines[i]);
 
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
