@@ -14,6 +14,7 @@ ObjectDetector::ObjectDetector(const std::string& enginePath, int height, int wi
     catch (const std::exception& e)
     {
         std::cerr << "Error initializing GPUInference" << e.what() << std::endl;
+        throw std::runtime_error("Error initializing GPUInference");
     }
 }
 
