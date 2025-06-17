@@ -324,18 +324,18 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     predicted_trajectory_ = x_seq;
 
     time2 = getCurrentTime();
-    // std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
-    // // publish trajectory in pixel coordinates
-    // // std::ostringstream oss;
-    // // for (size_t i = 0; i < x_seq.size(); ++i) {
-    // //     double x_pix = x_seq[i](0) / mx;
-    // //     double y_pix = x_seq[i](1) / my;
-    // //     oss << x_pix << "," << y_pix;
-    // //     if (i + 1 < x_seq.size()) oss << ";";
-    // // }
-    // time2 = getCurrentTime();
-    // std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
-    // publisher_->publishMpcTrajectory(oss.str());
+    std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
+    // publish trajectory in pixel coordinates
+    std::ostringstream oss;
+    for (size_t i = 0; i < x_seq.size(); ++i) {
+        double x_pix = x_seq[i](0) / mx;
+        double y_pix = x_seq[i](1) / my;
+        oss << x_pix << "," << y_pix;
+        if (i + 1 < x_seq.size()) oss << ";";
+    }
+    time2 = getCurrentTime();
+    std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
+    publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
     desired_speed_     = u_flat(0);
