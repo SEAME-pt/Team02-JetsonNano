@@ -109,18 +109,21 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             std::vector<uchar> buffer_original_frame;
             std::vector<int> params_org_frame = {cv::IMWRITE_JPEG_QUALITY, 20};
             cv::imencode(".jpg", original_frame, buffer_original_frame, params_org_frame);
+            trajectoryDef->frame_publisher_->put(buffer_original_frame);
             
             // trajectoryDef->publishOrigFrame(std::string(buffer_original_frame.begin(), buffer_original_frame.end()));
     
             std::vector<uchar> buffer_lane_mask;
             std::vector<int> params_lane = {cv::IMWRITE_JPEG_QUALITY, 20};
             cv::imencode(".jpg", lane_mask, buffer_lane_mask, params_lane);
+            trajectoryDef->lane_mask_publisher_->put(buffer_lane_mask);
             
             // trajectoryDef->publishBinMask(std::string(buffer_lane_mask.begin(), buffer_lane_mask.end()));
     
             std::vector<uchar> buffer_obj_mask;
             std::vector<int> params_obj = {cv::IMWRITE_JPEG_QUALITY, 20};
             cv::imencode(".jpg", object_mask, buffer_obj_mask, params_obj);
+            trajectoryDef->class_mask_publisher_->put(buffer_obj_mask);
             
             // trajectoryDef->publishClassMask(std::string(buffer_obj_mask.begin(), buffer_obj_mask.end()));
     
