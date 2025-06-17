@@ -459,6 +459,7 @@ void ModelPredictiveController::run()
     while (true)
     {
         if (!xboxController_->getPidEnable()) {
+            std::cout << "Running in MPC mode" << std::endl;
             std::string sae_level = getAutonomousDriveState();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
