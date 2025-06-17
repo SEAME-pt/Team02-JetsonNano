@@ -92,22 +92,22 @@ void TrajectoryDefinition::initLocalEnv() {
     {
         float cameraHeight = 0.137f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
-        float horizontalFOV = 100.0f;     // degrees
-        float img_height = static_cast<float>(600);
-        float img_width = static_cast<float>(800);
+        float horizontalFOV = 105.0f;     // degrees
+        float img_height = static_cast<float>(height_);
+        float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        float nearDistance = 0.01f;       // meters
-        float farDistance = 1.0f;       // meters
-        float laneWidth = 1.0f;      // meters
-        cv::Size bevSize = cv::Size(800, 600);
-        cv::Size origSize = cv::Size(800, 600);
+        nearDistance_ = 0.01f;       // meters
+        farDistance_ = 1.0f;       // meters
+        laneWidth_ = 1.0f;      // meters
+        cv::Size bevSize = cv::Size(width_, height_);
+        cv::Size origSize = cv::Size(width_, height_);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
-                                       verticalFOV, nearDistance, farDistance,
-                                       laneWidth);
+                                       verticalFOV, nearDistance_, farDistance_,
+                                       laneWidth_);
     }
     catch (const std::exception& e)
     {
@@ -116,7 +116,7 @@ void TrajectoryDefinition::initLocalEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(800, 600, 4);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 4);
     }
     catch (const std::exception& e)
     {
@@ -142,21 +142,21 @@ void TrajectoryDefinition::initCarlaEnv() {
         float cameraHeight = 1.5f;       // meters
         float cameraPitch = 15.0f;       // degrees down from horizontal
         float horizontalFOV = 105.0f;     // degrees
-        float img_height = static_cast<float>(512);
-        float img_width = static_cast<float>(1024);
+        float img_height = static_cast<float>(height_);
+        float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        float nearDistance = 1.0f;       // meters
-        float farDistance = 12.0f;       // meters
-        float laneWidth = 6.0f;          // meters
-        cv::Size bevSize = cv::Size(1024, 512);
-        cv::Size origSize = cv::Size(1024, 512);
+        nearDistance_ = 1.0f;       // meters
+        farDistance_ = 1.0f;       // meters
+        laneWidth_ = 6.0f;          // meters
+        cv::Size bevSize = cv::Size(width_, height_);
+        cv::Size origSize = cv::Size(width_, height_);
 
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
-                                       verticalFOV, nearDistance, farDistance,
-                                       laneWidth);
+                                       verticalFOV, nearDistance_, farDistance_,
+                                       laneWidth_);
     }
     catch (const std::exception& e)
     {
@@ -165,7 +165,7 @@ void TrajectoryDefinition::initCarlaEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(800, 600, 8);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 8);
     }
     catch (const std::exception& e)
     {
@@ -188,8 +188,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    cv::Size size(1024 * 6.0 / 8.0, 512);
-    // cv::Size size(800 * 1.0 / 1.0 , 600);
+    cv::Size size(width_ * laneWidth_ / (farDistance_ - nearDistance_), height_);
 
 
     cv::Mat res_frame;
@@ -217,18 +216,15 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
-    drawPolyLanes(lanePolylines);
     
-    float maxHorizontalDistance = frameWidth_ * 0.05;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.15; // 35% of frame height
+    float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
+    float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
+    drawPolyLanes(lanePolylines);
 
     if (lanePolylines.size() == 2)
     {
-        defineLanePolyline(lanePolylines[0]);
-        defineLanePolyline(lanePolylines[1]);
-
         twoPolylines(lanePolylines, leftCurve, rightCurve);
     }
     else if (lanePolylines.size() == 1)
@@ -251,7 +247,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
-    drawCurves(midCurve, leftCurve, rightCurve);
+    // drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
     // obstacleAvoidance(class_mask, midCurve);
    
@@ -441,8 +437,9 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 10)
+        if (lanePolylines[i].size() < 150)
             lanePolylines.erase(lanePolylines.begin() + i);
+        defineLanePolyline(lanePolylines[i]);
     }
 
     if (lanePolylines.size() > 2)
@@ -878,8 +875,6 @@ void TrajectoryDefinition::drawPolyLanes(
     // Draw each polyline with a different color
     for (size_t i = 0; i < lanePolylines.size(); i++)
     {
-        defineLanePolyline(lanePolylines[i]);
-
         cv::Scalar color = colors[i % colors.size()];
         for (size_t j = 1; j < lanePolylines[i].size(); j++)
         {
@@ -892,6 +887,10 @@ void TrajectoryDefinition::drawPolyLanes(
 void TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
+    if (curve.size() < 100) {
+        std::cout << "curve less than 100 on defineLanePolyline function" << std::endl;
+        return ;
+    }
     std::sort(curve.begin(), curve.end(),
               [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
 
@@ -941,13 +940,11 @@ void TrajectoryDefinition::defineLanePolyline(
 void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 {
     cv::Point midPoint;
-    int height = frameHeight_;
-    int width  = frameWidth_;
 
     if (!midCurve.empty())
     {
-        int targetY = height - (1.5 * height / 3); // 1/6 up from bottom for carla
-        // int targetY = height - (1.5 * height / 3); // 2/5 up from bottom for local
+        int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 1/6 up from bottom for carla
+        // int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 2/5 up from bottom for local
 
         // Find closest point to target Y
         size_t closestIdx = 0;
@@ -968,8 +965,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
         cv::circle(allPolylinesViz_, midPoint, 8, cv::Scalar(255, 0, 255), -1);
 
-        float centerX  = width / 2;
-        float rawError = (midPoint.x - centerX) / (width / 2.0f);
+        float centerX  = frameWidth_ / 2;
+        float rawError = (midPoint.x - centerX) / (frameWidth_ / 2.0f);
 
         // Apply rate limiting to error changes
         static float prevError       = 0.0f;

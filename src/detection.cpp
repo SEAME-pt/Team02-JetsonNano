@@ -140,10 +140,10 @@ int main(int argc, char** argv)
     signal(SIGINT, signalHandler);
     std::thread camThread, laneThread, objThread, trajThread;
 
-    const int height = 512;
-    const int width = 1024;
-    // const int height = 128;
-    // const int width = 256;
+    const int heightCameraFrame = 480;
+    const int widthCameraFrame = 640;
+    const int heightModelInf = 128;
+    const int widthModelInf = 256;
 
     try
     {
@@ -178,21 +178,21 @@ int main(int argc, char** argv)
         
         SynchronizedProcessor processor;
         Camera camera(session);
-        TrajectoryDefinition trajectoryDefinition(session, height, width);
+        TrajectoryDefinition trajectoryDefinition(session, heightCameraFrame, widthCameraFrame);
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
             const std::string pipeline =
                 "nvarguscamerasrc sensor-id=0 ! "
-                "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, "
+                "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
                 "format=NV12, framerate=(fraction)30/1 ! "
                 "nvvidconv ! video/x-raw, format=BGRx ! "
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local1_epoch_25.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_MOB_1_epoch_133.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local1_epoch_50.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
@@ -201,8 +201,8 @@ int main(int argc, char** argv)
             objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
         }
 
-        LaneDetector laneDetector(laneDetectionFile, height, width);
-        ObjectDetector objDetector(objDetectionFile, height, width);
+        LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
+        ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
     
         camera.startCapture();
 
