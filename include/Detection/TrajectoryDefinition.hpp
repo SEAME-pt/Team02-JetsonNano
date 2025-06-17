@@ -65,6 +65,11 @@ class TrajectoryDefinition
     const int height_;
     const int width_;
 
+    // IPM properties
+    float nearDistance_;
+    float farDistance_;
+    float laneWidth_;
+
     std::vector<cv::Point> mpcPoints_;
     
   public:
