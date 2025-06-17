@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
         std::thread manualThread(&XboxController::run, &manualController);
         // std::thread pidThread(&PidController::run, &pidController);
-        std::thread MPCThread(&ModelPredictiveController::run, &MPController);
+        // std::thread MPCThread(&ModelPredictiveController::run, &MPController);
 
         if (manualThread.joinable()) {
             manualThread.join();
@@ -113,9 +113,9 @@ int main(int argc, char** argv)
         //     pidThread.join();
         // }
 
-        if (MPCThread.joinable()) {
-            MPCThread.join();
-        }
+        // if (MPCThread.joinable()) {
+        //     MPCThread.join();
+        // }
     }
     catch (const std::exception& e)
     {
