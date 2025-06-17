@@ -18,6 +18,7 @@ LaneDetector::LaneDetector(const std::string& enginePath, int height, int width)
     catch (const std::exception& e)
     {
         std::cerr << "Error initializing GPUInference" << e.what() << std::endl;
+        throw std::runtime_error("Error initializing GPUInference");
     }
 
     // cv_stream = cv::cuda::Stream();
