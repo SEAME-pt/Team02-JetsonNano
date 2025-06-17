@@ -60,6 +60,8 @@ private:
     
     double w_ddelta_base_ = 250.0; // base weight for steering changes
 
+    std::vector<double> parsed_coeffs_;
+
 public:
     ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
     ~ModelPredictiveController();

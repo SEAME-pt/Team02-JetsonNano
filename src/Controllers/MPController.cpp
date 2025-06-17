@@ -35,26 +35,11 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         {
             std::string coeffs_str = sample.get_payload().as_string();
             
-            std::vector<double> parsed_coeffs;
             std::stringstream ss(coeffs_str);
             std::string token;
-            
+            parsed_coeffs_.clear();
             while (std::getline(ss, token, ',')) {
-                parsed_coeffs.push_back(std::stod(token));
-            }
-            
-            if (parsed_coeffs.size() == 4) {
-                Eigen::Vector4d x0;
-                x0(0) = 0;
-                x0(1) = 0;
-                x0(2) = current_steering_;
-                x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
-                
-                this->solve(x0, parsed_coeffs);
-
-            } else {
-                std::cerr << "Invalid number of coefficients: " 
-                          << parsed_coeffs.size() << " (expected 4)" << std::endl;
+                parsed_coeffs_.push_back(std::stod(token));
             }
         },
         zenoh::closures::none));
@@ -489,6 +474,19 @@ void ModelPredictiveController::conditionalAutomation()
 void ModelPredictiveController::autonomousControl()
 {
     double current_time   = getCurrentTime();
+    if (parsed_coeffs_.size() == 4) {
+        Eigen::Vector4d x0;
+        x0(0) = 0;
+        x0(1) = 0;
+        x0(2) = current_steering_;
+        x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+        
+        this->solve(x0, parsed_coeffs);
+
+    } else {
+        std::cerr << "Invalid number of coefficients: " 
+                << parsed_coeffs_.size() << " (expected 4)" << std::endl;
+    }
     double steering = current_steering_ *180 / M_PI + 90;
 
     publisher_->publishSteering(steering);
