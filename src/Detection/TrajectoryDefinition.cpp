@@ -98,8 +98,8 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         float nearDistance = 0.01f;       // meters
-        float farDistance = 1.0f;       // meters
-        float laneWidth = 1.0f;      // meters
+        float farDistance = 0.8f;       // meters
+        float laneWidth = 0.6f;      // meters
         cv::Size bevSize = cv::Size(800, 600);
         cv::Size origSize = cv::Size(800, 600);
 
@@ -188,8 +188,8 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     createLanes(ipm_frame, ipm_binary_mask, ipm_class_mask);
 
-    // cv::Size size(800 * 6.0 / 8.0, 600);
-    cv::Size size(800 * 1.0 / 1.0 , 600);
+    // cv::Size size(800 * 6.0 / 12.0, 600);
+    cv::Size size(800 * 0.6 / 0.8 , 600);
 
 
     cv::Mat res_frame;
@@ -219,15 +219,15 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     drawPolyLanes(lanePolylines);
     
-    float maxHorizontalDistance = frameWidth_ * 0.05;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.15; // 35% of frame height
+    float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
+    float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
     mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
 
     if (lanePolylines.size() == 2)
     {
-        defineLanePolyline(lanePolylines[0]);
-        defineLanePolyline(lanePolylines[1]);
+        // defineLanePolyline(lanePolylines[0]);
+        // defineLanePolyline(lanePolylines[1]);
 
         twoPolylines(lanePolylines, leftCurve, rightCurve);
     }
