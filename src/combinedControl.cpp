@@ -109,13 +109,13 @@ int main(int argc, char** argv)
             manualThread.join();
         }
 
-        // if (pidThread.joinable()) {
-        //     pidThread.join();
-        // }
+        if (pidThread.joinable()) {
+            pidThread.join();
+        }
 
-        // if (MPCThread.joinable()) {
-        //     MPCThread.join();
-        // }
+        if (MPCThread.joinable()) {
+            MPCThread.join();
+        }
     }
     catch (const std::exception& e)
     {
