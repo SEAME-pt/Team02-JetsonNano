@@ -52,8 +52,6 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 
                 this->solve(x0, parsed_coeffs);
 
-                std::cout << "Time for solve : " << (getCurrentTime() - time) << " seconds" << std::endl;
-
             } else {
                 std::cerr << "Invalid number of coefficients: " 
                           << parsed_coeffs.size() << " (expected 4)" << std::endl;
