@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             std::cout << "Running in LOCAL mode with physical camera" << std::endl;
             const std::string pipeline =
                 "nvarguscamerasrc sensor-id=0 ! "
-                "video/x-raw(memory:NVMM), width=(int)800, height=(int)600, "
+                "video/x-raw(memory:NVMM), width=(int)640, height=(int)480, "
                 "format=NV12, framerate=(fraction)30/1 ! "
                 "nvvidconv ! video/x-raw, format=BGRx ! "
                 "videoconvert ! video/x-raw, format=BGR ! "
@@ -178,7 +178,7 @@ int main(int argc, char** argv)
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local1_epoch_25.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_82.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_110.engine";
         } else {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
