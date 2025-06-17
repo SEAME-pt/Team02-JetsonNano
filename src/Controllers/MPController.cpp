@@ -53,7 +53,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 double time = getCurrentTime();
 
                 
-                this->solve(x0, parsed_coeffs);
+                // this->solve(x0, parsed_coeffs);
 
                 std::cout << "Time for solve : " << (getCurrentTime() - time) << " seconds" << std::endl;
 
