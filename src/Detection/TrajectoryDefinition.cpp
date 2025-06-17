@@ -106,8 +106,8 @@ void TrajectoryDefinition::initLocalEnv() {
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
-                                       verticalFOV, nearDistance, farDistance,
-                                       laneWidth);
+                                       verticalFOV, nearDistance_, farDistance_,
+                                       laneWidth_);
     }
     catch (const std::exception& e)
     {
@@ -155,8 +155,8 @@ void TrajectoryDefinition::initCarlaEnv() {
         this->ipm = new IPM();
         this->ipm->init(origSize, bevSize);
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
-                                       verticalFOV, nearDistance, farDistance,
-                                       laneWidth);
+                                       verticalFOV, nearDistance_, farDistance_,
+                                       laneWidth_);
     }
     catch (const std::exception& e)
     {
