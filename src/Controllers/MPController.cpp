@@ -481,7 +481,7 @@ void ModelPredictiveController::autonomousControl()
         x0(2) = current_steering_;
         x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
         
-        this->solve(x0, parsed_coeffs);
+        this->solve(x0, parsed_coeffs_);
 
     } else {
         std::cerr << "Invalid number of coefficients: " 
