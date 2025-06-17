@@ -82,7 +82,7 @@ int main(int argc, char** argv)
             float delta_time        = 0.05;
 
             // MPC controller values
-            size_t N  = 10;
+            size_t N  = 5;
             double L  = 2.9;
             double Ts = 0.1;
 
