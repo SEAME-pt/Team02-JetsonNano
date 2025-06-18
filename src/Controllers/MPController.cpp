@@ -126,12 +126,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     // static int solve_count = 0;
     // if (++solve_count >= 2) exit(0);
 
-    double time = getCurrentTime();
+    // double time = getCurrentTime();
     // Conversion factors
     const double mx         = 1.0 / width_;  // meters per pixel in x
     const double my         = 1.0 / height_;   // meters per pixel in y
-    double time2 = getCurrentTime();
-    std::cout << "Time for conversion factors: " << (time2 - time) << " s" << std::endl;
+    // double time2 = getCurrentTime();
+    // std::cout << "Time for conversion factors: " << (time2 - time) << " s" << std::endl;
     // Convert pixel-space trajectory coeffs to meter-space
     std::vector<double> meter_coeffs(4);
 
@@ -158,8 +158,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         double psi_ref = std::atan(dx_dy);
         x_ref[k] << x_ref_m, y_ref, psi_ref, v_ref;
     }
-    time = getCurrentTime();
-    std::cout << "Time for reference trajectory: " << (time - time2) << " s" << std::endl;
+    // time = getCurrentTime();
+    // std::cout << "Time for reference trajectory: " << (time - time2) << " s" << std::endl;
     // std::cout << "Reference state at step " << N_ << ": "
     //           << x_ref[N_].transpose() << std::endl;
 
@@ -171,8 +171,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     }
     u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
     u_flat(2*(N_-1) + 1) = 0.0;
-    time2 = getCurrentTime();
-    std::cout << "Time for warm-start: " << (time2 - time) << " s" << std::endl;
+    // time2 = getCurrentTime();
+    // std::cout << "Time for warm-start: " << (time2 - time) << " s" << std::endl;
 
     // lambda to compute cost for any u_try
     auto computeCost = [&](const Eigen::VectorXd& u_try) {
@@ -200,10 +200,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             double v_k       = x_seq[k][3];   // predicted speed at step k
             // std::cout << "v_k: " << v_k << std::endl;
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
-            speed_frac = 1;
+            speed_frac = 0;
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
-            double w_ddelta  = w_ddelta_base_ + speed_frac;
+            // double w_ddelta  = w_ddelta_base_ + speed_frac;
+            double w_ddelta  = 0;
             // std::cout << "w_ddelta: " << w_ddelta << std::endl;
 
             // add the Δu cost:
@@ -280,9 +281,10 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             Eigen::Vector2d du = uk - uk_prev;
             double v_k = x_seq[k][3];
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
-            speed_frac = 1;
-            double w_dv = 1 + speed_frac;
+            speed_frac = 0;
+            double w_dv = 0 + speed_frac;
             double w_ddelta = w_ddelta_base_ + speed_frac;
+            double w_ddelta = 0;
 
             // Gradient w.r.t. uk
             grad.segment<2>(2*k) += 2.0 * Eigen::Vector2d(w_dv * du(0), w_ddelta * du(1));

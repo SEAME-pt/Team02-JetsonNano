@@ -72,8 +72,8 @@ int main(int argc, char** argv)
             Q(3,3) = 100;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = 1;
-            R(1,1) = 1;
+            R(0,0) = 0.1;
+            R(1,1) = 0.1;
             
             Eigen::Matrix4d Qf = 5 * Q;
             pidController.init(kp, ki, kd, constant_speed, delta_time);
