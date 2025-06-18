@@ -152,10 +152,11 @@ int main(int argc, char** argv)
         std::string laneDetectionFile;
         std::string objDetectionFile;
         
-        if (!parseParameters(argc, argv, configFile, mode)) {
-            return -1;
-        }
+        // if (!parseParameters(argc, argv, configFile, mode)) {
+        //     return -1;
+        // }
 
+        mode = "local";
         std::shared_ptr<zenoh::Session> session;
         if (!configFile.empty()) {
             std::cout << "Using configuration from file: " << configFile << std::endl;
@@ -190,7 +191,7 @@ int main(int argc, char** argv)
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
-            trajectoryDefinition.initLocalEnv();
+            trajectoryDefinition.initLocalEnv(static _cast<float>(argv[1]), static_cast<float>(argv[]));
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local2_epoch_500.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else {
