@@ -79,7 +79,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            if (carlaMode) {
+            if (carlaMode_) {
                 current_speed_ = speed;
             }
             else {
@@ -344,7 +344,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
-    if (carlaMode) {
+    if (carlaMode_) {
         desired_speed_ = u_flat(0);
     } else {
         desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s to rpm
