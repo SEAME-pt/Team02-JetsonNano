@@ -283,7 +283,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
             speed_frac = 0;
             double w_dv = 0 + speed_frac;
-            double w_ddelta = w_ddelta_base_ + speed_frac;
+            // double w_ddelta = w_ddelta_base_ + speed_frac;
             double w_ddelta = 0;
 
             // Gradient w.r.t. uk
