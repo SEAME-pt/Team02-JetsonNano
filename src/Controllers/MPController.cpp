@@ -511,7 +511,8 @@ void ModelPredictiveController::autonomousControl()
         std::cerr << "Invalid number of coefficients: " 
                 << parsed_coeffs_.size() << " (expected 4)" << std::endl;
     }
-    double steering = current_steering_ *180 / M_PI + 90;
+    // double steering = current_steering_ *180 / M_PI + 90;
+    double steering = std::clamp(current_steering_ * 180 * 2 / M_PI + 90, 0.0, 180.0);
 
     publisher_->publishSteering(steering);
     if (!this->speed_lock_)
