@@ -8,6 +8,7 @@
 #include <atomic>
 #include <iostream>
 #include <csignal>
+#include <cstdlib>
 
 using namespace cv;
 using namespace std;
@@ -192,10 +193,8 @@ int main(int argc, char** argv)
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
-            std::string a = argv[1];
-            std::string b = argv[2];
 
-            trajectoryDefinition.initLocalEnv(static_cast<float>(a), static_cast<float>(b));
+            trajectoryDefinition.initLocalEnv(static_cast(atof(argv[1])), static_cast(atof(argv[2])));
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local2_epoch_500.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else {
