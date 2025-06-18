@@ -192,7 +192,10 @@ int main(int argc, char** argv)
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
-            trajectoryDefinition.initLocalEnv(static _cast<float>(argv[1]), static_cast<float>(argv[2]));
+            std::string a = argv[1];
+            std::string b = argv[2];
+
+            trajectoryDefinition.initLocalEnv(static_cast<float>(a), static_cast<float>(b));
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local2_epoch_500.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else {
