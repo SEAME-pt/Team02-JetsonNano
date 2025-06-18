@@ -73,8 +73,8 @@ int main(int argc, char** argv)
 
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = Rthrottle;
-            R(1,1) = Rsteer;
+            R(0,0) = Rthrottle * 0.1;
+            R(1,1) = Rsteer * 0.1;
 
             
             Eigen::Matrix4d Qf = 5 * Q;
