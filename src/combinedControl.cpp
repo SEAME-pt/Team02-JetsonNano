@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 
             // MPC controller values
             size_t N  = 10;
-            double L  = 2.9;
+            double L  = 0.15;
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
