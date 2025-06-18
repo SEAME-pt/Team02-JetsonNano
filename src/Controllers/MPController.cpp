@@ -222,12 +222,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     double alpha0 = 0.1, beta = 0.5;
     Eigen::VectorXd grad(2*N_);
 
-    time = getCurrentTime();
-    std::cout << "Time for setup: " << (time - time2) << " s" << std::endl;
+    // time = getCurrentTime();
+    // std::cout << "Time for setup: " << (time - time2) << " s" << std::endl;
     // initial cost
     double J_curr = computeCost(u_flat);
-    time2 = getCurrentTime();
-    std::cout << "Time for initial cost: " << (time2 - time) << " s" << std::endl;
+    // time2 = getCurrentTime();
+    // std::cout << "Time for initial cost: " << (time2 - time) << " s" << std::endl;
 
     for (int iter=0; iter<max_iter; ++iter) {
         // finite-difference gradient
@@ -313,8 +313,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         J_curr = J_next;
     }
 
-    time = getCurrentTime();
-    std::cout << "Time for optimization: " << (time - time2) << " s" << std::endl;
+    // time = getCurrentTime();
+    // std::cout << "Time for optimization: " << (time - time2) << " s" << std::endl;
     // store for next warm‐start
     last_u_flat_ = u_flat;
 
@@ -328,8 +328,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     }
     predicted_trajectory_ = x_seq;
 
-    time2 = getCurrentTime();
-    std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
+    // time2 = getCurrentTime();
+    // std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
     // publish trajectory in pixel coordinates
     std::ostringstream oss;
     for (size_t i = 0; i < x_seq.size(); ++i) {
@@ -338,8 +338,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         oss << x_pix << "," << y_pix;
         if (i + 1 < x_seq.size()) oss << ";";
     }
-    time2 = getCurrentTime();
-    std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
+    // time2 = getCurrentTime();
+    // std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
@@ -352,8 +352,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     std::cout << "Speed: " << desired_speed_
               << ", Steering: " << current_steering_ << std::endl;
-    time = getCurrentTime();
-    std::cout << "Time to publish: " << (time - time2) << " s" << std::endl;
+    // time = getCurrentTime();
+    // std::cout << "Time to publish: " << (time - time2) << " s" << std::endl;
     // summary
     // double total_error = 0.0;
     // for (size_t k = 0; k < N_; ++k) {
