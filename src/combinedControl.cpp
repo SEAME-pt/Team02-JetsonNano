@@ -68,8 +68,8 @@ int main(int argc, char** argv)
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
             Q(0,0) = 100;
             Q(1,1) = 100;
-            Q(2,2) = 1;
-            Q(3,3) = 1;
+            Q(2,2) = 100;
+            Q(3,3) = 100;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
             R(0,0) = 1;
