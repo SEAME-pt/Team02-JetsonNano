@@ -66,14 +66,14 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = Qx * 0.1;
-            Q(1,1) = Qy * 0.1;
-            Q(2,2) = Qpsi * 0.1;
-            Q(3,3) = Qv * 0.1;
+            Q(0,0) = 1;
+            Q(1,1) = 1;
+            Q(2,2) = 1;
+            Q(3,3) = 1;
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = Rthrottle * 0.1;
-            R(1,1) = Rsteer * 0.1;
+            R(0,0) = 1;
+            R(1,1) = 1;
             
             Eigen::Matrix4d Qf = 5 * Q;
             pidController.init(kp, ki, kd, constant_speed, delta_time);
