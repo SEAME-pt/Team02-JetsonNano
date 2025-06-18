@@ -66,8 +66,8 @@ int main(int argc, char** argv)
             double Ts = 0.1;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = Qx;
-            Q(1,1) = Qy;
+            Q(0,0) = Qx * 10;
+            Q(1,1) = Qy * 10;
             Q(2,2) = Qpsi;
             Q(3,3) = Qv;
 
