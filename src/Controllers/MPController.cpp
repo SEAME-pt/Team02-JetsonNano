@@ -281,8 +281,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                 : u_seq[k-1];
             Eigen::Vector2d du = uk - uk_prev;
             double v_k = x_seq[k][3];
-            // double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
-            double speed_frac = 1;
+            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            speed_frac = 1;
             double w_dv = 1 + speed_frac;
             double w_ddelta = w_ddelta_base_ + speed_frac;
 
