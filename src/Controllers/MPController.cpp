@@ -79,7 +79,12 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
+            if (carlaMode) {
+                current_speed_ = speed;
+            }
+            else {
+                current_speed_ = speed / 60.0 * M_PI * 0.067 ; // Convert from rpm to m/s based on car properties
+            }
         },
         zenoh::closures::none));
     std::cout << "MPC controller created!" << std::endl;
@@ -92,7 +97,7 @@ ModelPredictiveController::~ModelPredictiveController() {
 void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts,
                              const Eigen::Matrix4d& Q,
                              const Eigen::Matrix2d& R,
-                             const Eigen::Matrix4d& Qf, int height, int width, double target_velocity)
+                             const Eigen::Matrix4d& Qf, int height, int width, double target_velocity, bool carla_mode)
 {
     N_ = horizon;
     L_ = wheelbase;
@@ -100,6 +105,7 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     Q_ = Q;
     R_ = R;
     Qf_ = Qf;
+    carlaMode_ = carla_mode;
     desired_speed_ = target_velocity;
     target_velocity_ = target_velocity;
     height_ = height;
@@ -338,7 +344,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
-    desired_speed_     = u_flat(0);
+    if (carlaMode) {
+        desired_speed_ = u_flat(0);
+    } else {
+        desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s to rpm
+    }
     current_steering_  = u_flat(1);
 
     std::cout << "Speed: " << desired_speed_

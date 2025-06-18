@@ -24,6 +24,8 @@ private:
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
+    std::bool carlaMode_ = false;
+
     XboxController* xboxController_;
     bool speed_lock_;
     float fixed_delta_time_;
@@ -67,7 +69,7 @@ public:
     ~ModelPredictiveController();
 
     void init(size_t horizon, double wheelbase, double Ts,
-        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf, int height, int width, double target_velocity);
+        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf, int height, int width, double target_velocity, bool carla_mode);
 
     void run();
 
