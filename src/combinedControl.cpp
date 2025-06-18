@@ -53,7 +53,7 @@ int main(int argc, char** argv)
             float kp                = 130;
             float ki                = 0.000001;
             float kd                = 10;
-            float constant_speed    = 0.5;
+            float constant_speed    = 0.8;
             float delta_time        = 0.05;
 
             int screen_height = 480;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
             R(0,0) = Rthrottle * 0.1;
-            R(1,1) = Rsteer * 0.05;
+            R(1,1) = Rsteer * 0.1;
 
             
             Eigen::Matrix4d Qf = 5 * Q;
