@@ -24,7 +24,7 @@ private:
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
-    std::bool carlaMode_ = false;
+    bool carlaMode_ = false;
 
     XboxController* xboxController_;
     bool speed_lock_;
