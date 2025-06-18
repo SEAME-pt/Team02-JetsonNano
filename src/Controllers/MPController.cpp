@@ -165,12 +165,10 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // 3.1) warm‐start u_flat from last cycle:
     Eigen::VectorXd u_flat(2*N_);
-    // shift everything by one step
     for (size_t k = 0; k < N_-1; ++k) {
         u_flat(2*k)     = last_u_flat_(2*(k+1));
         u_flat(2*k + 1) = last_u_flat_(2*(k+1) + 1);
     }
-    // append [v_target, 0]
     u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
     u_flat(2*(N_-1) + 1) = 0.0;
     time2 = getCurrentTime();
@@ -178,7 +176,6 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // lambda to compute cost for any u_try
     auto computeCost = [&](const Eigen::VectorXd& u_try) {
-        // rollout with backwardEuler and sum dxᵀQdx + uᵀRu
         std::vector<Eigen::Vector4d> x_seq(N_+1);
         x_seq[0] = x0;
         double J = 0.0;
@@ -203,6 +200,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             double v_k       = x_seq[k][3];   // predicted speed at step k
             // std::cout << "v_k: " << v_k << std::endl;
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            speed_frac = 1;
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
             double w_ddelta  = w_ddelta_base_ + speed_frac;
