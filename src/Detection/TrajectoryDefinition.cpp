@@ -92,7 +92,7 @@ void TrajectoryDefinition::initLocalEnv() {
     {
         float cameraHeight = 0.137f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
-        float horizontalFOV = 101.5f;     // degrees
+        float horizontalFOV = 100.5f;     // degrees
         float img_height = static_cast<float>(height_);
         float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
