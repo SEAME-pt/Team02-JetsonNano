@@ -281,7 +281,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                 : u_seq[k-1];
             Eigen::Vector2d du = uk - uk_prev;
             double v_k = x_seq[k][3];
-            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            // double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            double speed_frac = 1;
             double w_dv = 1 + speed_frac;
             double w_ddelta = w_ddelta_base_ + speed_frac;
 
@@ -410,10 +411,10 @@ void ModelPredictiveController::manualControl()
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
-    std::cout << "Manual control - "
-              << "Current speed: " << current_speed_
-              << ", Steering: " << manual_steering
-              << ", Manual speed: " << manual_speed << std::endl;
+    // std::cout << "Manual control - "
+    //           << "Current speed: " << current_speed_
+    //           << ", Steering: " << manual_steering
+    //           << ", Manual speed: " << manual_speed << std::endl;
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
     else
@@ -428,7 +429,20 @@ void ModelPredictiveController::manualControl()
                 0 - current_speed_, current_time));
         }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    if (parsed_coeffs_.size() == 4) {
+        Eigen::Vector4d x0;
+        x0(0) = 0;
+        x0(1) = 0;
+        x0(2) = current_steering_;
+        x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+        
+        this->solve(x0, parsed_coeffs_);
+
+    } else {
+        std::cerr << "Invalid number of coefficients: " 
+                << parsed_coeffs_.size() << " (expected 4)" << std::endl;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 // SAE_1_LKAS
