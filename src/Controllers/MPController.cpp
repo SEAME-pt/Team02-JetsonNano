@@ -123,8 +123,8 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
 void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
                                          const std::vector<double>& traj_coeffs)
 {
-    // static int solve_count = 0;
-    // if (++solve_count >= 2) exit(0);
+    static int solve_count = 0;
+    if (++solve_count >= 2) exit(0);
 
     // double time = getCurrentTime();
     // Conversion factors
