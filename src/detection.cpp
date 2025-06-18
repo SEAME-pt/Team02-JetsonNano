@@ -194,7 +194,7 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
 
-            trajectoryDefinition.initLocalEnv(static_cast(atof(argv[1])), static_cast(atof(argv[2])));
+            trajectoryDefinition.initLocalEnv(static_cast<float>(atof(argv[1])), static_cast<float>(atof(argv[2])));
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local2_epoch_500.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else {
