@@ -179,12 +179,19 @@ int main(int argc, char** argv)
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local1_epoch_50.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
-        } else {
+        } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
             laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla3_epoch_16.engine";
             objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
+        } else {
+            std::cout << "Running in TEST mode with test video" << std::endl;
+            const std::string video = "/home/team02/record_cam/build/video.mp4";
+            camera.initLVideoTestEnv(video, "calibration.yml");
+            trajectoryDefinition.initLocalEnv();
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local1_epoch_50.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
