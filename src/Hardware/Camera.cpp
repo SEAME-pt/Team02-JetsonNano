@@ -48,7 +48,7 @@ void Camera::initLVideoTestEnv(const std::string& video, const std::string& cali
     cap.open(video);
     
     if (!cap.isOpened()) {
-        std::cerr << "Failed to open camera with pipeline: " << pipeline << std::endl;
+        std::cerr << "Failed to open video: " << video << std::endl;
         throw std::runtime_error("Failed to open camera");
     }
 
