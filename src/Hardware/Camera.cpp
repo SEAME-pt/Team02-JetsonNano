@@ -52,10 +52,10 @@ void Camera::initLVideoTestEnv(const std::string& video, const std::string& cali
         throw std::runtime_error("Failed to open camera");
     }
 
-    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+
+    cap.set(cv::CAP_PROP_FPS, 1);
 
     cap >> currentFrame;
     if (currentFrame.empty()) {
