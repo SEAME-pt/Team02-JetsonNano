@@ -50,14 +50,13 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                 x0(2) = current_steering_;
                 x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
                 
+                double time = getCurrentTime();
+
                 
                 // this->solve(x0, parsed_coeffs);
-                
-                // std::cout << "Received coefficients: " 
-                //           << parsed_coeffs[0] << ", " 
-                //           << parsed_coeffs[1] << ", " 
-                //           << parsed_coeffs[2] << ", " 
-                //           << parsed_coeffs[3] << std::endl;
+
+                std::cout << "Time for solve : " << (getCurrentTime() - time) << " seconds" << std::endl;
+
             } else {
                 std::cerr << "Invalid number of coefficients: " 
                           << parsed_coeffs.size() << " (expected 4)" << std::endl;
