@@ -216,6 +216,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
+    drawPolyLanes(lanePolylines);
     
     float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
     float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
@@ -437,7 +438,7 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 30)
+        if (lanePolylines[i].size() < 10)
             lanePolylines.erase(lanePolylines.begin() + i);
         defineLanePolyline(lanePolylines[i]);
     }
@@ -998,8 +999,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
         std::string statusMsg =
             "Error: " + std::to_string(lateralError).substr(0, 6);
-        cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 40),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 2);
+        cv::putText(allPolylinesViz_, statusMsg, cv::Point(60, 100),
+                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 2);
     }
 }
 
