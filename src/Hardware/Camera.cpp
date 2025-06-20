@@ -54,6 +54,9 @@ void Camera::initLVideoTestEnv(const std::string& video, const std::string& cali
 
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+
     cap >> currentFrame;
     if (currentFrame.empty()) {
         cv::destroyAllWindows();
