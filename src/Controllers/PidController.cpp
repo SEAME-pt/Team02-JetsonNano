@@ -253,7 +253,7 @@ void PidController::autonomousControl()
     //     publisher_->publishCurrentGear(0);
     // }
     std::this_thread::sleep_for(std::chrono::milliseconds(
-                static_cast<int>(fixed_delta_time_ * 1000)));
+                static_cast<int>(fixed_delta_time_ * 10000)));
 }
 
 void PidController::run()
