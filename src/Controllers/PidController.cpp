@@ -28,10 +28,10 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     speed_lock_         = false;
     xboxController_     = xbox_controller;
     current_speed_      = 0.0f;
-    speedKp_ = 0.1f;
+    speedKp_ = 0.2f;
     // speedKi_ = 1.3f;
     // speedKd_ = 0.01f;    
-    speedKi_ = 0.000f;
+    speedKi_ = 0.01f;
     speedKd_ = 0.0f;
     speedPidController_ = new SpeedPidController();
     speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
