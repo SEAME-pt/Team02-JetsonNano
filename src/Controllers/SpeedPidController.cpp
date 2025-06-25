@@ -21,8 +21,37 @@ SpeedPidController::SpeedPidController()
 
 SpeedPidController::~SpeedPidController() {}
 
-void SpeedPidController::init(float kp, float ki, float kd, float delta_time)
+void SpeedPidController::init(float kp, float ki, float kd, float delta_time, std::shared_ptr<zenoh::Session> session)
 {
+    session_ = session;
+
+    kp_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/speedpid/kp",
+        [this](const zenoh::Sample& sample)
+        {
+            kp_ = std::stof(sample.payload().to_string());
+            std::cout << "Updated Kp: " << kp_ << std::endl;
+        },
+        zenoh::closures::none));
+    
+    ki_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/speedpid/ki",
+        [this](const zenoh::Sample& sample)
+        {
+            ki_ = std::stof(sample.payload().to_string());
+            std::cout << "Updated Ki: " << kp_ << std::endl;
+        },
+        zenoh::closures::none));
+
+    kd_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/speedpid/kd",
+        [this](const zenoh::Sample& sample)
+        {
+            kd_ = std::stof(sample.payload().to_string());
+            std::cout << "Updated Kd: " << kp_ << std::endl;
+        },
+        zenoh::closures::none));
+
     kp_               = kp;
     ki_               = ki;
     kd_               = kd;
