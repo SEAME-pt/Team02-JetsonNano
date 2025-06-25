@@ -1,4 +1,3 @@
-
 #include "Signals.hpp"
 #include <sys/stat.h>
 #define SESSION_OPEN zenoh::Session::open
@@ -79,18 +78,16 @@ void Signals::run()
                 this->canBus->readMessage(buffer, can_id, data);
                 if (can_id == 0x01)
                 {
-                    int speed;
+                    double speed;
                     // double wheelDiame = 0.067;
     
-                    memcpy(&speed, &data[1], 4);
-    
-                    speed = ntohl(speed);
+                    memcpy(&speed, &data[1], 8);
+                    // If your CAN protocol sends double in network byte order, you may need to convert byte order here.
                     // speed = wheelDiame * 3.14 * speed * 10 / 60;
                     if (speed < 0 || speed > 2000)
                         speed = 0;
-                    printf("Publishing speed: '%d'\n", speed);
-                    std::string speed_str = std::to_string(speed);
-                    publisher_->publishSpeed(std::stof(speed_str));
+                    printf("Publishing speed: '%f'\n", speed);
+                    publisher_->publishSpeed(speed);
                 }
             }
         }
