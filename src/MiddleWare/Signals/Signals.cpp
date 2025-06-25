@@ -67,7 +67,7 @@ void Signals::run()
 {
     while (1)
     {
-        usleep(50);
+        usleep(10);
 
         if (this->canBus) {
             int buffer = this->canBus->checktheReceive();
