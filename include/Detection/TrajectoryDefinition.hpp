@@ -85,7 +85,7 @@ class TrajectoryDefinition
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
     ~TrajectoryDefinition();
 
-    void initLocalEnv(float a, float b);
+    void initLocalEnv();
     void initCarlaEnv();
 
     cv::Mat process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
