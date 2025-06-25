@@ -8,7 +8,7 @@ Publisher::Publisher(
     SpeedKp_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/speedpid/kp")));
     SpeedKi_pub.emplace(session_->declare_publisher(
-        zenoh::KeyExpr("Vehicle/1/speedpid/kp")));
+        zenoh::KeyExpr("Vehicle/1/speedpid/ki")));
     SpeedKd_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/speedpid/kd")));
 
