@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(zenohc_DIR "/usr/local/lib/cmake/zenohc")
 set(zenohcxx_DIR "/usr/local/lib/cmake/zenohcxx")
 
+find_package(zenohc REQUIRED)
+find_package(zenohcxx REQUIRED)
+
 add_executable(pid_calibrator
     ./src/main.cpp
     ./src/Communication/Publisher.cpp
