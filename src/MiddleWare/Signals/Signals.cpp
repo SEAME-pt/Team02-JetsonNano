@@ -80,10 +80,22 @@ void Signals::run()
                 this->canBus->readMessage(buffer, can_id, data);
                 if (can_id == 0x01)
                 {
+                    uint64_t speedBits = 0;
+                    for (int i = 0; i < 8; i++) {
+                        speedBits |= ((uint64_t)data[i]) << (56 - i * 8);
+                    }
                     double speed;
-                    memcpy(&speed, data, 8); // Read from data[0] to data[7]
-                    // if (speed < 0 || speed > 2000)
-                    //     speed = 0;
+                    memcpy(&speed, &speedBits, 8);
+                    // double speed;
+                    // memcpy(&speed, data, 8); // Read from data[0] to data[7]
+                    // // if (speed < 0 || speed > 2000)
+                    // //     speed = 0;
+
+                    printf("Raw bytes: ");
+                    for (int i = 0; i < 8; i++) {
+                        printf("%02X ", data[i]);
+                    }
+                    printf("\n");
                     printf("Publishing speed: '%f'\n", speed);
                     publisher_->publishSpeed(speed);
                 }
