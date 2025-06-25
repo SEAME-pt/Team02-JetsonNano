@@ -90,6 +90,7 @@ void Signals::run()
                     // memcpy(&speed, data, 8); // Read from data[0] to data[7]
                     // // if (speed < 0 || speed > 2000)
                     // //     speed = 0;
+                    speed = static_cast<double>(ntohl(speed)); // Convert from network byte order to host byte order
 
                     printf("Raw bytes: ");
                     for (int i = 0; i < 8; i++) {
