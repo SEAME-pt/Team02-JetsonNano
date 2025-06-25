@@ -80,12 +80,8 @@ void Signals::run()
                 this->canBus->readMessage(buffer, can_id, data);
                 if (can_id == 0x01)
                 {
-                    uint64_t speedBits = 0;
-                    for (int i = 0; i < 8; i++) {
-                        speedBits |= ((uint64_t)data[i]) << (56 - i * 8);
-                    }
                     double speed;
-                    memcpy(&speed, &speedBits, 8);
+                    memcpy(&speed, &data, 8);
                     // double speed;
                     // memcpy(&speed, data, 8); // Read from data[0] to data[7]
                     // // if (speed < 0 || speed > 2000)
