@@ -242,8 +242,9 @@ void PidController::autonomousControl()
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
     // if (!this->speed_lock_)
     {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            constant_speed_ - current_speed_, current_time));
+        double speed_cmd = speedPidController_->speedPID(constant_speed_ - current_speed_, current_time);
+        speed_cmd = std::max(0.0, speed_cmd); // Clamp to minimum 0
+        publisher_->publishSpeed(speed_cmd);
         publisher_->publishCurrentGear(1);
     }
     // else
