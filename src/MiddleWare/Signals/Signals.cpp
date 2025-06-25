@@ -72,6 +72,7 @@ void Signals::run()
         if (this->canBus) {
             int buffer = this->canBus->checktheReceive();
             // printf("Buffer: %d\n", buffer);
+
             if (buffer != -1)
             {
                 uint32_t can_id = 0;
@@ -80,21 +81,18 @@ void Signals::run()
                 this->canBus->readMessage(buffer, can_id, data);
                 if (can_id == 0x01)
                 {
-                    double speed;
-                    memcpy(&speed, &data, 8);
-                    // double speed;
-                    // memcpy(&speed, data, 8); // Read from data[0] to data[7]
-                    // // if (speed < 0 || speed > 2000)
-                    // //     speed = 0;
-                    speed = static_cast<double>(ntohl(speed)); // Convert from network byte order to host byte order
-
-                    printf("Raw bytes: ");
-                    for (int i = 0; i < 8; i++) {
-                        printf("%02X ", data[i]);
-                    }
-                    printf("\n");
-                    printf("Publishing speed: '%f'\n", speed);
-                    publisher_->publishSpeed(speed);
+                    int speed;
+                    // double wheelDiame = 0.067;
+    
+                    memcpy(&speed, &data[1], 4);
+    
+                    speed = ntohl(speed);
+                    // speed = wheelDiame * 3.14 * speed * 10 / 60;
+                    if (speed < 0 || speed > 2000)
+                        speed = 0;
+                    printf("Publishing speed: '%d'\n", speed);
+                    std::string speed_str = std::to_string(speed);
+                    publisher_->publishSpeed(std::stof(speed_str));
                 }
             }
         }
