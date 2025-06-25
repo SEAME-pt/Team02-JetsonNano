@@ -39,7 +39,7 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
         [this](const zenoh::Sample& sample)
         {
             ki_ = std::stof(sample.get_payload().as_string());
-            std::cout << "Updated Ksadhaswdpofishi: " << ki_ << std::endl;
+            std::cout << "Updated Ki: " << ki_ << std::endl;
         },
         zenoh::closures::none));
 
