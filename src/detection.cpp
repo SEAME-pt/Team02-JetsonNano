@@ -204,7 +204,7 @@ int main(int argc, char** argv)
             const std::string video = "/home/team02/record_cam/build/video.mp4";
             camera.initLVideoTestEnv(video, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Mob1_epoch_48.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_50.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         }
 
