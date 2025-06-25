@@ -82,8 +82,8 @@ void Signals::run()
                 {
                     double speed;
                     memcpy(&speed, data, 8); // Read from data[0] to data[7]
-                    if (speed < 0 || speed > 2000)
-                        speed = 0;
+                    // if (speed < 0 || speed > 2000)
+                    //     speed = 0;
                     printf("Publishing speed: '%f'\n", speed);
                     publisher_->publishSpeed(speed);
                 }
