@@ -69,7 +69,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
     delete avoidance;
 }
 
-void TrajectoryDefinition::initLocalEnv(float a, float b) {
+void TrajectoryDefinition::initLocalEnv() {
     try {
         this->canBus     = new CAN();
         this->canBus->init("/dev/spidev0.0");
@@ -91,8 +91,8 @@ void TrajectoryDefinition::initLocalEnv(float a, float b) {
     try
     {
         float cameraHeight = 0.137f;       // meters
-        float cameraPitch = a;       // degrees down from horizontal
-        float horizontalFOV = b;     // degrees
+        float cameraPitch = 20.0f;       // degrees down from horizontal
+        float horizontalFOV = 65.1f;     // degrees
         float img_height = static_cast<float>(height_);
         float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;

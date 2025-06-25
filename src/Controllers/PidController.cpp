@@ -236,14 +236,14 @@ void PidController::autonomousControl()
     double current_time   = getCurrentTime();
     float direction = steeringPID(cameraError_, current_time);
 
-    publisher_->publishSteering(direction);
-    publisher_->publishSpeed(xboxController_->getManualSpeed());
+    // publisher_->publishSteering(direction);
+    // publisher_->publishSpeed(xboxController_->getManualSpeed());
     // if (!this->speed_lock_)
-    // {
-    //     publisher_->publishSpeed(speedPidController_->speedPID(
-    //         constant_speed_ - current_speed_, current_time));
-    //     publisher_->publishCurrentGear(1);
-    // }
+    {
+        publisher_->publishSpeed(speedPidController_->speedPID(
+            constant_speed_ - current_speed_, current_time));
+        publisher_->publishCurrentGear(1);
+    }
     // else
     // {
     //     publisher_->publishSpeed(speedPidController_->speedPID(
