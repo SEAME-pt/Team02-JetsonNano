@@ -29,7 +29,7 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
         "Vehicle/1/speedpid/kp",
         [this](const zenoh::Sample& sample)
         {
-            kp_ = std::stof(sample.payload().to_string());
+            kp_ = std::stof(sample.get_payload().to_string());
             std::cout << "Updated Kp: " << kp_ << std::endl;
         },
         zenoh::closures::none));
@@ -38,7 +38,7 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
         "Vehicle/1/speedpid/ki",
         [this](const zenoh::Sample& sample)
         {
-            ki_ = std::stof(sample.payload().to_string());
+            ki_ = std::stof(sample.get_payload().to_string());
             std::cout << "Updated Ki: " << kp_ << std::endl;
         },
         zenoh::closures::none));
@@ -47,7 +47,7 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
         "Vehicle/1/speedpid/kd",
         [this](const zenoh::Sample& sample)
         {
-            kd_ = std::stof(sample.payload().to_string());
+            kd_ = std::stof(sample.get_payload().to_string());
             std::cout << "Updated Kd: " << kp_ << std::endl;
         },
         zenoh::closures::none));
