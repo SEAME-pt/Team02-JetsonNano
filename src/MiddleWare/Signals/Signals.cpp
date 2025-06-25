@@ -71,11 +71,6 @@ void Signals::run()
 
         if (this->canBus) {
             int buffer = this->canBus->checktheReceive();
-            // printf("Buffer: %d\n", buffer);
-            if (buffer == -1)
-            {
-                std::cout << "Waiting for CAN messages..." << std::flush;
-            }
             if (buffer != -1)
             {
                 uint32_t can_id = 0;
