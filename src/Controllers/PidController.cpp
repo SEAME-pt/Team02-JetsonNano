@@ -234,7 +234,7 @@ void PidController::conditionalAutomation()
 void PidController::autonomousControl()
 {
     double current_time   = getCurrentTime();
-    float direction = steeringPID(cameraError_, current_time);
+    // float direction = steeringPID(cameraError_, current_time);
 
     // publisher_->publishSteering(direction);
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
