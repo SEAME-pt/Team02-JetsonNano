@@ -22,10 +22,10 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
     speedKp_ = 0.12f;
     speedKi_ = 1.3f;
     speedKd_ = 0.01f;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
-    
     session_ = session;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_, session_);
+    
     
     publisher_ = std::make_unique<ControllerPublisher>(session_);
     
