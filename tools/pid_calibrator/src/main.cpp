@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
     // Initialize Zenoh session
     auto config = zenoh::Config::create_default();
-    auto session = zstd::make_shared<zenoh::Session>(
+    auto session = std::make_shared<zenoh::Session>(
                 zenoh::Session::open(std::move(config)));
     if (!session)
     {
