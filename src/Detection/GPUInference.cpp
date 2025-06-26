@@ -129,7 +129,6 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
             // Convert to [0,1] by dividing by 255
             float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ - 1 - c)] / 255.0f;
             
-            // Apply normalization using ImageNet stats (matching Python's transform_pipeline)
             inputData[c * plane_size + i] = (pixelValue - means[c]) / stds[c];
         }
     }
