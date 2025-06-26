@@ -191,7 +191,7 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_10.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
@@ -204,7 +204,7 @@ int main(int argc, char** argv)
             const std::string video = "/home/team02/record_cam/build/video.mp4";
             camera.initLVideoTestEnv(video, "calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_10.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         }
 
