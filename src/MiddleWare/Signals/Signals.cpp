@@ -84,7 +84,7 @@ void Signals::run()
                     int speed;
                     // double wheelDiame = 0.067;
     
-                    memcpy(&speed, &data, 4);
+                    memcpy(&speed, &data[0], 4);
     
                     speed = ntohl(speed);
                     // speed = wheelDiame * 3.14 * speed * 10 / 60;
