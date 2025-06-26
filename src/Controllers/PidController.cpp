@@ -236,23 +236,23 @@ void PidController::conditionalAutomation()
 void PidController::autonomousControl()
 {
     double current_time   = getCurrentTime();
-    // float direction = steeringPID(cameraError_, current_time);
+    float direction = steeringPID(cameraError_, current_time);
 
-    // publisher_->publishSteering(direction);
+    publisher_->publishSteering(direction);
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
-    // if (!this->speed_lock_)
+    if (!this->speed_lock_)
     {
         double speed_cmd = speedPidController_->speedPID(constant_speed_ - current_speed_, current_time);
         speed_cmd = std::max(0.0, speed_cmd); // Clamp to minimum 0
         publisher_->publishSpeed(speed_cmd);
         publisher_->publishCurrentGear(1);
     }
-    // else
-    // {
-    //     publisher_->publishSpeed(speedPidController_->speedPID(
-    //         0 - current_speed_, current_time));
-    //     publisher_->publishCurrentGear(0);
-    // }
+    else
+    {
+        publisher_->publishSpeed(speedPidController_->speedPID(
+            0 - current_speed_, current_time));
+        publisher_->publishCurrentGear(0);
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 10000)));
 }
