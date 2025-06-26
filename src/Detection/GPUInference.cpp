@@ -139,6 +139,10 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
                     cudaMemcpyHostToDevice, stream);
 }
 
+float sigmoid(float x) {
+    return 1.0f / (1.0f + expf(-x));
+}
+
 void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
 {
     const int total_pixels = height_ * width_;
@@ -151,9 +155,10 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
 
     for (int i = 0; i < total_pixels; i++)
     {
-        int y                      = i / width_;
-        int x                      = i % width_;
-        uchar value                = (outputData[i] > 0.5) ? 255 : 0;
+        int y = i / width_;
+        int x = i % width_;
+        float prob = sigmoid(outputData[i]);
+        uchar value = (prob > 0.5f) ? 255 : 0;
         outputMask.at<uchar>(y, x) = value;
     }
 }
