@@ -28,13 +28,15 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     speed_lock_         = false;
     xboxController_     = xbox_controller;
     current_speed_      = 0.0f;
-    speedKp_ = 0.12f;
-    speedKi_ = 1.3f;
-    speedKd_ = 0.01f;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
-
     session_ = session;
+    speedKp_ = 0.15f;
+    // speedKi_ = 1.3f;
+    // speedKd_ = 0.01f;    
+    speedKi_ = 0.0001f;
+    speedKd_ = 0.0001f;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_, session_);
+
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
@@ -237,19 +239,20 @@ void PidController::autonomousControl()
     float direction = steeringPID(cameraError_, current_time);
 
     publisher_->publishSteering(direction);
-    publisher_->publishSpeed(xboxController_->getManualSpeed());
-    // if (!this->speed_lock_)
-    // {
-    //     publisher_->publishSpeed(speedPidController_->speedPID(
-    //         constant_speed_ - current_speed_, current_time));
-    //     publisher_->publishCurrentGear(1);
-    // }
-    // else
-    // {
-    //     publisher_->publishSpeed(speedPidController_->speedPID(
-    //         0 - current_speed_, current_time));
-    //     publisher_->publishCurrentGear(0);
-    // }
+    // publisher_->publishSpeed(xboxController_->getManualSpeed());
+    if (!this->speed_lock_)
+    {
+        double speed_cmd = speedPidController_->speedPID(constant_speed_ - current_speed_, current_time);
+        speed_cmd = std::max(0.0, speed_cmd); // Clamp to minimum 0
+        publisher_->publishSpeed(speed_cmd);
+        publisher_->publishCurrentGear(1);
+    }
+    else
+    {
+        publisher_->publishSpeed(speedPidController_->speedPID(
+            0 - current_speed_, current_time));
+        publisher_->publishCurrentGear(0);
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }

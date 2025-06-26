@@ -70,6 +70,7 @@ class TrajectoryDefinition
     float farDistance_;
     float laneWidth_;
 
+
     std::vector<cv::Point> mpcPoints_;
     
   public:
