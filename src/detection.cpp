@@ -143,8 +143,8 @@ int main(int argc, char** argv)
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
-    const int heightModelInf = 384;
-    const int widthModelInf = 384;
+    const int heightModelInf = 256;
+    const int widthModelInf = 256;
 
     try
     {
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
             camera.initLocalEnv(pipeline, "calibration.yml");
 
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple1_epoch_20.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
