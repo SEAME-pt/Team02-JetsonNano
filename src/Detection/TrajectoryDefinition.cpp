@@ -177,10 +177,10 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
                                    cv::Mat& class_mask)
 {
     cv::Mat resized_binary_mask;
-    cv::resize(binary_mask, resized_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::resize(binary_mask, resized_binary_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
     cv::Mat resized_class_mask;
-    cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
     cv::Mat ipm_binary_mask = ipm->applyIPM(resized_binary_mask);
     cv::Mat ipm_class_mask = ipm->applyIPM(resized_class_mask);
@@ -192,10 +192,10 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
 
     cv::Mat res_frame;
-    cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
+    cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_LINEAR);
 
     cv::Mat res_class_mask;
-    cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_NEAREST);
+    cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_LINEAR);
 
     cv::addWeighted(res_frame, 0.7, res_class_mask, 0.3, 0.0, res_frame);
     return (res_frame);
