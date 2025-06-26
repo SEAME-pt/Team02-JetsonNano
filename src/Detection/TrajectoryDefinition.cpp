@@ -147,7 +147,7 @@ void TrajectoryDefinition::initCarlaEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 1.0f;       // meters
-        farDistance_ = 1.0f;       // meters
+        farDistance_ = 10.0f;       // meters
         laneWidth_ = 6.0f;          // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
