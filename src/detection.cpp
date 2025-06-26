@@ -143,8 +143,8 @@ int main(int argc, char** argv)
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
-    const int heightModelInf = 128;
-    const int widthModelInf = 256;
+    const int heightModelInf = 384;
+    const int widthModelInf = 384;
 
     try
     {
