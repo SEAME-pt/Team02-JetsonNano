@@ -53,7 +53,7 @@ int main(int argc, char** argv)
             float kp                = 130;
             float ki                = 0.000001;
             float kd                = 10;
-            float constant_speed    = 120;
+            float constant_speed    = 100;
             float delta_time        = 0.05;
 
             int screen_height = 480;
