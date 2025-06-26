@@ -8,6 +8,7 @@
 #include <atomic>
 #include <iostream>
 #include <csignal>
+#include <cstdlib>
 
 using namespace cv;
 using namespace std;
@@ -156,6 +157,7 @@ int main(int argc, char** argv)
             return -1;
         }
 
+        mode = "local";
         std::shared_ptr<zenoh::Session> session;
         if (!configFile.empty()) {
             std::cout << "Using configuration from file: " << configFile << std::endl;
@@ -190,6 +192,7 @@ int main(int argc, char** argv)
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "calibration.yml");
+
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";

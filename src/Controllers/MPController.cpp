@@ -22,10 +22,10 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
     speedKp_ = 0.12f;
     speedKi_ = 1.3f;
     speedKd_ = 0.01f;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_);
-    
     session_ = session;
+    speedPidController_ = new SpeedPidController();
+    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_, session_);
+    
     
     publisher_ = std::make_unique<ControllerPublisher>(session_);
     
@@ -35,31 +35,11 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         {
             std::string coeffs_str = sample.get_payload().as_string();
             
-            std::vector<double> parsed_coeffs;
             std::stringstream ss(coeffs_str);
             std::string token;
-            
+            parsed_coeffs_.clear();
             while (std::getline(ss, token, ',')) {
-                parsed_coeffs.push_back(std::stod(token));
-            }
-            
-            if (parsed_coeffs.size() == 4) {
-                Eigen::Vector4d x0;
-                x0(0) = 0;
-                x0(1) = 0;
-                x0(2) = current_steering_;
-                x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
-                
-                double time = getCurrentTime();
-
-                
-                // this->solve(x0, parsed_coeffs);
-
-                std::cout << "Time for solve : " << (getCurrentTime() - time) << " seconds" << std::endl;
-
-            } else {
-                std::cerr << "Invalid number of coefficients: " 
-                          << parsed_coeffs.size() << " (expected 4)" << std::endl;
+                parsed_coeffs_.push_back(std::stod(token));
             }
         },
         zenoh::closures::none));
@@ -99,7 +79,12 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
+            if (carlaMode_) {
+                current_speed_ = speed;
+            }
+            else {
+                current_speed_ = speed / 60.0 * M_PI * 0.067 ; // Convert from rpm to m/s based on car properties
+            }
         },
         zenoh::closures::none));
     std::cout << "MPC controller created!" << std::endl;
@@ -112,7 +97,7 @@ ModelPredictiveController::~ModelPredictiveController() {
 void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts,
                              const Eigen::Matrix4d& Q,
                              const Eigen::Matrix2d& R,
-                             const Eigen::Matrix4d& Qf)
+                             const Eigen::Matrix4d& Qf, int height, int width, double target_velocity, bool carla_mode)
 {
     N_ = horizon;
     L_ = wheelbase;
@@ -120,7 +105,11 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     Q_ = Q;
     R_ = R;
     Qf_ = Qf;
-    desired_speed_ = 8.0;
+    carlaMode_ = carla_mode;
+    desired_speed_ = target_velocity;
+    target_velocity_ = target_velocity;
+    height_ = height;
+    width_ = width;
 
     last_u_flat_.setConstant(2*N_, 0.0);
     
@@ -137,10 +126,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     // static int solve_count = 0;
     // if (++solve_count >= 2) exit(0);
 
+    // double time = getCurrentTime();
     // Conversion factors
-    const double mx         = 6.0 / 1024.0;  // meters per pixel in x
-    const double my         = 7.0 / 512.0;   // meters per pixel in y
-
+    const double mx         = 1.0 / width_;  // meters per pixel in x
+    const double my         = 1.0 / height_;   // meters per pixel in y
+    // double time2 = getCurrentTime();
+    // std::cout << "Time for conversion factors: " << (time2 - time) << " s" << std::endl;
     // Convert pixel-space trajectory coeffs to meter-space
     std::vector<double> meter_coeffs(4);
 
@@ -167,23 +158,24 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         double psi_ref = std::atan(dx_dy);
         x_ref[k] << x_ref_m, y_ref, psi_ref, v_ref;
     }
+    // time = getCurrentTime();
+    // std::cout << "Time for reference trajectory: " << (time - time2) << " s" << std::endl;
     // std::cout << "Reference state at step " << N_ << ": "
     //           << x_ref[N_].transpose() << std::endl;
 
     // 3.1) warm‐start u_flat from last cycle:
     Eigen::VectorXd u_flat(2*N_);
-    // shift everything by one step
     for (size_t k = 0; k < N_-1; ++k) {
         u_flat(2*k)     = last_u_flat_(2*(k+1));
         u_flat(2*k + 1) = last_u_flat_(2*(k+1) + 1);
     }
-    // append [v_target, 0]
     u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
     u_flat(2*(N_-1) + 1) = 0.0;
+    // time2 = getCurrentTime();
+    // std::cout << "Time for warm-start: " << (time2 - time) << " s" << std::endl;
 
     // lambda to compute cost for any u_try
     auto computeCost = [&](const Eigen::VectorXd& u_try) {
-        // rollout with backwardEuler and sum dxᵀQdx + uᵀRu
         std::vector<Eigen::Vector4d> x_seq(N_+1);
         x_seq[0] = x0;
         double J = 0.0;
@@ -207,10 +199,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             // compute speed‐adaptive steering smoothness weight:
             double v_k       = x_seq[k][3];   // predicted speed at step k
             // std::cout << "v_k: " << v_k << std::endl;
-            double speed_frac = std::clamp(v_k / 10 * 500, 0.0, 700.0);
+            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            speed_frac = 0;
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
-            double w_ddelta  = w_ddelta_base_ + speed_frac;
+            // double w_ddelta  = w_ddelta_base_ + speed_frac;
+            double w_ddelta  = 0;
             // std::cout << "w_ddelta: " << w_ddelta << std::endl;
 
             // add the Δu cost:
@@ -229,18 +223,78 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     double alpha0 = 0.1, beta = 0.5;
     Eigen::VectorXd grad(2*N_);
 
+    // time = getCurrentTime();
+    // std::cout << "Time for setup: " << (time - time2) << " s" << std::endl;
     // initial cost
     double J_curr = computeCost(u_flat);
+    // time2 = getCurrentTime();
+    // std::cout << "Time for initial cost: " << (time2 - time) << " s" << std::endl;
 
     for (int iter=0; iter<max_iter; ++iter) {
         // finite-difference gradient
-        const double eps = 1e-3;
-        for (int i=0; i<2*(int)N_; ++i) {
-        Eigen::VectorXd up = u_flat, um = u_flat;
-        up(i) += eps;  um(i) -= eps;
-        grad(i) = (computeCost(up) - computeCost(um)) / (2*eps);
+        // const double eps = 1e-2;
+        // for (int i=0; i<2*(int)N_; ++i) {
+        //     Eigen::VectorXd up = u_flat, um = u_flat;
+        //     up(i) += eps;  um(i) -= eps;
+        //     grad(i) = (computeCost(up) - computeCost(um)) / (2*eps);
+        // }
+
+        std::vector<Eigen::Vector4d> x_seq(N_+1);
+        std::vector<Eigen::Vector2d> u_seq(N_);
+        x_seq[0] = x0;
+        for (size_t k = 0; k < N_; ++k) {
+            u_seq[k] = Eigen::Vector2d(u_flat(2*k), u_flat(2*k+1));
+            x_seq[k+1] = backwardEuler(x_seq[k], u_seq[k]);
         }
-        if (grad.norm()<tol) break;
+
+        // Backward pass
+        std::vector<Eigen::Vector4d> lambda(N_+1);
+        lambda[N_] = Qf_ * (x_seq[N_] - x_ref[N_]);
+        for (int k = N_-1; k >= 0; --k) {
+            double v = x_seq[k](3);
+            double psi = x_seq[k](2);
+            double delta = u_seq[k](1);
+
+            Eigen::Matrix4d A = Eigen::Matrix4d::Zero();
+            A(0,0) = 1.0;
+            A(0,2) = Ts_ * v * std::cos(psi);
+            A(0,3) = Ts_ * std::sin(psi);
+
+            A(1,1) = 1.0;
+            A(1,2) = -Ts_ * v * std::sin(psi);
+            A(1,3) = Ts_ * std::cos(psi);
+
+            A(2,2) = 1.0;
+            A(2,3) = Ts_ / L_ * std::tan(delta);
+
+            Eigen::Matrix<double, 4, 2> B = Eigen::Matrix<double, 4, 2>::Zero();
+            B(2,1) = Ts_ * v / (L_ * std::cos(delta) * std::cos(delta));
+            B(3,0) = 1.0;
+
+            lambda[k] = Q_ * (x_seq[k] - x_ref[k]) + A.transpose() * lambda[k+1];
+            grad.segment<2>(2*k) = 2.0 * R_ * u_seq[k] + B.transpose() * lambda[k+1];
+
+            Eigen::Vector2d uk = u_seq[k];
+            Eigen::Vector2d uk_prev = (k==0)
+                ? Eigen::Vector2d{x0(3), current_steering_}
+                : u_seq[k-1];
+            Eigen::Vector2d du = uk - uk_prev;
+            double v_k = x_seq[k][3];
+            double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
+            speed_frac = 0;
+            double w_dv = 0 + speed_frac;
+            // double w_ddelta = w_ddelta_base_ + speed_frac;
+            double w_ddelta = 0;
+
+            // Gradient w.r.t. uk
+            grad.segment<2>(2*k) += 2.0 * Eigen::Vector2d(w_dv * du(0), w_ddelta * du(1));
+            // Gradient w.r.t. uk_prev (if k > 0)
+            if (k > 0) {
+                grad.segment<2>(2*(k-1)) -= 2.0 * Eigen::Vector2d(w_dv * du(0), w_ddelta * du(1));
+            }
+        }
+
+        if (grad.norm() < tol) break;
 
         // backtracking line-search
         double alpha = alpha0;
@@ -261,6 +315,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         J_curr = J_next;
     }
 
+    // time = getCurrentTime();
+    // std::cout << "Time for optimization: " << (time - time2) << " s" << std::endl;
     // store for next warm‐start
     last_u_flat_ = u_flat;
 
@@ -274,6 +330,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     }
     predicted_trajectory_ = x_seq;
 
+    // time2 = getCurrentTime();
+    // std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
     // publish trajectory in pixel coordinates
     std::ostringstream oss;
     for (size_t i = 0; i < x_seq.size(); ++i) {
@@ -282,15 +340,22 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         oss << x_pix << "," << y_pix;
         if (i + 1 < x_seq.size()) oss << ";";
     }
+    // time2 = getCurrentTime();
+    // std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
-    desired_speed_     = u_flat(0);
+    if (carlaMode_) {
+        desired_speed_ = u_flat(0);
+    } else {
+        desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s to rpm
+    }
     current_steering_  = u_flat(1);
 
     std::cout << "Speed: " << desired_speed_
               << ", Steering: " << current_steering_ << std::endl;
-
+    // time = getCurrentTime();
+    // std::cout << "Time to publish: " << (time - time2) << " s" << std::endl;
     // summary
     // double total_error = 0.0;
     // for (size_t k = 0; k < N_; ++k) {
@@ -346,10 +411,10 @@ void ModelPredictiveController::manualControl()
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
-    std::cout << "Manual control - "
-              << "Current speed: " << current_speed_
-              << ", Steering: " << manual_steering
-              << ", Manual speed: " << manual_speed << std::endl;
+    // std::cout << "Manual control - "
+    //           << "Current speed: " << current_speed_
+    //           << ", Steering: " << manual_steering
+    //           << ", Manual speed: " << manual_speed << std::endl;
     if (!speed_lock_)
         publisher_->publishSpeed(manual_speed);
     else
@@ -364,7 +429,20 @@ void ModelPredictiveController::manualControl()
                 0 - current_speed_, current_time));
         }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    if (parsed_coeffs_.size() == 4) {
+        Eigen::Vector4d x0;
+        x0(0) = 0;
+        x0(1) = 0;
+        x0(2) = current_steering_;
+        x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+        
+        this->solve(x0, parsed_coeffs_);
+
+    } else {
+        std::cerr << "Invalid number of coefficients: " 
+                << parsed_coeffs_.size() << " (expected 4)" << std::endl;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 // SAE_1_LKAS
@@ -420,7 +498,21 @@ void ModelPredictiveController::conditionalAutomation()
 void ModelPredictiveController::autonomousControl()
 {
     double current_time   = getCurrentTime();
-    double steering = current_steering_ *180 / M_PI + 90;
+    if (parsed_coeffs_.size() == 4) {
+        Eigen::Vector4d x0;
+        x0(0) = 0;
+        x0(1) = 0;
+        x0(2) = current_steering_;
+        x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
+        
+        this->solve(x0, parsed_coeffs_);
+
+    } else {
+        std::cerr << "Invalid number of coefficients: " 
+                << parsed_coeffs_.size() << " (expected 4)" << std::endl;
+    }
+    // double steering = current_steering_ *180 / M_PI + 90;
+    double steering = std::clamp(current_steering_ * 180  * 3 / M_PI + 90, 0.0, 180.0);
 
     publisher_->publishSteering(steering);
     if (!this->speed_lock_)
@@ -447,6 +539,7 @@ void ModelPredictiveController::run()
     while (true)
     {
         if (!xboxController_->getPidEnable()) {
+            std::cout << "Running in MPC mode" << std::endl;
             std::string sae_level = getAutonomousDriveState();
 
             if (sae_level.find("SAE_0") != std::string::npos) {

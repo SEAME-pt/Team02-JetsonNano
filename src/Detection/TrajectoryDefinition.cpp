@@ -92,14 +92,14 @@ void TrajectoryDefinition::initLocalEnv() {
     {
         float cameraHeight = 0.137f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
-        float horizontalFOV = 105.0f;     // degrees
+        float horizontalFOV = 65.1f;     // degrees
         float img_height = static_cast<float>(height_);
         float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.01f;       // meters
-        farDistance_ = 1.0f;       // meters
-        laneWidth_ = 1.0f;      // meters
+        farDistance_ = 0.6f;       // meters
+        laneWidth_ = 0.5f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
 
@@ -248,7 +248,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
-    // drawCurves(midCurve, leftCurve, rightCurve);
+    drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
     // obstacleAvoidance(class_mask, midCurve);
    
@@ -438,7 +438,7 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 10)
+        if (lanePolylines[i].size() < 30)
             lanePolylines.erase(lanePolylines.begin() + i);
         defineLanePolyline(lanePolylines[i]);
     }
@@ -522,7 +522,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
 //     bool lane0IsLeft = false;
 //     bool lane1IsLeft = false;
     
-//     float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.15;
+//     float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.4;
     
 //     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
 //     {

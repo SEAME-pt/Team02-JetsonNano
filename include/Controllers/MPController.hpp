@@ -24,6 +24,8 @@ private:
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
+    bool carlaMode_ = false;
+
     XboxController* xboxController_;
     bool speed_lock_;
     float fixed_delta_time_;
@@ -37,6 +39,9 @@ private:
     float current_speed_;
     float desired_speed_;
     float current_steering_;
+
+    int height_; // Height of the image
+    int width_; // Width of the image
 
     Eigen::Vector4d currentState_;
     std::string autonomousDrive_;
@@ -57,12 +62,14 @@ private:
     
     double w_ddelta_base_ = 250.0; // base weight for steering changes
 
+    std::vector<double> parsed_coeffs_;
+
 public:
     ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
     ~ModelPredictiveController();
 
     void init(size_t horizon, double wheelbase, double Ts,
-        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf);
+        const Eigen::Matrix4d& Q, const Eigen::Matrix2d& R, const Eigen::Matrix4d& Qf, int height, int width, double target_velocity, bool carla_mode);
 
     void run();
 

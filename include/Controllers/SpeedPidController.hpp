@@ -23,6 +23,11 @@ class SpeedPidController
 {
 private:
     
+    std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::Subscriber<void>> kp_subscriber;
+    std::optional<zenoh::Subscriber<void>> ki_subscriber;
+    std::optional<zenoh::Subscriber<void>> kd_subscriber;
+
     // PID constants
     float kp_; // Proportional gain
     float ki_; // Integral gain
@@ -45,7 +50,7 @@ public:
     SpeedPidController();
     ~SpeedPidController();
     
-    void init(float kp, float ki, float kd, float delta_time);
+    void init(float kp, float ki, float kd, float delta_time, std::shared_ptr<zenoh::Session> session);
     
     float speedPID(float error, double current_time);
     float speedAdjustment(float error);
