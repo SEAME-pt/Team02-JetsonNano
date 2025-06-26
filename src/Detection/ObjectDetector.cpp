@@ -41,7 +41,7 @@ void ObjectDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     cv::Mat resized;
     
-    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0, cv::INTER_NEAREST);
+    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0, cv::INTER_LINEAR);
     
     cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
 }
