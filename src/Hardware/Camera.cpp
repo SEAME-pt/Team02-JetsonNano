@@ -42,7 +42,7 @@ void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibr
                             cameraMatrix, imageSize, CV_16SC2, map1, map2);
 }
 
-void Camera::initLVideoTestEnv(const std::string& video, const std::string& calibrationFile) {
+void Camera::initLVideoTestEnv(const std::string& video) {
     useZenohSubscription = false;
 
     cap.open(video);
@@ -62,12 +62,6 @@ void Camera::initLVideoTestEnv(const std::string& video, const std::string& cali
         cv::destroyAllWindows();
         throw std::runtime_error("Error reading initial frame");
     }
-
-    this->setCalibrationParameters(calibrationFile);
-
-    Size imageSize = currentFrame.size();
-    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                            cameraMatrix, imageSize, CV_16SC2, map1, map2);
 }
 
 void Camera::initCarlaEnv() {
