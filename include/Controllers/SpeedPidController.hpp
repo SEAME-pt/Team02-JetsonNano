@@ -20,6 +20,10 @@
   extern "C" ssize_t custom_xbox_write(int fd, const void* buf, size_t count);
 #endif
 
+# ifndef M_PI
+# define M_PI 3.14159265358979323846
+# endif
+
 class SpeedPidController
 {
 private:
