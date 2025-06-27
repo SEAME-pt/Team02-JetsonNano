@@ -92,10 +92,10 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 
     while (running)
     {
-        double time = getCurrentTime();
+        // double time = getCurrentTime();
         processor->getProcessingData(original_frame, lane_mask, object_mask);
-        std::cout << "1: " << getCurrentTime() - time << std::endl;
-        time = getCurrentTime();
+        // std::cout << "1: " << getCurrentTime() - time << std::endl;
+        // time = getCurrentTime();
         if (!original_frame.empty() && !lane_mask.empty() && !object_mask.empty()) 
         {
             cv::Mat new_frame = trajectoryDef->process(original_frame, lane_mask, object_mask);
@@ -132,7 +132,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-        std::cout << "2: " << getCurrentTime() - time << std::endl;
+        // std::cout << "2: " << getCurrentTime() - time << std::endl;
     }
 }
 
@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
-    const int heightModelInf = 128;
+    const int heightModelInf = 256;
     const int widthModelInf = 256;
 
     try
@@ -194,14 +194,21 @@ int main(int argc, char** argv)
             camera.initLocalEnv(pipeline, "calibration.yml");
 
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local2_epoch_1000.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_Yolo_local1_epoch_200.engine";
-        } else {
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_70.engine";
+        } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
             laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla3_epoch_16.engine";
-            objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_75.engine";
+            objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_200.engine";
+        } else {
+            std::cout << "Running in TEST mode with test video" << std::endl;
+            const std::string video = "/home/team02/record_cam/build/video.mp4";
+            camera.initLVideoTestEnv(video, "calibration.yml");
+            trajectoryDefinition.initLocalEnv();
+            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_70.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);

@@ -22,8 +22,8 @@ bool parseParameters(int argc, char** argv, std::string& configFile, std::string
                 mode = argv[i + 1];
                 i++;
                 
-                if (mode != "local" && mode != "carla") {
-                    std::cerr << "Error: mode must be 'local' or 'carla'" << std::endl;
+                if (mode != "local" && mode != "carla" && mode != "test") {
+                    std::cerr << "Error: mode must be 'local', 'carla' or 'test'" << std::endl;
                     return false;
                 }
                 
