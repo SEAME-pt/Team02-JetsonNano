@@ -440,7 +440,7 @@ void TrajectoryDefinition::mergeLaneComponents(
         defineLanePolyline(lanePolylines[i]);
     }
 
-    if (lanePolylines.size() > 2)
+    if (lanePolylines.size() > 2 && !prevLeftCurve.empty() && !prevRightCurve.empty())
     {
         std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
         std::pair<int, float> minorRightDistance(-1, FLT_MAX);
@@ -471,6 +471,13 @@ void TrajectoryDefinition::mergeLaneComponents(
                 cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
                 0.5, cv::Scalar(0, 0, 255), 1);
         std::cout << "Keeping 2 closest lanes" << std::endl;
+    } else {
+        lanePolylines.resize(2);
+
+        cv::putText(allPolylinesViz_, "Keeping 2 left lanes", 
+                cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
+                0.5, cv::Scalar(0, 0, 255), 1);
+        std::cout << "Keeping 2 left lanes" << std::endl;
     }
 }
 
