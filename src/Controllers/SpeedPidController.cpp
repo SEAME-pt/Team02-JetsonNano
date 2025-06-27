@@ -99,7 +99,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         zenoh::closures::none));
 
     desiredSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/DesiredSpeed",
+        "Vehicle/1/ADAS/speedPid/DesiredSpeed",
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
