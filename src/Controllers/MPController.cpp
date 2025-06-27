@@ -334,11 +334,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
-    if (carlaMode_) {
+    // if (carlaMode_) {
         desired_speed_ = u_flat(0);
-    } else {
-        desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s to rpm
-    }
+    // } else {
+        // desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s to rpm
+    // }
     current_steering_  = u_flat(1);
 
     std::cout << "Speed: " << desired_speed_
