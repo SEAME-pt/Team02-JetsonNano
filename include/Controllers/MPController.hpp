@@ -22,6 +22,7 @@ private:
     std::optional<zenoh::Subscriber<void>> coeffs_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
     bool carlaMode_ = false;
 
