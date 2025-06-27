@@ -94,7 +94,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
+            current_speed_ = speed  * 60.0 / (M_PI * 0.067);
         },
         zenoh::closures::none));
 
@@ -103,7 +103,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            desired_speed_ = speed;
+            desired_speed_ = speed * 60.0 / (M_PI * 0.067);
         },
         zenoh::closures::none));
 
