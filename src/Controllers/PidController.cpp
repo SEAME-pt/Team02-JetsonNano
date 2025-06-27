@@ -197,12 +197,12 @@ void PidController::conditionalAutomation()
 // SAE_4
 void PidController::autonomousControl()
 {
-    // double current_time   = getCurrentTime();
-    float manual_steering = xboxController_->getManualSteering();
-    // float direction = steeringPID(cameraError_, current_time);
+    double current_time   = getCurrentTime();
+    // float manual_steering = xboxController_->getManualSteering();
+    float direction = steeringPID(cameraError_, current_time);
 
-    publisher_->publishSteering(manual_steering);
-    // publisher_->publishSteering(direction);
+    // publisher_->publishSteering(manual_steering);
+    publisher_->publishSteering(direction);
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
     if (!this->speed_lock_)
     {

@@ -67,6 +67,15 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
                       << std::endl;
         },
         zenoh::closures::none));
+
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+        },
+        zenoh::closures::none));
     
     std::cout << "MPC controller created!" << std::endl;
 }
