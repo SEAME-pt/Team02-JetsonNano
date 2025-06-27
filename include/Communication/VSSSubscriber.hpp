@@ -44,7 +44,6 @@ class VSSSubscriber
     std::shared_ptr<zenoh::Session> session_;
 
     std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN_;
-    uint8_t lights_[1] = {0};
 
     std::optional<zenoh::Subscriber<void>> throttle_subscriber;
     std::optional<zenoh::Subscriber<void>> steering_subscriber;
