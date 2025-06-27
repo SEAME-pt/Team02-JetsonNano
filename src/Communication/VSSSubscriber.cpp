@@ -56,8 +56,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Low" << std::endl;
-            lights_[0] ^= (1 << 2);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isOn);
+            this->sendToCAN_(0x702, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -74,8 +74,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_beam_high(value);
 
             std::cout << "High" << std::endl;
-            lights_[0] ^= (1 << 3);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isOn);
+            this->sendToCAN_(0x703, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -104,8 +104,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Parking" << std::endl;
-            lights_[0] ^= (1 << 7);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isOn);
+            this->sendToCAN_(0x707, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -121,8 +121,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "RearFog" << std::endl;
-            lights_[0] ^= (1 << 5);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isOn);
+            this->sendToCAN_(0x705, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -139,8 +139,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_fog_front(value);
 
             std::cout << "FrontFog" << std::endl;
-            lights_[0] ^= (1 << 4);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isOn);
+            this->sendToCAN_(0x704, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -169,8 +169,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Hazard" << std::endl;
-            lights_[0] ^= (1 << 6);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            this->sendToCAN_(0x706, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
     directionIndicatorLeft_subscriber.emplace(session_->declare_subscriber(
@@ -186,10 +186,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_direction_indicator_left(value);
 
             std::cout << "Left" << std::endl;
-            lights_[0] ^= (1 << 1);
-            if (((lights_[0] >> 0) & 1) == 1)
-                lights_[0] ^= (1 << 0);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            this->sendToCAN_(0x700, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -207,10 +205,8 @@ void VSSSubscriber::setupSubscriptions()
 
             // CAN communication
             std::cout << "Right" << std::endl;
-            lights_[0] ^= (1 << 0);
-            if (((lights_[0] >> 1) & 1) == 1)
-                lights_[0] ^= (1 << 1);
-            this->sendToCAN_(0x03, lights_, sizeof(lights_));
+            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            this->sendToCAN_(0x701, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
