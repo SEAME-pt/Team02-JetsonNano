@@ -101,16 +101,16 @@ void GPUInference::inference()
 
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    if (outputChannels_ == 1)
-    {
-        std::cout << "Inference time in lane detection: " << milliseconds
-                  << "ms\n";
-    }
-    else
-    {
-        std::cout << "Inference time in object detection: " << milliseconds
-                  << "ms\n";
-    }
+    // if (outputChannels_ == 1)
+    // {
+    //     std::cout << "Inference time in lane detection: " << milliseconds
+    //               << "ms\n";
+    // }
+    // else
+    // {
+    //     std::cout << "Inference time in object detection: " << milliseconds
+    //               << "ms\n";
+    // }
 }
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
