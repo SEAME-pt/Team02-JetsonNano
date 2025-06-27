@@ -451,17 +451,16 @@ void TrajectoryDefinition::mergeLaneComponents(
         {
             float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
             float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-            if (minorLeftDistance.second > leftDistance) {
+            if (minorLeftDistance.second > leftDistance && leftDistance < 100) {
                 minorLeftDistance.first = i;
                 minorLeftDistance.second = leftDistance;
             }
-            if (minorRightDistance.second > rightDistance) {
+            if (minorRightDistance.second > rightDistance && rightDistance < 100) {
                 minorRightDistance.first = i;
                 minorRightDistance.second = rightDistance;
             }
         }
 
-        // Collect unique indices
         std::set<int> keepIndices = {minorLeftDistance.first, minorRightDistance.first};
         std::vector<std::vector<cv::Point>> filteredPolylines;
         for (int idx : keepIndices) {
