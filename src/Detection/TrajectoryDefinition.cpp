@@ -812,21 +812,38 @@ void TrajectoryDefinition::checkPredicedCurve(
 
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
+
+        float divergence = 0.1f;
+
         if (isLeftLane)
         {
+            // for (const auto& pt : realLane)
+            // {
+            //     predictedCurve.push_back(
+            //         cv::Point(pt.x + expectedWidth, pt.y));
+            // }
             for (const auto& pt : realLane)
             {
+                // The farther down (higher y), the more we shift to the right
+                int extra_offset = static_cast<int>(divergence * (pt.y - realLane.front().y));
                 predictedCurve.push_back(
-                    cv::Point(pt.x + expectedWidth, pt.y));
+                    cv::Point(pt.x + expectedWidth + extra_offset, pt.y));
             }
             kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
         else
         {
+            // for (const auto& pt : realLane)
+            // {
+            //     predictedCurve.push_back(
+            //         cv::Point(pt.x - expectedWidth, pt.y));
+            // }
             for (const auto& pt : realLane)
             {
+                // The farther down (higher y), the more we shift to the left
+                int extra_offset = static_cast<int>(divergence * (pt.y - realLane.front().y));
                 predictedCurve.push_back(
-                    cv::Point(pt.x - expectedWidth, pt.y));
+                    cv::Point(pt.x - expectedWidth - extra_offset, pt.y));
             }
             kalmanFilter->updateRightLaneFilter(predictedCurve);
         }
