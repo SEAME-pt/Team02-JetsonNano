@@ -1,11 +1,11 @@
 #include "MPController.hpp"
 
-static double getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
+// static double getCurrentTime()
+// {
+//     struct timeval tv;
+//     gettimeofday(&tv, NULL);
+//     return tv.tv_sec + tv.tv_usec * 1e-6;
+// }
 
 ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
@@ -19,14 +19,8 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
 
     lane_departure_threshold_ = 0.1f;
 
-    speedKp_ = 0.12f;
-    speedKi_ = 1.3f;
-    speedKd_ = 0.01f;
     session_ = session;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_, session_);
-    
-    
+
     publisher_ = std::make_unique<ControllerPublisher>(session_);
     
     coeffs_subscriber.emplace(session_->declare_subscriber(
@@ -74,24 +68,10 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         },
         zenoh::closures::none));
     
-    currentSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed",
-        [this](const zenoh::Sample& sample)
-        {
-            float speed    = std::stof(sample.get_payload().as_string());
-            if (carlaMode_) {
-                current_speed_ = speed;
-            }
-            else {
-                current_speed_ = speed / 60.0 * M_PI * 0.067 ; // Convert from rpm to m/s based on car properties
-            }
-        },
-        zenoh::closures::none));
     std::cout << "MPC controller created!" << std::endl;
 }
 
 ModelPredictiveController::~ModelPredictiveController() {
-    delete speedPidController_;
 }
 
 void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts,
@@ -407,28 +387,11 @@ std::string ModelPredictiveController::getAutonomousDriveState() const
 // SAE_0
 void ModelPredictiveController::manualControl()
 {
-    double current_time   = getCurrentTime();
+    // double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
-    float manual_speed    = xboxController_->getManualSpeed();
+    // float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
-    // std::cout << "Manual control - "
-    //           << "Current speed: " << current_speed_
-    //           << ", Steering: " << manual_steering
-    //           << ", Manual speed: " << manual_speed << std::endl;
-    if (!speed_lock_)
-        publisher_->publishSpeed(manual_speed);
-    else
-    {
-        if (manual_speed <= 0)
-        {
-            publisher_->publishSpeed(manual_speed);
-        }
-        else
-        {
-            publisher_->publishSpeed(speedPidController_->speedPID(
-                0 - current_speed_, current_time));
-        }
-    }
+
     if (parsed_coeffs_.size() == 4) {
         Eigen::Vector4d x0;
         x0(0) = 0;
@@ -497,7 +460,7 @@ void ModelPredictiveController::conditionalAutomation()
 // SAE_4
 void ModelPredictiveController::autonomousControl()
 {
-    double current_time   = getCurrentTime();
+    // double current_time   = getCurrentTime();
     if (parsed_coeffs_.size() == 4) {
         Eigen::Vector4d x0;
         x0(0) = 0;
@@ -517,14 +480,12 @@ void ModelPredictiveController::autonomousControl()
     publisher_->publishSteering(steering);
     if (!this->speed_lock_)
     {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            desired_speed_ - current_speed_, current_time));
+        publisher_->publishDesiredSpeed(desired_speed_);
         publisher_->publishCurrentGear(1);
     }
     else
     {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            0 - current_speed_, current_time));
+        publisher_->publishDesiredSpeed(0);
         publisher_->publishCurrentGear(0);
     }
     std::cout << "MPC control - "

@@ -27,17 +27,8 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     autonomousDrive_    = "SAE_0";
     speed_lock_         = false;
     xboxController_     = xbox_controller;
-    current_speed_      = 0.0f;
     session_ = session;
-    speedKp_ = 0.25f;
-    // speedKi_ = 1.3f;
-    // speedKd_ = 0.01f;    
-    speedKi_ = 0.005f;
-    speedKd_ = 0.0005f;
-    speedPidController_ = new SpeedPidController();
-    speedPidController_->init(speedKp_, speedKi_, speedKd_, fixed_delta_time_, session_);
-
-
+    
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
     cameraError_subscriber.emplace(session_->declare_subscriber(
@@ -79,22 +70,11 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         },
         zenoh::closures::none));
 
-    currentSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed",
-        [this](const zenoh::Sample& sample)
-        {
-            float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
-        },
-        zenoh::closures::none));
-
     std::cout << "PID controller created!" << std::endl;
 }
 
 PidController::~PidController()
-{
-    delete speedPidController_;
-}
+{}
 
 void PidController::init(float kp, float ki, float kd, float speed,
                          float delta_time)
@@ -161,25 +141,11 @@ float PidController::steeringPID(float error, double current_time)
 // SAE_0
 void PidController::manualControl()
 {
-    double current_time   = getCurrentTime();
+    // double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
-    float manual_speed    = xboxController_->getManualSpeed();
+    // float manual_speed    = xboxController_->getManualSpeed();
 
     publisher_->publishSteering(manual_steering);
-    if (!speed_lock_)
-        publisher_->publishSpeed(manual_speed);
-    else
-    {
-        if (manual_speed <= 0)
-        {
-            publisher_->publishSpeed(manual_speed);
-        }
-        else
-        {
-            publisher_->publishSpeed(speedPidController_->speedPID(
-                0 - current_speed_, current_time));
-        }
-    }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
@@ -188,7 +154,7 @@ void PidController::LKASControl()
 {
     double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
-    float manual_speed    = xboxController_->getManualSpeed();
+    // float manual_speed    = xboxController_->getManualSpeed();
 
     if (std::abs(cameraError_) > lane_departure_threshold_ &&
         std::abs(cameraError_) < 1)
@@ -201,11 +167,7 @@ void PidController::LKASControl()
     {
         publisher_->publishSteering(manual_steering);
     }
-    if (!speed_lock_)
-        publisher_->publishSpeed(manual_speed);
-    else
-        publisher_->publishSpeed(
-            speedPidController_->speedPID(0 - current_speed_, current_time));
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
@@ -235,7 +197,7 @@ void PidController::conditionalAutomation()
 // SAE_4
 void PidController::autonomousControl()
 {
-    double current_time   = getCurrentTime();
+    // double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     // float direction = steeringPID(cameraError_, current_time);
 
@@ -244,15 +206,12 @@ void PidController::autonomousControl()
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
     if (!this->speed_lock_)
     {
-        double speed_cmd = speedPidController_->speedPID(constant_speed_ - current_speed_, current_time);
-        speed_cmd = std::max(0.0, speed_cmd); // Clamp to minimum 0
-        publisher_->publishSpeed(speed_cmd);
+        publisher_->publishDesiredSpeed(constant_speed_);
         publisher_->publishCurrentGear(1);
     }
     else
     {
-        publisher_->publishSpeed(speedPidController_->speedPID(
-            0 - current_speed_, current_time));
+        publisher_->publishDesiredSpeed(0);
         publisher_->publishCurrentGear(0);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(
