@@ -22,7 +22,6 @@ private:
     std::optional<zenoh::Subscriber<void>> coeffs_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
-    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
 
     bool carlaMode_ = false;
 
@@ -32,10 +31,7 @@ private:
 
     float lane_departure_threshold_;
 
-    SpeedPidController* speedPidController_;
-    float speedKp_;
-    float speedKi_;
-    float speedKd_;
+
     float current_speed_;
     float desired_speed_;
     float current_steering_;
