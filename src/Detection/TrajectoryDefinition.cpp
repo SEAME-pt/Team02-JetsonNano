@@ -708,11 +708,11 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
         
     updateLaneWidthHistory(leftCurve, rightCurve);
 
-    size_t leftCurveSize = leftCurve.size();
+    if (leftCurve.size() > 90)
+        kalmanFilter->updateLeftLaneFilter(leftCurve);
 
-    std::cout << "Left curve size: " << leftCurveSize << std::endl;
-    kalmanFilter->updateLeftLaneFilter(leftCurve);
-    kalmanFilter->updateRightLaneFilter(rightCurve);
+    if (rightCurve.size() > 90)
+        kalmanFilter->updateRightLaneFilter(rightCurve);
 
     prevLeftCurve = leftCurve;
     prevRightCurve = rightCurve;
