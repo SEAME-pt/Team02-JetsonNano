@@ -1,9 +1,16 @@
 #include "SpeedPidController.hpp"
 
-SpeedPidController::SpeedPidController()
+static double getCurrentTime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
+
+
+SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
     prev_error_  = 0.0f;
-    cameraError_ = 0.0f;
     integral_    = 0.0f;
     last_time_   = 0.0f;
 
@@ -15,15 +22,14 @@ SpeedPidController::SpeedPidController()
     kd_ = 0.0f;
 
     fixed_delta_time_ = 0.02f;
+    autonomousDrive_    = "SAE_0";
+    speed_lock_         = false;
+    xboxController_     = xbox_controller;
 
     std::cout << "SpeedPID controller created!" << std::endl;
-}
 
-SpeedPidController::~SpeedPidController() {}
-
-void SpeedPidController::init(float kp, float ki, float kd, float delta_time, std::shared_ptr<zenoh::Session> session)
-{
     session_ = session;
+    publisher_ = std::make_unique<ControllerPublisher>(session_);
 
     kp_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/speedpid/kp",
@@ -52,6 +58,63 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
         },
         zenoh::closures::none));
 
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            std::cout << "Active Autonomy Level: " << activeAutonomyLevel
+                      << std::endl;
+            setAutonomousDriveState(activeAutonomyLevel);
+        },
+        zenoh::closures::none));
+
+    speed_lock_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Lock",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string value_str = sample.get_payload().as_string();
+
+            bool lock_value = false;
+            if (value_str.find("1") != std::string::npos)
+            {
+                lock_value = true;
+            }
+
+            speed_lock_ = lock_value;
+
+            // std::cout << "Speed lock "
+            //           << (lock_value ? "activated" : "deactivated")
+            //           << std::endl;
+        },
+        zenoh::closures::none));
+
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+        },
+        zenoh::closures::none));
+
+    desiredSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/speedPid/DesiredSpeed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            desired_speed_ = speed;
+        },
+        zenoh::closures::none));
+
+
+}
+
+SpeedPidController::~SpeedPidController() {}
+
+void SpeedPidController::init(float kp, float ki, float kd, float delta_time)
+{
+
     kp_               = kp;
     ki_               = ki;
     kd_               = kd;
@@ -59,10 +122,22 @@ void SpeedPidController::init(float kp, float ki, float kd, float delta_time, st
 
     prev_error_ = 0.0f;
     integral_   = 0.0f;
+    desired_speed_ = 0.0f;
 
     std::cout << "SpeedPID Controller initialized with Kp=" << kp_
               << ", Ki=" << ki_ << ", Kd=" << kd_
               << ", dt=" << fixed_delta_time_ << std::endl;
+
+}
+
+void SpeedPidController::setAutonomousDriveState(std::string current_state)
+{
+    autonomousDrive_ = current_state;
+}
+
+std::string SpeedPidController::getAutonomousDriveState() const
+{
+    return autonomousDrive_;
 }
 
 float SpeedPidController::speedPID(float error, double current_time)
@@ -99,4 +174,57 @@ float SpeedPidController::speedPID(float error, double current_time)
     last_time_  = current_time;
     // std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
+}
+
+void SpeedPidController::run()
+{
+    while (true)
+    {
+        std::string sae_level = getAutonomousDriveState();
+        if (!speed_lock_)
+        {
+            if (sae_level.find("SAE_0") != std::string::npos) {
+                float manual_speed    = xboxController_->getManualSpeed();
+                publisher_->publishSpeed(manual_speed);
+
+            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+
+            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+
+            } else if (sae_level.find("SAE_2") != std::string::npos) {
+
+            } else if (sae_level.find("SAE_3") != std::string::npos) {
+
+            } else if (sae_level.find("SAE_4") != std::string::npos) {
+                double current_time = getCurrentTime();
+                float error = desired_speed_ - current_speed_;
+                double throttle = speedPID(error, current_time);
+                throttle = std::max(0.0, throttle); 
+                publisher_->publishSpeed(throttle);
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(fixed_delta_time_ * 10000)));
+            } else {
+
+            }
+        }
+        else
+        {
+            float manual_speed    = xboxController_->getManualSpeed();
+            if (manual_speed <= 0)
+            {
+                publisher_->publishSpeed(manual_speed);
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(fixed_delta_time_ * 1000)));
+            }
+            else
+            {
+                double current_time = getCurrentTime();
+                float error = 0 - current_speed_;
+                double throttle = speedPID(error, current_time);
+                publisher_->publishSpeed(throttle);
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(fixed_delta_time_ * 10000)));
+            }
+        }
+    }
 }

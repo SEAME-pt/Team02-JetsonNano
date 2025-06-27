@@ -1,6 +1,7 @@
 #include "XboxController.hpp"
 #include "MPController.hpp"
 #include "PidController.hpp"
+#include "SpeedPidController.hpp"
 #include "utils.hpp"
 
 int main(int argc, char** argv)
@@ -46,6 +47,7 @@ int main(int argc, char** argv)
         XboxController manualController(session);
         PidController pidController(session, &manualController);
         ModelPredictiveController MPController(session, &manualController);
+        SpeedPidController speedPidController(session, &manualController);
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode" << std::endl;
@@ -53,7 +55,7 @@ int main(int argc, char** argv)
             float kp                = 160;
             float ki                = 0.000001;
             float kd                = 10;
-            float constant_speed    = 150;
+            float constant_speed    = 165;
             float delta_time        = 0.05;
 
             int screen_height = 480;
@@ -80,6 +82,9 @@ int main(int argc, char** argv)
             Eigen::Matrix4d Qf = 5 * Q;
             pidController.init(kp, ki, kd, constant_speed, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width, constant_speed, false);
+            speedPidController.init(0.25, 0.005, 0.0005, delta_time);
+            
+
         } else {
             std::cout << "Running in CARLA mode" << std::endl;
             // PID controller values
@@ -109,11 +114,13 @@ int main(int argc, char** argv)
             Eigen::Matrix4d Qf = Q * 5;       // Terminal cost, more aggressive
             pidController.init(kp, ki, kd, constant_speed, delta_time);
             MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width, constant_speed, true);
+            speedPidController.init(0.25, 0.005, 0.0005, delta_time);
         }
 
         std::thread manualThread(&XboxController::run, &manualController);
         std::thread pidThread(&PidController::run, &pidController);
         std::thread MPCThread(&ModelPredictiveController::run, &MPController);
+        std::thread speedPidThread(&SpeedPidController::run, &speedPidController);
 
         if (manualThread.joinable()) {
             manualThread.join();
@@ -125,6 +132,10 @@ int main(int argc, char** argv)
 
         if (MPCThread.joinable()) {
             MPCThread.join();
+        }
+
+        if (speedPidThread.joinable()) {
+            speedPidThread.join();
         }
     }
     catch (const std::exception& e)

@@ -36,6 +36,11 @@ ControllerPublisher::ControllerPublisher(
 
     mpcTrajectory_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/MPC/Trajectory")));
+
+    desiredSpeed_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/ADAS/speedPid/DesiredSpeed")));
+
+    
 }
 
 void ControllerPublisher::publishSpeed(float speed)
@@ -202,4 +207,15 @@ void ControllerPublisher::publishMpcTrajectory(
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     mpcTrajectory_pub->put(std::move(buf));
+}
+
+void ControllerPublisher::publishDesiredSpeed(float speed)
+{
+    std::string value_str = std::to_string(speed);
+    const auto len        = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    desiredSpeed_pub->put(std::move(buf));
 }
