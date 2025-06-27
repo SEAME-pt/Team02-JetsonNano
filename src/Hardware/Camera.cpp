@@ -42,6 +42,34 @@ void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibr
                             cameraMatrix, imageSize, CV_16SC2, map1, map2);
 }
 
+void Camera::initLVideoTestEnv(const std::string& video, const std::string& calibrationFile) {
+    useZenohSubscription = false;
+
+    cap.open(video);
+    
+    if (!cap.isOpened()) {
+        std::cerr << "Failed to open video: " << video << std::endl;
+        throw std::runtime_error("Failed to open camera");
+    }
+
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+
+    cap.set(cv::CAP_PROP_FPS, 1);
+
+    cap >> currentFrame;
+    if (currentFrame.empty()) {
+        cv::destroyAllWindows();
+        throw std::runtime_error("Error reading initial frame");
+    }
+
+    this->setCalibrationParameters(calibrationFile);
+
+    Size imageSize = currentFrame.size();
+    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
+                            cameraMatrix, imageSize, CV_16SC2, map1, map2);
+}
+
 void Camera::initCarlaEnv() {
     useZenohSubscription = true;
 

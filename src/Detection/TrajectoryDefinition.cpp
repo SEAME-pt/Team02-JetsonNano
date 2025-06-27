@@ -97,8 +97,8 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.01f;       // meters
-        farDistance_ = 0.6f;       // meters
-        laneWidth_ = 0.5f;      // meters
+        farDistance_ = 0.5f;       // meters
+        laneWidth_ = 0.4f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
 
@@ -176,10 +176,10 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
                                    cv::Mat& class_mask)
 {
     cv::Mat resized_binary_mask;
-    cv::resize(binary_mask, resized_binary_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::resize(binary_mask, resized_binary_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
     cv::Mat resized_class_mask;
-    cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_NEAREST);
+    cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
     cv::Mat ipm_binary_mask = ipm->applyIPM(resized_binary_mask);
     cv::Mat ipm_class_mask = ipm->applyIPM(resized_class_mask);
@@ -191,10 +191,10 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
 
     cv::Mat res_frame;
-    cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_NEAREST);
+    cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_LINEAR);
 
     cv::Mat res_class_mask;
-    cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_NEAREST);
+    cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_LINEAR);
 
     cv::addWeighted(res_frame, 0.7, res_class_mask, 0.3, 0.0, res_frame);
     return (res_frame);
@@ -215,6 +215,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
 
+    drawPolyLanes(lanePolylines);
     
     float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
     float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
@@ -417,7 +418,6 @@ void TrajectoryDefinition::mergeLaneComponents(
                     similarDirection = (dotProduct > 0); // Positive dot product means similar direction
                 }
                 
-                // Calculate a combined distance threshold based on both horizontal and vertical max values
                 float combinedThreshold = std::sqrt(maxHorizontalDist * maxHorizontalDist + 
                                                   maxVerticalGap * maxVerticalGap);
 
@@ -443,12 +443,35 @@ void TrajectoryDefinition::mergeLaneComponents(
 
     if (lanePolylines.size() > 2)
     {
-        lanePolylines.resize(2);
-        
-        cv::putText(allPolylinesViz_, "No memory - keeping leftmost 2 lanes", 
+        std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
+        std::pair<int, float> minorRightDistance(-1, FLT_MAX);
+
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
+        {
+            float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+            float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+            if (minorLeftDistance.second > leftDistance && leftDistance < 100) {
+                minorLeftDistance.first = i;
+                minorLeftDistance.second = leftDistance;
+            }
+            if (minorRightDistance.second > rightDistance && rightDistance < 100) {
+                minorRightDistance.first = i;
+                minorRightDistance.second = rightDistance;
+            }
+        }
+
+        std::set<int> keepIndices = {minorLeftDistance.first, minorRightDistance.first};
+        std::vector<std::vector<cv::Point>> filteredPolylines;
+        for (int idx : keepIndices) {
+            if (idx >= 0 && idx < static_cast<int>(lanePolylines.size()))
+                filteredPolylines.push_back(lanePolylines[idx]);
+        }
+        lanePolylines = filteredPolylines;
+
+        cv::putText(allPolylinesViz_, "Keeping 2 closest lanes", 
                 cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
                 0.5, cv::Scalar(0, 0, 255), 1);
-        std::cout << "No memory - keeping leftmost 2 lanes" << std::endl;
+        std::cout << "Keeping 2 closest lanes" << std::endl;
     }
 }
 
@@ -942,8 +965,8 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
 
     if (!midCurve.empty())
     {
-        int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 1/6 up from bottom for carla
-        // int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 2/5 up from bottom for local
+        int targetY = frameHeight_ - (1.5 * frameHeight_ / 3); // 3/6 up from bottom for local
+        // int targetY = frameHeight_ - (1.0 * frameHeight_ / 3); // 1/3 up from bottom for carla
 
         // Find closest point to target Y
         size_t closestIdx = 0;

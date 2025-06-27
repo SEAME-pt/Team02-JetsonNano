@@ -129,7 +129,6 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
             // Convert to [0,1] by dividing by 255
             float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ - 1 - c)] / 255.0f;
             
-            // Apply normalization using ImageNet stats (matching Python's transform_pipeline)
             inputData[c * plane_size + i] = (pixelValue - means[c]) / stds[c];
         }
     }
@@ -138,6 +137,10 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
     cudaMemcpyAsync(inputDevice, inputData,
                     inputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
+}
+
+float sigmoid(float x) {
+    return 1.0f / (1.0f + expf(-x));
 }
 
 void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
@@ -152,9 +155,10 @@ void GPUInference::copyToCPUBinaryOutput(cv::Mat& outputMask)
 
     for (int i = 0; i < total_pixels; i++)
     {
-        int y                      = i / width_;
-        int x                      = i % width_;
-        uchar value                = (outputData[i] > 0.5) ? 255 : 0;
+        int y = i / width_;
+        int x = i % width_;
+        float prob = sigmoid(outputData[i]);
+        uchar value = (prob > 0.5f) ? 255 : 0;
         outputMask.at<uchar>(y, x) = value;
     }
 }

@@ -32,6 +32,7 @@ public:
 
     void initLocalEnv(const std::string& pipeline, const std::string& calibrationFile);
     void initCarlaEnv();
+    void initLVideoTestEnv(const std::string& video, const std::string& calibrationFile);
 
     void startCapture();
     void stopCapture();
