@@ -183,7 +183,7 @@ int main(int argc, char** argv)
                 "nvvidconv ! video/x-raw, format=BGRx ! "
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
-            camera.initLocalEnv(pipeline, "calibration.yml");
+            camera.initLocalEnv(pipeline, "/home/team02/Team02-Course/JetsonNano/tools/cam_calibration/calibration.yml");
 
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
