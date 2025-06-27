@@ -489,8 +489,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     {
         rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
         checkPredicedCurve(rightCurve, leftCurve, true);
-            
-        kalmanFilter->updateLeftLaneFilter(leftCurve);
+        
+        if (leftCurve.size() > 90)
+            kalmanFilter->updateLeftLaneFilter(leftCurve);
         // kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve = leftCurve;
@@ -510,7 +511,8 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         checkPredicedCurve(leftCurve, rightCurve, false);
         
         // kalmanFilter->updateLeftLaneFilter(leftCurve);
-        kalmanFilter->updateRightLaneFilter(rightCurve);
+        if (rightCurve.size() > 90)
+            kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve = leftCurve;
         prevRightCurve = rightCurve;
