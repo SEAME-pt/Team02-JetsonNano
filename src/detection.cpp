@@ -197,7 +197,7 @@ int main(int argc, char** argv)
         } else {
             std::cout << "Running in TEST mode with test video" << std::endl;
             const std::string video = "/home/team02/record_cam/build/video.mp4";
-            camera.initLVideoTestEnv(video, "calibration.yml");
+            camera.initLVideoTestEnv(video);
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
