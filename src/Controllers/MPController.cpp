@@ -73,7 +73,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         [this](const zenoh::Sample& sample)
         {
             float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed;
+            current_speed_ = speed / 60.0 * (M_PI * 0.067);
         },
         zenoh::closures::none));
     
@@ -117,8 +117,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // double time = getCurrentTime();
     // Conversion factors
-    const double mx         = 1.0 / width_;  // meters per pixel in x
-    const double my         = 1.0 / height_;   // meters per pixel in y
+    const double mx         = 0.5 / width_;  // meters per pixel in x
+    const double my         = 0.4 / height_;   // meters per pixel in y
     // double time2 = getCurrentTime();
     // std::cout << "Time for conversion factors: " << (time2 - time) << " s" << std::endl;
     // Convert pixel-space trajectory coeffs to meter-space
