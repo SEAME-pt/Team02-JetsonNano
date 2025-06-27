@@ -32,10 +32,7 @@ private:
 
     float lane_departure_threshold_;
 
-    SpeedPidController* speedPidController_;
-    float speedKp_;
-    float speedKi_;
-    float speedKd_;
+
     float current_speed_;
     float desired_speed_;
     float current_steering_;
