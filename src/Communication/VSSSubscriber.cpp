@@ -48,6 +48,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Beam/Low",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
@@ -56,7 +57,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Low" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isOn);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x702, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -65,6 +67,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Beam/High",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
@@ -74,7 +77,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_beam_high(value);
 
             std::cout << "High" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isOn);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x703, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -96,6 +100,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Parking",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
@@ -104,7 +109,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Parking" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isOn);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x707, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -113,6 +119,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Fog/Rear",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
@@ -121,7 +128,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "RearFog" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isOn);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x705, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -130,6 +138,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Fog/Front",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
@@ -139,7 +148,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_fog_front(value);
 
             std::cout << "FrontFog" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isOn);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x704, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -161,6 +171,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/Hazard",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
@@ -169,7 +180,8 @@ void VSSSubscriber::setupSubscriptions()
                 value);
 
             std::cout << "Hazard" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x706, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -177,6 +189,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/DirectionIndicator/Left",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
@@ -186,7 +199,8 @@ void VSSSubscriber::setupSubscriptions()
                 .set_direction_indicator_left(value);
 
             std::cout << "Left" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x700, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
@@ -195,6 +209,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Body/Lights/DirectionIndicator/Right",
         [this](const zenoh::Sample& sample)
         {
+            static bool state = 0;
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
@@ -205,7 +220,8 @@ void VSSSubscriber::setupSubscriptions()
 
             // CAN communication
             std::cout << "Right" << std::endl;
-            uint8_t onOff = static_cast<uint8_t>(isSignaling);
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
             this->sendToCAN_(0x701, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
