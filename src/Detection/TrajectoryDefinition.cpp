@@ -189,7 +189,6 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
 
     cv::Size size(width_ * laneWidth_ / (farDistance_ - nearDistance_), height_);
 
-
     cv::Mat res_frame;
     cv::resize(ipm_frame, res_frame, size, 0, 0, cv::INTER_LINEAR);
 
@@ -450,11 +449,11 @@ void TrajectoryDefinition::mergeLaneComponents(
         {
             float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
             float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-            if (minorLeftDistance.second > leftDistance && leftDistance < 100) {
+            if (minorLeftDistance.second > leftDistance && leftDistance < 50) {
                 minorLeftDistance.first = i;
                 minorLeftDistance.second = leftDistance;
             }
-            if (minorRightDistance.second > rightDistance && rightDistance < 100) {
+            if (minorRightDistance.second > rightDistance && rightDistance < 50) {
                 minorRightDistance.first = i;
                 minorRightDistance.second = rightDistance;
             }
