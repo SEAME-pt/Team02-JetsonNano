@@ -19,18 +19,12 @@ private:
     std::unique_ptr<ControllerPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
-    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     
     float kp_;
     float ki_;
     float kd_;
     
-    SpeedPidController* speedPidController_;
-    float speedKp_;
-    float speedKi_;
-    float speedKd_;
-    float current_speed_;
 
     float prev_error_;
     float cameraError_;
