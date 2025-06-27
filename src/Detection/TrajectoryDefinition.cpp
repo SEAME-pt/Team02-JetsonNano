@@ -53,7 +53,6 @@ TrajectoryDefinition::TrajectoryDefinition(
             }
             // Store for use in visualization
             mpcPoints_ = points;
-            std::cout << "Received MPC trajectory with " << points.size() << " points." << std::endl;
         },
         zenoh::closures::none));
 
