@@ -440,44 +440,46 @@ void TrajectoryDefinition::mergeLaneComponents(
         defineLanePolyline(lanePolylines[i]);
     }
 
-    if (lanePolylines.size() > 2 && !prevLeftCurve.empty() && !prevRightCurve.empty())
+    if (lanePolylines.size() > 2)
     {
-        std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
-        std::pair<int, float> minorRightDistance(-1, FLT_MAX);
+        if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
+            std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
+            std::pair<int, float> minorRightDistance(-1, FLT_MAX);
 
-        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
-        {
-            float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
-            float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-            if (minorLeftDistance.second > leftDistance && leftDistance < 50) {
-                minorLeftDistance.first = i;
-                minorLeftDistance.second = leftDistance;
+            for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
+            {
+                float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+                float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+                if (minorLeftDistance.second > leftDistance && leftDistance < 50) {
+                    minorLeftDistance.first = i;
+                    minorLeftDistance.second = leftDistance;
+                }
+                if (minorRightDistance.second > rightDistance && rightDistance < 50) {
+                    minorRightDistance.first = i;
+                    minorRightDistance.second = rightDistance;
+                }
             }
-            if (minorRightDistance.second > rightDistance && rightDistance < 50) {
-                minorRightDistance.first = i;
-                minorRightDistance.second = rightDistance;
+
+            std::set<int> keepIndices = {minorLeftDistance.first, minorRightDistance.first};
+            std::vector<std::vector<cv::Point>> filteredPolylines;
+            for (int idx : keepIndices) {
+                if (idx >= 0 && idx < static_cast<int>(lanePolylines.size()))
+                    filteredPolylines.push_back(lanePolylines[idx]);
             }
+            lanePolylines = filteredPolylines;
+
+            cv::putText(allPolylinesViz_, "Keeping 2 closest lanes", 
+                    cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
+                    0.5, cv::Scalar(0, 0, 255), 1);
+            std::cout << "Keeping 2 closest lanes" << std::endl;
+        } else {
+            lanePolylines.resize(2);
+
+            cv::putText(allPolylinesViz_, "Keeping 2 left lanes", 
+                    cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
+                    0.5, cv::Scalar(0, 0, 255), 1);
+            std::cout << "Keeping 2 left lanes" << std::endl;
         }
-
-        std::set<int> keepIndices = {minorLeftDistance.first, minorRightDistance.first};
-        std::vector<std::vector<cv::Point>> filteredPolylines;
-        for (int idx : keepIndices) {
-            if (idx >= 0 && idx < static_cast<int>(lanePolylines.size()))
-                filteredPolylines.push_back(lanePolylines[idx]);
-        }
-        lanePolylines = filteredPolylines;
-
-        cv::putText(allPolylinesViz_, "Keeping 2 closest lanes", 
-                cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
-                0.5, cv::Scalar(0, 0, 255), 1);
-        std::cout << "Keeping 2 closest lanes" << std::endl;
-    } else {
-        lanePolylines.resize(2);
-
-        cv::putText(allPolylinesViz_, "Keeping 2 left lanes", 
-                cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
-                0.5, cv::Scalar(0, 0, 255), 1);
-        std::cout << "Keeping 2 left lanes" << std::endl;
     }
 }
 
