@@ -710,7 +710,7 @@ void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lane
 
     size_t leftCurveSize = leftCurve.size();
 
-    std::cout << "Left curve size: " << leftCurve.size() << std::endl;
+    std::cout << "Left curve size: " << leftCurveSize << std::endl;
     kalmanFilter->updateLeftLaneFilter(leftCurve);
     kalmanFilter->updateRightLaneFilter(rightCurve);
 
