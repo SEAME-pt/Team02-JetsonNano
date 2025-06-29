@@ -42,6 +42,17 @@ private:
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> currentYaw_subscriber;
 
+    //calibration parameters
+    // Straight-line FOPDT model
+    float Kp_s_= 466.84;
+    float tau_s_ = 0.80;
+    float L_s_ = 0.12;
+    // Cornering FOPDT model
+    float Kp_c_ = 686.10;
+    float tau_c_ = 1.37;
+    float L_c_ = 0.35;
+    // Saturation limits
+    
     // PID constants
     float kp_; // Proportional gain
     float ki_; // Integral gain
@@ -58,7 +69,7 @@ private:
     // Control parameters
     float max_speed_;
     float max_throttle_;
-
+    float max_integral_;
     float fixed_delta_time_;
 
     std::string autonomousDrive_;

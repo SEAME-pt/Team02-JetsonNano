@@ -168,28 +168,42 @@ float SpeedPidController::speedPID(float error, double current_time)
     double dt = current_time - last_time_;
 
     // PID
+    // Gain-scheduling index from steering (-1..1 -> 0..1)
+    float alpha = std::min(1.0f, std::fabs(steer_));
+
+    // Interpolate process model parameters
+    float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
+    float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
+    float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
+
+    // IMC PID tuning
+    float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
+    float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
+    float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
+    float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
+
+    // Update PID gains
+    kp_ = Kc;
+    ki_ = Kc / Ti;
+    kd_ = Kc * Td;
+    max_integral_ = (alpha * max_throttle_) / ki_;
+    std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
+
+    // PID terms with anti-windup
     float p_term = kp_ * error;
+    integral_  += error * dt;
+    integral_   = std::clamp(integral_, -max_integral_, max_integral_);
 
-    // Improved implementation with anti-windup
-    integral_ += error * dt;
     // Limit integral term to prevent windup
-    const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
-    integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+    // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+    // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+    // float i_term = ki_ * integral_;
     float i_term = ki_ * integral_;
+    float d_term = kd_ * ((error - prev_error_) / dt);
 
-    float d_term = kd_ * (error - prev_error_) / dt;
-
-    // Adjust steering
-    float outputThrottle = p_term + i_term + d_term;
-    float throttle       = outputThrottle;
-    if (throttle > max_throttle_)
-    {
-        throttle = max_throttle_;
-    }
-    else if (throttle < -max_throttle_)
-    {
-        throttle = -max_throttle_;
-    }
+    // Final command: PID only (no feed-forward)
+    float throttle = p_term + i_term + d_term;
+    throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     prev_error_ = error;
     last_time_  = current_time;
