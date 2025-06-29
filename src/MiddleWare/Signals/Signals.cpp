@@ -96,9 +96,27 @@ void Signals::run()
                     // speed = wheelDiame * 3.14 * speed * 10 / 60;
                     if (speed < 0 || speed > 2000)
                         speed = 0;
-                    printf("Publishing speed: '%d'\n", speed);
-                    std::string speed_str = std::to_string(speed);
-                    publisher_->publishSpeed(std::stof(speed_str));
+
+                    bool validReading = true;
+                    if (!isFirstReading) {
+                        int speedChange = abs(speed - lastValidSpeed);
+                        if (speedChange > MAX_SPEED_CHANGE) {
+                            printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
+                                   speed, speedChange, lastValidSpeed);
+                            validReading = false;
+                        }
+                    }
+                    
+                    if (validReading) {
+                        lastValidSpeed = speed;
+                        isFirstReading = false;
+                        printf("Publishing speed: '%d'\n", speed);
+                        std::string speed_str = std::to_string(speed);
+                        publisher_->publishSpeed(std::stof(speed_str));
+                    }
+                    // printf("Publishing speed: '%d'\n", speed);
+                    // std::string speed_str = std::to_string(speed);
+                    // publisher_->publishSpeed(std::stof(speed_str));
                 }
             }
         }
