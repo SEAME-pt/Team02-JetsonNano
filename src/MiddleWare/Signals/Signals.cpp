@@ -100,7 +100,7 @@ void Signals::run()
                     bool validReading = true;
                     if (!isFirstReading) {
                         int speedChange = speed - lastValidSpeed;
-                        if (speedChange > MAX_SPEED_CHANGE) {
+                        if (speedChange > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
                             printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
                                    speed, speedChange, lastValidSpeed);
                             validReading = false;
