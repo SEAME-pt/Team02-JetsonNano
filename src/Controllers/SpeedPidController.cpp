@@ -100,7 +100,13 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             {
                 double now = getCurrentTime();
                 log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
+            
+                if (now - log_start_time_ > 3.0) {
+                    logging_ = false;
+                    log_file_.close();
+                }
             }
+
         },
         zenoh::closures::none));
 
@@ -270,14 +276,8 @@ void SpeedPidController::run()
         std::cout << "lalala" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
         throttle = 45;
-        publisher_->publishSpeed(0);
-        
-        // Stop after 2 seconds
-        if (now - log_start_time_ > 3.0) {
-            std::cout << "estou aqui" << std::endl;
-            logging_ = false;
-            log_file_.close();
-            publisher_->publishSpeed(0);
-        }
+        publisher_->publishSpeed(throttle);
+
     }
+    publisher_->publishSpeed(0);
 }
