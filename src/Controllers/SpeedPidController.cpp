@@ -124,8 +124,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         [this](const zenoh::Sample& sample)
         {
             float steer    = std::stof(sample.get_payload().as_string());
-            steer_ = (steer - 90.0) / 180;
-            std::cout << "steer : " << steer_ << std::endl;
+            steer_ = (steer - 90.0) / 90;
         },
         zenoh::closures::none));
 
