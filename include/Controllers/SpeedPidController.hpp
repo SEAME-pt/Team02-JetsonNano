@@ -11,6 +11,9 @@
 #include <cmath>
 #include <sys/time.h>
 
+//calibratrion
+#include <fstream>
+
 #ifdef TEST_MODE
   // Declare your custom functions
   extern "C" int custom_xbox_open(const char* path, int flags);
@@ -37,6 +40,7 @@ private:
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentYaw_subscriber;
 
     // PID constants
     float kp_; // Proportional gain
@@ -60,6 +64,14 @@ private:
     std::string autonomousDrive_;
     XboxController* xboxController_;
     bool speed_lock_;
+
+
+    //calibration measurement parameters
+    std::ofstream log_file_;
+    bool logging_ = false;
+    double log_start_time_ = 0.0;
+
+    float steer_ = 0.0;
 
 
 public:
