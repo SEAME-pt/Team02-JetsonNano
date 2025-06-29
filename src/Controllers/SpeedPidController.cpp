@@ -270,7 +270,7 @@ void SpeedPidController::run()
         std::cout << "lalala" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
         throttle = 45;
-        publisher_->publishSpeed(throttle);
+        publisher_->publishSpeed(0);
         
         // Stop after 2 seconds
         if (now - log_start_time_ > 3.0) {
