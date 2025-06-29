@@ -202,7 +202,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     float d_term = kd_ * ((error - prev_error_) / dt);
 
     // Final command: PID only (no feed-forward)
-    float throttle = p_term + i_term + d_term;
+    float throttle = (p_term + i_term + d_term) * 100.0f; // Scale to percentage
     throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     prev_error_ = error;
