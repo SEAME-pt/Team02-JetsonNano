@@ -272,12 +272,9 @@ void SpeedPidController::run()
     log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.35" << "\n";
     logging_ = true;
     while (logging_) {
-
-        std::cout << "lalala" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
         throttle = 45;
         publisher_->publishSpeed(throttle);
-
     }
     publisher_->publishSpeed(0);
 }
