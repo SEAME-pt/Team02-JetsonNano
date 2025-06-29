@@ -240,10 +240,14 @@ void SpeedPidController::run()
     //calibration
     while (true){
         std::string sae_level = getAutonomousDriveState();
-        if (sae_level.find("SAE_4") != std::string::npos)
+        if (sae_level.find("SAE_4") != std::string::npos){
+            std::cout << "AQUI" << std::endl;
             break;
+        }
     }
 
+    std::cout << "LALA" << std::endl;
+    
     double throttle = 0.15;
     publisher_->publishSpeed(throttle);
     
