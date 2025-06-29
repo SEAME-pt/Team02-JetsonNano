@@ -9,6 +9,38 @@ def load_data(filepath):
     """
     return pd.read_csv(filepath)
 
+def remove_outliers(df, column='speed', method='iqr', factor=1.5):
+    """
+    Remove outliers from the specified column using IQR or Z-score method.
+    
+    Parameters:
+    - df: DataFrame
+    - column: column name to check for outliers
+    - method: 'iqr' (Interquartile Range) or 'zscore'
+    - factor: multiplier for outlier detection (1.5 for IQR, 3 for Z-score)
+    
+    Returns:
+    - Cleaned DataFrame with outliers removed
+    """
+    if method == 'iqr':
+        Q1 = df[column].quantile(0.25)
+        Q3 = df[column].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - factor * IQR
+        upper_bound = Q3 + factor * IQR
+        mask = (df[column] >= lower_bound) & (df[column] <= upper_bound)
+        
+    elif method == 'zscore':
+        z_scores = np.abs((df[column] - df[column].mean()) / df[column].std())
+        mask = z_scores < factor
+        
+    else:
+        raise ValueError("Method must be 'iqr' or 'zscore'")
+    
+    outliers_removed = len(df) - mask.sum()
+    print(f"Removed {outliers_removed} outliers from {column} column using {method} method")
+    
+    return df[mask].reset_index(drop=True)
 
 def find_step_indices(u, tol=1e-6):
     """
@@ -105,8 +137,15 @@ def plot_step_response(t, y, u, step_idx, end_idx=None, params=None, ax=None):
     ax.legend()
 
 
-def main(filepath):
+def main(filepath, remove_outliers_flag=True, outlier_method='iqr', outlier_factor=1.5):
     df = load_data(filepath)
+    
+    # Remove outliers if requested
+    if remove_outliers_flag:
+        print(f"Original data shape: {df.shape}")
+        df = remove_outliers(df, column='speed', method=outlier_method, factor=outlier_factor)
+        print(f"Cleaned data shape: {df.shape}")
+    
     t = df['time'].values
     y = df['speed'].values
     u = df['throttle'].values
@@ -116,7 +155,7 @@ def main(filepath):
     plt.plot(t, y)
     plt.xlabel('Time (s)')
     plt.ylabel('Speed (RPM)')
-    plt.title('Overall Speed vs Time')
+    plt.title('Overall Speed vs Time (After Outlier Removal)' if remove_outliers_flag else 'Overall Speed vs Time')
     plt.show()
 
     plt.figure()
@@ -154,7 +193,24 @@ def main(filepath):
 
 if __name__ == '__main__':
     import sys
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} path/to/log.csv")
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} path/to/log.csv [--no-outlier-removal] [--method zscore] [--factor 2.0]")
     else:
-        main(sys.argv[1])
+        filepath = sys.argv[1]
+        remove_outliers_flag = '--no-outlier-removal' not in sys.argv
+        
+        # Parse method
+        method = 'iqr'
+        if '--method' in sys.argv:
+            method_idx = sys.argv.index('--method')
+            if method_idx + 1 < len(sys.argv):
+                method = sys.argv[method_idx + 1]
+        
+        # Parse factor
+        factor = 1.5 if method == 'iqr' else 3.0
+        if '--factor' in sys.argv:
+            factor_idx = sys.argv.index('--factor')
+            if factor_idx + 1 < len(sys.argv):
+                factor = float(sys.argv[factor_idx + 1])
+        
+        main(filepath, remove_outliers_flag, method, factor)
