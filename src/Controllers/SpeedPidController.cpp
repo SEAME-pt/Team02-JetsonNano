@@ -101,7 +101,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
                 double now = getCurrentTime();
                 log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
             
-                if (now - log_start_time_ > 3.0) {
+                if (now - log_start_time_ > 15.0) {
                     logging_ = false;
                     log_file_.close();
                 }
@@ -261,7 +261,7 @@ void SpeedPidController::run()
     publisher_->publishSpeed(throttle);
     
     // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
-    std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     
     
     // Start logging
