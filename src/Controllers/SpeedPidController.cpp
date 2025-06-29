@@ -95,6 +95,13 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
+
+            if (logging_)
+            {
+                double now = getCurrentTime();
+                // Log speed and throttle
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
+            }
         },
         zenoh::closures::none));
 
@@ -253,17 +260,16 @@ void SpeedPidController::run()
     
     
     // Start logging
-    logging_ = true;
+    double now = getCurrentTime();
     log_start_time_ = getCurrentTime();
     log_file_.open("straight_speed_pid_log.csv");
     log_file_ << "time,speed,throttle\n";
-    
+    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
+    logging_ = true;
     while (logging_) {
-        double now = getCurrentTime();
-        // Log speed and throttle
-        log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << throttle << "\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Log at 40 Hz
+
         
+        std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
         throttle = 45;
         publisher_->publishSpeed(throttle);
         
