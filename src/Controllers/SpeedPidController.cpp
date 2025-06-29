@@ -252,7 +252,7 @@ void SpeedPidController::run()
     publisher_->publishSpeed(throttle);
     
     // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
-    std::this_thread::sleep_for(std::chrono::milliseconds(1500)); // Example: wait 2 seconds
+    std::this_thread::sleep_for(std::chrono::milliseconds(2500)); // Example: wait 2 seconds
     
     
     // Start logging
@@ -271,7 +271,7 @@ void SpeedPidController::run()
         publisher_->publishSpeed(throttle);
         
         // Stop after 2 seconds
-        if (now - log_start_time_ > 2.0) {
+        if (now - log_start_time_ > 3.0) {
             logging_ = false;
             log_file_.close();
             publisher_->publishSpeed(0);
