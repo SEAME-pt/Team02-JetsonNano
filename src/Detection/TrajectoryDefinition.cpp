@@ -284,8 +284,7 @@ void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> 
     }
 }
 
-void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
-    std::vector<cv::Point>& rightCurve) {
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
     std::vector<std::pair<int, float>> rightDistances;
     std::vector<std::pair<int, float>> leftDistances;
     if (!prevRightCurve.empty()) {
@@ -413,7 +412,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                 leftLaneLastUpdatedFrame = currentFrame;
                 rightLaneLastUpdatedFrame = currentFrame;
             } else {
-                onePolyline(leftCurve, rightCurve)
+                onePolyline(leftCurve, rightCurve);
             }
         } else {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
@@ -472,7 +471,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                 leftLaneLastUpdatedFrame = currentFrame;
                 rightLaneLastUpdatedFrame = currentFrame;
             } else {
-                onePolyline(leftCurve, rightCurve)
+                onePolyline(leftCurve, rightCurve);
             }
         } else {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
