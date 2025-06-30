@@ -284,7 +284,8 @@ void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> 
     }
 }
 
-void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines) {
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
+    std::vector<cv::Point>& rightCurve) {
     std::vector<std::pair<int, float>> rightDistances;
     std::vector<std::pair<int, float>> leftDistances;
     if (!prevRightCurve.empty()) {
@@ -481,7 +482,8 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
     }
 }
 
-void trajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines) {
+void trajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
+    std::vector<cv::Point>& rightCurve) {
     int centerX = frameWidth_ / 2;
     float minLeftDist = FLT_MAX;
     float minRightDist = FLT_MAX;
@@ -700,7 +702,7 @@ void TrajectoryDefinition::mergeLaneComponents(
     }
 }
 
-void TrajectoryDefinition::onePolyline(leftCurve, rightCurve, std::vector<cv::Point>& leftCurve,
+void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     std::vector<cv::Point>& rightCurve) {
     if (rightCurve.empty())
     {
