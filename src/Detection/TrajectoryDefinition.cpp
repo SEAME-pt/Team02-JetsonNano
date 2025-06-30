@@ -212,15 +212,15 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 5000, frameWidth_ * frameHeight_ / 5000, 6);
+    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 6000, frameWidth_ * frameHeight_ / 5000, 6);
     
+    drawPolyLanes(lanePolylines);
     // float maxHorizontalDistance = frameWidth_ * 0.10;  // 15% of frame width
     // float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
     // mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
     defineLaneEnv(lanePolylines);
     
-    drawPolyLanes(lanePolylines);
 
     // if (lanePolylines.size() == 2)
     // {
