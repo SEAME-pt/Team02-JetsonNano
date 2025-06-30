@@ -537,7 +537,7 @@ TrajectoryDefinition::clusterLaneMask(const cv::Mat& laneMask, int kernelSize,
                                       int minArea, int maxLanes)
 {
     static cv::Mat verticalKernel = cv::getStructuringElement(
-        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
+        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 2));
     static cv::Mat horizontalKernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
 
