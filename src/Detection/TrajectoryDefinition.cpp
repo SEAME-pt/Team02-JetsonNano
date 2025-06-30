@@ -440,8 +440,8 @@ void TrajectoryDefinition::mergeLaneComponents(
         defineLanePolyline(lanePolylines[i]);
     }
 
-    if (lanePolylines.size() > 2)
-    {
+    // if (lanePolylines.size() >= 2)
+    // {
         if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
             std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
             std::pair<int, float> minorRightDistance(-1, FLT_MAX);
@@ -450,11 +450,11 @@ void TrajectoryDefinition::mergeLaneComponents(
             {
                 float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
                 float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-                if (minorLeftDistance.second > leftDistance && leftDistance < 20 && leftDistance < rightDistance) {
+                if (minorLeftDistance.second > leftDistance && leftDistance < 50 && leftDistance < rightDistance) {
                     minorLeftDistance.first = i;
                     minorLeftDistance.second = leftDistance;
                 }
-                if (minorRightDistance.second > rightDistance && rightDistance < 20 && rightDistance < leftDistance) {
+                if (minorRightDistance.second > rightDistance && rightDistance < 50 && rightDistance < leftDistance) {
                     minorRightDistance.first = i;
                     minorRightDistance.second = rightDistance;
                 }
@@ -480,7 +480,7 @@ void TrajectoryDefinition::mergeLaneComponents(
                     0.5, cv::Scalar(0, 0, 255), 1);
             std::cout << "Keeping 2 left lanes" << std::endl;
         }
-    }
+    // }
 }
 
 void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
