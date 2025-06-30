@@ -353,7 +353,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
 
                 // Must be to the left of rightCurve
                 if (avgX < leftAvgX) {
-                    float dist = calculateLaneDistance(lanePolylines[i], rightCurve);
+                    float dist = calculateLaneDistance(lanePolylines[i], leftCurve);
                     if (dist < minRightDist && dist < maxAllowedDistance) {
                         minRightDist = dist;
                         bestRightIdx = i;
@@ -421,7 +421,6 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                     avgX += pt.x;
                 avgX /= lanePolylines[i].size();
 
-                // Must be to the right of leftCurve
                 if (avgX > rightAvgX) {
                     float dist = calculateLaneDistance(lanePolylines[i], rightCurve);
                     if (dist < minLeftDist && dist < maxAllowedDistance) {
