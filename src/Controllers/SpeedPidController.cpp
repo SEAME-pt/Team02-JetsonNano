@@ -95,6 +95,18 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
+
+            if (logging_)
+            {
+                double now = getCurrentTime();
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
+            
+                if (now - log_start_time_ > 15.0) {
+                    logging_ = false;
+                    log_file_.close();
+                }
+            }
+
         },
         zenoh::closures::none));
 
@@ -104,6 +116,15 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         {
             float speed    = std::stof(sample.get_payload().as_string());
             desired_speed_ = speed * 60.0 / (M_PI * 0.067);
+        },
+        zenoh::closures::none));
+
+    currentYaw_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Chassis/SteeringWheel/Angle",
+        [this](const zenoh::Sample& sample)
+        {
+            float steer    = std::stof(sample.get_payload().as_string());
+            steer_ = (steer - 90.0) / 90;
         },
         zenoh::closures::none));
 
@@ -147,28 +168,42 @@ float SpeedPidController::speedPID(float error, double current_time)
     double dt = current_time - last_time_;
 
     // PID
+    // Gain-scheduling index from steering (-1..1 -> 0..1)
+    float alpha = std::min(1.0f, std::fabs(steer_));
+
+    // Interpolate process model parameters
+    float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
+    float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
+    float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
+
+    // IMC PID tuning
+    float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
+    float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
+    float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
+    float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
+
+    // Update PID gains
+    kp_ = Kc;
+    ki_ = Kc / Ti;
+    kd_ = Kc * Td;
+    max_integral_ = (alpha * max_throttle_) / ki_;
+    std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
+    std::cout << "ERROR : "<< error << std::endl;
+    // PID terms with anti-windup
     float p_term = kp_ * error;
+    integral_  += error * dt;
+    integral_   = std::clamp(integral_, -max_integral_, max_integral_);
 
-    // Improved implementation with anti-windup
-    integral_ += error * dt;
     // Limit integral term to prevent windup
-    const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
-    integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+    // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+    // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+    // float i_term = ki_ * integral_;
     float i_term = ki_ * integral_;
+    float d_term = kd_ * ((error - prev_error_) / dt);
 
-    float d_term = kd_ * (error - prev_error_) / dt;
-
-    // Adjust steering
-    float outputThrottle = p_term + i_term + d_term;
-    float throttle       = outputThrottle;
-    if (throttle > max_throttle_)
-    {
-        throttle = max_throttle_;
-    }
-    else if (throttle < -max_throttle_)
-    {
-        throttle = -max_throttle_;
-    }
+    // Final command: PID only (no feed-forward)
+    float throttle = (p_term + i_term + d_term) * 100.0f; // Scale to percentage
+    throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     prev_error_ = error;
     last_time_  = current_time;
@@ -227,4 +262,33 @@ void SpeedPidController::run()
             }
         }
     }
+
+    // //calibration
+    // while (true){
+    //     std::string sae_level = getAutonomousDriveState();
+    //     if (sae_level.find("SAE_4") != std::string::npos){
+    //         break;
+    //     }
+    // }
+
+    // double throttle = 35;
+    // publisher_->publishSpeed(throttle);
+    
+    // // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
+    // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    
+    
+    // // Start logging
+    // double now = getCurrentTime();
+    // log_start_time_ = getCurrentTime();
+    // log_file_.open("nofriction_speed_pid_log.csv");
+    // log_file_ << "time,speed,throttle\n";
+    // log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.35" << "\n";
+    // logging_ = true;
+    // while (logging_) {
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
+    //     throttle = 45;
+    //     publisher_->publishSpeed(throttle);
+    // }
+    // publisher_->publishSpeed(0);
 }
