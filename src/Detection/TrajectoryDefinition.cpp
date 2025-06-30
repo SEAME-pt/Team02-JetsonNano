@@ -821,8 +821,6 @@ void TrajectoryDefinition::checkPredicedCurve(
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
 
-        float divergence = 0.1f;
-
         if (isLeftLane)
         {
             for (const auto& pt : realLane)
