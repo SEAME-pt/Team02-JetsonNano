@@ -810,8 +810,9 @@ void TrajectoryDefinition::checkPredicedCurve(
     }
 
     float error = std::abs(avgMiddleX - expectedMiddleX);
+    bool isOnCorrectSide = isLeftLane ? (avgMiddleX > avgDetectedX) : (avgMiddleX < avgDetectedX);
 
-    if (error > frameWidth_ * 0.20f)
+    if (error > frameWidth_ * 0.20f || !isOnCorrectSide)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
