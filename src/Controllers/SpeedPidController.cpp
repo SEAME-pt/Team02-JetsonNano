@@ -187,6 +187,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     ki_ = Kc / Ti;
     kd_ = Kc * Td;
     max_integral_ = (alpha * max_throttle_) / ki_;
+    max_integral_ = 0;
     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
     std::cout << "ERROR : "<< error << std::endl;
     // PID terms with anti-windup
