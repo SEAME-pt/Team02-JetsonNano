@@ -271,7 +271,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
             float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
 
-            float threshold = calculateHistoricalLaneWidth() * 0.80;
+            float threshold = calculateHistoricalLaneWidth() * 0.60;
 
             if (leftDistance < rightDistance && leftDistance > threshold) {
                 if (leftDistance < minLeftDist) {
