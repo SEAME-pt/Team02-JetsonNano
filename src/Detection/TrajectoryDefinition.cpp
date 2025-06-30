@@ -264,7 +264,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
     std::cout << "Width: " << frameWidth_ << std::endl;
     for (int i = static_cast<int>(lanePolylines.size()) - 1; i >= 0; i--)
     {
-        if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3072))
+        if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3450))
             lanePolylines.erase(lanePolylines.begin() + i);
         else
             defineLanePolyline(lanePolylines[i]);
