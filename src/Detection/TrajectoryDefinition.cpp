@@ -450,11 +450,11 @@ void TrajectoryDefinition::mergeLaneComponents(
             {
                 float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
                 float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-                if (minorLeftDistance.second > leftDistance && leftDistance < 50) {
+                if (minorLeftDistance.second > leftDistance && leftDistance < 30 && leftDistance < rightDistance) {
                     minorLeftDistance.first = i;
                     minorLeftDistance.second = leftDistance;
                 }
-                if (minorRightDistance.second > rightDistance && rightDistance < 50) {
+                if (minorRightDistance.second > rightDistance && rightDistance < 30 && rightDistance < leftDistance) {
                     minorRightDistance.first = i;
                     minorRightDistance.second = rightDistance;
                 }
