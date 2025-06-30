@@ -947,11 +947,9 @@ void TrajectoryDefinition::defineLanePolyline(
     }
 
     cv::Mat coeffs;
-    if (x_values.size() >= 4)
+    if (x_values.size() >= 120)
     {
         cv::Mat y_mat(y_values), x_mat;
-
-        // Create Vandermonde matrix for polynomial fitting
         x_mat.create(y_values.size(), 4, CV_64F);
         for (int i = 0; i < x_mat.rows; i++)
         {
@@ -973,12 +971,35 @@ void TrajectoryDefinition::defineLanePolyline(
             double xVal = coeffs.at<double>(0) + coeffs.at<double>(1) * yVal +
                           coeffs.at<double>(2) * yVal * yVal +
                           coeffs.at<double>(3) * yVal * yVal * yVal;
-
-            // xVal =
-            //     std::max(0.0, std::min(static_cast<double>(frameWidth_), xVal));
-
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+    }
+    else if (x_values.size() >= 4)
+    {
+        // 2nd-degree polynomial fit
+        cv::Mat y_mat(y_values), x_mat;
+        x_mat.create(y_values.size(), 3, CV_64F);
+        for (int i = 0; i < x_mat.rows; i++)
+        {
+            x_mat.at<double>(i, 0) = 1.0;
+            x_mat.at<double>(i, 1) = y_values[i];
+            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
+        }
+        cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
+
+        curve.clear();
+        int numSamples = frameHeight_ / 100;
+        for (int y = 0; y < frameHeight_; y += numSamples)
+        {
+            double yVal = static_cast<double>(y);
+            double xVal = coeffs.at<double>(0) + coeffs.at<double>(1) * yVal +
+                          coeffs.at<double>(2) * yVal * yVal;
+            curve.push_back(cv::Point(static_cast<int>(xVal), y));
+        }
+    }
+    else
+    {
+        std::cerr << "Not enough points to calculate coefficients" << std::endl;
     }
 }
 
