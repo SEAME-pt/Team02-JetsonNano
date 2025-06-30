@@ -265,7 +265,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     (void) class_mask;
     // // obstacleAvoidance(class_mask, midCurve);
    
-    // createMidPointError(midCurve);
+    createMidPointError(midCurve);
     
     // // checkForwardCollision(class_mask, midCurve);
 
