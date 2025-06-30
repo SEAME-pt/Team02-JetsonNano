@@ -260,9 +260,11 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 }
 
 void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines) {
+    std::cout << "Height: " << frameHeight_ << std::endl;
+    std::cout << "Width: " << frameWidth_ << std::endl;
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        // if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 655))
+        // if (lanePolylines[i].size() < static_cast<unsigned int>(height_ * width_ / 655))
         //     lanePolylines.erase(lanePolylines.begin() + i);
         defineLanePolyline(lanePolylines[i]);
     }
