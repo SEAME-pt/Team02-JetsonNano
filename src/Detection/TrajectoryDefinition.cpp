@@ -240,8 +240,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     }
     else
     {
-        leftCurve  = kalmanFilter.predictLeftLaneCurve();
-        rightCurve = kalmanFilter.predictRightLaneCurve();
+        leftCurve  = kalmanFilter->predictLeftLaneCurve();
+        rightCurve = kalmanFilter->predictRightLaneCurve();
     }
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
