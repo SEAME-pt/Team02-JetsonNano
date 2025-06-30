@@ -259,9 +259,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     //     rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
     // }
 
-    // defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
+    defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
-    // drawCurves(midCurve, leftCurve, rightCurve);
+    drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
     // // obstacleAvoidance(class_mask, midCurve);
    
