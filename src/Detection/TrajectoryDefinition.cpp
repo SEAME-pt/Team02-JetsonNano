@@ -342,6 +342,9 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             float minRightDist = FLT_MAX;
 
             for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+                if (i == bestLeftIdx) {
+                    continue ;
+                }
                 float avgX = 0.0f;
                 for (const auto& pt : lanePolylines[i])
                     avgX += pt.x;
@@ -408,6 +411,10 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             float minLeftDist = FLT_MAX;
 
             for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+                if (i == bestRightIdx) {
+                    continue ;
+                }
+
                 float avgX = 0.0f;
                 for (const auto& pt : lanePolylines[i])
                     avgX += pt.x;
