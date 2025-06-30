@@ -677,7 +677,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
         checkPredicedCurve(rightCurve, leftCurve, true);
         
-        if (leftCurve.size() > 100)
+        if (leftCurve.size() > 90)
             kalmanFilter->updateLeftLaneFilter(leftCurve);
 
         prevLeftCurve = leftCurve;
@@ -695,7 +695,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         leftCurve = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
         checkPredicedCurve(leftCurve, rightCurve, false);
         
-        if (rightCurve.size() > 100)
+        if (rightCurve.size() > 90)
             kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve.clear();
@@ -709,50 +709,6 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     }
 }
-
-void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
-    cv::Point lowestPoint1(-1, -1);
-    cv::Point lowestPoint2(-1, -1);
-
-    for (const auto& pt : lanePolylines[0])
-    {
-        if (pt.y > lowestPoint1.y)
-        {
-            lowestPoint1 = pt;
-        }
-    }
-
-    for (const auto& pt : lanePolylines[1])
-    {
-        if (pt.y > lowestPoint2.y)
-        {
-            lowestPoint2 = pt;
-        }
-    }
-
-    if (lowestPoint1.x < lowestPoint2.x) {
-        leftCurve = lanePolylines[0];
-        rightCurve = lanePolylines[1];
-    } else {
-        leftCurve = lanePolylines[1];
-        rightCurve = lanePolylines[0];
-    }
-        
-    updateLaneWidthHistory(leftCurve, rightCurve);
-
-    if (leftCurve.size() > 90)
-        kalmanFilter->updateLeftLaneFilter(leftCurve);
-
-    if (rightCurve.size() > 90)
-        kalmanFilter->updateRightLaneFilter(rightCurve);
-
-    prevLeftCurve = leftCurve;
-    prevRightCurve = rightCurve;
-    
-    leftLaneLastUpdatedFrame = currentFrame;
-    rightLaneLastUpdatedFrame = currentFrame;
-}
-
 
 float TrajectoryDefinition::calculateLaneDistance(
     const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2)
