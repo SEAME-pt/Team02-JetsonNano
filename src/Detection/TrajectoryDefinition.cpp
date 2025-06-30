@@ -413,8 +413,8 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                     avgX += pt.x;
                 avgX /= lanePolylines[i].size();
 
-                // Must be to the left of rightCurve
-                if (avgX < rightAvgX) {
+                // Must be to the right of leftCurve
+                if (avgX > rightAvgX) {
                     float dist = calculateLaneDistance(lanePolylines[i], rightCurve);
                     if (dist < minLeftDist && dist < maxAllowedDistance) {
                         minLeftDist = dist;
@@ -686,9 +686,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         leftLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 3);
         cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
     }
     else
     {
@@ -704,9 +704,9 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 255), 3);
         cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
     }
 }
 
@@ -807,8 +807,8 @@ void TrajectoryDefinition::checkPredicedCurve(
     if (error > frameWidth_ * 0.15f)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
-                    cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5,
-                    cv::Scalar(0, 0, 255), 1);
+                    cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(255, 255, 0), 1);
         std::cout << "Invalid curve prediction - using offset" << std::endl;
 
         predictedCurve.clear();
