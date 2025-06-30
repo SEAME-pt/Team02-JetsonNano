@@ -235,29 +235,6 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
         leftCurve  = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
         rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
     }
-    
-
-    // if (lanePolylines.size() == 2)
-    // {
-    //     twoPolylines(lanePolylines, leftCurve, rightCurve);
-    // }
-    // else if (lanePolylines.size() == 1)
-    // {
-    //     defineLanePolyline(lanePolylines[0]);
-
-    //     if (checkIfLeftLane(lanePolylines[0])) {
-    //         leftCurve = lanePolylines[0];
-    //         onePolyline(leftCurve, rightCurve);
-    //     } else {
-    //         rightCurve = lanePolylines[0];
-    //         onePolyline(leftCurve, rightCurve);
-    //     }
-    // }
-    // else
-    // {
-    //     leftCurve  = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
-    //     rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
-    // }
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
@@ -311,51 +288,51 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         int bestLeftIdx = -1, bestRightIdx = -1;
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
 
-        // Find best left candidate
-        for (const auto& ld : leftDistances) {
-            if (ld.second < minLeftDist && ld.second < (frameHeight_ * frameWidth_ / 5000)) {
-                minLeftDist = ld.second;
-                bestLeftIdx = ld.first;
-            }
-        }
-        // Find best right candidate
-        for (const auto& rd : rightDistances) {
-            if (rd.second < minRightDist && rd.second < (frameHeight_ * frameWidth_ / 5000)) {
-                minRightDist = rd.second;
-                bestRightIdx = rd.first;
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+
+            float threshold = (frameHeight_ * frameWidth_ / 5000);
+
+            if (leftDistance < rightDistance && leftDistance < threshold) {
+                if (leftDistance < minLeftDist) {
+                    minLeftDist = leftDistance;
+                    bestLeftIdx = i;
+                }
+            } else if (rightDistance < leftDistance && rightDistance < threshold) {
+                if (rightDistance < minRightDist) {
+                    minRightDist = rightDistance;
+                    bestRightIdx = i;
+                }
             }
         }
 
-        // Ensure they are not the same and are on correct sides
         if (bestLeftIdx != -1 && bestRightIdx != -1 && bestLeftIdx != bestRightIdx) {
-            // Compute average x for both
-            float leftAvgX = 0.0f, rightAvgX = 0.0f;
-            for (const auto& pt : lanePolylines[bestLeftIdx]) leftAvgX += pt.x;
-            leftAvgX /= lanePolylines[bestLeftIdx].size();
-            for (const auto& pt : lanePolylines[bestRightIdx]) rightAvgX += pt.x;
-            rightAvgX /= lanePolylines[bestRightIdx].size();
+            leftCurve = lanePolylines[bestLeftIdx];
+            rightCurve = lanePolylines[bestRightIdx];
+            
+            updateLaneWidthHistory(leftCurve, rightCurve);
 
-            if (leftAvgX < rightAvgX) {
-                leftCurve = lanePolylines[bestLeftIdx];
-                rightCurve = lanePolylines[bestRightIdx];
+            if (leftCurve.size() > 90)
+                kalmanFilter->updateLeftLaneFilter(leftCurve);
 
-                updateLaneWidthHistory(leftCurve, rightCurve);
+            if (rightCurve.size() > 90)
+                kalmanFilter->updateRightLaneFilter(rightCurve);
 
-                if (leftCurve.size() > 90)
-                    kalmanFilter->updateLeftLaneFilter(leftCurve);
-                if (rightCurve.size() > 90)
-                    kalmanFilter->updateRightLaneFilter(rightCurve);
+            prevLeftCurve = leftCurve;
+            prevRightCurve = rightCurve;
+            
+            leftLaneLastUpdatedFrame = currentFrame;
+            rightLaneLastUpdatedFrame = currentFrame;
+        } else if (bestLeftIdx != -1) {
+            leftCurve = lanePolylines[bestLeftIdx];
+            
+            onePolyline(leftCurve, rightCurve);
+        } else if (bestRightIdx != -1) {
+            rightCurve = lanePolylines[bestRightIdx];
 
-                prevLeftCurve = leftCurve;
-                prevRightCurve = rightCurve;
-                leftLaneLastUpdatedFrame = currentFrame;
-                rightLaneLastUpdatedFrame = currentFrame;
-            } else {
-                // If not on correct sides, fallback to position-based or lowerPointLaneDefinition
-                lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
-            }
+            onePolyline(leftCurve, rightCurve);
         } else {
-            // If can't find both, fallback
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else if (!leftDistances.empty()) {
