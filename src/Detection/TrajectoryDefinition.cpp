@@ -811,7 +811,7 @@ void TrajectoryDefinition::checkPredicedCurve(
 
     float error = std::abs(avgMiddleX - expectedMiddleX);
 
-    if (error > frameWidth_ * 0.15f)
+    if (error > frameWidth_ * 0.20f)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
@@ -825,34 +825,22 @@ void TrajectoryDefinition::checkPredicedCurve(
 
         if (isLeftLane)
         {
-            // for (const auto& pt : realLane)
-            // {
-            //     predictedCurve.push_back(
-            //         cv::Point(pt.x + expectedWidth, pt.y));
-            // }
             for (const auto& pt : realLane)
             {
-                // The farther down (higher y), the more we shift to the right
-                int extra_offset = static_cast<int>(divergence * (pt.y - realLane.front().y));
                 predictedCurve.push_back(
-                    cv::Point(pt.x + expectedWidth + extra_offset, pt.y));
+                    cv::Point(pt.x + expectedWidth, pt.y));
             }
+            
             kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
         else
         {
-            // for (const auto& pt : realLane)
-            // {
-            //     predictedCurve.push_back(
-            //         cv::Point(pt.x - expectedWidth, pt.y));
-            // }
             for (const auto& pt : realLane)
             {
-                // The farther down (higher y), the more we shift to the left
-                int extra_offset = static_cast<int>(divergence * (pt.y - realLane.front().y));
                 predictedCurve.push_back(
-                    cv::Point(pt.x - expectedWidth - extra_offset, pt.y));
+                    cv::Point(pt.x - expectedWidth, pt.y));
             }
+
             kalmanFilter->updateRightLaneFilter(predictedCurve);
         }
 
