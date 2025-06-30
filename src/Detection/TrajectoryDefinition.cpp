@@ -222,7 +222,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     filterFalseLanes(lanePolylines);
 
     if (lanePolylines.size() >= 2) {
-        defineLaneEnv(lanePolylines);
+        defineLaneEnv(lanePolylines, leftCurve, rightCurve);
     } else if (lanePolylines.size() == 1) {
         if (checkIfLeftLane(lanePolylines[0])) {
             leftCurve = lanePolylines[0];
@@ -353,11 +353,11 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                 rightLaneLastUpdatedFrame = currentFrame;
             } else {
                 // If not on correct sides, fallback to position-based or lowerPointLaneDefinition
-                lowerPointLaneDefinition(lanePolylines);
+                lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
             }
         } else {
             // If can't find both, fallback
-            lowerPointLaneDefinition(lanePolylines);
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else if (!leftDistances.empty()) {
         std::pair<int, float> minDistance = (-1, FLT_MAX);
@@ -416,7 +416,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                 onePolyline(leftCurve, rightCurve)
             }
         } else {
-            lowerPointLaneDefinition(lanePolylines);
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else if (!rightDistances.empty()) {
         std::pair<int, float> minDistance = (-1, FLT_MAX);
@@ -475,10 +475,10 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
                 onePolyline(leftCurve, rightCurve)
             }
         } else {
-            lowerPointLaneDefinition(lanePolylines);
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else {
-        lowerPointLaneDefinition(lanePolylines);
+        lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
     }
 }
 
