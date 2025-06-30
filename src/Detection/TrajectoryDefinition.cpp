@@ -894,21 +894,21 @@ void TrajectoryDefinition::drawCurves(
     for (size_t i = 1; i < leftCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, leftCurve[i - 1], leftCurve[i], leftCurveColor,
-                 3);
+                 8);
     }
 
     cv::Scalar midCurveColor = cv::Scalar(255, 255, 255);
     for (size_t i = 1; i < midCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
-                 3);
+                 8);
     }
 
     cv::Scalar rightCurveColor = cv::Scalar(0, 0, 255);
     for (size_t i = 1; i < rightCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, rightCurve[i - 1], rightCurve[i], rightCurveColor,
-                 3);
+                 8);
     }
 }
 
