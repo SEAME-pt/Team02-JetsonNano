@@ -247,7 +247,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     // defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
     // drawCurves(midCurve, leftCurve, rightCurve);
-    // (void) class_mask;
+    (void) class_mask;
     // // obstacleAvoidance(class_mask, midCurve);
    
     // createMidPointError(midCurve);
