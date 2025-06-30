@@ -212,7 +212,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
+    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * 0.10, frameWidth_ * 0.15, 6);
 
     drawPolyLanes(lanePolylines);
     
@@ -240,8 +240,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     }
     else
     {
-        leftCurve  = prevLeftCurve;
-        rightCurve = prevRightCurve;
+        leftCurve  = kalmanFilter.predictLeftLaneCurve();
+        rightCurve = kalmanFilter.predictRightLaneCurve();
     }
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
@@ -450,11 +450,11 @@ void TrajectoryDefinition::mergeLaneComponents(
             {
                 float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
                 float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-                if (minorLeftDistance.second > leftDistance && leftDistance < 30 && leftDistance < rightDistance) {
+                if (minorLeftDistance.second > leftDistance && leftDistance < 20 && leftDistance < rightDistance) {
                     minorLeftDistance.first = i;
                     minorLeftDistance.second = leftDistance;
                 }
-                if (minorRightDistance.second > rightDistance && rightDistance < 30 && rightDistance < leftDistance) {
+                if (minorRightDistance.second > rightDistance && rightDistance < 20 && rightDistance < leftDistance) {
                     minorRightDistance.first = i;
                     minorRightDistance.second = rightDistance;
                 }
