@@ -262,7 +262,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines) {
     for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
     {
-        if (lanePolylines[i].size() < 100)
+        if (lanePolylines[i].size() < frameHeight_ * frameWidth_ / 655)
             lanePolylines.erase(lanePolylines.begin() + i);
         defineLanePolyline(lanePolylines[i]);
     }
@@ -936,10 +936,6 @@ void TrajectoryDefinition::drawPolyLanes(
 void TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
-    if (curve.size() < 100) {
-        std::cout << "curve less than 100 on defineLanePolyline function" << std::endl;
-        return ;
-    }
     std::sort(curve.begin(), curve.end(),
               [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
 
