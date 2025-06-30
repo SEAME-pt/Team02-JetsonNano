@@ -359,7 +359,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else if (!leftDistances.empty()) {
-        std::pair<int, float> minDistance = (-1, FLT_MAX);
+        std::pair<int, float> minDistance(-1, FLT_MAX);
 
         for (auto& ld : leftDistances) {
             if (ld.second < minDistance.second && ld.second < (frameHeight_ * frameWidth_ / 5000)) {
@@ -418,7 +418,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
     } else if (!rightDistances.empty()) {
-        std::pair<int, float> minDistance = (-1, FLT_MAX);
+        std::pair<int, float> minDistance(-1, FLT_MAX);
 
         for (auto& rd : rightDistances) {
             if (rd.second < minDistance.second && rd.second < (frameHeight_ * frameWidth_ / 5000)) {
@@ -481,7 +481,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
     }
 }
 
-void trajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
+void TrajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
     std::vector<cv::Point>& rightCurve) {
     int centerX = frameWidth_ / 2;
     float minLeftDist = FLT_MAX;
