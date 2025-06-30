@@ -104,6 +104,9 @@ class TrajectoryDefinition
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines);
     bool checkIfLeftLane(const std::vector<cv::Point>& lanePolyline);
 
+    void filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines);
+    void lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines);
+
     float calculateHistoricalLaneWidth();
     void updateLaneWidthHistory(const std::vector<cv::Point>& leftLane, 
                                                 const std::vector<cv::Point>& rightLane);
