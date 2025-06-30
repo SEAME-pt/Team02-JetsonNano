@@ -362,7 +362,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             }
 
             if (bestRightIdx != -1) {
-                leftCurve = lanePolylines[bestRightIdx];
+                rightCurve = lanePolylines[bestRightIdx];
 
                 updateLaneWidthHistory(leftCurve, rightCurve);
 
