@@ -284,7 +284,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         }
     }
 
-    if (!leftDistances.empty() && !rightDistances.empty()) {
+    if (!prevRightCurve.empty() && !prevLeftCurve.empty()) {
         int bestLeftIdx = -1, bestRightIdx = -1;
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
 
@@ -335,16 +335,23 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         } else {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
-    } else if (!leftDistances.empty()) {
-        std::pair<int, float> minDistance(-1, FLT_MAX);
+    } else if (!prevLeftCurve.empty()) {
+        int bestLeftIdx = -1;
+        float minLeftDist = FLT_MAX;
 
-        for (auto& ld : leftDistances) {
-            if (ld.second < minDistance.second && ld.second < (frameHeight_ * frameWidth_ / 5000)) {
-                minDistance = ld;
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+
+            float threshold = (frameHeight_ * frameWidth_ / 5000);
+
+            if (leftDistance < minLeftDist && leftDistance < threshold) {
+                minLeftDist = leftDistance;
+                bestLeftIdx = i;
             }
         }
-        if (minDistance.first != -1) {
-            leftCurve = lanePolylines[minDistance.first];
+
+        if (bestLeftIdx != -1) {
+            leftCurve = lanePolylines[bestLeftIdx];
 
             float maxAllowedDistance =  calculateHistoricalLaneWidth() * 0.60;
 
@@ -394,16 +401,23 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         } else {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
         }
-    } else if (!rightDistances.empty()) {
-        std::pair<int, float> minDistance(-1, FLT_MAX);
+    } else if (!prevRightCurve.empty()) {
+        int bestRightIdx = -1;
+        float minRightDist = FLT_MAX;
 
-        for (auto& rd : rightDistances) {
-            if (rd.second < minDistance.second && rd.second < (frameHeight_ * frameWidth_ / 5000)) {
-                minDistance = rd;
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+
+            float threshold = (frameHeight_ * frameWidth_ / 5000);
+
+            if (rightDistance < minRightDist && rightDistance < threshold) {
+                minRightDist = rightDistance;
+                bestRightIdx = i;
             }
         }
-        if (minDistance.first != -1) {
-            rightCurve = lanePolylines[minDistance.first];
+
+        if (bestRightIdx != -1) {
+            rightCurve = lanePolylines[bestRightIdx];
 
             float maxAllowedDistance =  calculateHistoricalLaneWidth() * 0.60;
 
