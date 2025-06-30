@@ -98,14 +98,14 @@ class TrajectoryDefinition
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
     void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
-    void defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines);
+    void defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void onePolyline(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines);
     bool checkIfLeftLane(const std::vector<cv::Point>& lanePolyline);
 
     void filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines);
-    void lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines);
+    void lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
 
     float calculateHistoricalLaneWidth();
     void updateLaneWidthHistory(const std::vector<cv::Point>& leftLane, 
