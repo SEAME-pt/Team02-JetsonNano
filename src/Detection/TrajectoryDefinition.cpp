@@ -814,7 +814,7 @@ void TrajectoryDefinition::checkPredicedCurve(
     if (error > frameWidth_ * 0.15f)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
-                    cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(255, 255, 0), 1);
         std::cout << "Invalid curve prediction - using offset" << std::endl;
 
