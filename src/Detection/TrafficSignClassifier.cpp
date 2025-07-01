@@ -91,16 +91,12 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 static const std::string classes[7] = {
                     "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
                 };
-                
-                cv::Mat resized_cropped;
-                
-                cv::resize(preprocessedFrame, resized_cropped, cv::Size(640, 480), 0, 0, cv::INTER_LINEAR);
-                
                 cv::putText(
-                    resized_cropped, classes[bestClass], cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1
+                    preprocessedFrame, classes[bestClass], cv::Point(10, 10),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.5
                 );
-                croppedBlocks.push_back(resized_cropped);
+
+                croppedBlocks.push_back(preprocessedFrame);
 
                 std::cout << "Block " << i << " size: " << componentSizes[i]
                         << " pixels, cropped region: " << roi << std::endl;
