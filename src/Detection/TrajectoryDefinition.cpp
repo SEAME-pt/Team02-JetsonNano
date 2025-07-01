@@ -802,6 +802,8 @@ void TrajectoryDefinition::checkPredicedCurve(
             }
             
             kalmanFilter->updateLeftLaneFilter(predictedCurve);
+
+            prevLeftCurve = predictedCurve
         }
         else
         {
@@ -812,6 +814,8 @@ void TrajectoryDefinition::checkPredicedCurve(
             }
 
             kalmanFilter->updateRightLaneFilter(predictedCurve);
+
+            prevRightCurve = predictedCurve
         }
 
         defineLanePolyline(predictedCurve);
