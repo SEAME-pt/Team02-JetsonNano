@@ -33,18 +33,31 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask)
 
     (void) frame;
 
-    // 1. Create a binary mask for (220, 220, 0)
     cv::Mat binary_mask;
     cv::inRange(class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), binary_mask);
 
-    // 2. Find connected components (blocks)
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
 
-    // nLabels includes background (label 0), so subtract 1
     int numBlocks = nLabels - 1;
 
     std::cout << "Detected " << numBlocks << " blocks of (220, 220, 0) in class_mask." << std::endl;
+
+    // Count the size of each component (excluding background label 0)
+    std::vector<int> componentSizes(nLabels, 0);
+    for (int y = 0; y < labels.rows; ++y) {
+        for (int x = 0; x < labels.cols; ++x) {
+            int label = labels.at<int>(y, x);
+            if (label > 0) {
+                componentSizes[label]++;
+            }
+        }
+    }
+
+    // Print the size of each component
+    for (int i = 1; i < nLabels; ++i) {
+        std::cout << "Block " << i << " size: " << componentSizes[i] << " pixels" << std::endl;
+    }
 
 }
 
