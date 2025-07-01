@@ -146,7 +146,7 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
 
             if (!result.empty()) {
                 std::vector<uchar> buffer_trafficSign_frame;
-                std::vector<int> params_trafficSign = {cv::IMWRITE_JPEG_QUALITY, 20};
+                std::vector<int> params_trafficSign = {cv::IMWRITE_JPEG_QUALITY, 100};
                 cv::imencode(".jpg", result, buffer_trafficSign_frame, params_trafficSign);
                 trafficSignClassifier->publishTrafficSignFrame(std::string(buffer_trafficSign_frame.begin(), buffer_trafficSign_frame.end()));
             }
