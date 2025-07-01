@@ -295,7 +295,7 @@ void SpeedPidController::run()
     // Start logging
     double now = getCurrentTime();
     log_start_time_ = getCurrentTime();
-    log_file_.open("straight_speed_pid_log.csv");
+    log_file_.open("corner_speed_pid_log.csv");
     log_file_ << "time,speed,throttle\n";
     log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
     logging_ = true;
