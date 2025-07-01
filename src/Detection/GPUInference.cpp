@@ -103,16 +103,18 @@ void GPUInference::inference()
 
     if (outputChannels_ == 1)
     {
-        std::cout << "Inference time in lane detection: " << milliseconds
-                  << "ms\n";
+        std::cout << "\033[32mInference time in lane detection: " << milliseconds
+                << "ms\033[0m\n"; // Green
     }
     else if (outputChannels_ == 8)
     {
-        std::cout << "Inference time in object detection: " << milliseconds
-                  << "ms\n";
-    } else if (outputChannels_ == 7) {
-        std::cout << "Inference time in traffic classification: " << milliseconds
-                  << "ms\n";
+        std::cout << "\033[34mInference time in object detection: " << milliseconds
+                << "ms\033[0m\n"; // Blue
+    }
+    else if (outputChannels_ == 7)
+    {
+        std::cout << "\033[33mInference time in traffic classification: " << milliseconds
+                << "ms\033[0m\n"; // Yellow
     }
 }
 
