@@ -94,7 +94,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 
                 cv::Mat resized_cropped;
                 
-                cv::resize(preprocessedFrame, resized_cropped, cv::Size(640, 480), 0, 0, cv::INTER_LINEAR)
+                cv::resize(preprocessedFrame, resized_cropped, cv::Size(640, 480), 0, 0, cv::INTER_LINEAR);
                 
                 cv::putText(
                     resized_cropped, classes[bestClass], cv::Point(10, 10),
