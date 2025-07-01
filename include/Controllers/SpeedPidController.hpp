@@ -48,9 +48,9 @@ private:
     float tau_s_ = 0.5;
     float L_s_ = 0.25;
     // Cornering FOPDT model
-    float Kp_c_ = 6.0459;
-    float tau_c_ = 0.4253;
-    float L_c_ = 0.0748;
+    float Kp_c_ = 4.5;
+    float tau_c_ = 0.700;
+    float L_c_ = 0.4746;
     // Saturation limits
     
     // PID constants
