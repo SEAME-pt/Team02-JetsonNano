@@ -1,6 +1,7 @@
 #include "LaneDetector.hpp"
 #include "ObjectDetector.hpp"
 #include "TrajectoryDefinition.hpp"
+#include "TrafficSignClassifier.hpp"
 #include "Camera.hpp"
 #include "SynchronizedProcessor.hpp"
 #include "utils.hpp"
@@ -128,15 +129,38 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
     }
 }
 
+void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
+                                   SynchronizedProcessor* processor)
+{
+    cv::Mat frame, object_mask;
+
+    while (running)
+    {
+        processor->getFrameAndObjectMask(frame, object_mask);
+
+        if (!frame.empty() && !object_mask.empty())
+        {
+            cv::Mat result;
+
+            trafficSignClassifier->classify(frame, object_mask);
+        }
+        else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, signalHandler);
-    std::thread camThread, laneThread, objThread, trajThread;
+    std::thread camThread, laneThread, objThread, trajThread, trafficSignThread;
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
     const int heightModelInf = 256;
     const int widthModelInf = 256;
+    const int heightTrafficModelInf = 30;
+    const int widthTrafficModelInf = 30;
 
     try
     {
@@ -144,6 +168,7 @@ int main(int argc, char** argv)
         std::string mode;
         std::string laneDetectionFile;
         std::string objDetectionFile;
+        std::string trafficClassifierFile;
         
         if (!parseParameters(argc, argv, configFile, mode)) {
             return -1;
@@ -184,16 +209,17 @@ int main(int argc, char** argv)
                 "videoconvert ! video/x-raw, format=BGR ! "
                 "appsink";
             camera.initLocalEnv(pipeline, "/home/team02/Team02-Course/JetsonNano/tools/cam_calibration/calibration.yml");
-
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
+            trafficClassifierFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
             trajectoryDefinition.initCarlaEnv();
             laneDetectionFile = "/home/jorge/Downloads/lane_Yolo_Carla3_epoch_16.engine";
             objDetectionFile = "/home/jorge/Downloads/obj_YOLO_Carla1_epoch_200.engine";
+            trafficClassifierFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
         } else {
             std::cout << "Running in TEST mode with test video" << std::endl;
             const std::string video = "/home/team02/record_cam/build/video.mp4";
@@ -201,10 +227,12 @@ int main(int argc, char** argv)
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
+            trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model.engine";
         }
 
         LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
         ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
+        trafficSignClassifier trafficSignClassifier(trafficClassifierFile, heightTrafficModelInf, widthTrafficModelInf);
     
         camera.startCapture();
 
@@ -212,6 +240,7 @@ int main(int argc, char** argv)
         laneThread = std::thread(laneDetectionThreadFunction, &laneDetector, &processor);
         objThread = std::thread(objectDetectionThreadFunction, &objDetector, &processor);
         trajThread = std::thread(trajectoryThreadFunction, &trajectoryDefinition, &processor);
+        trafficSignThread = std::thread(trafficSignThreadFunction, &trafficSignClassifier, &processor);
 
         std::cout << "Running. Press Ctrl+C to exit." << std::endl;
         while(running) {
@@ -237,6 +266,10 @@ int main(int argc, char** argv)
         if (trajThread.joinable()) {
             std::cout << "Joining trajectory thread..." << std::endl;
             trajThread.join();
+        }
+        if (trafficSignThread.joinable()) {
+            std::cout << "Joining traffic classifier thread..." << std::endl;
+            trafficSignThread.join();
         }
 
         camera.stopCapture();
