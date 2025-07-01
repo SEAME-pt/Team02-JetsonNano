@@ -216,6 +216,7 @@ float SpeedPidController::speedPID(float error, double current_time)
                       << " (change limited to " << max_change << ")" << std::endl;
         }
     }
+    std::cout << "Throttle: " << throttle << std::endl;
 
     prev_error_ = error;
     prev_throttle_ = throttle;
