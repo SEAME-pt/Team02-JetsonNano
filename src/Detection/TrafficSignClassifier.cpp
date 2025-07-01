@@ -78,6 +78,14 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
 
             if (!cropped.empty()) {
                 croppedBlocks.push_back(cropped);
+    
+                cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
+
+                preProcess(cropped, preprocessedFrame);
+
+                gpuInference->copyToGPU(preprocessedFrame);
+                gpuInference->inference();
+                gpuInference->copyToCPUTrafficOutput();
             }
 
             std::cout << "Block " << i << " size: " << componentSizes[i]
@@ -91,15 +99,6 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
     } else {
         result = cv::Mat();
     }
-
-    // cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
-
-    // preProcess(cropped, preprocessedFrame);
-
-    // gpuInference->copyToGPU(preprocessedFrame);
-    // gpuInference->inference();
-
-    // gpuInference->copyToCPUTrafficOutput(class_mask);
 }
 
 void TrafficSignClassifier::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)

@@ -48,7 +48,7 @@ class GPUInference
     void copyToGPU(cv::Mat& preprocessedFrame);
     void copyToCPUBinaryOutput(cv::Mat& outputMask);
     void copyToCPUClassOutput(cv::Mat& outputMask);
-    void copyToCPUTrafficOutput(cv::Mat& outputMask);
+    void copyToCPUTrafficOutput();
 
   private:
     void createExecutionContext(const std::string& enginePath);

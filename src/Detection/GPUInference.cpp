@@ -106,9 +106,12 @@ void GPUInference::inference()
         std::cout << "Inference time in lane detection: " << milliseconds
                   << "ms\n";
     }
-    else
+    else if (outputChannels_ == 8)
     {
         std::cout << "Inference time in object detection: " << milliseconds
+                  << "ms\n";
+    } else if (outputChannels_ == 7) {
+        std::cout << "Inference time in traffic classification: " << milliseconds
                   << "ms\n";
     }
 }
@@ -220,21 +223,9 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
 }
 
 
-void GPUInference::copyToCPUTrafficOutput(cv::Mat& outputMask)
+void GPUInference::copyToCPUTrafficOutput()
 {
     const int total_pixels       = height_ * width_;
-    const cv::Scalar color_map[] = {
-        cv::Scalar(0, 0, 10),     // Background
-        cv::Scalar(128, 64, 128), // Road
-        cv::Scalar(0, 0, 142),    // Car
-        cv::Scalar(250, 170, 30), // Traffic Light
-        cv::Scalar(220, 220, 0),  // Traffic Sign
-        cv::Scalar(220, 20, 60),  // Person
-        cv::Scalar(244, 35, 232), // Sidewalks
-        cv::Scalar(0, 0, 70),     // Truck
-        cv::Scalar(0, 60, 100),   // Bus
-        cv::Scalar(0, 0, 230)     // Motorcycle
-    };
 
     // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
@@ -243,35 +234,16 @@ void GPUInference::copyToCPUTrafficOutput(cv::Mat& outputMask)
 
     cudaStreamSynchronize(stream);
 
-    // For each pixel, find the class with highest probability
-    for (int i = 0; i < total_pixels; i++)
-    {
-        // Get probability for each class
-        float probs[outputChannels_];
-        for (int c = 0; c < outputChannels_; c++)
-        {
-            probs[c] = outputData[total_pixels * c + i];
+    // Print probabilities and predicted class
+    int best_class = 0;
+    float max_prob = outputData[0];
+    std::cout << "Traffic sign class probabilities: ";
+    for (int c = 0; c < outputChannels_; ++c) {
+        std::cout << outputData[c] << " ";
+        if (outputData[c] > max_prob) {
+            max_prob = outputData[c];
+            best_class = c;
         }
-
-        int best_class = 0;
-        float max_prob = probs[0];
-
-        for (int c = 1; c < outputChannels_; c++)
-        {
-            if (probs[c] > max_prob)
-            {
-                max_prob   = probs[c];
-                best_class = c;
-            }
-        }
-
-        // Map pixel coordinates (i) back to x,y
-        int y = i / width_;
-        int x = i % width_;
-
-        // Set pixel color based on class
-        outputMask.at<cv::Vec3b>(y, x) =
-            cv::Vec3b(color_map[best_class][0], color_map[best_class][1],
-                      color_map[best_class][2]);
     }
+    std::cout << "\nPredicted class: " << best_class << " (prob=" << max_prob << ")" << std::endl;
 }
