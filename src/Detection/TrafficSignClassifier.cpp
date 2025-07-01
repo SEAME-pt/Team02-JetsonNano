@@ -76,7 +76,9 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
             cv::Rect roi(minX, minY, maxX - minX + 1, maxY - minY + 1);
             cv::Mat cropped = frame(roi).clone();
 
-            croppedBlocks.push_back(cropped);
+            if (!cropped.empty()) {
+                croppedBlocks.push_back(cropped);
+            }
 
             std::cout << "Block " << i << " size: " << componentSizes[i]
                     << " pixels, cropped region: " << roi << std::endl;
