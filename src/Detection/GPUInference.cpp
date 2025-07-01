@@ -227,9 +227,6 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
 
 void GPUInference::copyToCPUTrafficOutput()
 {
-    const int total_pixels       = height_ * width_;
-
-    // Copy back to CPU
     cudaMemcpyAsync(outputData, outputDevice,
                     outputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyDeviceToHost, stream);
