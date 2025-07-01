@@ -108,7 +108,7 @@ target_link_libraries(VehicleSystem
     ./src/Communication/ControllerPublisher.cpp
     ./src/utils/utils.cpp
     ./src/combinedControl.cpp
-)]]
+)
 
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
@@ -116,7 +116,7 @@ target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc
     Eigen3::Eigen    
-)
+)]]
 
 add_executable(Detection
     ./src/Detection/ObjectDetector.cpp
