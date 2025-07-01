@@ -28,6 +28,8 @@ TrafficSignClassifier::~TrafficSignClassifier()
 
 void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Mat& result)
 {
+    std::vector<cv::Mat> croppedBlocks;
+
     cv::Mat binary_mask;
     cv::inRange(class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), binary_mask);
 
@@ -72,21 +74,28 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
 
             // Crop from the original frame (or class_mask)
             cv::Rect roi(minX, minY, maxX - minX + 1, maxY - minY + 1);
-            cv::Mat cropped = frame(roi).clone(); // or class_mask(roi).clone();
+            cv::Mat cropped = frame(roi).clone();
+
+            croppedBlocks.push_back(cropped);
 
             std::cout << "Block " << i << " size: " << componentSizes[i]
                     << " pixels, cropped region: " << roi << std::endl;
         }
     }
 
-    cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
+    // Concatenate all cropped blocks vertically
+    if (!croppedBlocks.empty()) {
+        cv::vconcat(croppedBlocks, result);
+    } else {
+        result = cv::Mat();
+    }
 
-    preProcess(cropped, preprocessedFrame);
+    // cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
 
-    gpuInference->copyToGPU(preprocessedFrame);
-    gpuInference->inference();
+    // preProcess(cropped, preprocessedFrame);
 
-    cropped.copyTo(result);
+    // gpuInference->copyToGPU(preprocessedFrame);
+    // gpuInference->inference();
 
     // gpuInference->copyToCPUTrafficOutput(class_mask);
 }
