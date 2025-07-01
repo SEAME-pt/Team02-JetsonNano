@@ -22,10 +22,6 @@ TrafficSignClassifier::~TrafficSignClassifier()
 
 void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask)
 {
-    (void) frame;
-    (void) class_mask;
-
-    std::cout << "Classification ----------------------------------" << std::endl;
     // cv::Mat class_mask(height_, width_, CV_8UC3);
     // cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
 
@@ -35,50 +31,21 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask)
     // gpuInference->inference();
     // gpuInference->copyToCPUTrafficOutput(class_mask);
 
-    // class_ids.clear();
-    // confidences.clear();
+    (void) frame;
 
-    // for (const auto& roi : rois) {
-    //     // Crop and resize ROI
-    //     cv::Rect clipped_roi = roi & cv::Rect(0, 0, frame.cols, frame.rows);
-    //     if (clipped_roi.width <= 0 || clipped_roi.height <= 0) {
-    //         class_ids.push_back(-1);
-    //         confidences.push_back(0.0f);
-    //         continue;
-    //     }
-    //     cv::Mat sign = frame(clipped_roi).clone();
-    //     cv::resize(sign, sign, cv::Size(inputSize_, inputSize_));
+    // 1. Create a binary mask for (220, 220, 0)
+    cv::Mat binary_mask;
+    cv::inRange(class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), binary_mask);
 
-    //     // Preprocess: BGR to RGB, float, normalization (update mean/std as needed)
-    //     cv::cvtColor(sign, sign, cv::COLOR_BGR2RGB);
-    //     sign.convertTo(sign, CV_32FC3, 1.0 / 255.0);
-    //     cv::Scalar mean(0.485, 0.456, 0.406);
-    //     cv::Scalar std(0.229, 0.224, 0.225);
-    //     sign = (sign - mean) / std;
+    // 2. Find connected components (blocks)
+    cv::Mat labels;
+    int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
 
-    //     // Run inference
-    //     gpuInference->copyToGPU(sign);
-    //     gpuInference->inference();
-    //     std::vector<float> output;
-    //     gpuInference->copyToCPUClassOutput(output);
+    // nLabels includes background (label 0), so subtract 1
+    int numBlocks = nLabels - 1;
 
-    //     // Softmax
-    //     float max_val = *std::max_element(output.begin(), output.end());
-    //     float sum = 0.0f;
-    //     for (auto& v : output) {
-    //         v = std::exp(v - max_val);
-    //         sum += v;
-    //     }
-    //     for (auto& v : output) v /= sum;
+    std::cout << "Detected " << numBlocks << " blocks of (220, 220, 0) in class_mask." << std::endl;
 
-    //     // Get class and confidence
-    //     auto max_it = std::max_element(output.begin(), output.end());
-    //     int class_id = std::distance(output.begin(), max_it);
-    //     float confidence = *max_it;
-
-    //     class_ids.push_back(class_id);
-    //     confidences.push_back(confidence);
-    // }
 }
 
 void TrafficSignClassifier::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
