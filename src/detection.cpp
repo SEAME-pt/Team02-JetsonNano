@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 
         LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
         ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
-        trafficSignClassifier trafficSignClassifier(trafficClassifierFile, heightTrafficModelInf, widthTrafficModelInf);
+        TrafficSignClassifier trafficSignClassifier(trafficClassifierFile, heightTrafficModelInf, widthTrafficModelInf);
     
         camera.startCapture();
 
