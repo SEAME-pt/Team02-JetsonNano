@@ -233,16 +233,27 @@ void GPUInference::copyToCPUTrafficOutput()
 
     cudaStreamSynchronize(stream);
 
+    const std::string classes[7] = {
+        "Speed 50km/h",
+        "Speed 80km/h",
+        "Yield",
+        "Stop",
+        "Danger",
+        "Crosswalk",
+        "Unknown"
+    }
+
     // Print probabilities and predicted class
     int best_class = 0;
     float max_prob = outputData[0];
     std::cout << "Traffic sign class probabilities: ";
     for (int c = 0; c < outputChannels_; ++c) {
-        std::cout << outputData[c] << " ";
+        std::cout << classes[c] << "("
+        std::cout << outputData[c] << "), ";
         if (outputData[c] > max_prob) {
             max_prob = outputData[c];
             best_class = c;
         }
     }
-    std::cout << "\nPredicted class: " << best_class << " (prob=" << max_prob << ")" << std::endl;
+    std::cout << "\nPredicted class: " << classes[best_class] << " (prob=" << max_prob << ")" << std::endl;
 }

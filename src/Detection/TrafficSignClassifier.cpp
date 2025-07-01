@@ -78,6 +78,8 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
 
             if (!cropped.empty()) {
                 croppedBlocks.push_back(cropped);
+
+                cropped.copyTo(result);
     
                 cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
 
@@ -93,12 +95,12 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
         }
     }
 
-    // Concatenate all cropped blocks vertically
-    if (!croppedBlocks.empty()) {
-        cv::vconcat(croppedBlocks, result);
-    } else {
-        result = cv::Mat();
-    }
+    // // Concatenate all cropped blocks vertically
+    // if (!croppedBlocks.empty()) {
+    //     cv::vconcat(croppedBlocks, result);
+    // } else {
+    //     result = cv::Mat();
+    // }
 }
 
 void TrafficSignClassifier::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
