@@ -55,7 +55,7 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
     }
 
     for (int i = 1; i < nLabels; ++i) {
-        if (componentSizes[i] >= 5000) {
+        if (componentSizes[i] >= 3000) {
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
             for (int y = 0; y < labels.rows; ++y) {
@@ -93,7 +93,7 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
                 };
                 cv::putText(
                     cropped, classes[bestClass], cv::Point(10, 30),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2
                 );
 
                 croppedBlocks.push_back(cropped);
