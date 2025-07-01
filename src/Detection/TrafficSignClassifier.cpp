@@ -26,7 +26,7 @@ TrafficSignClassifier::~TrafficSignClassifier()
     delete gpuInference;
 }
 
-void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Mat& result)
+void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result)
 {
     cv::Mat resized_class_mask;
     cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
@@ -111,7 +111,7 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
     // }
 }
 
-void TrafficSignClassifier::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
+void TrafficSignClassifier::preProcess(cv::Mat frame, cv::Mat& preprocessedFrame)
 {
     cv::Mat resized;
     
