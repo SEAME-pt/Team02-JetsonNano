@@ -248,7 +248,7 @@ void GPUInference::copyToCPUTrafficOutput()
     float max_prob = outputData[0];
     std::cout << "Traffic sign class probabilities: ";
     for (int c = 0; c < outputChannels_; ++c) {
-        std::cout << classes[c] << "("
+        std::cout << classes[c] << "(";
         std::cout << outputData[c] << "), ";
         if (outputData[c] > max_prob) {
             max_prob = outputData[c];
