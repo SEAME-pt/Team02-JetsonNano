@@ -200,13 +200,27 @@ float SpeedPidController::speedPID(float error, double current_time)
     // float i_term = ki_ * integral_;
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
+    // Raw PID output
+    float raw_throttle = p_term + i_term + d_term;
+    raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
 
-    // Final command: PID only (no feed-forward)
-    float throttle = p_term + i_term + d_term; // Scale to percentage
-    throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
+    // Rate limiting to prevent sudden throttle changes
+    float throttle = raw_throttle;
+    if (last_time_ > 0) { // Skip rate limiting on first iteration
+        float max_change = MAX_THROTTLE_RATE * dt;
+        float throttle_diff = raw_throttle - prev_throttle_;
+        
+        if (std::abs(throttle_diff) > max_change) {
+            throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
+            std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
+                      << " (change limited to " << max_change << ")" << std::endl;
+        }
+    }
 
     prev_error_ = error;
+    prev_throttle_ = throttle;
     last_time_  = current_time;
+    
     // std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
 }

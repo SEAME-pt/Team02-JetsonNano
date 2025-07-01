@@ -84,6 +84,9 @@ private:
 
     float steer_ = 0.0;
 
+    float prev_throttle_ = 0.0f;
+    const float MAX_THROTTLE_RATE = 20.0f;
+
 
 public:
     SpeedPidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
