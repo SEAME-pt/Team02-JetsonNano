@@ -241,7 +241,7 @@ void GPUInference::copyToCPUTrafficOutput()
         "Danger",
         "Crosswalk",
         "Unknown"
-    }
+    };
 
     // Print probabilities and predicted class
     int best_class = 0;
