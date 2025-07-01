@@ -22,6 +22,9 @@ TrafficSignClassifier::~TrafficSignClassifier()
 
 void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask)
 {
+    (void) frame;
+    (void) class_mask;
+
     std::cout "Classification ----------------------------------" << std::endl;
     // cv::Mat class_mask(height_, width_, CV_8UC3);
     // cv::Mat preprocessedFrame(height_, width_, CV_8UC3);

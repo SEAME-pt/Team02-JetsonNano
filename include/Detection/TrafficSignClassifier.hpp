@@ -15,5 +15,6 @@ public:
 
 private:
     GPUInference* gpuInference;
-    int inputSize_;
+    int height_;
+    int width_;
 };
