@@ -6,14 +6,12 @@
 
 class TrafficSignClassifier {
 public:
-    TrafficSignClassifier(const std::string& enginePath, int inputSize = 30);
+    TrafficSignClassifier(const std::string& enginePath, int height, int width);
     ~TrafficSignClassifier();
 
-    // Each roi is a cv::Rect(x, y, size, size)
-    void classify(const cv::Mat& frame,
-                  const std::vector<cv::Rect>& rois,
-                  std::vector<int>& class_ids,
-                  std::vector<float>& confidences);
+    void classify(cv::Mat& frame, cv::Mat& class_mask);
+    
+    void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
 
 private:
     GPUInference* gpuInference;
