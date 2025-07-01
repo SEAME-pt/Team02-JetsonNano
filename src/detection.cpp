@@ -144,10 +144,12 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
 
             trafficSignClassifier->classify(frame, object_mask, result);
 
-            std::vector<uchar> buffer_trafficSign_frame;
-            std::vector<int> params_trafficSign = {cv::IMWRITE_JPEG_QUALITY, 20};
-            cv::imencode(".jpg", result, buffer_trafficSign_frame, params_trafficSign);
-            trafficSignClassifier->publishTrafficSignFrame(std::string(buffer_trafficSign_frame.begin(), buffer_trafficSign_frame.end()));
+            if (!result.empty()) {
+                std::vector<uchar> buffer_trafficSign_frame;
+                std::vector<int> params_trafficSign = {cv::IMWRITE_JPEG_QUALITY, 20};
+                cv::imencode(".jpg", result, buffer_trafficSign_frame, params_trafficSign);
+                trafficSignClassifier->publishTrafficSignFrame(std::string(buffer_trafficSign_frame.begin(), buffer_trafficSign_frame.end()));
+            }
         }
         else {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
