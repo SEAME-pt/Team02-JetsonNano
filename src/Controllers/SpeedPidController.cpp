@@ -163,74 +163,74 @@ std::string SpeedPidController::getAutonomousDriveState() const
 
 float SpeedPidController::speedPID(float error, double current_time)
 {
-//     // std::cout << "Error in speed PID: " << error << std::endl;
-//     // dt
-//     double dt = current_time - last_time_;
+    // std::cout << "Error in speed PID: " << error << std::endl;
+    // dt
+    double dt = current_time - last_time_;
 
-//     // PID
-//     // Gain-scheduling index from steering (-1..1 -> 0..1)
-//     float alpha = std::min(1.0f, std::fabs(steer_));
+    // PID
+    // Gain-scheduling index from steering (-1..1 -> 0..1)
+    float alpha = std::min(1.0f, std::fabs(steer_));
 
-//     // Interpolate process model parameters
-//     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
-//     float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
-//     float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
+    // Interpolate process model parameters
+    float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
+    float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
+    float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
 
-//     // IMC PID tuning
-//     float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
-//     float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
-//     float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
-//     float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
+    // IMC PID tuning
+    float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
+    float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
+    float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
+    float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
 
-//     // Update PID gains
-//     kp_ = Kc;
-//     ki_ = Kc / Ti;
-//     kd_ = Kc * Td;
-//     max_integral_ = (alpha * max_throttle_) / ki_;
-//     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
-//     std::cout << "ERROR : "<< error << std::endl;
-//     // PID terms with anti-windup
-//     float p_term = kp_ * error;
-//     integral_  += error * dt;
-//     integral_   = std::clamp(integral_, -max_integral_, max_integral_);
+    // Update PID gains
+    kp_ = Kc;
+    ki_ = Kc / Ti;
+    kd_ = Kc * Td;
+    max_integral_ = (alpha * max_throttle_) / ki_;
+    std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
+    std::cout << "ERROR : "<< error << std::endl;
+    // PID terms with anti-windup
+    float p_term = kp_ * error;
+    integral_  += error * dt;
+    integral_   = std::clamp(integral_, -max_integral_, max_integral_);
 
-//     // Limit integral term to prevent windup
-//     // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
-//     // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
-//     // float i_term = ki_ * integral_;
-//     float i_term = ki_ * integral_;
-//     float d_term = kd_ * ((error - prev_error_) / dt);
-//     // Raw PID output
-//     float raw_throttle = p_term + i_term + d_term;
-//     raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
+    // Limit integral term to prevent windup
+    // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+    // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+    // float i_term = ki_ * integral_;
+    float i_term = ki_ * integral_;
+    float d_term = kd_ * ((error - prev_error_) / dt);
+    // Raw PID output
+    float raw_throttle = p_term + i_term + d_term;
+    raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
 
-//     // Rate limiting to prevent sudden throttle changes
-//     float throttle = raw_throttle;
-//     if (last_time_ > 0) { // Skip rate limiting on first iteration
-//         float max_change = MAX_THROTTLE_RATE * dt;
-//         float throttle_diff = raw_throttle - prev_throttle_;
+    // Rate limiting to prevent sudden throttle changes
+    float throttle = raw_throttle;
+    if (last_time_ > 0) { // Skip rate limiting on first iteration
+        float max_change = MAX_THROTTLE_RATE * dt;
+        float throttle_diff = raw_throttle - prev_throttle_;
         
-//         if (std::abs(throttle_diff) > max_change) {
-//             throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
-//             std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
-//                       << " (change limited to " << max_change << ")" << std::endl;
-//         }
-//     }
-//     std::cout << "Throttle: " << throttle << std::endl;
-//     std::cout << "Desired Speed: " << desired_speed_ << std::endl;
-//     std::cout << "Current Speed: " << current_speed_ << std::endl;
+        if (std::abs(throttle_diff) > max_change) {
+            throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
+            std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
+                      << " (change limited to " << max_change << ")" << std::endl;
+        }
+    }
+    std::cout << "Throttle: " << throttle << std::endl;
+    std::cout << "Desired Speed: " << desired_speed_ << std::endl;
+    std::cout << "Current Speed: " << current_speed_ << std::endl;
 
 
-//     prev_error_ = error;
-//     prev_throttle_ = throttle;
-//     last_time_  = current_time;
+    prev_error_ = error;
+    prev_throttle_ = throttle;
+    last_time_  = current_time;
     
-//     // std::cout << "Throttle output: " << throttle << std::endl;
-//     return throttle;
-// }
+    // std::cout << "Throttle output: " << throttle << std::endl;
+    return throttle;
+}
 
-// void SpeedPidController::run()
-// {
+void SpeedPidController::run()
+{
 //     while (true)
 //     {
 //         std::string sae_level = getAutonomousDriveState();
