@@ -69,7 +69,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 }
             }
             // Expand bounding box by a margin (e.g., 10 pixels)
-            int margin = 5;
+            int margin = 1;
             minX = std::max(0, minX - margin);
             minY = std::max(0, minY - margin);
             maxX = std::min(labels.cols - 1, maxX + margin);
@@ -83,7 +83,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
                 preProcess(cropped, preprocessedFrame);
 
-                preprocessedFrame.copyTo(result);
+                // preprocessedFrame.copyTo(result);
 
                 gpuInference->copyToGPU(preprocessedFrame);
                 gpuInference->inference();
