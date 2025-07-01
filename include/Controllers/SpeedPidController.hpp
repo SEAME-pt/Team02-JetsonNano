@@ -86,7 +86,7 @@ private:
 
     float prev_throttle_ = 0.0f;
     const float MAX_THROTTLE_RATE = 20.0f;
-    float u_stiction = 27.0; 
+    float u_stiction = 30.0; 
 
 
 public:
