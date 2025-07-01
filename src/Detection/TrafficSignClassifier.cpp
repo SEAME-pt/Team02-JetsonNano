@@ -83,6 +83,8 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
                 cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
                 preProcess(cropped, preprocessedFrame);
 
+                preprocessedFrame.copyTo(result);
+
                 gpuInference->copyToGPU(preprocessedFrame);
                 gpuInference->inference();
                 int bestClass = gpuInference->copyToCPUTrafficOutput();
@@ -96,19 +98,17 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2
                 );
 
-                croppedBlocks.push_back(cropped);
-
                 std::cout << "Block " << i << " size: " << componentSizes[i]
                         << " pixels, cropped region: " << roi << std::endl;
             }
         }
     }
-    // Concatenate all cropped blocks vertically
-    if (!croppedBlocks.empty()) {
-        cv::vconcat(croppedBlocks, result);
-    } else {
-        result = cv::Mat();
-    }
+    // // Concatenate all cropped blocks vertically
+    // if (!croppedBlocks.empty()) {
+    //     cv::vconcat(croppedBlocks, result);
+    // } else {
+    //     result = cv::Mat();
+    // }
 }
 
 void TrafficSignClassifier::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
