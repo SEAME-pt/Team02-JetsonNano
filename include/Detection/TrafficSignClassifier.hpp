@@ -9,12 +9,12 @@ public:
     TrafficSignClassifier(const std::string& enginePath, std::shared_ptr<zenoh::Session> session, int height, int width);
     ~TrafficSignClassifier();
 
-    void classify(cv::Mat& frame, cv::Mat& class_mask, cv::Mat& result);
+    void classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result);
 
     void publishTrafficSignFrame(const std::string& value_str);
 
 private:
-    void preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame);
+    void preProcess(cv::Mat frame, cv::Mat& preprocessedFrame);
 
 private:
     std::shared_ptr<zenoh::Session> session_;
