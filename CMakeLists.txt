@@ -152,7 +152,7 @@ target_link_libraries(Detection
     nvinfer
     nvonnxparser
 )
-
+#[[
 add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp
     ./src/MiddleWare/BatterySensor/BatterySensor.cpp
@@ -167,7 +167,7 @@ target_link_libraries(MiddleWare
     ${CMAKE_THREAD_LIBS_INIT}
     Libs
     vehicle_lib
-)
+)]]
 
 if(ENABLE_TESTING)
     FetchContent_Declare(
