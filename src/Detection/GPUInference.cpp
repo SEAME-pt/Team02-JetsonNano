@@ -225,7 +225,7 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
 }
 
 
-void GPUInference::copyToCPUTrafficOutput()
+int GPUInference::copyToCPUTrafficOutput()
 {
     cudaMemcpyAsync(outputData, outputDevice,
                     outputChannels_ * height_ * width_ * sizeof(float),
@@ -243,17 +243,29 @@ void GPUInference::copyToCPUTrafficOutput()
         "Unknown"
     };
 
+    // Apply softmax to outputData
+    float sum = 0.0f;
+    std::vector<float> probs(outputChannels_);
+    for (int c = 0; c < outputChannels_; ++c) {
+        probs[c] = expf(outputData[c]);
+        sum += probs[c];
+    }
+    for (int c = 0; c < outputChannels_; ++c) {
+        probs[c] /= sum;
+    }
+
     // Print probabilities and predicted class
     int best_class = 0;
-    float max_prob = outputData[0];
+    float max_prob = probs[0];
     std::cout << "Traffic sign class probabilities: ";
     for (int c = 0; c < outputChannels_; ++c) {
-        std::cout << classes[c] << "(";
-        std::cout << outputData[c] << "), ";
-        if (outputData[c] > max_prob) {
-            max_prob = outputData[c];
+        std::cout << classes[c] << "(" << probs[c] << "), ";
+        if (probs[c] > max_prob) {
+            max_prob = probs[c];
             best_class = c;
         }
     }
     std::cout << "\nPredicted class: " << classes[best_class] << " (prob=" << max_prob << ")" << std::endl;
+
+    return best_class;
 }

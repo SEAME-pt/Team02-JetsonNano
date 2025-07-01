@@ -55,7 +55,7 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
     }
 
     for (int i = 1; i < nLabels; ++i) {
-        if (componentSizes[i] >= 1000) {
+        if (componentSizes[i] >= 5000) {
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
             for (int y = 0; y < labels.rows; ++y) {
@@ -80,22 +80,29 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
             cv::Mat cropped = frame(roi).clone();
 
             if (!cropped.empty()) {
-                croppedBlocks.push_back(cropped);
-    
                 cv::Mat preprocessedFrame(height_, width_, CV_8UC3);
-
                 preProcess(cropped, preprocessedFrame);
 
                 gpuInference->copyToGPU(preprocessedFrame);
                 gpuInference->inference();
-                gpuInference->copyToCPUTrafficOutput();
-            }
+                int bestClass = gpuInference->copyToCPUTrafficOutput();
 
-            std::cout << "Block " << i << " size: " << componentSizes[i]
-                    << " pixels, cropped region: " << roi << std::endl;
+                // Draw class label on cropped image
+                static const std::string classes[7] = {
+                    "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
+                };
+                cv::putText(
+                    cropped, classes[bestClass], cv::Point(10, 30),
+                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2
+                );
+
+                croppedBlocks.push_back(cropped);
+
+                std::cout << "Block " << i << " size: " << componentSizes[i]
+                        << " pixels, cropped region: " << roi << std::endl;
+            }
         }
     }
-
     // Concatenate all cropped blocks vertically
     if (!croppedBlocks.empty()) {
         cv::vconcat(croppedBlocks, result);
