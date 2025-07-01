@@ -69,7 +69,7 @@ void TrafficSignClassifier::classify(cv::Mat& frame, cv::Mat& class_mask, cv::Ma
                 }
             }
             // Expand bounding box by a margin (e.g., 10 pixels)
-            int margin = 10;
+            int margin = 5;
             minX = std::max(0, minX - margin);
             minY = std::max(0, minY - margin);
             maxX = std::min(labels.cols - 1, maxX + margin);
