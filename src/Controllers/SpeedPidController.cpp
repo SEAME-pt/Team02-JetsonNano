@@ -170,7 +170,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
     float alpha = std::min(1.0f, std::fabs(steer_));
-    alpha = std::max(0.3f, alpha);
+    alpha = std::max(0.5f, alpha);
     // float alpha = 1;
 
     // Interpolate process model parameters
@@ -209,7 +209,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Rate limiting to prevent sudden throttle changes
     float throttle = raw_throttle;
     if (last_time_ > 0) { // Skip rate limiting on first iteration
-        float max_change = MAX_THROTTLE_RATE * dt;
+        float max_change = MAX_THROTTLE_RATE * dt * 0.5;
         float throttle_diff = raw_throttle - prev_throttle_;
         
         if (std::abs(throttle_diff) > max_change) {
