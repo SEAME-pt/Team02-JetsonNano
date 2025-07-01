@@ -778,8 +778,8 @@ void TrajectoryDefinition::checkPredicedCurve(
     const std::vector<cv::Point>& realLane, bool isLeftLane)
 {
     float expectedWidth = calculateHistoricalLaneWidth();
-    float minDistance = calculateHistoricalLaneWidth() * 0.80;
-    float maxDistance = calculateHistoricalLaneWidth() * 1.20;
+    float minDistance = calculateHistoricalLaneWidth() * 0.85;
+    float maxDistance = calculateHistoricalLaneWidth() * 1.15;
 
     float realDistance = calculateLaneDistance(realLane, predictedCurve);
 
