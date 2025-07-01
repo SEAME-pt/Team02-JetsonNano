@@ -170,7 +170,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
     float alpha = std::min(1.0f, std::fabs(steer_));
-    alpha = std::max(0.5f, alpha);
+    // alpha = std::max(0.5f, alpha);
     // float alpha = 1;
 
     // Interpolate process model parameters
