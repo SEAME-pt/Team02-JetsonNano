@@ -28,10 +28,10 @@ TrafficSignClassifier::~TrafficSignClassifier()
 
 void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result)
 {
+    std::vector<cv::Mat> croppedBlocks;
+
     cv::Mat resized_class_mask;
     cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
-
-    std::vector<cv::Mat> croppedBlocks;
 
     cv::Mat binary_mask;
     cv::inRange(resized_class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), binary_mask);
@@ -96,19 +96,19 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     cv::FONT_HERSHEY_SIMPLEX, 0.01, cv::Scalar(0, 255, 0), 2
                 );
 
-                preprocessedFrame.copyTo(result);
+                croppedBlocks.push_back(preprocessedFrame);
 
                 std::cout << "Block " << i << " size: " << componentSizes[i]
                         << " pixels, cropped region: " << roi << std::endl;
             }
         }
     }
-    // // Concatenate all cropped blocks vertically
-    // if (!croppedBlocks.empty()) {
-    //     cv::vconcat(croppedBlocks, result);
-    // } else {
-    //     result = cv::Mat();
-    // }
+    // Concatenate all cropped blocks vertically
+    if (!croppedBlocks.empty()) {
+        cv::vconcat(croppedBlocks, result);
+    } else {
+        result = cv::Mat();
+    }
 }
 
 void TrafficSignClassifier::preProcess(cv::Mat frame, cv::Mat& preprocessedFrame)
