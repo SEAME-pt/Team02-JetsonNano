@@ -98,6 +98,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 2
                 );
 
+                cropped.copyTo(res)
                 std::cout << "Block " << i << " size: " << componentSizes[i]
                         << " pixels, cropped region: " << roi << std::endl;
             }
