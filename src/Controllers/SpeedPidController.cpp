@@ -163,123 +163,123 @@ std::string SpeedPidController::getAutonomousDriveState() const
 
 float SpeedPidController::speedPID(float error, double current_time)
 {
-    // std::cout << "Error in speed PID: " << error << std::endl;
-    // dt
-    double dt = current_time - last_time_;
+//     // std::cout << "Error in speed PID: " << error << std::endl;
+//     // dt
+//     double dt = current_time - last_time_;
 
-    // PID
-    // Gain-scheduling index from steering (-1..1 -> 0..1)
-    float alpha = std::min(1.0f, std::fabs(steer_));
+//     // PID
+//     // Gain-scheduling index from steering (-1..1 -> 0..1)
+//     float alpha = std::min(1.0f, std::fabs(steer_));
 
-    // Interpolate process model parameters
-    float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
-    float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
-    float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
+//     // Interpolate process model parameters
+//     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
+//     float tau_sch  = (1.0f - alpha) * tau_s_ + alpha * tau_c_;
+//     float L_sch    = (1.0f - alpha) * L_s_   + alpha * L_c_;
 
-    // IMC PID tuning
-    float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
-    float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
-    float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
-    float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
+//     // IMC PID tuning
+//     float lambda = std::max(tau_sch * 0.5f, 2.0f * L_sch);
+//     float Kc     = tau_sch / (Kp_model * (L_sch + lambda));
+//     float Ti     = std::min(tau_sch, 4.0f * (L_sch + lambda));
+//     float Td     = tau_sch * L_sch / (2.0f * tau_sch + L_sch);
 
-    // Update PID gains
-    kp_ = Kc;
-    ki_ = Kc / Ti;
-    kd_ = Kc * Td;
-    max_integral_ = (alpha * max_throttle_) / ki_;
-    std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
-    std::cout << "ERROR : "<< error << std::endl;
-    // PID terms with anti-windup
-    float p_term = kp_ * error;
-    integral_  += error * dt;
-    integral_   = std::clamp(integral_, -max_integral_, max_integral_);
+//     // Update PID gains
+//     kp_ = Kc;
+//     ki_ = Kc / Ti;
+//     kd_ = Kc * Td;
+//     max_integral_ = (alpha * max_throttle_) / ki_;
+//     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
+//     std::cout << "ERROR : "<< error << std::endl;
+//     // PID terms with anti-windup
+//     float p_term = kp_ * error;
+//     integral_  += error * dt;
+//     integral_   = std::clamp(integral_, -max_integral_, max_integral_);
 
-    // Limit integral term to prevent windup
-    // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
-    // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
-    // float i_term = ki_ * integral_;
-    float i_term = ki_ * integral_;
-    float d_term = kd_ * ((error - prev_error_) / dt);
-    // Raw PID output
-    float raw_throttle = p_term + i_term + d_term;
-    raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
+//     // Limit integral term to prevent windup
+//     // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
+//     // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
+//     // float i_term = ki_ * integral_;
+//     float i_term = ki_ * integral_;
+//     float d_term = kd_ * ((error - prev_error_) / dt);
+//     // Raw PID output
+//     float raw_throttle = p_term + i_term + d_term;
+//     raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
 
-    // Rate limiting to prevent sudden throttle changes
-    float throttle = raw_throttle;
-    if (last_time_ > 0) { // Skip rate limiting on first iteration
-        float max_change = MAX_THROTTLE_RATE * dt;
-        float throttle_diff = raw_throttle - prev_throttle_;
+//     // Rate limiting to prevent sudden throttle changes
+//     float throttle = raw_throttle;
+//     if (last_time_ > 0) { // Skip rate limiting on first iteration
+//         float max_change = MAX_THROTTLE_RATE * dt;
+//         float throttle_diff = raw_throttle - prev_throttle_;
         
-        if (std::abs(throttle_diff) > max_change) {
-            throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
-            std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
-                      << " (change limited to " << max_change << ")" << std::endl;
-        }
-    }
-    std::cout << "Throttle: " << throttle << std::endl;
-    std::cout << "Desired Speed: " << desired_speed_ << std::endl;
-    std::cout << "Current Speed: " << current_speed_ << std::endl;
+//         if (std::abs(throttle_diff) > max_change) {
+//             throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
+//             std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
+//                       << " (change limited to " << max_change << ")" << std::endl;
+//         }
+//     }
+//     std::cout << "Throttle: " << throttle << std::endl;
+//     std::cout << "Desired Speed: " << desired_speed_ << std::endl;
+//     std::cout << "Current Speed: " << current_speed_ << std::endl;
 
 
-    prev_error_ = error;
-    prev_throttle_ = throttle;
-    last_time_  = current_time;
+//     prev_error_ = error;
+//     prev_throttle_ = throttle;
+//     last_time_  = current_time;
     
-    // std::cout << "Throttle output: " << throttle << std::endl;
-    return throttle;
-}
+//     // std::cout << "Throttle output: " << throttle << std::endl;
+//     return throttle;
+// }
 
-void SpeedPidController::run()
-{
-    while (true)
-    {
-        std::string sae_level = getAutonomousDriveState();
-        if (!speed_lock_)
-        {
-            if (sae_level.find("SAE_0") != std::string::npos) {
-                float manual_speed    = xboxController_->getManualSpeed();
-                publisher_->publishSpeed(manual_speed);
+// void SpeedPidController::run()
+// {
+//     while (true)
+//     {
+//         std::string sae_level = getAutonomousDriveState();
+//         if (!speed_lock_)
+//         {
+//             if (sae_level.find("SAE_0") != std::string::npos) {
+//                 float manual_speed    = xboxController_->getManualSpeed();
+//                 publisher_->publishSpeed(manual_speed);
 
-            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+//             } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+//             } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_2") != std::string::npos) {
+//             } else if (sae_level.find("SAE_2") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_3") != std::string::npos) {
+//             } else if (sae_level.find("SAE_3") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_4") != std::string::npos) {
-                double current_time = getCurrentTime();
-                float error = desired_speed_ - current_speed_;
-                double throttle = speedPID(error, current_time);
-                throttle = std::max(0.0, throttle); 
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
-            } else {
+//             } else if (sae_level.find("SAE_4") != std::string::npos) {
+//                 double current_time = getCurrentTime();
+//                 float error = desired_speed_ - current_speed_;
+//                 double throttle = speedPID(error, current_time);
+//                 throttle = std::max(0.0, throttle); 
+//                 publisher_->publishSpeed(throttle);
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(
+//                             static_cast<int>(fixed_delta_time_ * 10000)));
+//             } else {
 
-            }
-        }
-        else
-        {
-            float manual_speed    = xboxController_->getManualSpeed();
-            if (manual_speed <= 0)
-            {
-                publisher_->publishSpeed(manual_speed);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 1000)));
-            }
-            else
-            {
-                double current_time = getCurrentTime();
-                float error = 0 - current_speed_;
-                double throttle = speedPID(error, current_time);
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
-            }
-        }
-    }
+//             }
+//         }
+//         else
+//         {
+//             float manual_speed    = xboxController_->getManualSpeed();
+//             if (manual_speed <= 0)
+//             {
+//                 publisher_->publishSpeed(manual_speed);
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(
+//                             static_cast<int>(fixed_delta_time_ * 1000)));
+//             }
+//             else
+//             {
+//                 double current_time = getCurrentTime();
+//                 float error = 0 - current_speed_;
+//                 double throttle = speedPID(error, current_time);
+//                 publisher_->publishSpeed(throttle);
+//                 std::this_thread::sleep_for(std::chrono::milliseconds(
+//                             static_cast<int>(fixed_delta_time_ * 10000)));
+//             }
+//         }
+//     }
 
     // //calibration
     // while (true){
@@ -309,4 +309,59 @@ void SpeedPidController::run()
     //     publisher_->publishSpeed(throttle);
     // }
     // publisher_->publishSpeed(0);
+
+    std::cout << "Starting minimum throttle calibration..." << std::endl;
+    
+    double throttle = 0.0;
+    const double THROTTLE_INCREMENT = 1.0;  // Increase by 1% each step
+    const double TARGET_SPEED = 10.0;       // Target 10 RPM
+    const double MAX_THROTTLE = 50.0;       // Safety limit
+    const int WAIT_TIME_MS = 2000;          // Wait 2 seconds between increments
+    const int SPEED_CHECK_COUNT = 5;        // Check speed 5 times before confirming
+    
+    bool speed_achieved = false;
+    
+    while (!speed_achieved && throttle <= MAX_THROTTLE) {
+        // Set current throttle
+        publisher_->publishSpeed(throttle);
+        std::cout << "Testing throttle: " << throttle << "%" << std::endl;
+        
+        // Wait for system to stabilize
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS));
+        
+        // Check if speed consistently above target
+        int speed_above_target_count = 0;
+        for (int i = 0; i < SPEED_CHECK_COUNT; i++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if (current_speed_ > TARGET_SPEED) {
+                speed_above_target_count++;
+            }
+            std::cout << "Speed check " << (i+1) << ": " << current_speed_ << " RPM" << std::endl;
+        }
+        
+        // If speed consistently above target, we found minimum throttle
+        if (speed_above_target_count >= SPEED_CHECK_COUNT - 1) {
+            speed_achieved = true;
+            std::cout << "SUCCESS: Minimum throttle found at " << throttle 
+                      << "% for speed > " << TARGET_SPEED << " RPM" << std::endl;
+            std::cout << "Final speed: " << current_speed_ << " RPM" << std::endl;
+        } else {
+            // Increase throttle and try again
+            throttle += THROTTLE_INCREMENT;
+            std::cout << "Speed too low (" << current_speed_ 
+                      << " RPM), increasing throttle..." << std::endl;
+        }
+    }
+    
+    if (!speed_achieved) {
+        std::cout << "WARNING: Could not achieve " << TARGET_SPEED 
+                  << " RPM with throttle up to " << MAX_THROTTLE << "%" << std::endl;
+    }
+    
+    // Stop the vehicle
+    publisher_->publishSpeed(0);
+    std::cout << "Calibration complete. Vehicle stopped." << std::endl;
+
+
+
 }
