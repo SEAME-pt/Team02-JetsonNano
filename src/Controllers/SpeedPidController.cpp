@@ -323,6 +323,8 @@ void SpeedPidController::run()
     
     while (!speed_achieved && throttle <= MAX_THROTTLE) {
         // Set current throttle
+        publisher_->publishSpeed(0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         publisher_->publishSpeed(throttle);
         std::cout << "Testing throttle: " << throttle << "%" << std::endl;
         
@@ -332,7 +334,7 @@ void SpeedPidController::run()
         // Check if speed consistently above target
         int speed_above_target_count = 0;
         for (int i = 0; i < SPEED_CHECK_COUNT; i++) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
             if (current_speed_ > TARGET_SPEED) {
                 speed_above_target_count++;
             }
