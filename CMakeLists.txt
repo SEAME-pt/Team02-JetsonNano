@@ -100,7 +100,7 @@ target_link_libraries(VehicleSystem
     vehicle_lib
 )
 
-add_executable(CombinedController
+#[[add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
     ./src/Controllers/MPController.cpp
@@ -108,7 +108,7 @@ add_executable(CombinedController
     ./src/Communication/ControllerPublisher.cpp
     ./src/utils/utils.cpp
     ./src/combinedControl.cpp
-)
+)]]
 
 target_compile_options(CombinedController PRIVATE -Wall -Werror -Wextra)
 
