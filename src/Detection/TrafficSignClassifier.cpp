@@ -41,8 +41,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
 
-    int numBlocks = nLabels - 1;
-
     std::vector<int> componentSizes(nLabels, 0);
     for (int y = 0; y < labels.rows; ++y) {
         for (int x = 0; x < labels.cols; ++x) {
