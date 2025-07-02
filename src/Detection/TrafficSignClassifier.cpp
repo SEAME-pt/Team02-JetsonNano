@@ -92,7 +92,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
                 };
                 cv::putText(
-                    preprocessedFrame, classes[bestClass], cv::Point(10, 10),
+                    preprocessedFrame, classes[bestClass], cv::Point(0, 0),
                     cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.5
                 );
 
