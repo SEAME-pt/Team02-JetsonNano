@@ -401,7 +401,7 @@ void ModelPredictiveController::manualControl()
     // float manual_speed    = xboxController_->getManualSpeed();
     publisher_->publishSteering(manual_steering);
 
-    double now = getCurrenTime();
+    double now = getCurrentTime();
 
     if (parsed_coeffs_.size() == 4) {
         Eigen::Vector4d x0;
@@ -416,7 +416,7 @@ void ModelPredictiveController::manualControl()
         std::cerr << "Invalid number of coefficients: " 
                 << parsed_coeffs_.size() << " (expected 4)" << std::endl;
     }
-    std::cout << "SOLVE TIME: " << getCurrenTime() - now << std::endl;
+    std::cout << "SOLVE TIME: " << getCurrentTime() - now << std::endl;
     // std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
