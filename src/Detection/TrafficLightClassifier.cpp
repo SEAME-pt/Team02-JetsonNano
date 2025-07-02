@@ -17,6 +17,43 @@ TrafficLightClassifier::~TrafficLightClassifier()
 {
 }
 
+std::string detectTrafficLightColor(const cv::Mat& img, float ratio = 1.2, int min_brightness = 3000) {
+    cv::Mat hsv;
+    cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
+
+    // Red mask (two ranges)
+    cv::Mat mask_red1, mask_red2, red_mask, yellow_mask, green_mask;
+    cv::inRange(hsv, cv::Scalar(0, 70, 50), cv::Scalar(10, 255, 255), mask_red1);
+    cv::inRange(hsv, cv::Scalar(170, 70, 50), cv::Scalar(180, 255, 255), mask_red2);
+    cv::add(mask_red1, mask_red2, red_mask);
+
+    // Yellow mask
+    cv::inRange(hsv, cv::Scalar(20, 100, 100), cv::Scalar(30, 255, 255), yellow_mask);
+
+    // Green mask
+    cv::inRange(hsv, cv::Scalar(40, 40, 40), cv::Scalar(90, 255, 255), green_mask);
+
+    int red_brightness = cv::sum(red_mask)[0];
+    int yellow_brightness = cv::sum(yellow_mask)[0];
+    int green_brightness = cv::sum(green_mask)[0];
+
+    std::vector<int> brightnesses = {red_brightness, yellow_brightness, green_brightness};
+    std::vector<std::string> color_names = {"Red", "Yellow", "Green"};
+
+    int max_idx = std::distance(brightnesses.begin(), std::max_element(brightnesses.begin(), brightnesses.end()));
+    int max_value = brightnesses[max_idx];
+    std::vector<int> other_vals;
+    for (int i = 0; i < 3; ++i) if (i != max_idx) other_vals.push_back(brightnesses[i]);
+
+    std::string detected = "None";
+    if (max_value > min_brightness &&
+        std::all_of(other_vals.begin(), other_vals.end(), [max_value, ratio](int val) { return max_value > ratio * val; })) {
+        detected = color_names[max_idx];
+    }
+
+    return detected;
+}
+
 void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result)
 {
     std::vector<cv::Mat> croppedBlocks;
@@ -68,6 +105,10 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
             const int fixed_height = 64;
             const int fixed_type = CV_8UC3;
             if (!cropped.empty()) {
+                std::string color = detectTrafficLightColor(cropped);
+
+                std::cout << "Color: " << color << std::endl;
+
                 cv::Mat resized_cropped;
                 cv::resize(cropped, resized_cropped, cv::Size(fixed_width, fixed_height));
                 if (resized_cropped.type() != fixed_type) {
@@ -84,6 +125,7 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
         result = cv::Mat();
     }
 }
+
 void TrafficLightClassifier::publishTrafficLightFrame(const std::string& value_str)
 {
     const auto len = value_str.size() + 1;
