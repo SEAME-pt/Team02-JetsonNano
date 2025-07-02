@@ -42,7 +42,7 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
     }
 
     for (int i = 1; i < nLabels; ++i) {
-        if (componentSizes[i] >= 5) {
+        if (componentSizes[i] >= 500) {
             std::cout << "Here" << std::endl;
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
@@ -66,7 +66,7 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
             cv::Rect roi(minX, minY, maxX - minX + 1, maxY - minY + 1);
             cv::Mat cropped = frame(roi).clone();
 
-            const int fixed_width = 64;
+            const int fixed_width = 32;
             const int fixed_height = 64;
             const int fixed_type = CV_8UC3;
             if (!cropped.empty()) {
