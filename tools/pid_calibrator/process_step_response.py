@@ -11,36 +11,15 @@ def load_data(filepath):
 
 def remove_outliers(df, column='speed', method='iqr', factor=1.5):
     """
-    Remove outliers from the specified column using IQR or Z-score method.
-    
-    Parameters:
-    - df: DataFrame
-    - column: column name to check for outliers
-    - method: 'iqr' (Interquartile Range) or 'zscore'
-    - factor: multiplier for outlier detection (1.5 for IQR, 3 for Z-score)
-    
-    Returns:
-    - Cleaned DataFrame with outliers removed
+    Remove outliers from the specified column using IQR method by default.
     """
-    if method == 'iqr':
-        Q1 = df[column].quantile(0.25)
-        Q3 = df[column].quantile(0.75)
-        IQR = Q3 - Q1
-        lower_bound = Q1 - factor * IQR
-        upper_bound = Q3 + factor * IQR
-        mask = (df[column] >= lower_bound) & (df[column] <= upper_bound)
-        
-    elif method == 'zscore':
-        z_scores = np.abs((df[column] - df[column].mean()) / df[column].std())
-        mask = z_scores < factor
-        
-    else:
-        raise ValueError("Method must be 'iqr' or 'zscore'")
-    
-    outliers_removed = len(df) - mask.sum()
-    print(f"Removed {outliers_removed} outliers from {column} column using {method} method")
-    
+    Q1 = df[column].quantile(0.25)
+    Q3 = df[column].quantile(0.75)
+    IQR = Q3 - Q1
+    mask = (df[column] >= Q1 - factor * IQR) & (df[column] <= Q3 + factor * IQR)
+    print(f"Removed {len(df) - mask.sum()} outliers from {column}")
     return df[mask].reset_index(drop=True)
+
 
 def find_step_indices(u, tol=1e-6):
     """

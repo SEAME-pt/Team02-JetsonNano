@@ -51,6 +51,9 @@ private:
     float Kp_c_ = 4.5;
     float tau_c_ = 0.700;
     float L_c_ = 0.4746;
+
+    float a0_ = 12.93f;
+    float a1_ = 0.130f;
     // Saturation limits
     
     // PID constants
@@ -86,7 +89,9 @@ private:
 
     float prev_throttle_ = 0.0f;
     const float MAX_THROTTLE_RATE = 20.0f;
-    float u_stiction = 30.0; 
+    float u_stiction = 30.0;
+
+
 
 
 public:
