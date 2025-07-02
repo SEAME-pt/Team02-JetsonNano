@@ -265,7 +265,11 @@ int GPUInference::copyToCPUTrafficOutput()
             best_class = c;
         }
     }
-    std::cout << "\nPredicted class: " << classes[best_class] << " (prob=" << max_prob << ")" << std::endl;
 
-    return best_class;
+    if (probs[best_class] > 0.80) {
+        std::cout << "\nPredicted class: " << classes[best_class] << " (prob=" << max_prob << ")" << std::endl;
+    
+        return best_class;
+    }
+    return (-1);
 }
