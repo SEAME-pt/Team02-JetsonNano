@@ -47,6 +47,7 @@ void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     // cv::Mat resized;
     
+    std::cout << frame.at<cv::Vec3b>(0,0) << std::endl;
     cv::resize(frame, preprocessedFrame, cv::Size(width_, height_), 0, 0, cv::INTER_LINEAR);
     
     // cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
