@@ -39,11 +39,14 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             if (this->canBus) {
                 uint8_t value[8];
                 if (trafficSign.find("Speed 50km/h")) {
-                    memcpy(value, &trafficSign, sizeof(value));
-                    this->canBus->writeMessage(0x504, value, sizeof(value));
+                    int speed = 50;
+                    memcpy(value, &speed, sizeof(value));
+                    this->canBus->writeMessage(0x500, value, sizeof(value));
                 } else if (trafficSign.find("Speed 80km/h")) {
                     memcpy(value, &trafficSign, sizeof(value));
-                    this->canBus->writeMessage(0x505, value, sizeof(value));
+                    int speed = 80;
+                    memcpy(value, &speed, sizeof(value));
+                    this->canBus->writeMessage(0x500, value, sizeof(value));
                 } else if (trafficSign.find("Yield")) {
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x502, value, sizeof(value));
@@ -52,7 +55,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     this->canBus->writeMessage(0x501, value, sizeof(value));
                 } else if (trafficSign.find("Danger")) {
                     memcpy(value, &trafficSign, sizeof(value));
-                    this->canBus->writeMessage(0x500, value, sizeof(value));
+                    this->canBus->writeMessage(0x504, value, sizeof(value));
                 } else if (trafficSign.find("Crosswalk")) {
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
