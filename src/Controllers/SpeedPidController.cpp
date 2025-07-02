@@ -258,13 +258,14 @@ void SpeedPidController::run()
             } else if (sae_level.find("SAE_3") != std::string::npos) {
 
             } else if (sae_level.find("SAE_4") != std::string::npos) {
-                double current_time = getCurrentTime();
-                float error = desired_speed_ - current_speed_;
-                double throttle = speedPID(error, current_time);
-                throttle = std::max(0.0, throttle); 
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
+                // double current_time = getCurrentTime();
+                // float error = desired_speed_ - current_speed_;
+                // double throttle = speedPID(error, current_time);
+                // throttle = std::max(0.0, throttle); 
+                // publisher_->publishSpeed(throttle);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(
+                //             static_cast<int>(fixed_delta_time_ * 10000)));
+                runThrottleCalibration();
             } else {
 
             }
@@ -290,7 +291,7 @@ void SpeedPidController::run()
         }
     }
 
-    // //calibration
+    //calibration
     // while (true){
     //     std::string sae_level = getAutonomousDriveState();
     //     if (sae_level.find("SAE_4") != std::string::npos){
@@ -375,4 +376,70 @@ void SpeedPidController::run()
 
 
 
+}
+
+void SpeedPidController::runThrottleCalibration()
+{
+    std::cout << "Starting throttle calibration..." << std::endl;
+    
+    // Throttle values to test
+    std::vector<double> throttle_values = {10, 15, 20, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
+    
+    const int STABILIZATION_TIME_MS = 5000;  // 5 seconds to stabilize
+    const int LOGGING_TIME_MS = 3000;       // 3 seconds of data collection
+    const int LOG_INTERVAL_MS = 25;          // 40 Hz logging
+    
+    for (double test_throttle : throttle_values) {
+        std::cout << "\n=== Testing throttle: " << test_throttle << "% ===" << std::endl;
+        
+        // Stop vehicle first
+        publisher_->publishSpeed(0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        
+        // Create filename for this throttle test
+        std::string filename = "throttle_" + std::to_string((int)test_throttle) + "_speed_log.csv";
+        std::ofstream log_file(filename);
+        
+        if (!log_file.is_open()) {
+            std::cerr << "Failed to open log file: " << filename << std::endl;
+            continue;
+        }
+        
+        // Write CSV header
+        log_file << "time,speed,throttle\n";
+        
+        // Apply throttle
+        publisher_->publishSpeed(test_throttle);
+        std::cout << "Applied throttle: " << test_throttle << "%, stabilizing..." << std::endl;
+        
+        // Wait for stabilization
+        std::this_thread::sleep_for(std::chrono::milliseconds(STABILIZATION_TIME_MS));
+        
+        // Start data collection
+        std::cout << "Starting data collection for " << LOGGING_TIME_MS/1000 << " seconds..." << std::endl;
+        double log_start_time = getCurrentTime();
+        double collection_start = getCurrentTime();
+        
+        while ((getCurrentTime() - collection_start) * 1000 < LOGGING_TIME_MS) {
+            double now = getCurrentTime();
+            double elapsed = now - log_start_time;
+            
+            // Log current data
+            log_file << elapsed << "," << current_speed_ << "," << test_throttle << "\n";
+            
+            // Maintain throttle
+            publisher_->publishSpeed(test_throttle);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(LOG_INTERVAL_MS));
+        }
+        
+        log_file.close();
+        std::cout << "Data collection complete. Saved to: " << filename << std::endl;
+        std::cout << "Final speed: " << current_speed_ << " RPM" << std::endl;
+    }
+    
+    // Stop vehicle
+    publisher_->publishSpeed(0);
+    std::cout << "\n=== Throttle calibration complete ===" << std::endl;
+    std::cout << "All data files saved. Vehicle stopped." << std::endl;
 }

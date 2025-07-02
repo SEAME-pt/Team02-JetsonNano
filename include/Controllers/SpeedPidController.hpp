@@ -100,5 +100,7 @@ public:
     
     float speedPID(float error, double current_time);
 
+    void runThrottleCalibration();
+
     void run();
 };
