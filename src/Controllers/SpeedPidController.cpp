@@ -195,7 +195,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // PID terms with anti-windup
     float p_term = kp_ * error;
     integral_  += error * dt;
-    max_integral_ = 5 / ki_; 
+    max_integral_ = 10 / ki_; 
     // Limit integral term to prevent windup
     integral_   = std::clamp(integral_, -max_integral_, max_integral_);
     float i_term = ki_ * integral_;
@@ -209,6 +209,8 @@ float SpeedPidController::speedPID(float error, double current_time)
     std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
               << " FF:" << u_ff << " | Integral:" << integral_ 
               << " | Output:" << throttle << std::endl;
+
+    last_time_ = current_time;
     return throttle;
 }
 
