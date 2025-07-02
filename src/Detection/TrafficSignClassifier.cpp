@@ -19,6 +19,8 @@ TrafficSignClassifier::TrafficSignClassifier(const std::string& enginePath,
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     trafficSign_mask_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/TrafficMask")));
+    trafficSign_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/TrafficSign")));
 }
 
 TrafficSignClassifier::~TrafficSignClassifier()
@@ -91,6 +93,9 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 static const std::string classes[7] = {
                     "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
                 };
+
+                publishTrafficSign(classes[bestClass]);
+                
                 cv::putText(
                     preprocessedFrame, classes[bestClass], cv::Point(5, 5),
                     cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.4
@@ -128,4 +133,14 @@ void TrafficSignClassifier::publishTrafficSignFrame(const std::string& value_str
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     trafficSign_mask_publisher_->put(std::move(buf));
+}
+
+void TrafficSignClassifier::publishTrafficSign(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    trafficSign_publisher_->put(std::move(buf));
 }

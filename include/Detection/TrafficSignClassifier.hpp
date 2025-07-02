@@ -12,6 +12,7 @@ public:
     void classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result);
 
     void publishTrafficSignFrame(const std::string& value_str);
+    void publishTrafficSign(const std::string& value_str);
 
 private:
     void preProcess(cv::Mat frame, cv::Mat& preprocessedFrame);
