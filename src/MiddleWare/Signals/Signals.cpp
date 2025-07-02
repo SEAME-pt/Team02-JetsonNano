@@ -47,7 +47,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     std::cout << "\033[36mSpeed 80\033[0m" << std::endl;
                     int speed = 80;
                     memcpy(value, &speed, sizeof(value));
-                    this->canBus->writeMessage(0x500, value, sizeof(value));
+                    this->canBus->writeMessage(0x505, value, sizeof(value));
                 } else if (trafficSign.find("Yield") != std::string::npos) {
                     std::cout << "\033[33mYield\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
