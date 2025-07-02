@@ -66,11 +66,6 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals,
     // Check if we have enough points for the requested degree
     if (y_vals.rows < degree + 1)
     {
-        // Not enough points - reduce degree or return empty matrix
-        if (y_vals.rows < 2)
-        {
-            return cv::Mat();
-        }
         // Adjust degree based on available points
         degree = y_vals.rows - 1;
     }
@@ -143,7 +138,7 @@ cv::Mat KalmanFilter::extractPolynomialCoefficients(
 
     // Fit polynomial (y = ax² + bx + c)
     // Note: We're fitting x as a function of y since lanes are more vertical
-    return polyfit(yVals, xVals, 2);
+    return polyfit(yVals, xVals, 3);
 }
 
 std::vector<cv::Point>
