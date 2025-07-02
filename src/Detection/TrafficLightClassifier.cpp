@@ -91,7 +91,7 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
                     }
                 }
             }
-            int margin = 10;
+            int margin = 5;
             minX = std::max(0, minX - margin);
             minY = std::max(0, minY - margin);
             maxX = std::min(labels.cols - 1, maxX + margin);
