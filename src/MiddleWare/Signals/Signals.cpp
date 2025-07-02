@@ -132,14 +132,14 @@ void Signals::run()
                         speed = 0;
 
                     bool validReading = true;
-                    if (!isFirstReading) {
-                        int speedChange = speed - lastValidSpeed;
-                        if (speedChange > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
-                            printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
-                                   speed, speedChange, lastValidSpeed);
-                            validReading = false;
-                        }
-                    }
+                    // int speedChange = speed - lastValidSpeed;
+                    // if (!isFirstReading) {
+                    //     if (std::abs(speedChange) > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
+                    //         printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
+                    //                speed, speedChange, lastValidSpeed);
+                    //         validReading = false;
+                    //     }
+                    // }
                     
                     if (validReading) {
                         lastValidSpeed = speed;
@@ -148,6 +148,11 @@ void Signals::run()
                         std::string speed_str = std::to_string(speed);
                         publisher_->publishSpeed(std::stof(speed_str));
                     }
+                    // else
+                    // {
+                    //     std::string speed_str = std::to_string(speed + speedChange / 3);
+                    //     publisher_->publishSpeed(std::stof(speed_str));
+                    // }
                     // printf("Publishing speed: '%d'\n", speed);
                     // std::string speed_str = std::to_string(speed);
                     // publisher_->publishSpeed(std::stof(speed_str));

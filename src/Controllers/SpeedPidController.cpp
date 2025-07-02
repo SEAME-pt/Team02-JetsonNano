@@ -15,7 +15,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
     last_time_   = 0.0f;
 
     max_speed_    = 90.0f;
-    max_throttle_ = 100.0f;
+    max_throttle_ = 40.0f;
 
     kp_ = 1.0f;
     ki_ = 0.0f;
@@ -99,9 +99,9 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             if (logging_)
             {
                 double now = getCurrentTime();
-                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.45" << "\n";
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
             
-                if (now - log_start_time_ > 15.0) {
+                if (now - log_start_time_ > 5.0) {
                     logging_ = false;
                     log_file_.close();
                 }
@@ -163,13 +163,15 @@ std::string SpeedPidController::getAutonomousDriveState() const
 
 float SpeedPidController::speedPID(float error, double current_time)
 {
-    // std::cout << "Error in speed PID: " << error << std::endl;
+
     // dt
     double dt = current_time - last_time_;
 
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
-    float alpha = std::min(1.0f, std::fabs(steer_));
+    // float alpha = std::min(1.0f, std::fabs(steer_));
+    // alpha = std::max(0.5f, alpha);
+    float alpha = 1;
 
     // Interpolate process model parameters
     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
@@ -185,9 +187,9 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Update PID gains
     kp_ = Kc;
     ki_ = Kc / Ti;
+    ki_ = 0;
     kd_ = Kc * Td;
-    max_integral_ = (alpha * max_throttle_) / ki_;
-    max_integral_ = 0;
+    max_integral_ = alpha * (max_throttle_ - 20) / ki_;
     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
     std::cout << "ERROR : "<< error << std::endl;
     // PID terms with anti-windup
@@ -201,14 +203,45 @@ float SpeedPidController::speedPID(float error, double current_time)
     // float i_term = ki_ * integral_;
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
+    // Raw PID output
+    // float raw_throttle = p_term + i_term + d_term;
+    // raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
 
-    // Final command: PID only (no feed-forward)
-    float throttle = (p_term + i_term + d_term) * 100.0f; // Scale to percentage
+    // Rate limiting to prevent sudden throttle changes
+    // float throttle = raw_throttle;
+    // if (last_time_ > 0) { // Skip rate limiting on first iteration
+    //     float max_change = MAX_THROTTLE_RATE * dt * 0.5;
+    //     float throttle_diff = raw_throttle - prev_throttle_;
+        
+    //     if (std::abs(throttle_diff) > max_change) {
+    //         throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
+    //         std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
+    //                   << " (change limited to " << max_change << ")" << std::endl;
+    //     }
+    // }
+    
+    // if (current_speed_ < 5.0f && desired_speed_ > 5.0f)
+    // {
+    //     // if we’re trying to start from ~0 RPM to some non-zero speed
+    //     throttle = std::max(throttle, u_stiction);
+    // }
+    // std::cout << "Throttle: " << throttle << std::endl;
+    // std::cout << "Desired Speed: " << desired_speed_ << std::endl;
+    // std::cout << "Current Speed: " << current_speed_ << std::endl;
+    
+    
+    // prev_error_ = error;
+    // prev_throttle_ = throttle;
+    // last_time_  = current_time;
+    
+    float u_ff = a0_ + a1_ * desired_speed_;
+    
+    // Combine feed-forward and PID
+    float throttle = u_ff + p_term + i_term + d_term;
     throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
-    prev_error_ = error;
-    last_time_  = current_time;
-    // std::cout << "Throttle output: " << throttle << std::endl;
+    
+    std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
 }
 
@@ -239,6 +272,7 @@ void SpeedPidController::run()
                 publisher_->publishSpeed(throttle);
                 std::this_thread::sleep_for(std::chrono::milliseconds(
                             static_cast<int>(fixed_delta_time_ * 10000)));
+                // runThrottleCalibration();
             } else {
 
             }
@@ -264,7 +298,7 @@ void SpeedPidController::run()
         }
     }
 
-    // //calibration
+    //calibration
     // while (true){
     //     std::string sae_level = getAutonomousDriveState();
     //     if (sae_level.find("SAE_4") != std::string::npos){
@@ -272,24 +306,148 @@ void SpeedPidController::run()
     //     }
     // }
 
-    // double throttle = 35;
+    // double throttle = 25;
     // publisher_->publishSpeed(throttle);
     
     // // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
-    // std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(8000));
     
     
     // // Start logging
     // double now = getCurrentTime();
     // log_start_time_ = getCurrentTime();
-    // log_file_.open("nofriction_speed_pid_log.csv");
+    // log_file_.open("corner_speed_pid_log.csv");
     // log_file_ << "time,speed,throttle\n";
-    // log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "0.35" << "\n";
+    // log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
     // logging_ = true;
     // while (logging_) {
     //     std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
-    //     throttle = 45;
+    //     throttle = 35;
     //     publisher_->publishSpeed(throttle);
     // }
     // publisher_->publishSpeed(0);
+
+    //calibration of minimum speed to make the wheels turn
+    // std::cout << "Starting minimum throttle calibration..." << std::endl;
+    
+    // double throttle = 0.0;
+    // const double THROTTLE_INCREMENT = 1.0;  // Increase by 1% each step
+    // const double TARGET_SPEED = 10.0;       // Target 10 RPM
+    // const double MAX_THROTTLE = 50.0;       // Safety limit
+    // const int WAIT_TIME_MS = 2000;          // Wait 2 seconds between increments
+    // const int SPEED_CHECK_COUNT = 5;        // Check speed 5 times before confirming
+    
+    // bool speed_achieved = false;
+    
+    // while (!speed_achieved && throttle <= MAX_THROTTLE) {
+    //     // Set current throttle
+    //     publisher_->publishSpeed(0);
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //     publisher_->publishSpeed(throttle);
+    //     std::cout << "Testing throttle: " << throttle << "%" << std::endl;
+        
+    //     // Wait for system to stabilize
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_MS));
+        
+    //     // Check if speed consistently above target
+    //     int speed_above_target_count = 0;
+    //     for (int i = 0; i < SPEED_CHECK_COUNT; i++) {
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    //         if (current_speed_ > TARGET_SPEED) {
+    //             speed_above_target_count++;
+    //         }
+    //         std::cout << "Speed check " << (i+1) << ": " << current_speed_ << " RPM" << std::endl;
+    //     }
+        
+    //     // If speed consistently above target, we found minimum throttle
+    //     if (speed_above_target_count >= SPEED_CHECK_COUNT - 1) {
+    //         speed_achieved = true;
+    //         std::cout << "SUCCESS: Minimum throttle found at " << throttle 
+    //                   << "% for speed > " << TARGET_SPEED << " RPM" << std::endl;
+    //         std::cout << "Final speed: " << current_speed_ << " RPM" << std::endl;
+    //     } else {
+    //         // Increase throttle and try again
+    //         throttle += THROTTLE_INCREMENT;
+    //         std::cout << "Speed too low (" << current_speed_ 
+    //                   << " RPM), increasing throttle..." << std::endl;
+    //     }
+    // }
+    
+    // if (!speed_achieved) {
+    //     std::cout << "WARNING: Could not achieve " << TARGET_SPEED 
+    //               << " RPM with throttle up to " << MAX_THROTTLE << "%" << std::endl;
+    // }
+    
+    // // Stop the vehicle
+    // publisher_->publishSpeed(0);
+    // std::cout << "Calibration complete. Vehicle stopped." << std::endl;
+
+
+
+}
+
+void SpeedPidController::runThrottleCalibration()
+{
+    std::cout << "Starting throttle calibration..." << std::endl;
+    
+    // Throttle values to test
+    std::vector<double> throttle_values = {10, 15, 20, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
+    
+    const int STABILIZATION_TIME_MS = 5000;  // 5 seconds to stabilize
+    const int LOGGING_TIME_MS = 3000;       // 3 seconds of data collection
+    const int LOG_INTERVAL_MS = 25;          // 40 Hz logging
+    
+    for (double test_throttle : throttle_values) {
+        std::cout << "\n=== Testing throttle: " << test_throttle << "% ===" << std::endl;
+        
+        // Stop vehicle first
+        publisher_->publishSpeed(0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        
+        // Create filename for this throttle test
+        std::string filename = "throttle_" + std::to_string((int)test_throttle) + "_speed_log.csv";
+        std::ofstream log_file(filename);
+        
+        if (!log_file.is_open()) {
+            std::cerr << "Failed to open log file: " << filename << std::endl;
+            continue;
+        }
+        
+        // Write CSV header
+        log_file << "time,speed,throttle\n";
+        
+        // Apply throttle
+        publisher_->publishSpeed(test_throttle);
+        std::cout << "Applied throttle: " << test_throttle << "%, stabilizing..." << std::endl;
+        
+        // Wait for stabilization
+        std::this_thread::sleep_for(std::chrono::milliseconds(STABILIZATION_TIME_MS));
+        
+        // Start data collection
+        std::cout << "Starting data collection for " << LOGGING_TIME_MS/1000 << " seconds..." << std::endl;
+        double log_start_time = getCurrentTime();
+        double collection_start = getCurrentTime();
+        
+        while ((getCurrentTime() - collection_start) * 1000 < LOGGING_TIME_MS) {
+            double now = getCurrentTime();
+            double elapsed = now - log_start_time;
+            
+            // Log current data
+            log_file << elapsed << "," << current_speed_ << "," << test_throttle << "\n";
+            
+            // Maintain throttle
+            publisher_->publishSpeed(test_throttle);
+            
+            std::this_thread::sleep_for(std::chrono::milliseconds(LOG_INTERVAL_MS));
+        }
+        
+        log_file.close();
+        std::cout << "Data collection complete. Saved to: " << filename << std::endl;
+        std::cout << "Final speed: " << current_speed_ << " RPM" << std::endl;
+    }
+    
+    // Stop vehicle
+    publisher_->publishSpeed(0);
+    std::cout << "\n=== Throttle calibration complete ===" << std::endl;
+    std::cout << "All data files saved. Vehicle stopped." << std::endl;
 }
