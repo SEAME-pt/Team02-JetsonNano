@@ -64,8 +64,16 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
             cv::Rect roi(minX, minY, maxX - minX + 1, maxY - minY + 1);
             cv::Mat cropped = frame(roi).clone();
 
+            const int fixed_width = 64;
+            const int fixed_height = 64;
+            const int fixed_type = CV_8UC3;
             if (!cropped.empty()) {
-                croppedBlocks.push_back(cropped);
+                cv::Mat resized_cropped;
+                cv::resize(cropped, resized_cropped, cv::Size(fixed_width, fixed_height));
+                if (resized_cropped.type() != fixed_type) {
+                    resized_cropped.convertTo(resized_cropped, fixed_type);
+                }
+                croppedBlocks.push_back(resized_cropped);
             }
         }
     }
