@@ -206,7 +206,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
     
-    std::cout << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
+    std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
               << " FF:" << u_ff << " | Integral:" << integral_ 
               << " | Output:" << throttle << std::endl;
     return throttle;
