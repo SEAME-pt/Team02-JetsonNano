@@ -169,9 +169,9 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
-    float alpha = std::min(1.0f, std::fabs(steer_));
+    // float alpha = std::min(1.0f, std::fabs(steer_));
     // alpha = std::max(0.5f, alpha);
-    // float alpha = 1;
+    float alpha = 1;
 
     // Interpolate process model parameters
     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
@@ -240,7 +240,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     
-    // std::cout << "Throttle output: " << throttle << std::endl;
+    std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
 }
 
