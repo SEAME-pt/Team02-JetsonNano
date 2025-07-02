@@ -1,11 +1,11 @@
 #include "SpeedPidController.hpp"
 
-// static double getCurrentTime()
-// {
-//     struct timeval tv;
-//     gettimeofday(&tv, NULL);
-//     return tv.tv_sec + tv.tv_usec * 1e-6;
-// }
+static double getCurrentTime()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec * 1e-6;
+}
 
 
 SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
