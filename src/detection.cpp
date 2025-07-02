@@ -189,7 +189,7 @@ void trafficLightThreadFunction(TrafficLightClassifier* trafficLightClassifier,
 int main(int argc, char** argv)
 {
     signal(SIGINT, signalHandler);
-    std::thread camThread, laneThread, objThread, trajThread, trafficSignThread;
+    std::thread camThread, laneThread, objThread, trajThread, trafficSignThread, trafficLightThread;
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
