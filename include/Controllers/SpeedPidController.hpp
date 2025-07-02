@@ -44,13 +44,16 @@ private:
 
     //calibration parameters
     // Straight-line FOPDT model
-    float Kp_s_= 466.84;
-    float tau_s_ = 0.80;
-    float L_s_ = 0.12;
+    float Kp_s_= 6.5;
+    float tau_s_ = 0.5;
+    float L_s_ = 0.25;
     // Cornering FOPDT model
-    float Kp_c_ = 686.10;
-    float tau_c_ = 1.37;
-    float L_c_ = 0.35;
+    float Kp_c_ = 430;
+    float tau_c_ = 0.5574;
+    float L_c_ = 0.1750;
+
+    float a0_ = 12.93f;
+    float a1_ = 0.130f;
     // Saturation limits
     
     // PID constants
@@ -84,6 +87,12 @@ private:
 
     float steer_ = 0.0;
 
+    float prev_throttle_ = 0.0f;
+    const float MAX_THROTTLE_RATE = 20.0f;
+    float u_stiction = 30.0;
+
+
+
 
 public:
     SpeedPidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
@@ -95,6 +104,8 @@ public:
     std::string getAutonomousDriveState() const;
     
     float speedPID(float error, double current_time);
+
+    void runThrottleCalibration();
 
     void run();
 };
