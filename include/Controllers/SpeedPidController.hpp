@@ -72,7 +72,7 @@ private:
     // Control parameters
     float max_speed_;
     float max_throttle_;
-    float max_integral_;
+    float max_integral_ = 10.0;
     float fixed_delta_time_;
 
     std::string autonomousDrive_;

@@ -187,59 +187,25 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Update PID gains
     kp_ = Kc;
     ki_ = Kc / Ti;
-    ki_ = 0;
     kd_ = Kc * Td;
-    max_integral_ = alpha * (max_throttle_ - 20) / ki_;
+
     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
     std::cout << "ERROR : "<< error << std::endl;
+
+
     // PID terms with anti-windup
     float p_term = kp_ * error;
     integral_  += error * dt;
     integral_   = std::clamp(integral_, -max_integral_, max_integral_);
 
     // Limit integral term to prevent windup
-    // const float MAX_INTEGRAL = 10.0f; // Adjust based on your system
-    // integral_    = std::max(-MAX_INTEGRAL, std::min(integral_, MAX_INTEGRAL));
-    // float i_term = ki_ * integral_;
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
-    // Raw PID output
-    // float raw_throttle = p_term + i_term + d_term;
-    // raw_throttle = std::clamp(raw_throttle, -max_throttle_, max_throttle_);
 
-    // Rate limiting to prevent sudden throttle changes
-    // float throttle = raw_throttle;
-    // if (last_time_ > 0) { // Skip rate limiting on first iteration
-    //     float max_change = MAX_THROTTLE_RATE * dt * 0.5;
-    //     float throttle_diff = raw_throttle - prev_throttle_;
-        
-    //     if (std::abs(throttle_diff) > max_change) {
-    //         throttle = prev_throttle_ + std::copysign(max_change, throttle_diff);
-    //         std::cout << "Rate limiting: " << raw_throttle << " -> " << throttle 
-    //                   << " (change limited to " << max_change << ")" << std::endl;
-    //     }
-    // }
-    
-    // std::cout << "Throttle: " << throttle << std::endl;
-    // std::cout << "Desired Speed: " << desired_speed_ << std::endl;
-    // std::cout << "Current Speed: " << current_speed_ << std::endl;
-    
-    
-    // prev_error_ = error;
-    // prev_throttle_ = throttle;
-    // last_time_  = current_time;
-    
     float u_ff = a0_ + a1_ * desired_speed_;
     
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
-    if (current_speed_ < 5.0f && desired_speed_ > 5.0f)
-    {
-        // if we’re trying to start from ~0 RPM to some non-zero speed
-        throttle = std::max(throttle, u_stiction);
-    }
-    throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
-
     
     std::cout << "Throttle output: " << throttle << std::endl;
     return throttle;
@@ -271,7 +237,7 @@ void SpeedPidController::run()
                 throttle = std::max(0.0, throttle); 
                 publisher_->publishSpeed(throttle);
                 std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
+                            static_cast<int>(fixed_delta_time_ * 1000)));
                 // runThrottleCalibration();
             } else {
 
