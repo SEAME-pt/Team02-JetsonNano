@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
-    const int heightModelInf = 256;
+    const int heightModelInf = 128;
     const int widthModelInf = 256;
     const int heightTrafficModelInf = 30;
     const int widthTrafficModelInf = 30;
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
             trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model.engine";
         }
 
-        LaneDetector laneDetector(laneDetectionFile, 128, 256);
+        LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
         ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
         TrafficSignClassifier trafficSignClassifier(trafficClassifierFile, session, heightTrafficModelInf, widthTrafficModelInf);
     
