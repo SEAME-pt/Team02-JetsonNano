@@ -157,6 +157,34 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
     }
 }
 
+// void trafficLightThreadFunction(TrafficLightClassifier* trafficLightClassifier,
+//                                    SynchronizedProcessor* processor)
+// {
+//     cv::Mat frame, object_mask;
+
+//     while (running)
+//     {
+//         processor->getFrameAndObjectMask(frame, object_mask);
+
+//         if (!frame.empty() && !object_mask.empty())
+//         {
+//             cv::Mat result;
+
+//             trafficLightClassifier->classify(frame, object_mask, result);
+
+//             if (!result.empty()) {
+//                 std::vector<uchar> buffer_trafficLight_frame;
+//                 std::vector<int> params_trafficLight = {cv::IMWRITE_JPEG_QUALITY, 100};
+//                 cv::imencode(".jpg", result, buffer_trafficLight_frame, params_trafficLight);
+//                 trafficLightClassifier->publishTrafficSignFrame(std::string(buffer_trafficLight_frame.begin(), buffer_trafficSign_frame.end()));
+//             }
+//         }
+//         else {
+//             std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//         }
+//     }
+// }
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, signalHandler);
