@@ -84,7 +84,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 int bestClass = gpuInference->copyToCPUTrafficOutput();
 
                 if (best_class != -1) {
-                    // Draw class label on cropped image
                     static const std::string classes[7] = {
                         "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
                     };
