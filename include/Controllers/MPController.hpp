@@ -43,7 +43,7 @@ private:
     Eigen::Vector4d currentState_;
     std::string autonomousDrive_;
 
-    double target_velocity_ = 8.0;
+    double target_velocity_ = 0.3;
 
     float initial_v; //x and y start at zero and psi starts at 90 degrees
     size_t N_; //steps
