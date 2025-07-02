@@ -38,25 +38,30 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             std::string trafficSign = sample.get_payload().as_string();
             if (this->canBus) {
                 uint8_t value[8];
-                if (trafficSign.find("Speed 50km/h")) {
+                if (trafficSign.find("Speed 50km/h") != std::string::npos) {
+                    std::cout << "Speed 50" << std::endl;
                     int speed = 50;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
-                } else if (trafficSign.find("Speed 80km/h")) {
+                } else if (trafficSign.find("Speed 80km/h") != std::string::npos) {
+                    std::cout << "Speed 80" << std::endl;
                     int speed = 80;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
-                } else if (trafficSign.find("Yield")) {
+                } else if (trafficSign.find("Yield") != std::string::npos) {
+                    std::cout << "Yield" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x502, value, sizeof(value));
-                } else if (trafficSign.find("Stop")) {
+                } else if (trafficSign.find("Stop") != std::string::npos) {
                     std::cout << "Stop" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x501, value, sizeof(value));
-                } else if (trafficSign.find("Danger")) {
+                } else if (trafficSign.find("Danger") != std::string::npos) {
+                    std::cout << "Danger" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x504, value, sizeof(value));
-                } else if (trafficSign.find("Crosswalk")) {
+                } else if (trafficSign.find("Crosswalk") != std::string::npos) {
+                    std::cout << "Crosswalk" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
                 } else {
