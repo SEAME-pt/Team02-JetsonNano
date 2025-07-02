@@ -217,7 +217,7 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "/home/team02/Team02-Course/JetsonNano/tools/cam_calibration/calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple4_epoch_30.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
             trafficClassifierFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
         } else if (mode == "carla") {
@@ -232,12 +232,12 @@ int main(int argc, char** argv)
             const std::string video = "/home/team02/record_cam/build/video.mp4";
             camera.initLVideoTestEnv(video);
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Yolo_local_pretrained_tusimple1_epoch_25.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple4_epoch_30.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
             trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model.engine";
         }
 
-        LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
+        LaneDetector laneDetector(laneDetectionFile, 128, 256);
         ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
         TrafficSignClassifier trafficSignClassifier(trafficClassifierFile, session, heightTrafficModelInf, widthTrafficModelInf);
     
