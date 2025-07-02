@@ -65,7 +65,7 @@ int main(int argc, char** argv)
             // MPC controller values
             size_t N  = 10;
             double L  = 0.15;
-            double Ts = 0.1;
+            double Ts = 0.05;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
             Q(0,0) = Qx * 10;
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
             R(0,0) = Rthrottle;
-            R(1,1) = Rsteer*0.2;
+            R(1,1) = Rsteer * 0.2;
 
             
             Eigen::Matrix4d Qf = 5 * Q;
