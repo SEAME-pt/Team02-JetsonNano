@@ -48,7 +48,7 @@ private:
     float tau_s_ = 0.5;
     float L_s_ = 0.25;
     // Cornering FOPDT model
-    float Kp_c_ = 300;
+    float Kp_c_ = 142;
     float tau_c_ = 0.5574;
     float L_c_ = 0.1750;
 
