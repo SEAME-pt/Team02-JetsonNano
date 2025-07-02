@@ -44,6 +44,7 @@ class Signals
     std::shared_ptr<zenoh::Session> session_;
     std::shared_ptr<SensoringPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
+    std::optional<zenoh::Subscriber<void>> trafficSign_subscriber;
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
 
     int lastValidSpeed = 0;
