@@ -136,8 +136,6 @@ cv::Mat KalmanFilter::extractPolynomialCoefficients(
         yVals.at<double>(i) = laneCurve[i].y;
     }
 
-    // Fit polynomial (y = ax² + bx + c)
-    // Note: We're fitting x as a function of y since lanes are more vertical
     return polyfit(yVals, xVals, 3);
 }
 
