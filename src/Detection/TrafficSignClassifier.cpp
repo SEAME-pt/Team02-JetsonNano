@@ -113,11 +113,11 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
 
 void TrafficSignClassifier::preProcess(cv::Mat frame, cv::Mat& preprocessedFrame)
 {
-    // cv::Mat resized;
+    cv::Mat resized;
     
-    cv::resize(frame, preprocessedFrame, cv::Size(width_, height_), 0, 0, cv::INTER_LINEAR);
+    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0, cv::INTER_LINEAR);
     
-    // cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
+    cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
 }
 
 void TrafficSignClassifier::publishTrafficSignFrame(const std::string& value_str)
