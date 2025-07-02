@@ -220,11 +220,6 @@ float SpeedPidController::speedPID(float error, double current_time)
     //     }
     // }
     
-    // if (current_speed_ < 5.0f && desired_speed_ > 5.0f)
-    // {
-    //     // if we’re trying to start from ~0 RPM to some non-zero speed
-    //     throttle = std::max(throttle, u_stiction);
-    // }
     // std::cout << "Throttle: " << throttle << std::endl;
     // std::cout << "Desired Speed: " << desired_speed_ << std::endl;
     // std::cout << "Current Speed: " << current_speed_ << std::endl;
@@ -238,6 +233,11 @@ float SpeedPidController::speedPID(float error, double current_time)
     
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
+    if (current_speed_ < 5.0f && desired_speed_ > 5.0f)
+    {
+        // if we’re trying to start from ~0 RPM to some non-zero speed
+        throttle = std::max(throttle, u_stiction);
+    }
     throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     
