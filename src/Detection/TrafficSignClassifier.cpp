@@ -93,7 +93,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 };
                 cv::putText(
                     preprocessedFrame, classes[bestClass], cv::Point(0, 0),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.5
+                    cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.4
                 );
 
                 croppedBlocks.push_back(preprocessedFrame);
