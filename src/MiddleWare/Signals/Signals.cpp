@@ -124,7 +124,7 @@ void Signals::run()
                 // for (int i = 0; i < 8; i++) {
                 //     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
                 // }
-                std::cout << std::dec << std::endl;
+                // std::cout << std::dec << std::endl;
                 if (can_id == 0x01)
                 {
                     int speed;
