@@ -25,7 +25,7 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
     cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
     cv::Mat binary_mask;
-    cv::inRange(resized_class_mask, cv::Scalar(250, 170, 30), cv::Scalar(250, 170, 30), binary_mask);
+    cv::inRange(resized_class_mask, cv::Scalar(250, 0, 0), cv::Scalar(250, 0, 0), binary_mask);
 
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
