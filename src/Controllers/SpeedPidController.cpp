@@ -236,7 +236,8 @@ float SpeedPidController::speedPID(float error, double current_time)
     float u_ff = a0_ + a1_ * desired_speed_;
     
     // Combine feed-forward and PID
-    float throttle = u_ff + p_term + i_term + d_term;
+    // float throttle = u_ff + p_term + i_term + d_term;
+    float throttle = u_ff;
     throttle = std::clamp(throttle, -max_throttle_, max_throttle_);
 
     
