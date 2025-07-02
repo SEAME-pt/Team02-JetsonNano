@@ -218,8 +218,8 @@ int main(int argc, char** argv)
             camera.initLocalEnv(pipeline, "/home/team02/Team02-Course/JetsonNano/tools/cam_calibration/calibration.yml");
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple4_epoch_30.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
-            trafficClassifierFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k2_epoch_100.engine";
+            trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
