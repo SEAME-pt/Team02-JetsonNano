@@ -39,33 +39,33 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             if (this->canBus) {
                 uint8_t value[8];
                 if (trafficSign.find("Speed 50km/h") != std::string::npos) {
-                    std::cout << "Speed 50" << std::endl;
+                    std::cout << "\033[32mSpeed 50\033[0m" << std::endl;
                     int speed = 50;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
                 } else if (trafficSign.find("Speed 80km/h") != std::string::npos) {
-                    std::cout << "Speed 80" << std::endl;
+                    std::cout << "\033[36mSpeed 80\033[0m" << std::endl;
                     int speed = 80;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
                 } else if (trafficSign.find("Yield") != std::string::npos) {
-                    std::cout << "Yield" << std::endl;
+                    std::cout << "\033[33mYield\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x502, value, sizeof(value));
                 } else if (trafficSign.find("Stop") != std::string::npos) {
-                    std::cout << "Stop" << std::endl;
+                    std::cout << "\033[31mStop\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x501, value, sizeof(value));
                 } else if (trafficSign.find("Danger") != std::string::npos) {
-                    std::cout << "Danger" << std::endl;
+                    std::cout << "\033[35mDanger\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x504, value, sizeof(value));
                 } else if (trafficSign.find("Crosswalk") != std::string::npos) {
-                    std::cout << "Crosswalk" << std::endl;
+                    std::cout << "\033[34mCrosswalk\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
                 } else {
-                    std::cout << "Unknown traffic sign!" << std::endl;
+                    std::cout << "\033[37Unknown traffic sign!\033[0m" << std::endl;
                 }
             }
         },
