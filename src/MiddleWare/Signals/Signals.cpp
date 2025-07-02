@@ -59,7 +59,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
                 } else {
-                    std::cout "Unknown traffic sign!" << std::endl;
+                    std::cout << "Unknown traffic sign!" << std::endl;
                 }
             }
         },
