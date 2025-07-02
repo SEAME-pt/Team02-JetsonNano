@@ -189,7 +189,6 @@ float SpeedPidController::speedPID(float error, double current_time)
     ki_ = Kc / Ti;
     kd_ = Kc * Td;
 
-    std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
     std::cout << "ERROR : "<< error << std::endl;
 
 
@@ -207,7 +206,9 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
     
-    std::cout << "Throttle output: " << throttle << std::endl;
+    std::cout << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
+              << " FF:" << u_ff << " | Integral:" << integral_ 
+              << " | Output:" << throttle << std::endl;
     return throttle;
 }
 
