@@ -43,9 +43,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
 
     int numBlocks = nLabels - 1;
 
-    std::cout << "Detected " << numBlocks << " blocks of (220, 220, 0) in class_mask." << std::endl;
-
-    // Count the size of each component (excluding background label 0)
     std::vector<int> componentSizes(nLabels, 0);
     for (int y = 0; y < labels.rows; ++y) {
         for (int x = 0; x < labels.cols; ++x) {
@@ -57,7 +54,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
     }
 
     for (int i = 1; i < nLabels; ++i) {
-        if (componentSizes[i] >= 2000) {
+        if (componentSizes[i] >= 1500) {
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
             for (int y = 0; y < labels.rows; ++y) {
@@ -70,7 +67,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     }
                 }
             }
-            // Expand bounding box by a margin (e.g., 10 pixels)
             int margin = 1;
             minX = std::max(0, minX - margin);
             minY = std::max(0, minY - margin);
@@ -102,9 +98,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 );
 
                 croppedBlocks.push_back(preprocessedFrame);
-
-                std::cout << "Block " << i << " size: " << componentSizes[i]
-                        << " pixels, cropped region: " << roi << std::endl;
             }
         }
     }
