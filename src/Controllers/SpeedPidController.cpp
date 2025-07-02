@@ -187,7 +187,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Update PID gains
     kp_ = Kc;
     ki_ = Kc / Ti;
-    ki = 0;
+    ki_ = 0;
     kd_ = Kc * Td;
     max_integral_ = alpha * (max_throttle_ - 20) / ki_;
     std::cout << "PID Gains: Kp=" << kp_ << ", Ki=" << ki_ << ", Kd=" << kd_ << std::endl;
