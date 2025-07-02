@@ -30,7 +30,6 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
 
-    std::cout << nLabels - 1 << std::endl;
     std::vector<int> componentSizes(nLabels, 0);
     for (int y = 0; y < labels.rows; ++y) {
         for (int x = 0; x < labels.cols; ++x) {
@@ -43,7 +42,6 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
 
     for (int i = 1; i < nLabels; ++i) {
         if (componentSizes[i] >= 500) {
-            std::cout << "Here" << std::endl;
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
             for (int y = 0; y < labels.rows; ++y) {
