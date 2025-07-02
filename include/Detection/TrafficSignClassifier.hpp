@@ -21,6 +21,7 @@ private:
     std::shared_ptr<zenoh::Session> session_;
     std::optional<zenoh::PosixShmProvider> provider_;
     std::optional<zenoh::Publisher> trafficSign_mask_publisher_;
+    std::optional<zenoh::Publisher> trafficSign_publisher_;
 
     GPUInference* gpuInference;
     int height_;
