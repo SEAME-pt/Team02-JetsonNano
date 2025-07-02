@@ -166,7 +166,7 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // dt
     // double dt = current_time - last_time_;
-
+    (void) current_time;
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
     // float alpha = std::min(1.0f, std::fabs(steer_));
