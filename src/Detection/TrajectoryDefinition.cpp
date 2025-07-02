@@ -98,8 +98,8 @@ void TrajectoryDefinition::initLocalEnv() {
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.01f;       // meters
         farDistance_ = 0.5f;       // meters
-        // laneWidth_ = 0.4f;      // meters
-        laneWidth_ = 0.5f;      // meters
+        laneWidth_ = 0.4f;      // meters
+        // laneWidth_ = 0.5f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
 
