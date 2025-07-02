@@ -83,17 +83,20 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 gpuInference->inference();
                 int bestClass = gpuInference->copyToCPUTrafficOutput();
 
-                // Draw class label on cropped image
-                static const std::string classes[7] = {
-                    "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
-                };
-
-                publishTrafficSign(classes[bestClass]);
+                if (best_class != -1) {
+                    // Draw class label on cropped image
+                    static const std::string classes[7] = {
+                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
+                    };
+    
+                    publishTrafficSign(classes[bestClass]);
+                    
+                    cv::putText(
+                        preprocessedFrame, classes[bestClass], cv::Point(5, 5),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.4
+                    );
+                }
                 
-                cv::putText(
-                    preprocessedFrame, classes[bestClass], cv::Point(5, 5),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(0, 255, 0), 0.4
-                );
 
                 croppedBlocks.push_back(preprocessedFrame);
             }
