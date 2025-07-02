@@ -50,6 +50,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x502, value, sizeof(value));
                 } else if (trafficSign.find("Stop")) {
+                    std::cout << "Stop" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x501, value, sizeof(value));
                 } else if (trafficSign.find("Danger")) {
