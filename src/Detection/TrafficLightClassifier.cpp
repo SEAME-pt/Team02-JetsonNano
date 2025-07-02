@@ -30,7 +30,6 @@ void TrafficLightClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Ma
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
 
-
     std::cout << nLabels - 1 << std::endl;
     std::vector<int> componentSizes(nLabels, 0);
     for (int y = 0; y < labels.rows; ++y) {
