@@ -68,15 +68,15 @@ int main(int argc, char** argv)
             double Ts = 0.05;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = Qx * 10;
-            Q(1,1) = Qy * 10;
+            Q(0,0) = Qx;
+            Q(1,1) = Qy;
             Q(2,2) = Qpsi;
             Q(3,3) = Qv;
 
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
             R(0,0) = Rthrottle;
-            R(1,1) = Rsteer * 0.2;
+            R(1,1) = Rsteer;
 
             
             Eigen::Matrix4d Qf = 5 * Q;
