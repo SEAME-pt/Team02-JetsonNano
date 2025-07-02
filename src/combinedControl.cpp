@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         if (mode == "local") {
             std::cout << "Running in LOCAL mode" << std::endl;
             // PID controller values
-            float kp                = 90;
+            float kp                = 100;
             float ki                = 0.000001;
             float kd                = 10;
             float constant_speed    = 0.25;
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
 
             // MPC controller values
-            size_t N  = 10;
+            size_t N  = 5;
             double L  = 0.15;
             double Ts = 0.05;
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
             int screen_height = 512;
             int screen_width  = 1024;
             // MPC controller values
-            size_t N  = 10;
+            size_t N  = 5;
             double L  = 2.9;
             double Ts = 0.1;
 
