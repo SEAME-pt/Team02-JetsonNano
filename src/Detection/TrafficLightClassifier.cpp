@@ -93,7 +93,7 @@ void TrafficLightClassifier::publishTrafficLightFrame(const std::string& value_s
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    trafficLight_publisher_->put(std::move(buf));
+    trafficLight_mask_publisher_->put(std::move(buf));
 }
 
 void TrafficLightClassifier::publishTrafficLight(const std::string& value_str)
