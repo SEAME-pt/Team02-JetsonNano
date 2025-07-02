@@ -1396,7 +1396,6 @@ void TrajectoryDefinition::mpcDebug(void) {
     // Draw the predicted trajectory as a green polyline
     if (mpcPoints_.size() > 1) {
         for (size_t i = 1; i < mpcPoints_.size(); ++i) {
-            std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
             cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
         }
     }
