@@ -43,7 +43,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
                 } else if (trafficSign.find("Speed 80km/h")) {
-                    memcpy(value, &trafficSign, sizeof(value));
                     int speed = 80;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
