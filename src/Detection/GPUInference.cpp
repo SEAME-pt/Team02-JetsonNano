@@ -175,7 +175,7 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
         cv::Scalar(0, 0, 10),     // Background
         cv::Scalar(128, 64, 128), // Road
         cv::Scalar(0, 0, 142),    // Car
-        cv::Scalar(250, 170, 30), // Traffic Light
+        cv::Scalar(250, 0, 0), // Traffic Light
         cv::Scalar(220, 220, 0),  // Traffic Sign
         cv::Scalar(220, 20, 60),  // Person
         cv::Scalar(244, 35, 232), // Sidewalks
