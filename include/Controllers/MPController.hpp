@@ -43,7 +43,7 @@ private:
     Eigen::Vector4d currentState_;
     std::string autonomousDrive_;
 
-    double target_velocity_ = 8.0;
+    double target_velocity_ = 0.3;
 
     float initial_v; //x and y start at zero and psi starts at 90 degrees
     size_t N_; //steps
@@ -57,7 +57,7 @@ private:
     Eigen::VectorXd last_u_flat_;    // size = 2*N_
     double tau_v_ = 1.0;
     
-    double w_ddelta_base_ = 250.0; // base weight for steering changes
+    double w_ddelta_base_ = 350.0; // base weight for steering changes
 
     std::vector<double> parsed_coeffs_;
 
