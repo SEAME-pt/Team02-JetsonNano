@@ -54,7 +54,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
     }
 
     for (int i = 1; i < nLabels; ++i) {
-        if (componentSizes[i] >= 1000) {
+        if (componentSizes[i] >= 500) {
             int minX = labels.cols, minY = labels.rows, maxX = 0, maxY = 0;
             // Find bounding box for this component
             for (int y = 0; y < labels.rows; ++y) {
@@ -67,7 +67,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     }
                 }
             }
-            int margin = 1;
+            int margin = 5;
             minX = std::max(0, minX - margin);
             minY = std::max(0, minY - margin);
             maxX = std::min(labels.cols - 1, maxX + margin);
