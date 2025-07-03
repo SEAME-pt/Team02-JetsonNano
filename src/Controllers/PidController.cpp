@@ -182,6 +182,7 @@ void PidController::LKASControl()
         }
         publisher_->publishSteering(manual_steering);
     }
+    publisher_->publishSpeed(manual_speed);
     
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
