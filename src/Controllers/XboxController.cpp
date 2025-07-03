@@ -111,7 +111,7 @@ void XboxController::run()
 
     while (this->readEvent() == 0)
     {
-        std::cout << this->event.type << std::endl;
+        std::cout << std::hex << this->event.type << std::endl;
         switch (this->event.type)
         {
             case JS_EVENT_BUTTON:
