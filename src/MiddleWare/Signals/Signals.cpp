@@ -64,6 +64,18 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     std::cout << "\033[34mCrosswalk\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Yellow") != std::string::npos) {
+                    std::cout << "\033[37mTraffic Yellow\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x600, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Green") != std::string::npos) {
+                    std::cout << "\033[38mTraffic Green\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x601, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Red") != std::string::npos) {
+                    std::cout << "\033[39mTraffic Red\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x602, value, sizeof(value));
                 } else {
                     std::cout << "\033[37mUnknown traffic sign!\033[0m" << std::endl;
                 }
