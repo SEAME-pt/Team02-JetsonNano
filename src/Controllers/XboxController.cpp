@@ -93,9 +93,8 @@ int XboxController::getAxisCount(void)
 int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
-    std::cout << axis << std::endl;
 
-    if (axis < 3)
+    if (axis <= 3)
     {
         if (event.number % 2 == 0)
             axes[axis]->x = event.value;
