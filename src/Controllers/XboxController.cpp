@@ -93,7 +93,7 @@ int XboxController::getAxisCount(void)
 int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
-
+    
     if (axis < 3)
     {
         if (event.number % 2 == 0)
@@ -171,8 +171,9 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
+
                             publisher_->publishActiveAutonomyLevel("SAE_4");
-                            std::cout << "Autonomous Driving" << std::endl;
+                            std::cout << "SAE_4 Driving" << std::endl;
                             break;
                         }
                         case BUTTON_SELECT:
@@ -181,21 +182,22 @@ void XboxController::run()
                             std::cout << "Control Type Switch" << std::endl;
                             break;
                         }
-
+                        
                         default:
                             break;
                     }
-                }
+                } 
                 break;
             }
             case JS_EVENT_AXIS:
             {
                 axis = this->getAxisState();
+                button = this->event.number;
                 switch (axis)
                 {
                     case (AXIS_LEFT_STICK):
                     {
-                        float speed = -this->axes[axis]->y * 100 / 32767;
+                        float speed = -this->axes[axis]->y * 45 / 32767;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
 
                         if (speed < -5)
@@ -221,6 +223,35 @@ void XboxController::run()
                         // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                switch (button) 
+                {
+                    case (BUTTON_CLICK_LEFT_RIGHT):
+                    {
+                        if (this->event.value == 32767) {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
+                            std::cout << "SAE_1_LKAS Driving" << std::endl;
+                        } else if (this->event.value == -32767) {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
+                            std::cout << "SAE_1_ACC Driving" << std::endl;
+                        }
+
+                        break;
+                    }
+                    case (BUTTON_CLICK_UP_DOWN):
+                    {
+                        if (this->event.value == 32767) {
+                            publisher_->publishActiveAutonomyLevel("SAE_2");
+                            std::cout << "SAE_2 Driving" << std::endl;
+                        } else if (this->event.value == -32767) {
+                            publisher_->publishActiveAutonomyLevel("SAE_3");
+                            std::cout << "SAE_3 Driving" << std::endl;
+                        }
+                        
                         break;
                     }
                     default:

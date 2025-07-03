@@ -118,40 +118,40 @@ target_link_libraries(CombinedController
     Eigen3::Eigen    
 )
 
+add_executable(Detection
+    ./src/Detection/ObjectDetector.cpp
+    ./src/Detection/LaneDetector.cpp
+    ./src/Detection/KalmanFilter.cpp
+    ./src/Detection/GPUInference.cpp
+    ./src/Detection/TrajectoryDefinition.cpp
+    ./src/Detection/TrafficSignClassifier.cpp
+    ./src/Detection/ObstacleAvoidance.cpp
+    ./src/Detection/SynchronizedProcessor.cpp
+    ./src/Detection/IPM.cpp
+    ./src/Communication/LaneDetectorPublisher.cpp
+    ./src/Hardware/Camera.cpp
+    ./src/utils/utils.cpp
+    ./src/detection.cpp
+)
 
-# add_executable(Detection
-#     ./src/Detection/ObjectDetector.cpp
-#     ./src/Detection/LaneDetector.cpp
-#     ./src/Detection/KalmanFilter.cpp
-#     ./src/Detection/GPUInference.cpp
-#     ./src/Detection/TrajectoryDefinition.cpp
-#     ./src/Detection/ObstacleAvoidance.cpp
-#     ./src/Detection/SynchronizedProcessor.cpp
-#     ./src/Detection/IPM.cpp
-#     ./src/Communication/LaneDetectorPublisher.cpp
-#     ./src/Hardware/Camera.cpp
-#     ./src/utils/utils.cpp
-#     ./src/detection.cpp
-# )
+target_compile_options(Detection PRIVATE -Wall -Werror -Wextra -O3
+    -march=native           # Optimize for the current CPU architecture
+    -flto                   # Enable link-time optimization
+    -ffast-math             # Fast math operations (may affect precision)
+    -ftree-vectorize        # Explicit vectorization
+    -funroll-loops
+)
 
-# target_compile_options(Detection PRIVATE -Wall -Werror -Wextra -O3
-#     -march=native           # Optimize for the current CPU architecture
-#     -flto                   # Enable link-time optimization
-#     -ffast-math             # Fast math operations (may affect precision)
-#     -ftree-vectorize        # Explicit vectorization
-#     -funroll-loops
-# )
-
-# target_link_libraries(Detection
-#     ${OpenCV_LIBS}
-#     ${CMAKE_THREAD_LIBS_INIT}
-#     zenohcxx::zenohc
-#     Libs
-#     vehicle_lib
-#     CUDA::cudart
-#     nvinfer
-#     nvonnxparser
-# )
+target_link_libraries(Detection
+    ${OpenCV_LIBS}
+    ${CMAKE_THREAD_LIBS_INIT}
+    zenohcxx::zenohc
+    Libs
+    vehicle_lib
+    CUDA::cudart
+    nvinfer
+    nvonnxparser
+)
 
 add_executable(MiddleWare
     ./src/Communication/SensoringPublisher.cpp

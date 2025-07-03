@@ -103,13 +103,18 @@ void GPUInference::inference()
 
     if (outputChannels_ == 1)
     {
-        std::cout << "Inference time in lane detection: " << milliseconds
-                  << "ms\n";
+        std::cout << "\033[32mInference time in lane detection: " << milliseconds
+                << "ms\033[0m\n"; // Green
     }
-    else
+    else if (outputChannels_ == 8)
     {
-        std::cout << "Inference time in object detection: " << milliseconds
-                  << "ms\n";
+        std::cout << "\033[34mInference time in object detection: " << milliseconds
+                << "ms\033[0m\n"; // Blue
+    }
+    else if (outputChannels_ == 9)
+    {
+        std::cout << "\033[33mInference time in traffic classification: " << milliseconds
+                << "ms\033[0m\n"; // Yellow
     }
 }
 
@@ -118,22 +123,19 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
     const int plane_size = height_ * width_;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
-    // Match Python's preprocessing: normalize with ImageNet means and stds
-    float means[3] = {0.485f, 0.456f, 0.406f}; // RGB order
-    float stds[3] = {0.229f, 0.224f, 0.225f};  // RGB order
+    float means[3] = {0.485f, 0.456f, 0.406f};
+    float stds[3] = {0.229f, 0.224f, 0.225f};
     
     for (int c = 0; c < inputChannels_; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            // Convert to [0,1] by dividing by 255
-            float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ - 1 - c)] / 255.0f;
+            float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ + c)] / 255.0f;
             
             inputData[c * plane_size + i] = (pixelValue - means[c]) / stds[c];
         }
     }
 
-    // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
                     inputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
@@ -170,7 +172,7 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
         cv::Scalar(0, 0, 10),     // Background
         cv::Scalar(128, 64, 128), // Road
         cv::Scalar(0, 0, 142),    // Car
-        cv::Scalar(250, 170, 30), // Traffic Light
+        cv::Scalar(250, 0, 0), // Traffic Light
         cv::Scalar(220, 220, 0),  // Traffic Sign
         cv::Scalar(220, 20, 60),  // Person
         cv::Scalar(244, 35, 232), // Sidewalks
@@ -217,4 +219,56 @@ void GPUInference::copyToCPUClassOutput(cv::Mat& outputMask)
             cv::Vec3b(color_map[best_class][0], color_map[best_class][1],
                       color_map[best_class][2]);
     }
+}
+
+
+int GPUInference::copyToCPUTrafficOutput()
+{
+    cudaMemcpyAsync(outputData, outputDevice,
+                    outputChannels_ * height_ * width_ * sizeof(float),
+                    cudaMemcpyDeviceToHost, stream);
+
+    cudaStreamSynchronize(stream);
+
+    const std::string classes[9] = {
+        "Speed 50km/h",
+        "Speed 80km/h",
+        "Yield",
+        "Stop",
+        "Danger",
+        "Crosswalk",
+        "Traffic Green",
+        "Traffic Red",
+        "Traffic Yellow"
+    };
+
+    // Apply softmax to outputData
+    float sum = 0.0f;
+    std::vector<float> probs(outputChannels_);
+    for (int c = 0; c < outputChannels_; ++c) {
+        probs[c] = expf(outputData[c]);
+        sum += probs[c];
+    }
+    for (int c = 0; c < outputChannels_; ++c) {
+        probs[c] /= sum;
+    }
+
+    // Print probabilities and predicted class
+    int best_class = 0;
+    float max_prob = probs[0];
+    std::cout << "Traffic sign class probabilities: ";
+    for (int c = 0; c < outputChannels_; ++c) {
+        std::cout << classes[c] << "(" << probs[c] << "), ";
+        if (probs[c] > max_prob) {
+            max_prob = probs[c];
+            best_class = c;
+        }
+    }
+
+    if (probs[best_class] > 0.80) {
+        std::cout << "\nPredicted class: " << classes[best_class] << " (prob=" << max_prob << ")" << std::endl;
+    
+        return best_class;
+    }
+    return (-1);
 }
