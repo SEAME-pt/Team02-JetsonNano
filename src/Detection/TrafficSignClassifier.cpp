@@ -8,7 +8,7 @@ TrafficSignClassifier::TrafficSignClassifier(const std::string& enginePath,
     : height_(height), width_(width)
 {
     try {
-        this->gpuInference = new GPUInference(enginePath, 3, 7, height_, width_);
+        this->gpuInference = new GPUInference(enginePath, 3, 10, height_, width_);
         this->gpuInference->init();
     } catch (const std::exception& e) {
         std::cerr << "Error initializing GPUInference: " << e.what() << std::endl;
@@ -35,8 +35,10 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
     cv::Mat resized_class_mask;
     cv::resize(class_mask, resized_class_mask, frame.size(), 0, 0, cv::INTER_LINEAR);
 
-    cv::Mat binary_mask;
-    cv::inRange(resized_class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), binary_mask);
+    cv::Mat mask1, mask2, binary_mask;
+    cv::inRange(resized_class_mask, cv::Scalar(220, 220, 0), cv::Scalar(220, 220, 0), mask1); // yellow
+    cv::inRange(resized_class_mask, cv::Scalar(250, 0, 0), cv::Scalar(250, 0, 0), mask2);     // red
+    cv::bitwise_or(mask1, mask2, binary_mask);
 
     cv::Mat labels;
     int nLabels = cv::connectedComponents(binary_mask, labels, 8, CV_32S);
@@ -84,8 +86,8 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 int bestClass = gpuInference->copyToCPUTrafficOutput();
 
                 if (bestClass != -1) {
-                    static const std::string classes[7] = {
-                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown"
+                    static const std::string classes[10] = {
+                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown", "Traffic Green", "Traffic Red", "Traffic Yellow"
                     };
     
                     publishTrafficSign(classes[bestClass]);
@@ -96,7 +98,6 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                     );
                 }
                 
-
                 croppedBlocks.push_back(preprocessedFrame);
             }
         }
