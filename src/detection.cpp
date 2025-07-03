@@ -2,7 +2,6 @@
 #include "ObjectDetector.hpp"
 #include "TrajectoryDefinition.hpp"
 #include "TrafficSignClassifier.hpp"
-#include "TrafficLightClassifier.hpp"
 #include "Camera.hpp"
 #include "SynchronizedProcessor.hpp"
 #include "utils.hpp"
