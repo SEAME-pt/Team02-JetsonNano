@@ -30,7 +30,7 @@ void MotorController::setSpeed(int32_t speed)
     }
     if (speed < 0)
     {
-        uint16_t pulseWidth = static_cast<uint16_t>(-speed * 2047 / 100);
+        uint16_t pulseWidth = static_cast<uint16_t>(-speed * 4095 / 100);
 
         m_MotorPCA->setDutyCicle(0, pulseWidth);
         m_MotorPCA->setGPIO(1, true);
@@ -42,8 +42,7 @@ void MotorController::setSpeed(int32_t speed)
     }
     else
     {
-        uint16_t pulseWidth = static_cast<uint16_t>(speed * 2047 / 100);
-        // uint16_t pulseWidth = static_cast<uint16_t>(speed * 4095 / 100);
+        uint16_t pulseWidth = static_cast<uint16_t>(speed * 4095 / 100);
 
         m_MotorPCA->setDutyCicle(0, pulseWidth);
         m_MotorPCA->setGPIO(1, false);
