@@ -45,6 +45,7 @@ class Signals
     std::shared_ptr<SensoringPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
+    std::optional<zenoh::Subscriber<void>> laneAlert_subscriber;
 
     int lastValidSpeed = 0;
     const int MAX_SPEED_CHANGE = 30;
