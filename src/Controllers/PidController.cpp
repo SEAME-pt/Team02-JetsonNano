@@ -17,7 +17,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     constant_speed_     = 0.0f;
     max_steering_angle_ = 90.0f;
 
-    lane_departure_threshold_ = 0.1f;
+    lane_departure_threshold_ = 0.35f;
 
     kp_ = 1.0f;
     ki_ = 0.0f;
@@ -154,13 +154,13 @@ void PidController::LKASControl()
 {
     double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
-    // float manual_speed    = xboxController_->getManualSpeed();
+    float manual_speed    = xboxController_->getManualSpeed();
     static bool LKAS_enable = false;
 
     if (std::abs(cameraError_) > lane_departure_threshold_ &&
         std::abs(cameraError_) < 0.5)
     {
-        float direction = manual_steering +(steeringPID(cameraError_, current_time) - manual_steering) * 0.5f;
+        float direction = (steeringPID(cameraError_, current_time) - manual_steering) * 1.0f;
         if (cameraError_ < 0)
         {
             LKAS_enable = true;
