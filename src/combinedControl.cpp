@@ -99,7 +99,7 @@ int main(int argc, char** argv)
             // MPC controller values
             size_t N  = 5;
             double L  = 2.9;
-            double Ts = 0.1;
+            double Ts = 0.2;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
             Q(0,0) = Qx;
