@@ -131,12 +131,12 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     meter_coeffs[1] = mx * traj_coeffs[1] / my;
     meter_coeffs[2] = mx * traj_coeffs[2] / (my * my);
     meter_coeffs[3] = mx * traj_coeffs[3] / (my * my * my);
-    std::cout << "Meter coefficients: "
-              << meter_coeffs[0] << ", "
-              << meter_coeffs[1] << ", "
-              << meter_coeffs[2] << ", "
-              << meter_coeffs[3] << std::endl;
-    
+    // std::cout << "Meter coefficients: "
+    //           << meter_coeffs[0] << ", "
+    //           << meter_coeffs[1] << ", "
+    //           << meter_coeffs[2] << ", "
+    //           << meter_coeffs[3] << std::endl;
+
     // Build reference trajectory in meter-space
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
     const double v_init = x0(3);
@@ -350,8 +350,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     // }
     current_steering_  = u_flat(1);
 
-    std::cout << "Speed: " << desired_speed_
-              << ", Steering: " << current_steering_ << std::endl;
+    std::cout << "MPC control - " << "        Speed: " << desired_speed_
+              << ",         Steering: " << current_steering_ << std::endl;
     // time = getCurrentTime();
     // std::cout << "Time to publish: " << (time - time2) << " s" << std::endl;
     // summary
@@ -511,7 +511,7 @@ void ModelPredictiveController::autonomousControl()
     }
     std::cout << "MPC control - "
               << "Current speed: " << current_speed_
-              << ", Steering: " << steering << std::endl;
+              << ", Current Steering: " << steering << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }
@@ -521,7 +521,7 @@ void ModelPredictiveController::run()
     while (true)
     {
         if (!xboxController_->getPidEnable()) {
-            std::cout << "Running in MPC mode" << std::endl;
+            // std::cout << "Running in MPC mode" << std::endl;
             std::string sae_level = getAutonomousDriveState();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
