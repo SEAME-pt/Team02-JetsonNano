@@ -107,6 +107,7 @@ class XboxController
     int js;
     std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
+    std::optional<zenoh::Subscriber<void>> detectionEnable_subscriber;
 
     std::atomic<float> manual_steering_{90.0f};
     std::atomic<float> manual_speed_{0.0f};
