@@ -231,14 +231,13 @@ int GPUInference::copyToCPUTrafficOutput()
 
     cudaStreamSynchronize(stream);
 
-    const std::string classes[10] = {
+    const std::string classes[9] = {
         "Speed 50km/h",
         "Speed 80km/h",
         "Yield",
         "Stop",
         "Danger",
         "Crosswalk",
-        "Unknown",
         "Traffic Green",
         "Traffic Red",
         "Traffic Yellow"

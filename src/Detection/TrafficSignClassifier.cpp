@@ -8,7 +8,7 @@ TrafficSignClassifier::TrafficSignClassifier(const std::string& enginePath,
     : height_(height), width_(width)
 {
     try {
-        this->gpuInference = new GPUInference(enginePath, 3, 10, height_, width_);
+        this->gpuInference = new GPUInference(enginePath, 3, 9, height_, width_);
         this->gpuInference->init();
     } catch (const std::exception& e) {
         std::cerr << "Error initializing GPUInference: " << e.what() << std::endl;
@@ -86,8 +86,8 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
                 int bestClass = gpuInference->copyToCPUTrafficOutput();
 
                 if (bestClass != -1) {
-                    static const std::string classes[10] = {
-                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Unknown", "Traffic Green", "Traffic Red", "Traffic Yellow"
+                    static const std::string classes[9] = {
+                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Traffic Green", "Traffic Red", "Traffic Yellow"
                     };
     
                     publishTrafficSign(classes[bestClass]);
