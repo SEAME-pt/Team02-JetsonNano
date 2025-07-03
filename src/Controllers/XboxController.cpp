@@ -218,7 +218,7 @@ void XboxController::run()
                             break;
                     }
                 } else {
-                    break:
+                    break;
                 }
             }
             case JS_EVENT_AXIS:
