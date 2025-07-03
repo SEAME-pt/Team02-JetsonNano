@@ -171,8 +171,21 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
+
                             publisher_->publishActiveAutonomyLevel("SAE_4");
                             std::cout << "Autonomous Driving" << std::endl;
+                            break;
+                        }
+                        case BUTTON_CLICK_LEFT_RIGHT:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
+                            std::cout << "SAE_1_LKAS Driving" << std::endl;
+                            break;
+                        }
+                        case BUTTON_CLICK_UP_DOWN:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_3");
+                            std::cout << "SAE_3 Driving" << std::endl;
                             break;
                         }
                         case BUTTON_SELECT:
@@ -181,12 +194,29 @@ void XboxController::run()
                             std::cout << "Control Type Switch" << std::endl;
                             break;
                         }
-
+                        
                         default:
                             break;
                     }
+                } else if (this->event.value == -1) {
+                    switch (button) 
+                    {
+                        case BUTTON_CLICK_LEFT_RIGHT:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
+                            std::cout << "SAE_1_ACC Driving" << std::endl;
+                            break;
+                        }
+                        case BUTTON_CLICK_UP_DOWN:
+                        {
+                            publisher_->publishActiveAutonomyLevel("SAE_2");
+                            std::cout << "SAE_2 Driving" << std::endl;
+                            break;
+                        }
+                    }
+                } else {
+                    break:
                 }
-                break;
             }
             case JS_EVENT_AXIS:
             {
