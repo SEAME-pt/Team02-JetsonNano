@@ -100,7 +100,7 @@ target_link_libraries(VehicleSystem
     vehicle_lib
 )
 
-#[[add_executable(CombinedController
+add_executable(CombinedController
     ./src/Controllers/XboxController.cpp
     ./src/Controllers/PidController.cpp
     ./src/Controllers/MPController.cpp
@@ -116,7 +116,7 @@ target_link_libraries(CombinedController
     ${CMAKE_THREAD_LIBS_INIT}
     zenohcxx::zenohc
     Eigen3::Eigen    
-)]]
+)
 
 add_executable(Detection
     ./src/Detection/ObjectDetector.cpp
