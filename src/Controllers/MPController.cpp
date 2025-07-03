@@ -74,7 +74,6 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed / 60.0 * (M_PI * 0.067);
-            std::cout << "mpc Current speed: " << current_speed_ << " m/s" << std::endl;
         },
         zenoh::closures::none));
     
@@ -132,6 +131,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     meter_coeffs[1] = mx * traj_coeffs[1] / my;
     meter_coeffs[2] = mx * traj_coeffs[2] / (my * my);
     meter_coeffs[3] = mx * traj_coeffs[3] / (my * my * my);
+    std::cout << "Meter coefficients: "
+              << meter_coeffs[0] << ", "
+              << meter_coeffs[1] << ", "
+              << meter_coeffs[2] << ", "
+              << meter_coeffs[3] << std::endl;
 
     // Build reference trajectory in meter-space
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
@@ -376,8 +380,10 @@ ModelPredictiveController::backwardEuler(const Eigen::Vector4d& x,
 
     double v_next   = u(0);
     double psi_next = psi + Ts_ * (v / L_) * std::tan(u(1));
-    double Xf_next  = x(0) + Ts_ * v * std::sin(psi);
-    double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
+    // double Xf_next  = x(0) + Ts_ * v * std::sin(psi);
+    // double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
+    double Xf_next  = x(0) + Ts_ * v * std::cos(psi);
+    double Yf_next  = x(1) + Ts_ * v * std::sin(psi);
 
     Eigen::Vector4d x_next;
     x_next << Xf_next, Yf_next, psi_next, v_next;
