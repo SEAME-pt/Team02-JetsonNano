@@ -158,38 +158,10 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
     }
 }
 
-void trafficLightThreadFunction(TrafficLightClassifier* trafficLightClassifier,
-                                   SynchronizedProcessor* processor)
-{
-    cv::Mat frame, object_mask;
-
-    while (running)
-    {
-        processor->getFrameAndObjectMask(frame, object_mask);
-
-        if (!frame.empty() && !object_mask.empty())
-        {
-            cv::Mat result;
-
-            trafficLightClassifier->classify(frame, object_mask, result);
-
-            if (!result.empty()) {
-                std::vector<uchar> buffer_trafficLight_frame;
-                std::vector<int> params_trafficLight = {cv::IMWRITE_JPEG_QUALITY, 100};
-                cv::imencode(".jpg", result, buffer_trafficLight_frame, params_trafficLight);
-                trafficLightClassifier->publishTrafficLightFrame(std::string(buffer_trafficLight_frame.begin(), buffer_trafficLight_frame.end()));
-            }
-        }
-        else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-    }
-}
-
 int main(int argc, char** argv)
 {
     signal(SIGINT, signalHandler);
-    std::thread camThread, laneThread, objThread, trajThread, trafficSignThread, trafficLightThread;
+    std::thread camThread, laneThread, objThread, trajThread, trafficSignThread;
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
@@ -269,7 +241,6 @@ int main(int argc, char** argv)
         LaneDetector laneDetector(laneDetectionFile, heightModelInf, widthModelInf);
         ObjectDetector objDetector(objDetectionFile, heightModelInf, widthModelInf);
         TrafficSignClassifier trafficSignClassifier(trafficClassifierFile, session, heightTrafficModelInf, widthTrafficModelInf);
-        TrafficLightClassifier trafficLightClassifier(session);
     
         camera.startCapture();
 
@@ -278,7 +249,6 @@ int main(int argc, char** argv)
         objThread = std::thread(objectDetectionThreadFunction, &objDetector, &processor);
         trajThread = std::thread(trajectoryThreadFunction, &trajectoryDefinition, &processor);
         trafficSignThread = std::thread(trafficSignThreadFunction, &trafficSignClassifier, &processor);
-        trafficLightThread = std::thread(trafficLightThreadFunction, &trafficLightClassifier, &processor);
 
         std::cout << "Running. Press Ctrl+C to exit." << std::endl;
         while(running) {
@@ -308,10 +278,6 @@ int main(int argc, char** argv)
         if (trafficSignThread.joinable()) {
             std::cout << "Joining traffic classifier thread..." << std::endl;
             trafficSignThread.join();
-        }
-        if (trafficLightThread.joinable()) {
-            std::cout << "Joining traffic classifier thread..." << std::endl;
-            trafficLightThread.join();
         }
 
         camera.stopCapture();
