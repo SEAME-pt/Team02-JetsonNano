@@ -17,7 +17,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     constant_speed_     = 0.0f;
     max_steering_angle_ = 90.0f;
 
-    lane_departure_threshold_ = 0.35f;
+    lane_departure_threshold_ = 0.1f;
 
     kp_ = 1.0f;
     ki_ = 0.0f;
