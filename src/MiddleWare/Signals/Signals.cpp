@@ -15,7 +15,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
             if (this->canBus) {
-                if (activeAutonomyLevel.find("SAE_5") != std::string::npos)
+                if (activeAutonomyLevel.find("SAE_4") != std::string::npos)
                 {
                     uint8_t value[8];
                     memcpy(value, &activeAutonomyLevel, sizeof(value));
