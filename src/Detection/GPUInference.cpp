@@ -111,7 +111,7 @@ void GPUInference::inference()
         std::cout << "\033[34mInference time in object detection: " << milliseconds
                 << "ms\033[0m\n"; // Blue
     }
-    else if (outputChannels_ == 7)
+    else if (outputChannels_ == 9)
     {
         std::cout << "\033[33mInference time in traffic classification: " << milliseconds
                 << "ms\033[0m\n"; // Yellow
