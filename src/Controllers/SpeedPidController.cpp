@@ -189,7 +189,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     ki_ = Kc / Ti;
     kd_ = Kc * Td;
 
-    std::cout << "ERROR : "<< error << std::endl;
+    // std::cout << "ERROR : "<< error << std::endl;
 
 
     // PID terms with anti-windup
@@ -206,9 +206,9 @@ float SpeedPidController::speedPID(float error, double current_time)
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
     
-    std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
-              << " FF:" << u_ff << " | Integral:" << integral_ 
-              << " | Output:" << throttle << std::endl;
+    // std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
+    //           << " FF:" << u_ff << " | Integral:" << integral_ 
+    //           << " | Output:" << throttle << std::endl;
 
     last_time_ = current_time;
     return throttle;
