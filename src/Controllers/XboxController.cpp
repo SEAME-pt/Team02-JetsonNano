@@ -171,9 +171,17 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
+                            static bool sae_4 = false;
 
-                            publisher_->publishActiveAutonomyLevel("SAE_4");
-                            std::cout << "SAE_4 Driving" << std::endl;
+                            if (sae_4 == true) {
+                                publisher_->publishActiveAutonomyLevel("SAE_0");
+                                std::cout << "SAE_0 Driving" << std::endl;
+                                sae_4 = false;
+                            } else {
+                                publisher_->publishActiveAutonomyLevel("SAE_4");
+                                std::cout << "SAE_4 Driving" << std::endl;
+                                sae_4 = true;
+                            }
                             break;
                         }
                         case BUTTON_SELECT:
@@ -219,7 +227,6 @@ void XboxController::run()
                     case (AXIS_RIGHT_STICK):
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
-                        publisher_->publishActiveAutonomyLevel("SAE_0");
                         // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
