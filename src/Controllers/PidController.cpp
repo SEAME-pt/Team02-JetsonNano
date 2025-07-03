@@ -160,7 +160,7 @@ void PidController::LKASControl()
     if (std::abs(cameraError_) > lane_departure_threshold_ &&
         std::abs(cameraError_) < 0.5)
     {
-        float direction = manual_steering + (steeringPID(cameraError_, current_time) - manual_steering) * 0.2f;
+        float direction = manual_steering + (steeringPID(cameraError_, current_time) - manual_steering) * 0.6f;
         if (cameraError_ < 0)
         {
             LKAS_enable = true;
