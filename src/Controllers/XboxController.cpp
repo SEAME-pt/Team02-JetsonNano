@@ -111,10 +111,6 @@ void XboxController::run()
 
     while (this->readEvent() == 0)
     {
-        std::cout << "Event type: 0x" << std::hex << static_cast<int>(this->event.type)
-          << " (" << std::dec << static_cast<int>(this->event.type) << ")"
-          << ", number: " << static_cast<int>(this->event.number)
-          << ", value: " << static_cast<int>(this->event.value) << std::endl;
         switch (this->event.type)
         {
             case JS_EVENT_BUTTON:
@@ -249,11 +245,11 @@ void XboxController::run()
                     case (BUTTON_CLICK_UP_DOWN):
                     {
                         if (this->event.value == 32767) {
+                            publisher_->publishActiveAutonomyLevel("SAE_2");
+                            std::cout << "SAE_2 Driving" << std::endl;
+                        } else if (this->event.value == -32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_3");
                             std::cout << "SAE_3 Driving" << std::endl;
-                        } else if (this->event.value == -32767) {
-                            publisher_->publishActiveAutonomyLevel("SAE_4");
-                            std::cout << "SAE_4 Driving" << std::endl;
                         }
                         
                         break;
