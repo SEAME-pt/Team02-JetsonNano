@@ -57,7 +57,7 @@ private:
     Eigen::VectorXd last_u_flat_;    // size = 2*N_
     double tau_v_ = 1.0;
     
-    double w_ddelta_base_ = 250.0; // base weight for steering changes
+    double w_ddelta_base_ = 350.0; // base weight for steering changes
 
     std::vector<double> parsed_coeffs_;
 
