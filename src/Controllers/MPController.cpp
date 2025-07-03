@@ -74,6 +74,7 @@ ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Sess
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed / 60.0 * (M_PI * 0.067);
+            std::cout << "mpc Current speed: " << current_speed_ << " m/s" << std::endl;
         },
         zenoh::closures::none));
     
