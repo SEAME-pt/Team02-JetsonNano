@@ -103,18 +103,21 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
                     uint8_t value[8];
                     memcpy(value, &lane, sizeof(value));
                     this->canBus->writeMessage(0x301, value, sizeof(value));
+                    std::cout << "Lane Alert: Left" << std::endl;
                 }
                 else if (lane.find("Right") != std::string::npos)
                 {
                     uint8_t value[8];
                     memcpy(value, &lane, sizeof(value));
                     this->canBus->writeMessage(0x303, value, sizeof(value));
+                    std::cout << "Lane Alert: Right" << std::endl;
                 }
                 else if (lane.find("Off") != std::string::npos)
                 {
                     uint8_t value[8];
                     memcpy(value, &lane, sizeof(value));
                     this->canBus->writeMessage(0x302, value, sizeof(value));
+                    std::cout << "Lane Alert: Off" << std::endl;
                 }
             }
         },
