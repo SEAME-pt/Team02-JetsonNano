@@ -339,6 +339,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         oss << x_pix << "," << y_pix;
         if (i + 1 < x_seq.size()) oss << ";";
     }
+    std::cout << "Publishing trajectory: " << oss.str() << std::endl;
     // time2 = getCurrentTime();
     // std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
     publisher_->publishMpcTrajectory(oss.str());
