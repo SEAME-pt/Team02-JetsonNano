@@ -351,7 +351,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     current_steering_  = u_flat(1);
 
     std::cout << "MPC control - " << "        Speed: " << desired_speed_
-              << ",         Steering: " << current_steering_ << std::endl;
+              << ",         Steering: " << current_steering_ << "target Speed: "<< target_velocity_ << std::endl;
     // time = getCurrentTime();
     // std::cout << "Time to publish: " << (time - time2) << " s" << std::endl;
     // summary
