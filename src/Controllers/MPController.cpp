@@ -9,7 +9,7 @@ static double getCurrentTime()
 
 ModelPredictiveController::ModelPredictiveController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller)
 {
-    fixed_delta_time_   = 0.05f;
+    fixed_delta_time_   = 0.2f;
     autonomousDrive_    = "SAE_0";
     speed_lock_         = false;
     xboxController_     = xbox_controller;
@@ -95,7 +95,7 @@ void ModelPredictiveController::init(size_t horizon, double wheelbase, double Ts
     R_ = R;
     Qf_ = Qf;
     carlaMode_ = carla_mode;
-    desired_speed_ = target_velocity;
+    desired_speed_ = 0.0f;
     target_velocity_ = target_velocity;
     height_ = height;
     width_ = width;
@@ -187,7 +187,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             
             // compute speed‐adaptive steering smoothness weight:
             double v_k       = x_seq[k][3];   // predicted speed at step k
-            // std::cout << "v_k: " << v_k << std::endl;
+            std::cout << "v_k: " << v_k << std::endl;
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
             speed_frac = 0;
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
