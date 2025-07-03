@@ -198,7 +198,9 @@ void XboxController::run()
                         default:
                             break;
                     }
-                } else if (this->event.value == -1) {
+                } 
+                else if (this->event.value == -1) 
+                {
                     switch (button) 
                     {
                         case BUTTON_CLICK_LEFT_RIGHT:
@@ -217,7 +219,9 @@ void XboxController::run()
                         default:
                             break;
                     }
-                } else {
+                } 
+                else 
+                {
                     break;
                 }
             }
