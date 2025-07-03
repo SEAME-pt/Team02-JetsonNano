@@ -15,7 +15,7 @@ int main(int argc, char** argv)
             return -1;
         }
         
-        double Qx = 100.0, Qy = 400.0, Qpsi = 150.0, Qv = 250.0, Rthrottle = 20.0, Rsteer = 60.0;
+        double Qx = 100.0, Qy = 400.0, Qpsi = 200.0, Qv = 250.0, Rthrottle = 20.0, Rsteer = 100.0;
         for (int i = 1; i < argc; ++i) {
             if (std::string(argv[i]) == "--Qx" && i+1 < argc) Qx = std::stod(argv[++i]);
             if (std::string(argv[i]) == "--Qy" && i+1 < argc) Qy = std::stod(argv[++i]);
