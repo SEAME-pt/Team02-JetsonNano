@@ -173,7 +173,7 @@ void XboxController::run()
                         {
 
                             publisher_->publishActiveAutonomyLevel("SAE_4");
-                            std::cout << "Autonomous Driving" << std::endl;
+                            std::cout << "SAE_4 Driving" << std::endl;
                             break;
                         }
                         case BUTTON_SELECT:
