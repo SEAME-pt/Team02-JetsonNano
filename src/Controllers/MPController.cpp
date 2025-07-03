@@ -199,11 +199,9 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             double v_k       = x_seq[k][3];   // predicted speed at step k
             // std::cout << "v_k: " << v_k << std::endl;
             double speed_frac = std::clamp(v_k / 1 * 500, 0.0, 1500.0);
-            speed_frac = 0;
             // e.g. at v=0 → w_ddelta = base; at v=v_max → w_ddelta = 2*base
             double w_dv     = 1 + speed_frac;   // keep throttle pretty free
-            // double w_ddelta  = w_ddelta_base_ + speed_frac;
-            double w_ddelta  = 0;
+            double w_ddelta  = w_ddelta_base_ + speed_frac;
             // std::cout << "w_ddelta: " << w_ddelta << std::endl;
 
             // add the Δu cost:
