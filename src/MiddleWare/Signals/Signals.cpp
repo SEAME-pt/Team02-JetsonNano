@@ -31,6 +31,58 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         },
         zenoh::closures::none));
 
+    trafficSign_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/TrafficSign",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string trafficSign = sample.get_payload().as_string();
+            if (this->canBus) {
+                uint8_t value[8];
+                if (trafficSign.find("Speed 50km/h") != std::string::npos) {
+                    std::cout << "\033[32mSpeed 50\033[0m" << std::endl;
+                    int speed = 50;
+                    memcpy(value, &speed, sizeof(value));
+                    this->canBus->writeMessage(0x500, value, sizeof(value));
+                } else if (trafficSign.find("Speed 80km/h") != std::string::npos) {
+                    std::cout << "\033[36mSpeed 80\033[0m" << std::endl;
+                    int speed = 80;
+                    memcpy(value, &speed, sizeof(value));
+                    this->canBus->writeMessage(0x505, value, sizeof(value));
+                } else if (trafficSign.find("Yield") != std::string::npos) {
+                    std::cout << "\033[33mYield\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x502, value, sizeof(value));
+                } else if (trafficSign.find("Stop") != std::string::npos) {
+                    std::cout << "\033[31mStop\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x501, value, sizeof(value));
+                } else if (trafficSign.find("Danger") != std::string::npos) {
+                    std::cout << "\033[35mDanger\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x504, value, sizeof(value));
+                } else if (trafficSign.find("Crosswalk") != std::string::npos) {
+                    std::cout << "\033[34mCrosswalk\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x503, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Yellow") != std::string::npos) {
+                    std::cout << "\033[37mTraffic Yellow\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x600, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Green") != std::string::npos) {
+                    std::cout << "\033[38mTraffic Green\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x601, value, sizeof(value));
+                } else if (trafficSign.find("Traffic Red") != std::string::npos) {
+                    std::cout << "\033[39mTraffic Red\033[0m" << std::endl;
+                    memcpy(value, &trafficSign, sizeof(value));
+                    this->canBus->writeMessage(0x602, value, sizeof(value));
+                } else {
+                    std::cout << "\033[37mUnknown traffic sign!\033[0m" << std::endl;
+                }
+            }
+        },
+        zenoh::closures::none));
+
     carlaSpeed_subscriber.emplace(session_->declare_subscriber(
         "carla/speed",
         [this](const zenoh::Sample& sample)
@@ -107,12 +159,12 @@ void Signals::run()
                 // int size        = 0;
                 uint8_t data[8] = {0};
                 this->canBus->readMessage(buffer, can_id, data);
-                std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
-                          << ", Data: ";
-                for (int i = 0; i < 8; i++) {
-                    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
-                }
-                std::cout << std::dec << std::endl;
+                // std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
+                //           << ", Data: ";
+                // for (int i = 0; i < 8; i++) {
+                //     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
+                // }
+                // std::cout << std::dec << std::endl;
                 if (can_id == 0x01)
                 {
                     int speed;
@@ -138,7 +190,7 @@ void Signals::run()
                     if (validReading) {
                         lastValidSpeed = speed;
                         isFirstReading = false;
-                        printf("Publishing speed: '%d'\n", speed);
+                        // printf("Publishing speed: '%d'\n", speed);
                         std::string speed_str = std::to_string(speed);
                         publisher_->publishSpeed(std::stof(speed_str));
                     }

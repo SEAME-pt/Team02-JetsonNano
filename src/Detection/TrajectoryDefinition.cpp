@@ -212,24 +212,18 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, 30, 40, 6);
-
-    drawPolyLanes(lanePolylines);
-    
-    float maxHorizontalDistance = frameWidth_ * 0.15;  // 15% of frame width
-    float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
-    mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
+    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 3100, frameWidth_ * frameHeight_ / 3100, 6);
     
     drawPolyLanes(lanePolylines);
+    // float maxHorizontalDistance = frameWidth_ * 0.10;  // 15% of frame width
+    // float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
+    // mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
+    
+    filterFalseLanes(lanePolylines);
 
-    if (lanePolylines.size() == 2)
-    {
-        twoPolylines(lanePolylines, leftCurve, rightCurve);
-    }
-    else if (lanePolylines.size() == 1)
-    {
-        defineLanePolyline(lanePolylines[0]);
-
+    if (lanePolylines.size() >= 2) {
+        defineLaneEnv(lanePolylines, leftCurve, rightCurve);
+    } else if (lanePolylines.size() == 1) {
         if (checkIfLeftLane(lanePolylines[0])) {
             leftCurve = lanePolylines[0];
             onePolyline(leftCurve, rightCurve);
@@ -237,32 +231,272 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
             rightCurve = lanePolylines[0];
             onePolyline(leftCurve, rightCurve);
         }
-    }
-    else
-    {
-        leftCurve  = prevLeftCurve;
-        rightCurve = prevRightCurve;
+    } else {
+        leftCurve  = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
+        rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
+
+        leftCurve.clear();
+        rightCurve.clear();
     }
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
     drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
-    // obstacleAvoidance(class_mask, midCurve);
+    // // obstacleAvoidance(class_mask, midCurve);
    
     createMidPointError(midCurve);
     
-    // checkForwardCollision(class_mask, midCurve);
+    // // checkForwardCollision(class_mask, midCurve);
 
-    // Draw the predicted trajectory as a green polyline
-    if (mpcPoints_.size() > 1) {
-        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
-            std::cout << "Drawing MPC point: " << mpcPoints_[i] << std::endl;
-            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
+    mpcDebug();
+
+    allPolylinesViz_.copyTo(frame);
+}
+
+void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines) {
+    for (int i = static_cast<int>(lanePolylines.size()) - 1; i >= 0; i--)
+    {
+        if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3500))
+            lanePolylines.erase(lanePolylines.begin() + i);
+        else
+            defineLanePolyline(lanePolylines[i]);
+    }
+}
+
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+    if (!prevRightCurve.empty() && !prevLeftCurve.empty()) {
+        int bestLeftIdx = -1, bestRightIdx = -1;
+        float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
+
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+
+            float maxDistance = calculateHistoricalLaneWidth() * 0.20;
+
+            if (leftDistance < rightDistance && leftDistance < maxDistance) {
+                if (leftDistance < minLeftDist) {
+                    minLeftDist = leftDistance;
+                    bestLeftIdx = i;
+                }
+            } else if (rightDistance < leftDistance && rightDistance < maxDistance) {
+                if (rightDistance < minRightDist) {
+                    minRightDist = rightDistance;
+                    bestRightIdx = i;
+                }
+            }
+        }
+
+        if (bestLeftIdx != -1 && bestRightIdx != -1 && bestLeftIdx != bestRightIdx) {
+            leftCurve = lanePolylines[bestLeftIdx];
+            rightCurve = lanePolylines[bestRightIdx];
+            
+            updateLaneWidthHistory(leftCurve, rightCurve);
+
+            kalmanFilter->updateLeftLaneFilter(leftCurve);
+            kalmanFilter->updateRightLaneFilter(rightCurve);
+
+            prevLeftCurve = leftCurve;
+            prevRightCurve = rightCurve;
+            
+            leftLaneLastUpdatedFrame = currentFrame;
+            rightLaneLastUpdatedFrame = currentFrame;
+        } else if (bestLeftIdx != -1) {
+            leftCurve = lanePolylines[bestLeftIdx];
+            
+            onePolyline(leftCurve, rightCurve);
+        } else if (bestRightIdx != -1) {
+            rightCurve = lanePolylines[bestRightIdx];
+
+            onePolyline(leftCurve, rightCurve);
+        } else {
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
+        }
+    } else if (!prevLeftCurve.empty()) {
+        int bestLeftIdx = -1;
+        float minLeftDist = FLT_MAX;
+
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+
+            float maxDistance = calculateHistoricalLaneWidth() * 0.20;
+
+            if (leftDistance < minLeftDist && leftDistance < maxDistance) {
+                minLeftDist = leftDistance;
+                bestLeftIdx = i;
+            }
+        }
+
+        if (bestLeftIdx != -1) {
+            leftCurve = lanePolylines[bestLeftIdx];
+
+            float maxDistance = calculateHistoricalLaneWidth() * 1.15;
+            float minDistance = calculateHistoricalLaneWidth() * 0.85;
+
+            float leftAvgX = 0.0f;
+            for (const auto& pt : leftCurve)
+                leftAvgX += pt.x;
+            leftAvgX /= leftCurve.size();
+
+            int bestRightIdx = -1;
+            float minRightDist = FLT_MAX;
+
+            for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+                if (i == bestLeftIdx) {
+                    continue ;
+                }
+                float avgX = 0.0f;
+                for (const auto& pt : lanePolylines[i])
+                    avgX += pt.x;
+                avgX /= lanePolylines[i].size();
+
+                // Must be to the right of leftCurve
+                if (avgX > leftAvgX) {
+                    float dist = calculateLaneDistance(lanePolylines[i], leftCurve);
+                    if (dist < minRightDist && dist < maxDistance && dist > minDistance) {
+                        minRightDist = dist;
+                        bestRightIdx = i;
+                    }
+                }
+            }
+
+            if (bestRightIdx != -1) {
+                rightCurve = lanePolylines[bestRightIdx];
+
+                updateLaneWidthHistory(leftCurve, rightCurve);
+
+                kalmanFilter->updateLeftLaneFilter(leftCurve);
+                kalmanFilter->updateRightLaneFilter(rightCurve);
+
+                prevLeftCurve = leftCurve;
+                prevRightCurve = rightCurve;
+                
+                leftLaneLastUpdatedFrame = currentFrame;
+                rightLaneLastUpdatedFrame = currentFrame;
+            } else {
+                onePolyline(leftCurve, rightCurve);
+            }
+        } else {
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
+        }
+    } else if (!prevRightCurve.empty()) {
+        int bestRightIdx = -1;
+        float minRightDist = FLT_MAX;
+
+        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+
+            float maxDistance = calculateHistoricalLaneWidth() * 0.20;
+
+            if (rightDistance < minRightDist && rightDistance < maxDistance) {
+                minRightDist = rightDistance;
+                bestRightIdx = i;
+            }
+        }
+
+        if (bestRightIdx != -1) {
+            rightCurve = lanePolylines[bestRightIdx];
+
+            float maxDistance = calculateHistoricalLaneWidth() * 1.15;
+            float minDistance = calculateHistoricalLaneWidth() * 0.85;
+
+            float rightAvgX = 0.0f;
+            for (const auto& pt : rightCurve)
+                rightAvgX += pt.x;
+            rightAvgX /= rightCurve.size();
+
+            int bestLeftIdx = -1;
+            float minLeftDist = FLT_MAX;
+
+            for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
+                if (i == bestRightIdx) {
+                    continue ;
+                }
+
+                float avgX = 0.0f;
+                for (const auto& pt : lanePolylines[i])
+                    avgX += pt.x;
+                avgX /= lanePolylines[i].size();
+
+                if (avgX < rightAvgX) {
+                    float dist = calculateLaneDistance(lanePolylines[i], rightCurve);
+                    if (dist < minLeftDist && dist < maxDistance && dist > minDistance) {
+                        minLeftDist = dist;
+                        bestLeftIdx = i;
+                    }
+                }
+            }
+
+            if (bestLeftIdx != -1) {
+                leftCurve = lanePolylines[bestLeftIdx];
+
+                updateLaneWidthHistory(leftCurve, rightCurve);
+
+                kalmanFilter->updateLeftLaneFilter(leftCurve);
+                kalmanFilter->updateRightLaneFilter(rightCurve);
+
+                prevLeftCurve = leftCurve;
+                prevRightCurve = rightCurve;
+                
+                leftLaneLastUpdatedFrame = currentFrame;
+                rightLaneLastUpdatedFrame = currentFrame;
+            } else {
+                onePolyline(leftCurve, rightCurve);
+            }
+        } else {
+            lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
+        }
+    } else {
+        lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
+    }
+}
+
+void TrajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
+    std::vector<cv::Point>& rightCurve) {
+    int centerX = frameWidth_ / 2;
+    float minLeftDist = FLT_MAX;
+    float minRightDist = FLT_MAX;
+    int leftIdx = -1;
+    int rightIdx = -1;
+
+    for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
+    {
+        float avgX = 0.0f;
+        for (const auto& pt : lanePolylines[i])
+            avgX += pt.x;
+        avgX /= lanePolylines[i].size();
+
+        if (avgX < centerX) {
+            float dist = centerX - avgX;
+            if (dist < minLeftDist) {
+                minLeftDist = dist;
+                leftIdx = i;
+            }
+        } else {
+            float dist = avgX - centerX;
+            if (dist < minRightDist) {
+                minRightDist = dist;
+                rightIdx = i;
+            }
         }
     }
 
-    allPolylinesViz_.copyTo(frame);
+    if (leftIdx != -1)
+        leftCurve = lanePolylines[leftIdx];
+    if (rightIdx != -1)
+        rightCurve = lanePolylines[rightIdx];
+
+    updateLaneWidthHistory(leftCurve, rightCurve);
+
+    kalmanFilter->updateLeftLaneFilter(leftCurve);
+    kalmanFilter->updateRightLaneFilter(rightCurve);
+
+    prevLeftCurve = leftCurve;
+    prevRightCurve = rightCurve;
+    
+    leftLaneLastUpdatedFrame = currentFrame;
+    rightLaneLastUpdatedFrame = currentFrame;
 }
 
 std::vector<std::vector<cv::Point>>
@@ -270,7 +504,7 @@ TrajectoryDefinition::clusterLaneMask(const cv::Mat& laneMask, int kernelSize,
                                       int minArea, int maxLanes)
 {
     static cv::Mat verticalKernel = cv::getStructuringElement(
-        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 3));
+        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 2));
     static cv::Mat horizontalKernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
 
@@ -432,46 +666,6 @@ void TrajectoryDefinition::mergeLaneComponents(
             }
         }
     }
-
-    for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
-    {
-        if (lanePolylines[i].size() < 30)
-            lanePolylines.erase(lanePolylines.begin() + i);
-        defineLanePolyline(lanePolylines[i]);
-    }
-
-    if (lanePolylines.size() > 2)
-    {
-        std::pair<int, float> minorLeftDistance(-1, FLT_MAX);
-        std::pair<int, float> minorRightDistance(-1, FLT_MAX);
-
-        for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
-        {
-            float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
-            float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-            if (minorLeftDistance.second > leftDistance && leftDistance < 50) {
-                minorLeftDistance.first = i;
-                minorLeftDistance.second = leftDistance;
-            }
-            if (minorRightDistance.second > rightDistance && rightDistance < 50) {
-                minorRightDistance.first = i;
-                minorRightDistance.second = rightDistance;
-            }
-        }
-
-        std::set<int> keepIndices = {minorLeftDistance.first, minorRightDistance.first};
-        std::vector<std::vector<cv::Point>> filteredPolylines;
-        for (int idx : keepIndices) {
-            if (idx >= 0 && idx < static_cast<int>(lanePolylines.size()))
-                filteredPolylines.push_back(lanePolylines[idx]);
-        }
-        lanePolylines = filteredPolylines;
-
-        cv::putText(allPolylinesViz_, "Keeping 2 closest lanes", 
-                cv::Point(20, 180), cv::FONT_HERSHEY_SIMPLEX, 
-                0.5, cv::Scalar(0, 0, 255), 1);
-        std::cout << "Keeping 2 closest lanes" << std::endl;
-    }
 }
 
 void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
@@ -480,234 +674,37 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     {
         rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
         checkPredicedCurve(rightCurve, leftCurve, true);
-            
+        
         kalmanFilter->updateLeftLaneFilter(leftCurve);
-        // kalmanFilter->updateRightLaneFilter(rightCurve);
 
         prevLeftCurve = leftCurve;
-        prevRightCurve = rightCurve;
+        prevRightCurve.clear();
 
         leftLaneLastUpdatedFrame = currentFrame;
-        rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 3);
         cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
     }
     else
     {
         leftCurve = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
         checkPredicedCurve(leftCurve, rightCurve, false);
         
-        // kalmanFilter->updateLeftLaneFilter(leftCurve);
         kalmanFilter->updateRightLaneFilter(rightCurve);
 
-        prevLeftCurve = leftCurve;
+        prevLeftCurve.clear();
         prevRightCurve = rightCurve;
 
-        leftLaneLastUpdatedFrame = currentFrame;
         rightLaneLastUpdatedFrame = currentFrame;
 
         cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 255), 3);
         cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
     }
 }
-
-// void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
-//     cv::Point lowestPoint1(-1, -1);
-//     cv::Point lowestPoint2(-1, -1);
-
-//     for (const auto& pt : lanePolylines[0])
-//     {
-//         if (pt.y > lowestPoint1.y)
-//         {
-//             lowestPoint1 = pt;
-//         }
-//     }
-
-//     for (const auto& pt : lanePolylines[1])
-//     {
-//         if (pt.y > lowestPoint2.y)
-//         {
-//             lowestPoint2 = pt;
-//         }
-//     }
-    
-//     bool keepLane0 = true;
-//     bool keepLane1 = true;
-    
-//     bool lane0IsLeft = false;
-//     bool lane1IsLeft = false;
-    
-//     float maxShiftThreshold = calculateHistoricalLaneWidth() * 0.4;
-    
-//     if (!prevLeftCurve.empty() && !prevRightCurve.empty())
-//     {
-//         float dist0ToLeft = calculateLaneDistance(lanePolylines[0], prevLeftCurve);
-        
-//         float dist0ToRight = calculateLaneDistance(lanePolylines[0], prevRightCurve);
-            
-//         float dist1ToLeft = calculateLaneDistance(lanePolylines[1], prevLeftCurve);
-            
-//         float dist1ToRight = calculateLaneDistance(lanePolylines[1], prevRightCurve);
-        
-//         lane0IsLeft = (dist0ToLeft < dist0ToRight);
-//         lane1IsLeft = (dist1ToLeft < dist1ToRight);
-        
-//         if (lane0IsLeft) {
-//             if (dist0ToLeft > maxShiftThreshold) {
-//                 keepLane0 = false;
-//                 cv::putText(allPolylinesViz_, "Lane0: too far from LEFT", cv::Point(20, 130),
-//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-//                 std::cout << "Lane0: too far from LEFT" << std::endl;
-//             }
-//         } else {
-//             if (dist0ToRight > maxShiftThreshold) {
-//                 keepLane0 = false;
-//                 cv::putText(allPolylinesViz_, "Lane0: too far from RIGHT", cv::Point(20, 130),
-//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-//                 std::cout << "Lane0: too far from RIGHT" << std::endl;
-//             }
-//         }
-        
-//         if (lane1IsLeft) {
-//             if (dist1ToLeft > maxShiftThreshold) {
-//                 keepLane1 = false;
-//                 cv::putText(allPolylinesViz_, "Lane1: too far from LEFT", cv::Point(20, 130),
-//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-//                 std::cout << "Lane1: too far from LEFT" << std::endl;
-//             }
-//         } else {
-//             if (dist1ToRight > maxShiftThreshold) {
-//                 keepLane1 = false;
-//                 cv::putText(allPolylinesViz_, "Lane1: too far from RIGHT", cv::Point(20, 130),
-//                           cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 1);
-//                 std::cout << "Lane1: too far from RIGHT" << std::endl;
-//             }
-//         }
-
-//         if (lane0IsLeft == lane1IsLeft && keepLane0 && keepLane1) {
-//             cv::putText(allPolylinesViz_, "Inconsistent lane config: discarding worse match", 
-//                       cv::Point(20, 170), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 1);
-            
-//             if (lane0IsLeft) {
-//                 if (dist0ToLeft < dist1ToLeft) {
-//                     keepLane1 = false;
-//                 } else {
-//                     keepLane0 = false;
-//                 }
-//             } else {
-//                 if (dist0ToRight < dist1ToRight) {
-//                     keepLane1 = false;
-//                 } else {
-//                     keepLane0 = false;
-//                 }
-//             }
-//         }
-//     }
-//     else
-//     {
-//         lane0IsLeft = lowestPoint1.x < lowestPoint2.x;
-//         lane1IsLeft = lowestPoint2.x < lowestPoint1.x;
-        
-//         cv::putText(allPolylinesViz_, "No memory - using position",
-//                   cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.2, 
-//                   cv::Scalar(0, 0, 255), 1);
-//     }
-
-//     if (keepLane0 && keepLane1) {
-//         if (lane0IsLeft && !lane1IsLeft) {
-//             leftCurve = lanePolylines[0];
-//             rightCurve = lanePolylines[1];
-//         } else if (!lane0IsLeft && lane1IsLeft) {
-//             leftCurve = lanePolylines[1];
-//             rightCurve = lanePolylines[0];
-//         } else {
-//             if (lowestPoint1.x < lowestPoint2.x) {
-//                 leftCurve = lanePolylines[0];
-//                 rightCurve = lanePolylines[1];
-//             } else {
-//                 leftCurve = lanePolylines[1];
-//                 rightCurve = lanePolylines[0];
-//             }
-//         }
-        
-//         updateLaneWidthHistory(leftCurve, rightCurve);
-//         kalmanFilter->updateLeftLaneFilter(leftCurve);
-//         kalmanFilter->updateRightLaneFilter(rightCurve);
-
-//         prevLeftCurve = leftCurve;
-//         prevRightCurve = rightCurve;
-        
-//         leftLaneLastUpdatedFrame = currentFrame;
-//         rightLaneLastUpdatedFrame = currentFrame;
-//     }
-//     else if (keepLane0 && !keepLane1) {
-//         if (lane0IsLeft) {
-//             onePolyline(lanePolylines[0], rightCurve);
-//         } else {
-//             onePolyline(leftCurve, lanePolylines[0]);
-//         }
-//     }
-//     else if (!keepLane0 && keepLane1) {
-//         if (lane1IsLeft) {
-//             onePolyline(lanePolylines[1], rightCurve);
-//         } else {
-//             onePolyline(leftCurve, lanePolylines[1]);
-//         }
-//     }
-//     else {
-//         cv::putText(allPolylinesViz_, "WARNING: Both lanes invalid, using position",
-//                   cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5, 
-//                   cv::Scalar(0, 0, 255), 1);
-        
-//         leftCurve = prevLeftCurve;
-//         rightCurve = prevRightCurve;
-//     }
-// }
-
-void TrajectoryDefinition::twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
-    cv::Point lowestPoint1(-1, -1);
-    cv::Point lowestPoint2(-1, -1);
-
-    for (const auto& pt : lanePolylines[0])
-    {
-        if (pt.y > lowestPoint1.y)
-        {
-            lowestPoint1 = pt;
-        }
-    }
-
-    for (const auto& pt : lanePolylines[1])
-    {
-        if (pt.y > lowestPoint2.y)
-        {
-            lowestPoint2 = pt;
-        }
-    }
-
-    if (lowestPoint1.x < lowestPoint2.x) {
-        leftCurve = lanePolylines[0];
-        rightCurve = lanePolylines[1];
-    } else {
-        leftCurve = lanePolylines[1];
-        rightCurve = lanePolylines[0];
-    }
-        
-    updateLaneWidthHistory(leftCurve, rightCurve);
-    kalmanFilter->updateLeftLaneFilter(leftCurve);
-    kalmanFilter->updateRightLaneFilter(rightCurve);
-
-    prevLeftCurve = leftCurve;
-    prevRightCurve = rightCurve;
-    
-    leftLaneLastUpdatedFrame = currentFrame;
-    rightLaneLastUpdatedFrame = currentFrame;
-}
-
 
 float TrajectoryDefinition::calculateLaneDistance(
     const std::vector<cv::Point>& lane1, const std::vector<cv::Point>& lane2)
@@ -774,44 +771,22 @@ void TrajectoryDefinition::checkPredicedCurve(
     std::vector<cv::Point>& predictedCurve,
     const std::vector<cv::Point>& realLane, bool isLeftLane)
 {
-    float avgMiddleX        = 0;
-    float avgDetectedX      = 0;
     float expectedWidth = calculateHistoricalLaneWidth();
-    float expectedMiddleX   = 0;
+    float minDistance = calculateHistoricalLaneWidth() * 0.95;
+    float maxDistance = calculateHistoricalLaneWidth() * 1.15;
 
-    // Calculate average X positions
-    for (const auto& pt : predictedCurve)
-    {
-        avgMiddleX += pt.x;
-    }
-    avgMiddleX /= predictedCurve.size();
+    float realDistance = calculateLaneDistance(realLane, predictedCurve);
 
-    for (const auto& pt : realLane)
-    {
-        avgDetectedX += pt.x;
-    }
-    avgDetectedX /= realLane.size();
-
-    if (isLeftLane)
-    {
-        expectedMiddleX = avgDetectedX + expectedWidth;
-    }
-    else
-    {
-        expectedMiddleX = avgDetectedX - expectedWidth;
-    }
-
-    float error = std::abs(avgMiddleX - expectedMiddleX);
-
-    if (error > frameWidth_ * 0.15f)
+    if (realDistance < minDistance || realDistance > maxDistance)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
-                    cv::Point(20, 160), cv::FONT_HERSHEY_SIMPLEX, 0.5,
-                    cv::Scalar(0, 0, 255), 1);
+                    cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(255, 255, 0), 1);
         std::cout << "Invalid curve prediction - using offset" << std::endl;
 
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
+
         if (isLeftLane)
         {
             for (const auto& pt : realLane)
@@ -819,6 +794,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 predictedCurve.push_back(
                     cv::Point(pt.x + expectedWidth, pt.y));
             }
+            
             kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
         else
@@ -828,6 +804,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 predictedCurve.push_back(
                     cv::Point(pt.x - expectedWidth, pt.y));
             }
+
             kalmanFilter->updateRightLaneFilter(predictedCurve);
         }
 
@@ -862,21 +839,21 @@ void TrajectoryDefinition::drawCurves(
     for (size_t i = 1; i < leftCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, leftCurve[i - 1], leftCurve[i], leftCurveColor,
-                 3);
+                 8);
     }
 
     cv::Scalar midCurveColor = cv::Scalar(255, 255, 255);
     for (size_t i = 1; i < midCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
-                 3);
+                 8);
     }
 
     cv::Scalar rightCurveColor = cv::Scalar(0, 0, 255);
     for (size_t i = 1; i < rightCurve.size(); i++)
     {
         cv::line(allPolylinesViz_, rightCurve[i - 1], rightCurve[i], rightCurveColor,
-                 3);
+                 8);
     }
 }
 
@@ -908,10 +885,6 @@ void TrajectoryDefinition::drawPolyLanes(
 void TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
-    if (curve.size() < 100) {
-        std::cout << "curve less than 100 on defineLanePolyline function" << std::endl;
-        return ;
-    }
     std::sort(curve.begin(), curve.end(),
               [](const cv::Point& a, const cv::Point& b) { return a.y < b.y; });
 
@@ -923,11 +896,9 @@ void TrajectoryDefinition::defineLanePolyline(
     }
 
     cv::Mat coeffs;
-    if (x_values.size() >= 4)
+    if (x_values.size() >= 150)
     {
         cv::Mat y_mat(y_values), x_mat;
-
-        // Create Vandermonde matrix for polynomial fitting
         x_mat.create(y_values.size(), 4, CV_64F);
         for (int i = 0; i < x_mat.rows; i++)
         {
@@ -949,12 +920,35 @@ void TrajectoryDefinition::defineLanePolyline(
             double xVal = coeffs.at<double>(0) + coeffs.at<double>(1) * yVal +
                           coeffs.at<double>(2) * yVal * yVal +
                           coeffs.at<double>(3) * yVal * yVal * yVal;
-
-            // xVal =
-            //     std::max(0.0, std::min(static_cast<double>(frameWidth_), xVal));
-
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+    }
+    else if (x_values.size() >= 4)
+    {
+        // 2nd-degree polynomial fit
+        cv::Mat y_mat(y_values), x_mat;
+        x_mat.create(y_values.size(), 3, CV_64F);
+        for (int i = 0; i < x_mat.rows; i++)
+        {
+            x_mat.at<double>(i, 0) = 1.0;
+            x_mat.at<double>(i, 1) = y_values[i];
+            x_mat.at<double>(i, 2) = y_values[i] * y_values[i];
+        }
+        cv::solve(x_mat, cv::Mat(x_values), coeffs, cv::DECOMP_SVD);
+
+        curve.clear();
+        int numSamples = frameHeight_ / 100;
+        for (int y = 0; y < frameHeight_; y += numSamples)
+        {
+            double yVal = static_cast<double>(y);
+            double xVal = coeffs.at<double>(0) + coeffs.at<double>(1) * yVal +
+                          coeffs.at<double>(2) * yVal * yVal;
+            curve.push_back(cv::Point(static_cast<int>(xVal), y));
+        }
+    }
+    else
+    {
+        std::cerr << "Not enough points to calculate coefficients" << std::endl;
     }
 }
 
@@ -1396,8 +1390,15 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
     {
         std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
     }
+}
 
-
+void TrajectoryDefinition::mpcDebug(void) {
+    // Draw the predicted trajectory as a green polyline
+    if (mpcPoints_.size() > 1) {
+        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
+            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
+        }
+    }
 }
 
 void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)

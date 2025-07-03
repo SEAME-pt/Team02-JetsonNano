@@ -6,16 +6,24 @@
 
 class TrafficSignClassifier {
 public:
-    TrafficSignClassifier(const std::string& enginePath, int inputSize = 30);
+    TrafficSignClassifier(const std::string& enginePath, std::shared_ptr<zenoh::Session> session, int height, int width);
     ~TrafficSignClassifier();
 
-    // Each roi is a cv::Rect(x, y, size, size)
-    void classify(const cv::Mat& frame,
-                  const std::vector<cv::Rect>& rois,
-                  std::vector<int>& class_ids,
-                  std::vector<float>& confidences);
+    void classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat& result);
+
+    void publishTrafficSignFrame(const std::string& value_str);
+    void publishTrafficSign(const std::string& value_str);
 
 private:
+    void preProcess(cv::Mat frame, cv::Mat& preprocessedFrame);
+
+private:
+    std::shared_ptr<zenoh::Session> session_;
+    std::optional<zenoh::PosixShmProvider> provider_;
+    std::optional<zenoh::Publisher> trafficSign_mask_publisher_;
+    std::optional<zenoh::Publisher> trafficSign_publisher_;
+
     GPUInference* gpuInference;
-    int inputSize_;
+    int height_;
+    int width_;
 };

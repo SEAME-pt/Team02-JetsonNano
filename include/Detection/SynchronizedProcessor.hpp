@@ -44,6 +44,8 @@ class SynchronizedProcessor
     void getProcessingData(cv::Mat& original, cv::Mat& lane_mask,
                            cv::Mat& object_mask);
 
+    void getFrameAndObjectMask(cv::Mat& frame, cv::Mat& object_mask);
+
     void trajectoryDone();
 
     void shutdown();

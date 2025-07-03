@@ -79,6 +79,17 @@ void SynchronizedProcessor::getProcessingData(cv::Mat& original, cv::Mat& lane_m
     object_class_mask.copyTo(object_mask);
 }
 
+void SynchronizedProcessor::getFrameAndObjectMask(cv::Mat& frame, cv::Mat& object_mask)
+{
+    std::unique_lock<std::mutex> lock(sync_mutex);
+
+    inference_cv.wait_for(lock, std::chrono::milliseconds(100), [this]()
+        { return new_frame_available && object_ready; });
+
+    current_frame.copyTo(frame);
+    object_class_mask.copyTo(object_mask);
+}
+
 void SynchronizedProcessor::trajectoryDone()
 {
     std::unique_lock<std::mutex> lock(sync_mutex);
