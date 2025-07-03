@@ -222,12 +222,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     double alpha0 = 0.1, beta = 0.5;
     Eigen::VectorXd grad(2*N_);
 
-    // time = getCurrentTime();
-    // std::cout << "Time for setup: " << (time - time2) << " s" << std::endl;
     // initial cost
     double J_curr = computeCost(u_flat);
-    // time2 = getCurrentTime();
-    // std::cout << "Time for initial cost: " << (time2 - time) << " s" << std::endl;
 
     for (int iter=0; iter<max_iter; ++iter) {
         // finite-difference gradient
@@ -313,9 +309,6 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         u_flat = u_next;
         J_curr = J_next;
     }
-
-    // time = getCurrentTime();
-    // std::cout << "Time for optimization: " << (time - time2) << " s" << std::endl;
     // store for next warm‐start
     last_u_flat_ = u_flat;
 
@@ -328,9 +321,6 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         x_seq[k+1] = backwardEuler(x_seq[k], u_k);
     }
     predicted_trajectory_ = x_seq;
-
-    // time2 = getCurrentTime();
-    // std::cout << "Time for final rollout: " << (time2 - time) << " s" << std::endl;
     // publish trajectory in pixel coordinates
     std::ostringstream oss;
     for (size_t i = 0; i < x_seq.size(); ++i) {
@@ -340,8 +330,6 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         if (i + 1 < x_seq.size()) oss << ";";
     }
     std::cout << "Publishing trajectory: " << oss.str() << std::endl;
-    // time2 = getCurrentTime();
-    // std::cout << "Time for trajectory string conversion: " << (time2 - time) << " s" << std::endl;
     publisher_->publishMpcTrajectory(oss.str());
 
     // set outputs
