@@ -93,8 +93,8 @@ int XboxController::getAxisCount(void)
 int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
-
-    if (axis <= 3)
+    
+    if (axis < 3)
     {
         if (event.number % 2 == 0)
             axes[axis]->x = event.value;
@@ -196,6 +196,7 @@ void XboxController::run()
             case JS_EVENT_AXIS:
             {
                 axis = this->getAxisState();
+                button = this->event.number;
                 switch (axis)
                 {
                     case (AXIS_LEFT_STICK):
@@ -228,6 +229,11 @@ void XboxController::run()
                         std::cout << "Direction" << std::endl;
                         break;
                     }
+                    default:
+                        break;
+                }
+                switch (button) 
+                {
                     case (BUTTON_CLICK_LEFT_RIGHT):
                     {
                         if (this->event.value == 32767) {
