@@ -92,7 +92,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         },
         zenoh::closures::none));
 
-    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+    laneAlert_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/LaneAlert",
         [this](const zenoh::Sample& sample)
         {
