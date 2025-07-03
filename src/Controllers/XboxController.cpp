@@ -230,10 +230,10 @@ void XboxController::run()
                     }
                     case BUTTON_CLICK_LEFT_RIGHT:
                     {
-                        if (this->event.value == 1) {
+                        if (this->event.value == 32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
                             std::cout << "SAE_1_LKAS Driving" << std::endl;
-                        } else if (this->event.value == -1) {
+                        } else if (this->event.value == -32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
                             std::cout << "SAE_1_ACC Driving" << std::endl;
                         }
@@ -242,10 +242,10 @@ void XboxController::run()
                     }
                     case BUTTON_CLICK_UP_DOWN:
                     {
-                        if (this->event.value == 1) {
+                        if (this->event.value == 32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_3");
                             std::cout << "SAE_3 Driving" << std::endl;
-                        } else if (this->event.value == -1) {
+                        } else if (this->event.value == -32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_4");
                             std::cout << "SAE_4 Driving" << std::endl;
                         }

@@ -50,8 +50,8 @@ enum Button
     BUTTON_HOME        = 12,
     BUTTON_LEFT_STICK  = 13,
     BUTTON_RIGHT_STICK = 14,
-    BUTTON_CLICK_LEFT_RIGHT  = 16,
-    BUTTON_CLICK_UP_DOWN    = 17,
+    BUTTON_CLICK_LEFT_RIGHT  = 6,
+    BUTTON_CLICK_UP_DOWN    = 7,
 };
 
 enum Axis
