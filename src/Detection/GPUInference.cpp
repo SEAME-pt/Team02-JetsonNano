@@ -123,14 +123,14 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
     const int plane_size = height_ * width_;
     const uint8_t* preprocessedData = preprocessedFrame.data;
 
-    float means[3] = {0.406f, 0.456f, 0.485f};
-    float stds[3] = {0.225f, 0.224f, 0.229f};
+    float means[3] = {0.485f, 0.456f, 0.406f};
+    float stds[3] = {0.229f, 0.224f, 0.225f};
     
     for (int c = 0; c < inputChannels_; c++)
     {
         for (int i = 0; i < plane_size; i++)
         {
-            float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ - 1 - c)] / 255.0f;
+            float pixelValue = preprocessedData[i * inputChannels_ + (inputChannels_ + c)] / 255.0f;
             
             inputData[c * plane_size + i] = (pixelValue - means[c]) / stds[c];
         }
