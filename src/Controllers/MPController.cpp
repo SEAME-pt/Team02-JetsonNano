@@ -355,6 +355,13 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     //           << Q_(2,2) << "," << Q_(3,3)
     //           << " R=" << R_(0,0) << "," << R_(1,1)
     //           << " total_error=" << total_error << std::endl;
+    // 3. Add debug output in solve():
+    std::cout << "Initial state: " << x0.transpose() << std::endl;
+    std::cout << "Target velocity: " << target_velocity_ << " m/s" << std::endl;
+    std::cout << "Timestep: " << Ts_ << " s" << std::endl;
+    std::cout << "Expected step distance: " << target_velocity_ * Ts_ << " m" << std::endl;
+    std::cout << "Real distance: " << current_speed_ * Ts_ << " m" << std::endl;
+
 }
 
 
@@ -480,6 +487,7 @@ void ModelPredictiveController::autonomousControl()
         x0(3) = (current_speed_ > 0.01) ? current_speed_ : 0.1;
         
         this->solve(x0, parsed_coeffs_);
+
 
     } else {
         std::cerr << "Invalid number of coefficients: " 
