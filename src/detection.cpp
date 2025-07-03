@@ -248,7 +248,7 @@ int main(int argc, char** argv)
             trajectoryDefinition.initLocalEnv();
             laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
             objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
-            trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model2.engine";
+            trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model3.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
             camera.initCarlaEnv();
