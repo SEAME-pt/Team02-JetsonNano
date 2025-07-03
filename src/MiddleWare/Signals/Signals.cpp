@@ -39,6 +39,34 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             publisher_->publishSpeed(std::stof(speed_str));
         },
         zenoh::closures::none));
+
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/LaneAlert",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string lane = sample.get_payload().as_string();
+            if (this->canBus) {
+                if (lane.find("Left") != std::string::npos)
+                {
+                    uint8_t value[8];
+                    memcpy(value, &lane, sizeof(value));
+                    this->canBus->writeMessage(0x301, value, sizeof(value));
+                }
+                else if (lane.find("Right") != std::string::npos)
+                {
+                    uint8_t value[8];
+                    memcpy(value, &lane, sizeof(value));
+                    this->canBus->writeMessage(0x303, value, sizeof(value));
+                }
+                else if (lane.find("Off") != std::string::npos)
+                {
+                    uint8_t value[8];
+                    memcpy(value, &lane, sizeof(value));
+                    this->canBus->writeMessage(0x302, value, sizeof(value));
+                }
+            }
+        },
+        zenoh::closures::none));
 }
 
 Signals::~Signals() {}

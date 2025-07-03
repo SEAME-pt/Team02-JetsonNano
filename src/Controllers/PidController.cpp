@@ -155,16 +155,31 @@ void PidController::LKASControl()
     double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     // float manual_speed    = xboxController_->getManualSpeed();
+    static bool LKAS_enable = false;
 
     if (std::abs(cameraError_) > lane_departure_threshold_ &&
-        std::abs(cameraError_) < 1)
+        std::abs(cameraError_) < 0.5)
     {
         float direction = manual_steering +(steeringPID(cameraError_, current_time) - manual_steering) * 0.5f;
-        // publisher_->publishAlert("Lane Departure");
+        if (cameraError_ < 0)
+        {
+            LKAS_enable = true;
+            publisher_->publishLaneAlert("Left");
+        }
+        else
+        {
+            LKAS_enable = true;
+            publisher_->publishLaneAlert("Right");
+        }
         publisher_->publishSteering(direction);
     }
     else
     {
+        if (LKAS_enable)
+        {
+            publisher_->publishLaneAlert("Off");
+            LKAS_enable = false;
+        }
         publisher_->publishSteering(manual_steering);
     }
     

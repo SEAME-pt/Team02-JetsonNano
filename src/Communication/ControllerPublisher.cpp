@@ -40,6 +40,9 @@ ControllerPublisher::ControllerPublisher(
     desiredSpeed_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/speedPid/DesiredSpeed")));
 
+    laneAlert_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/ADAS/LaneAlert")));
+
     
 }
 
@@ -218,4 +221,14 @@ void ControllerPublisher::publishDesiredSpeed(float speed)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     desiredSpeed_pub->put(std::move(buf));
+}
+
+void ControllerPublisher::publishLaneAlert(std::string lane)
+{
+    const auto len        = lane.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), lane.c_str(), len);
+    laneAlert_pub->put(std::move(buf));
 }

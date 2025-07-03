@@ -46,6 +46,7 @@ class ControllerPublisher
     void publishActiveAutonomyLevel(std::string level);
     void publishMpcTrajectory(const std::string trajectory);
     void publishDesiredSpeed(float speed);
+    void publishLaneAlert(std::string lane);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
@@ -66,4 +67,5 @@ class ControllerPublisher
     std::optional<zenoh::Publisher> activeAutonomyLevel_pub;
     std::optional<zenoh::Publisher> mpcTrajectory_pub;
     std::optional<zenoh::Publisher> desiredSpeed_pub;
+    std::optional<zenoh::Publisher> laneAlert_pub;
 };
