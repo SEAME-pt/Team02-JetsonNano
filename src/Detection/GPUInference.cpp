@@ -136,7 +136,6 @@ void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
         }
     }
 
-    // Copy to GPU
     cudaMemcpyAsync(inputDevice, inputData,
                     inputChannels_ * height_ * width_ * sizeof(float),
                     cudaMemcpyHostToDevice, stream);
