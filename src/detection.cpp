@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 
     const int heightCameraFrame = 480;
     const int widthCameraFrame = 640;
-    const int heightModelInf = 256;
+    const int heightModelInf = 128;
     const int widthModelInf = 256;
     const int heightTrafficModelInf = 60;
     const int widthTrafficModelInf = 60;
@@ -217,8 +217,8 @@ int main(int argc, char** argv)
                 "appsink";
             camera.initLocalEnv(pipeline, "/home/team02/Team02-Course/JetsonNano/tools/cam_calibration/calibration.yml");
             trajectoryDefinition.initLocalEnv();
-            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple2_epoch_20.engine";
-            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k1_epoch_100.engine";
+            laneDetectionFile = "/home/team02/Models/engine/lane_Mob_local_pretrained_tusimple4_epoch_30.engine";
+            objDetectionFile = "/home/team02/Models/engine/obj_Mob_local_pretrained_BDD100k2_epoch_100.engine";
             trafficClassifierFile = "/home/team02/Models/engine/traffic_sign_model3.engine";
         } else if (mode == "carla") {
             std::cout << "Running in CARLA mode with simulated camera" << std::endl;
