@@ -136,7 +136,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
               << meter_coeffs[1] << ", "
               << meter_coeffs[2] << ", "
               << meter_coeffs[3] << std::endl;
-
+    
     // Build reference trajectory in meter-space
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
     const double v_init = x0(3);
@@ -163,7 +163,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         u_flat(2*k)     = last_u_flat_(2*(k+1));
         u_flat(2*k + 1) = last_u_flat_(2*(k+1) + 1);
     }
-    u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
+    // u_flat(2*(N_-1))     = x0(3) + (target_velocity_ - x0(3));  
+    // u_flat(2*(N_-1) + 1) = 0.0;
+
+    double speed_target = std::clamp(target_velocity_, 0.0, 2.0);
+    u_flat(2*(N_-1))     = std::clamp(x0(3) + 0.1 * (speed_target - x0(3)), 0.0, 2.0);
     u_flat(2*(N_-1) + 1) = 0.0;
     // time2 = getCurrentTime();
     // std::cout << "Time for warm-start: " << (time2 - time) << " s" << std::endl;
@@ -380,10 +384,8 @@ ModelPredictiveController::backwardEuler(const Eigen::Vector4d& x,
 
     double v_next   = u(0);
     double psi_next = psi + Ts_ * (v / L_) * std::tan(u(1));
-    // double Xf_next  = x(0) + Ts_ * v * std::sin(psi);
-    // double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
-    double Xf_next  = x(0) + Ts_ * v * std::cos(psi);
-    double Yf_next  = x(1) + Ts_ * v * std::sin(psi);
+    double Xf_next  = x(0) + Ts_ * v * std::sin(psi);
+    double Yf_next  = x(1) + Ts_ * v * std::cos(psi);
 
     Eigen::Vector4d x_next;
     x_next << Xf_next, Yf_next, psi_next, v_next;
