@@ -48,7 +48,7 @@ private:
     float tau_s_ = 0.5;
     float L_s_ = 0.25;
     // Cornering FOPDT model
-    float Kp_c_ = 430;
+    float Kp_c_ = 100;
     float tau_c_ = 0.5574;
     float L_c_ = 0.1750;
 
@@ -72,7 +72,7 @@ private:
     // Control parameters
     float max_speed_;
     float max_throttle_;
-    float max_integral_;
+    float max_integral_ = 10.0;
     float fixed_delta_time_;
 
     std::string autonomousDrive_;

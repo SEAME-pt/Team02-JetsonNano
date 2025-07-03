@@ -15,7 +15,7 @@ int main(int argc, char** argv)
             return -1;
         }
         
-        double Qx = 100.0, Qy = 250.0, Qpsi = 50.0, Qv = 250.0, Rthrottle = 20.0, Rsteer = 200.0;
+        double Qx = 100.0, Qy = 600.0, Qpsi = 300.0, Qv = 250.0, Rthrottle = 20.0, Rsteer = 40.0;
         for (int i = 1; i < argc; ++i) {
             if (std::string(argv[i]) == "--Qx" && i+1 < argc) Qx = std::stod(argv[++i]);
             if (std::string(argv[i]) == "--Qy" && i+1 < argc) Qy = std::stod(argv[++i]);
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         if (mode == "local") {
             std::cout << "Running in LOCAL mode" << std::endl;
             // PID controller values
-            float kp                = 90;
+            float kp                = 100;
             float ki                = 0.000001;
             float kd                = 10;
             float constant_speed    = 0.25;
@@ -63,20 +63,20 @@ int main(int argc, char** argv)
 
 
             // MPC controller values
-            size_t N  = 10;
+            size_t N  = 5;
             double L  = 0.15;
-            double Ts = 0.1;
+            double Ts = 0.2;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-            Q(0,0) = Qx * 10;
-            Q(1,1) = Qy * 10;
+            Q(0,0) = Qx;
+            Q(1,1) = Qy;
             Q(2,2) = Qpsi;
             Q(3,3) = Qv;
 
 
             Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-            R(0,0) = Rthrottle * 0.1;
-            R(1,1) = Rsteer * 0.1;
+            R(0,0) = Rthrottle;
+            R(1,1) = Rsteer;
 
             
             Eigen::Matrix4d Qf = 5 * Q;
@@ -97,9 +97,9 @@ int main(int argc, char** argv)
             int screen_height = 512;
             int screen_width  = 1024;
             // MPC controller values
-            size_t N  = 10;
+            size_t N  = 5;
             double L  = 2.9;
-            double Ts = 0.1;
+            double Ts = 0.05;
 
             Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
             Q(0,0) = Qx;
