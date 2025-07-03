@@ -195,7 +195,7 @@ void XboxController::run()
                 {
                     case (AXIS_LEFT_STICK):
                     {
-                        float speed = -this->axes[axis]->y * 100 / 32767;
+                        float speed = -this->axes[axis]->y * 50 / 32767;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
 
                         if (speed < -5)
