@@ -231,14 +231,17 @@ int GPUInference::copyToCPUTrafficOutput()
 
     cudaStreamSynchronize(stream);
 
-    const std::string classes[7] = {
+    const std::string classes[10] = {
         "Speed 50km/h",
         "Speed 80km/h",
         "Yield",
         "Stop",
         "Danger",
         "Crosswalk",
-        "Unknown"
+        "Unknown",
+        "Traffic Green",
+        "Traffic Red",
+        "Traffic Yellow"
     };
 
     // Apply softmax to outputData
@@ -255,9 +258,9 @@ int GPUInference::copyToCPUTrafficOutput()
     // Print probabilities and predicted class
     int best_class = 0;
     float max_prob = probs[0];
-    // std::cout << "Traffic sign class probabilities: ";
+    std::cout << "Traffic sign class probabilities: ";
     for (int c = 0; c < outputChannels_; ++c) {
-        // std::cout << classes[c] << "(" << probs[c] << "), ";
+        std::cout << classes[c] << "(" << probs[c] << "), ";
         if (probs[c] > max_prob) {
             max_prob = probs[c];
             best_class = c;
