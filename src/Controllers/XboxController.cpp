@@ -180,18 +180,6 @@ void XboxController::run()
                             std::cout << "Autonomous Driving" << std::endl;
                             break;
                         }
-                        case BUTTON_CLICK_LEFT_RIGHT:
-                        {
-                            publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
-                            std::cout << "SAE_1_LKAS Driving" << std::endl;
-                            break;
-                        }
-                        case BUTTON_CLICK_UP_DOWN:
-                        {
-                            publisher_->publishActiveAutonomyLevel("SAE_3");
-                            std::cout << "SAE_3 Driving" << std::endl;
-                            break;
-                        }
                         case BUTTON_SELECT:
                         {
                             pidEnable_.load() ? pidEnable_.store(false) : pidEnable_.store(true);
@@ -199,27 +187,6 @@ void XboxController::run()
                             break;
                         }
                         
-                        default:
-                            break;
-                    }
-                } 
-                else if (this->event.value == -1) 
-                {
-                    switch (button) 
-                    {
-                        case BUTTON_CLICK_LEFT_RIGHT:
-                        {
-                            publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
-                            std::cout << "SAE_1_ACC Driving" << std::endl;
-                            break;
-                        }
-                        case BUTTON_CLICK_UP_DOWN:
-                        {
-                            publisher_->publishActiveAutonomyLevel("SAE_2");
-                            std::cout << "SAE_2 Driving" << std::endl;
-                            break;
-                        }
-
                         default:
                             break;
                     }
@@ -259,6 +226,30 @@ void XboxController::run()
                         // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
+                        break;
+                    }
+                    case BUTTON_CLICK_LEFT_RIGHT:
+                    {
+                        if (this->event.value == 1) {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
+                            std::cout << "SAE_1_LKAS Driving" << std::endl;
+                        } else if (this->event.value == -1) {
+                            publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
+                            std::cout << "SAE_1_ACC Driving" << std::endl;
+                        }
+
+                        break;
+                    }
+                    case BUTTON_CLICK_UP_DOWN:
+                    {
+                        if (this->event.value == 1) {
+                            publisher_->publishActiveAutonomyLevel("SAE_3");
+                            std::cout << "SAE_3 Driving" << std::endl;
+                        } else if (this->event.value == -1) {
+                            publisher_->publishActiveAutonomyLevel("SAE_4");
+                            std::cout << "SAE_4 Driving" << std::endl;
+                        }
+                        
                         break;
                     }
                     default:
