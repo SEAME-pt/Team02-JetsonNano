@@ -93,6 +93,7 @@ int XboxController::getAxisCount(void)
 int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
+    std::cout << axis << std::endl;
 
     if (axis < 3)
     {
@@ -228,7 +229,7 @@ void XboxController::run()
                         std::cout << "Direction" << std::endl;
                         break;
                     }
-                    case BUTTON_CLICK_LEFT_RIGHT:
+                    case (BUTTON_CLICK_LEFT_RIGHT):
                     {
                         if (this->event.value == 32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
@@ -240,7 +241,7 @@ void XboxController::run()
 
                         break;
                     }
-                    case BUTTON_CLICK_UP_DOWN:
+                    case (BUTTON_CLICK_UP_DOWN):
                     {
                         if (this->event.value == 32767) {
                             publisher_->publishActiveAutonomyLevel("SAE_3");
