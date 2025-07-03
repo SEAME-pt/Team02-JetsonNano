@@ -213,6 +213,9 @@ void XboxController::run()
                             std::cout << "SAE_2 Driving" << std::endl;
                             break;
                         }
+
+                        default:
+                            break;
                     }
                 } else {
                     break:
