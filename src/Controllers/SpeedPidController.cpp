@@ -25,6 +25,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
     autonomousDrive_    = "SAE_0";
     speed_lock_         = false;
     xboxController_     = xbox_controller;
+    current_speed_ = 0.0f;
 
     std::cout << "SpeedPID controller created!" << std::endl;
 
