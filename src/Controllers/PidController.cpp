@@ -209,10 +209,25 @@ void PidController::partialControl()
 // SAE_3
 void PidController::conditionalAutomation()
 {
-    // double current_time   = getCurrentTime();
-    publisher_->publishSpeed(0);
+    double current_time   = getCurrentTime();
+    // float manual_steering = xboxController_->getManualSteering();
+    float direction = steeringPID(cameraError_, current_time);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    // publisher_->publishSteering(manual_steering);
+    publisher_->publishSteering(direction);
+    // publisher_->publishSpeed(xboxController_->getManualSpeed());
+    if (!this->speed_lock_)
+    {
+        publisher_->publishDesiredSpeed(constant_speed_);
+        publisher_->publishCurrentGear(1);
+    }
+    else
+    {
+        publisher_->publishDesiredSpeed(0);
+        publisher_->publishCurrentGear(0);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+                static_cast<int>(fixed_delta_time_ * 1000)));
 }
 
 // SAE_4
