@@ -212,6 +212,8 @@ void PidController::LKASControl()
         std::cout << "SAE_1_LKAS: Lane Proximity measure timeout, LKAS control not applied." << std::endl;
         LKAS_enable = false;
         manualControl();
+        publisher_->publishSpeed(manual_speed);
+
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
