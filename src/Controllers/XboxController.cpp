@@ -181,6 +181,10 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_4");
                                 std::cout << "SAE_4 Driving" << std::endl;
                                 sae_4 = true;
+                                sae_3 = false;
+                                sae_2 = false;
+                                sae_1_LKAS = false;
+                                sae_1_ACC = false;
                             }
                             break;
                         }
@@ -243,22 +247,28 @@ void XboxController::run()
                             static bool sae_1_LKAS = false;
                             if (sae_1_LKAS == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
                                 std::cout << "SAE_1_LKAS Driving" << std::endl;
+                                sae_4 = false;
+                                sae_3 = false;
+                                sae_2 = false;
                                 sae_1_LKAS = true;
+                                sae_1_ACC = false;
                             }
                         } else if (this->event.value == -32767) {
                             static bool sae_1_ACC = false;
                             if (sae_1_ACC == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
                                 std::cout << "SAE_1_ACC Driving" << std::endl;
+                                sae_4 = false;
+                                sae_3 = false;
+                                sae_2 = false;
+                                sae_1_LKAS = false;
                                 sae_1_ACC = true;
                             }
                         }
@@ -268,26 +278,32 @@ void XboxController::run()
                     case (BUTTON_CLICK_UP_DOWN):
                     {
                         if (this->event.value == 32767) {
-                            static bool SAE_2 = false;
-                            if (SAE_2 == true) {
+                            static bool sae_2 = false;
+                            if (sae_2 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
-                                SAE_2 = false;
+                                sae_2 = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_2");
                                 std::cout << "SAE_2 Driving" << std::endl;
-                                SAE_2 = true;
+                                sae_4 = false;
+                                sae_3 = false;
+                                sae_2 = true;
+                                sae_1_LKAS = false;
+                                sae_1_ACC = false;
                             }
                         } else if (this->event.value == -32767) {
-                            static bool SAE_3 = false;
-                            if (SAE_3 == true) {
+                            static bool sae_3 = false;
+                            if (sae_3 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
-                                SAE_3 = false;
+                                sae_3 = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_3");
                                 std::cout << "SAE_3 Driving" << std::endl;
-                                SAE_3 = true;
+                                sae_4 = false;
+                                sae_3 = true;
+                                sae_2 = false;
+                                sae_1_LKAS = false;
+                                sae_1_ACC = false;
                             }
                         }
                         
