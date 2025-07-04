@@ -284,7 +284,7 @@ void PidController::run()
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
-            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos && getCurrentTime() - lastLaneProximityMeasure_ < 0.3) {
+            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
                 LKASControl();
             } else if (sae_level.find("SAE_1_ACC") != std::string::npos && getCurrentTime() - lastLaneProximityMeasure_ < 0.3) {
                 adaptiveCruiseControl();
