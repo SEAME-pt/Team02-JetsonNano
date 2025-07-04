@@ -131,6 +131,8 @@ class TrajectoryDefinition
     void publishCoeffs(std::vector<cv::Point>& curve);
 
     void publishLKAS(const std::string &value_str);
+    void publishACC(const std::string& value_str);
+    void publishSAE_2Enabler(const std::string& value_str);
 
     void mpcDebug(void);
 };

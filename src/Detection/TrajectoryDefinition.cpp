@@ -1483,6 +1483,26 @@ void TrajectoryDefinition::publishLKAS(const std::string& value_str)
     lkas_publisher_->put(std::move(buf));
 }
 
+void TrajectoryDefinition::publishACC(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    acc_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishSAE_2Enabler(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    sae_2_enable_publisher_->put(std::move(buf));
+}
+
 void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
 {
     const auto len = value_str.size() + 1;
