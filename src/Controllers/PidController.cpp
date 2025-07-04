@@ -166,10 +166,10 @@ void PidController::LKASControl()
     double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
-
+    double last_action    = 0.0; 
     if (current_time - lastLaneProximityMeasure_ < 0.3)
     {
-        if (LKASon && laneProximity_ < 0.35f && !LKAS_enable)
+        if (LKASon && laneProximity_ < 0.35f && !LKAS_enable && manual_speed < 30)
         {
             float direction = 105;
             publisher_->publishLaneAlert("Left");
@@ -178,8 +178,9 @@ void PidController::LKASControl()
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             LKAS_enable = true;
             LKASon = false;
+            last_action = getCurrentTime();
         }
-        else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable)
+        else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable && manual_speed < 30)
         {
             float direction = 75;
             publisher_->publishLaneAlert("Right");
@@ -188,14 +189,18 @@ void PidController::LKASControl()
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             LKAS_enable = true;
             LKASon = false;
+            last_action = getCurrentTime();
         }
         else if (LKASon)
         {
             if (LKAS_enable)
             {
-                publisher_->publishLaneAlert("Off");
-                LKAS_enable = false;
-                LKASon = false;
+                if (getCurrentTime() - last_action < 2000)
+                {
+                    publisher_->publishLaneAlert("Off");
+                    LKAS_enable = false;
+                    LKASon = false;
+                }
             }
             publisher_->publishSteering(manual_steering);
         }
