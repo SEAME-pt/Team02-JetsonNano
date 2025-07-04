@@ -975,6 +975,7 @@ cv::Mat TrajectoryDefinition::defineLanePolyline(
     else
     {
         std::cerr << "Not enough points to calculate coefficients" << std::endl;
+        return coeffs;
     }
 }
 
