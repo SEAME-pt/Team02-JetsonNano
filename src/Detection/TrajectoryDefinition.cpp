@@ -777,7 +777,26 @@ void TrajectoryDefinition::checkPredicedCurve(
 
     float realDistance = calculateLaneDistance(realLane, predictedCurve);
 
-    if (realDistance < minDistance || realDistance > maxDistance)
+    float avgX = 0.0f;
+    for (const auto& pt : predictedCurve)
+        avgX += pt.x;
+    avgX /= predictedCurve.size();
+
+    float avgXRealLane = 0.0f;
+    for (const auto& pt : realLane)
+        avgXRealLane += pt.x;
+    avgXRealLane /= realLane.size();
+
+    bool correctSide = true;
+
+    if (leftLane) {
+        if (avgXRealLane > avgX)
+            correctSide = false;
+    } else {
+        if (avgXRealLane < avgX)
+            correctSide = false;
+    }
+    if ((realDistance < minDistance || realDistance > maxDistance) && correctSide)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
