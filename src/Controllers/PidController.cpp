@@ -76,6 +76,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         {
             laneProximity_ = std::stof(sample.get_payload().as_string());
             lastLaneProximityMeasure_ = getCurrentTime();
+            LKASon = true;
         },
         zenoh::closures::none));
 
@@ -168,30 +169,33 @@ void PidController::LKASControl()
 
     if (current_time - lastLaneProximityMeasure_ < 0.3)
     {
-        if (laneProximity_ < 0.35f && !LKAS_enable)
+        if (LKASon && laneProximity_ < 0.35f && !LKAS_enable)
         {
             float direction = 105;
             publisher_->publishLaneAlert("Left");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
             LKAS_enable = true;
+            LKASon = false;
         }
-        else if (laneProximity_ > 0.65 && !LKAS_enable)
+        else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable)
         {
             float direction = 75;
             publisher_->publishLaneAlert("Right");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
             LKAS_enable = true;
+            LKASon = false;
         }
-        else
+        else if (LKASon)
         {
             if (LKAS_enable)
             {
                 publisher_->publishLaneAlert("Off");
                 LKAS_enable = false;
+                LKASon = false;
             }
             publisher_->publishSteering(manual_steering);
         }

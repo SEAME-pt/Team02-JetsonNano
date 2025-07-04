@@ -46,6 +46,11 @@ private:
     float laneProximity_ = 0.5f;
     double lastLaneProximityMeasure_ = 0.0;
 
+    bool LKAS_enable = false;
+    bool LKASon = false;
+
+    
+
 private:
     //SAE_0
     void manualControl();
