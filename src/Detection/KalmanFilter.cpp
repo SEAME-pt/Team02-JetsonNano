@@ -110,12 +110,6 @@ cv::Mat KalmanFilter::polyfit(const cv::Mat& y_vals, const cv::Mat& x_vals,
         std::cerr << "Error in polyfit: " << e.what() << std::endl;
         return cv::Mat();
     }
-    if (abs(coeffs.at<double>(0)) < 0.0005)
-        coeffs.at<double>(0) = 0;
-    if (abs(coeffs.at<double>(1)) < 0.001)
-        coeffs.at<double>(1) = 0;
-    if (abs(coeffs.at<double>(2)) < 0.001)
-        coeffs.at<double>(2) = 0;
 
     return coeffs;
 }
