@@ -234,6 +234,13 @@ void SpeedPidController::run()
             } else if (sae_level.find("SAE_2") != std::string::npos) {
 
             } else if (sae_level.find("SAE_3") != std::string::npos) {
+                double current_time = getCurrentTime();
+                float error = desired_speed_ - current_speed_;
+                double throttle = speedPID(error, current_time);
+                throttle = std::max(0.0, throttle); 
+                publisher_->publishSpeed(throttle);
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(fixed_delta_time_ * 1000)));
 
             } else if (sae_level.find("SAE_4") != std::string::npos) {
                 double current_time = getCurrentTime();
