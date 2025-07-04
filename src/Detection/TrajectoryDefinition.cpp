@@ -1153,10 +1153,15 @@ bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double thresho
 }
 
 void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
-    if (!isCurveStraight(rightCoeffs, 1e-3) || !isCurveStraight(leftCoeffs, 1e-3)) {
-        std::cout << "Lane is curved!" << std::endl;
-        return ;
-    }
+    // if (!isCurveStraight(rightCoeffs, 1e-3)) {
+    //     std::cout << "Lane is curved!" << std::endl;
+    //     return ;
+    // }
+
+    !isCurveStraight(rightCoeffs, 1e-3)
+    std::cout << "Right" << std::endl;
+    !isCurveStraight(leftCoeffs, 1e-3)
+    std::cout << "Left" << std::endl;
 
     float centerX  = frameWidth_ / 2;
     float laneWidth = calculateHistoricalLaneWidth();
