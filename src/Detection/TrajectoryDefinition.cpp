@@ -255,7 +255,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     allPolylinesViz_.copyTo(frame);
 }
 
-void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Mat>> &coeffsSave) {
+void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Mat> &coeffsSave) {
     for (int i = static_cast<int>(lanePolylines.size()) - 1; i >= 0; i--)
     {
         if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3500))
@@ -265,7 +265,7 @@ void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> 
     }
 }
 
-void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, std::vector<cv::Mat>> &coeffsSave) {
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, std::vector<cv::Mat> &coeffsSave) {
     if (!prevRightCurve.empty() && !prevLeftCurve.empty()) {
         int bestLeftIdx = -1, bestRightIdx = -1;
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
