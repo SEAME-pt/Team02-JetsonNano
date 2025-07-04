@@ -206,6 +206,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
     std::vector<std::vector<cv::Point>> lanePolylines;
+    std::vector<cv::Mat>> coeffsSave;
 
     currentFrame++;
     allPolylinesViz_ = frame.clone();
@@ -219,10 +220,10 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     // float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
     // mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
-    filterFalseLanes(lanePolylines);
+    filterFalseLanes(lanePolylines, coeffsSave);
 
     if (lanePolylines.size() >= 2) {
-        defineLaneEnv(lanePolylines, leftCurve, rightCurve);
+        defineLaneEnv(lanePolylines, leftCurve, rightCurve, coeffsSave);
     } else if (lanePolylines.size() == 1) {
         if (checkIfLeftLane(lanePolylines[0])) {
             leftCurve = lanePolylines[0];
@@ -254,17 +255,17 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     allPolylinesViz_.copyTo(frame);
 }
 
-void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines) {
+void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Mat>> &coeffsSave) {
     for (int i = static_cast<int>(lanePolylines.size()) - 1; i >= 0; i--)
     {
         if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3500))
             lanePolylines.erase(lanePolylines.begin() + i);
         else
-            defineLanePolyline(lanePolylines[i]);
+            coeffsSave.push_back(defineLanePolyline(lanePolylines[i]));
     }
 }
 
-void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, std::vector<cv::Mat>> &coeffsSave) {
     if (!prevRightCurve.empty() && !prevLeftCurve.empty()) {
         int bestLeftIdx = -1, bestRightIdx = -1;
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
@@ -303,7 +304,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             leftLaneLastUpdatedFrame = currentFrame;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            checkLanesDistanceForLKAS(leftCurve, rightCurve);
+            checkLanesDistanceForLKAS(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
         } else if (bestLeftIdx != -1) {
             leftCurve = lanePolylines[bestLeftIdx];
             
@@ -903,7 +904,7 @@ void TrajectoryDefinition::drawPolyLanes(
     }
 }
 
-void TrajectoryDefinition::defineLanePolyline(
+cv::Mat TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
     std::sort(curve.begin(), curve.end(),
@@ -943,6 +944,8 @@ void TrajectoryDefinition::defineLanePolyline(
                           coeffs.at<double>(3) * yVal * yVal * yVal;
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+
+        return coeffs;
     }
     else if (x_values.size() >= 4)
     {
@@ -966,6 +969,8 @@ void TrajectoryDefinition::defineLanePolyline(
                           coeffs.at<double>(2) * yVal * yVal;
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+
+        return coeffs;
     }
     else
     {
@@ -1128,7 +1133,26 @@ bool TrajectoryDefinition::checkIfLeftLane(
     return (isLeftLane);
 }
 
-void TrajectoryDefinition::checkLanesDistanceForLKAS(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double threshold) {
+    if (coeffs.rows >= 4) {
+        double c = std::abs(coeffs.at<double>(2));
+        double d = std::abs(coeffs.at<double>(3));
+        return (c < threshold && d < threshold);
+    }
+    else if (coeffs.rows == 3) {
+        double c = std::abs(coeffs.at<double>(2));
+        return (c < threshold);
+    }
+
+    return true;
+}
+
+void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
+    if (!isCurveStraight(rightCoeffs, 1e-3) || !isCurveStraight(leftCoeffs, 1e-3)) {
+        std::cout << "Lane is curved!" << std::endl;
+        return ;
+    }
+
     float centerX  = frameWidth_ / 2;
     float laneWidth = calculateHistoricalLaneWidth();
 
@@ -1143,7 +1167,7 @@ void TrajectoryDefinition::checkLanesDistanceForLKAS(std::vector<cv::Point>& lef
     avgXRightCurve /= rightCurve.size();
 
     float diff = (centerX - avgXLeftCurve) / laneWidth;
-    std::cout << "Diff: " << diff << std::endl;
+    
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
