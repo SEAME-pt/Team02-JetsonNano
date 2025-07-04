@@ -96,7 +96,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
-            std::cout << "Current Speed: " << current_speed_ << std::endl;
 
             // if (logging_)
             // {
