@@ -1158,9 +1158,9 @@ void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurv
     //     return ;
     // }
 
-    !isCurveStraight(rightCoeffs, 1e-3)
+    !isCurveStraight(rightCoeffs, 1e-3);
     std::cout << "Right" << std::endl;
-    !isCurveStraight(leftCoeffs, 1e-3)
+    !isCurveStraight(leftCoeffs, 1e-3);
     std::cout << "Left" << std::endl;
 
     float centerX  = frameWidth_ / 2;
