@@ -226,7 +226,7 @@ void SpeedPidController::run()
         std::string sae_level = getAutonomousDriveState();
         if (!speed_lock_)
         {
-            if (getCurrentTime() - last_measure_ < 0.3)
+            if (getCurrentTime() - last_measure_ > 0.3)
             {
                 publisher_->publishSpeed(0);
                 std::cout << "Waiting for speed measurement..." << std::endl;
