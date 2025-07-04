@@ -1130,6 +1130,7 @@ bool TrajectoryDefinition::checkIfLeftLane(
 
 void TrajectoryDefinition::checkLanesDistanceForLKAS(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
     float centerX  = frameWidth_ / 2;
+    float laneWidth = calculateHistoricalLaneWidth();
 
     float avgXLeftCurve = 0.0f;
     for (const auto& pt : leftCurve)
@@ -1141,9 +1142,8 @@ void TrajectoryDefinition::checkLanesDistanceForLKAS(std::vector<cv::Point>& lef
         avgXRightCurve += pt.x;
     avgXRightCurve /= rightCurve.size();
 
-    std::cout << "Center x: " << centerX << std::endl;
-    std::cout << "avgXRight: " << avgXRightCurve << std::endl;
-    std::cout << "avgXLeft: " << avgXLeftCurve << std::endl;
+    float diff = (centerX - avgXLeftCurve) / laneWidth;
+    std::cout << "Diff: " << diff << std::endl;
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
