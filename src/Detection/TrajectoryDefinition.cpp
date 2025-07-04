@@ -304,7 +304,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             leftLaneLastUpdatedFrame = currentFrame;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            checkLanesDistanceForLKAS(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
+            checkAutomationLevel(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
         } else if (bestLeftIdx != -1) {
             leftCurve = lanePolylines[bestLeftIdx];
             
@@ -1169,6 +1169,7 @@ void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurv
 
     float diff = (centerX - avgXLeftCurve) / laneWidth;
     
+    std::cout << diff << std::endl;
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
