@@ -200,9 +200,8 @@ void PidController::LKASControl()
     else
     {
         publisher_->publishSAELevelAttributionError("SAE_1_LKAS");
-        std::cout << "SAE_1_LKAS: Lane Proximity measure timeout, switching to manual control." << std::endl;
+        std::cout << "SAE_1_LKAS: Lane Proximity measure timeout, LKAS control not applied." << std::endl;
         LKAS_enable = false;
-        publisher_->publishActiveAutonomyLevel("SAE_0");
         manualControl();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
