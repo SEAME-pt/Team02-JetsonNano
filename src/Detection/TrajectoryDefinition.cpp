@@ -302,6 +302,8 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             
             leftLaneLastUpdatedFrame = currentFrame;
             rightLaneLastUpdatedFrame = currentFrame;
+
+            checkLanesDistanceForLKAS(leftCurve, rightCurve);
         } else if (bestLeftIdx != -1) {
             leftCurve = lanePolylines[bestLeftIdx];
             
@@ -1124,6 +1126,24 @@ bool TrajectoryDefinition::checkIfLeftLane(
     }
 
     return (isLeftLane);
+}
+
+void TrajectoryDefinition::checkLanesDistanceForLKAS(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+    float centerX  = frameWidth_ / 2;
+
+    float avgXLeftCurve = 0.0f;
+    for (const auto& pt : leftCurve)
+        avgXLeftCurve += pt.x;
+    avgXLeftCurve /= leftCurve.size();
+
+    float avgXRightCurve = 0.0f;
+    for (const auto& pt : rightCurve)
+        avgXRightCurve += pt.x;
+    avgXRightCurve /= rightCurve.size();
+
+    std::cout << "Center x: " << centerX << std::endl;
+    std::cout << "avgXRight: " << avgXRightCurve << std::endl;
+    std::cout << "avgXLeft: " << avgXLeftCurve << std::endl;
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
