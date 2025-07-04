@@ -1176,7 +1176,7 @@ void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurv
         float diff = (centerX - avgXLeftCurve) / laneWidth;
         
         publishLKAS(std::to_string(diff));
-        std::cout "Publishing lkas value: " << diff < std::endl;
+        std::cout << "Publishing lkas value: " << diff < std::endl;
     }
 }
 
