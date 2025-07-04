@@ -229,6 +229,13 @@ void XboxController::run()
                     case (AXIS_RIGHT_STICK):
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
+
+                        if (sae_2 || sae_3 || sae_4) {
+                            publisher_->publishActiveAutonomyLevel("SAE_0");
+                            sae_2 = false;
+                            sae_3 = false;
+                            sae_4 = false;
+                        }
                         // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
                         std::cout << "Direction" << std::endl;
