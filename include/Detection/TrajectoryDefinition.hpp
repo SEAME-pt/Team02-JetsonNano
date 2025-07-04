@@ -78,6 +78,9 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> frame_publisher_;
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
+    std::optional<zenoh::Publisher> lkas_publisher_;
+    std::optional<zenoh::Publisher> acc_publisher_;
+    std::optional<zenoh::Publisher> sae_2_enable_publisher_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
 
