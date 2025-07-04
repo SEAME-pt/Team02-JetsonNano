@@ -25,6 +25,12 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/LaneMask")));
     class_mask_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
+    lkas_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/LKAS")));
+    acc_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/ACC")));
+    sae_2_enable_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
 
     // cv_stream = cv::cuda::Stream();
 
@@ -1139,13 +1145,13 @@ bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double thresho
         double c = std::abs(coeffs.at<double>(1));
         double d = std::abs(coeffs.at<double>(2));
         double e = std::abs(coeffs.at<double>(3));
-        std::cout << "c: " << c << " d: " << d << " e: " << e << std::endl;
+        // std::cout << "c: " << c << " d: " << d << " e: " << e << std::endl;
         return (c < 1 && d < threshold && e < threshold);
     }
     else if (coeffs.rows == 3) {
         double c = std::abs(coeffs.at<double>(1));
         double d = std::abs(coeffs.at<double>(2));
-        std::cout << "c: " << c << " d: " << d << std::endl;
+        // std::cout << "c: " << c << " d: " << d << std::endl;
         return (c < 1 && d < threshold);
     }
 
@@ -1153,27 +1159,24 @@ bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double thresho
 }
 
 void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
-    if (!isCurveStraight(rightCoeffs, 1e-3) || !isCurveStraight(leftCoeffs, 1e-3)) {
-        std::cout << "Lane is curved!" << std::endl;
-        return ;
+    if (isCurveStraight(rightCoeffs, 1e-3) && isCurveStraight(leftCoeffs, 1e-3)) {
+        float centerX  = frameWidth_ / 2;
+        float laneWidth = calculateHistoricalLaneWidth();
+
+        float avgXLeftCurve = 0.0f;
+        for (const auto& pt : leftCurve)
+            avgXLeftCurve += pt.x;
+        avgXLeftCurve /= leftCurve.size();
+
+        float avgXRightCurve = 0.0f;
+        for (const auto& pt : rightCurve)
+            avgXRightCurve += pt.x;
+        avgXRightCurve /= rightCurve.size();
+
+        float diff = (centerX - avgXLeftCurve) / laneWidth;
+        
+        publishLKAS(std::to_string(diff));
     }
-
-    float centerX  = frameWidth_ / 2;
-    float laneWidth = calculateHistoricalLaneWidth();
-
-    float avgXLeftCurve = 0.0f;
-    for (const auto& pt : leftCurve)
-        avgXLeftCurve += pt.x;
-    avgXLeftCurve /= leftCurve.size();
-
-    float avgXRightCurve = 0.0f;
-    for (const auto& pt : rightCurve)
-        avgXRightCurve += pt.x;
-    avgXRightCurve /= rightCurve.size();
-
-    float diff = (centerX - avgXLeftCurve) / laneWidth;
-    
-    std::cout << diff << std::endl;
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
@@ -1468,6 +1471,16 @@ void TrajectoryDefinition::mpcDebug(void) {
             cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
         }
     }
+}
+
+void TrajectoryDefinition::publishLKAS(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    lkas_publisher_->put(std::move(buf));
 }
 
 void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)

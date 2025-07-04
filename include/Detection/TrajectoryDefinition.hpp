@@ -127,5 +127,7 @@ class TrajectoryDefinition
     void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishCoeffs(std::vector<cv::Point>& curve);
 
+    void publishLKAS(const std::string &value_str);
+
     void mpcDebug(void);
 };
