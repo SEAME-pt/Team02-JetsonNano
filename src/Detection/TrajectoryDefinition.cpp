@@ -796,7 +796,7 @@ void TrajectoryDefinition::checkPredicedCurve(
         if (avgXRealLane < avgX)
             correctSide = false;
     }
-    if ((realDistance < minDistance || realDistance > maxDistance) && correctSide)
+    if (realDistance < minDistance || realDistance > maxDistance || !correctSide)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
