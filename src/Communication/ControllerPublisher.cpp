@@ -43,7 +43,7 @@ ControllerPublisher::ControllerPublisher(
     laneAlert_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/LaneAlert")));
 
-    SAElevel_pub.emplace(session_->declare_publisher(
+    SAElevelError_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/SAELevelAttributionError")));
 
     
