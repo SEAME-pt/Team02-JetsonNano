@@ -175,7 +175,7 @@ void PidController::LKASControl()
             publisher_->publishLaneAlert("Left");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             LKAS_enable = true;
             LKASon = false;
             last_action = getCurrentTime();
@@ -186,7 +186,7 @@ void PidController::LKASControl()
             publisher_->publishLaneAlert("Right");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             LKAS_enable = true;
             LKASon = false;
             last_action = getCurrentTime();
