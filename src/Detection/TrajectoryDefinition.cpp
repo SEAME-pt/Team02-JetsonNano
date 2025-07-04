@@ -789,7 +789,7 @@ void TrajectoryDefinition::checkPredicedCurve(
 
     bool correctSide = true;
 
-    if (leftLane) {
+    if (isLeftLane) {
         if (avgXRealLane > avgX)
             correctSide = false;
     } else {
