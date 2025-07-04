@@ -173,6 +173,7 @@ void PidController::LKASControl()
         {
             float direction = 105;
             publisher_->publishLaneAlert("Left");
+            std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
@@ -180,6 +181,7 @@ void PidController::LKASControl()
         {
             float direction = 75;
             publisher_->publishLaneAlert("Right");
+            std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
