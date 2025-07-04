@@ -1158,6 +1158,7 @@ void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurv
     //     return ;
     // }
 
+    (void) leftCoeffs;
     !isCurveStraight(rightCoeffs, 1e-3);
     std::cout << "Right" << std::endl;
     // !isCurveStraight(leftCoeffs, 1e-3);
