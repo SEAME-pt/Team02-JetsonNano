@@ -206,7 +206,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
     std::vector<std::vector<cv::Point>> lanePolylines;
-    std::vector<cv::Mat>> coeffsSave;
+    std::vector<cv::Mat> coeffsSave;
 
     currentFrame++;
     allPolylinesViz_ = frame.clone();
