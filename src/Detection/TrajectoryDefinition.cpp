@@ -1146,13 +1146,13 @@ bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double thresho
         double d = std::abs(coeffs.at<double>(2));
         double e = std::abs(coeffs.at<double>(3));
         // std::cout << "c: " << c << " d: " << d << " e: " << e << std::endl;
-        return (c < 1 && d < threshold && e < threshold);
+        return (d < threshold && e < threshold);
     }
     else if (coeffs.rows == 3) {
         double c = std::abs(coeffs.at<double>(1));
         double d = std::abs(coeffs.at<double>(2));
         // std::cout << "c: " << c << " d: " << d << std::endl;
-        return (c < 1 && d < threshold);
+        return (d < threshold);
     }
 
     return true;
