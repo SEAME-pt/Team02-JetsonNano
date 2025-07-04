@@ -91,6 +91,8 @@ private:
     const float MAX_THROTTLE_RATE = 20.0f;
     float u_stiction = 30.0;
 
+    double last_measure_ = 0.0;
+
 
 
 
