@@ -171,8 +171,6 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
-                            static bool sae_4 = false;
-
                             if (sae_4 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 std::cout << "SAE_0 Driving" << std::endl;
@@ -244,7 +242,6 @@ void XboxController::run()
                     case (BUTTON_CLICK_LEFT_RIGHT):
                     {
                         if (this->event.value == 32767) {
-                            static bool sae_1_LKAS = false;
                             if (sae_1_LKAS == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
@@ -258,7 +255,6 @@ void XboxController::run()
                                 sae_1_ACC = false;
                             }
                         } else if (this->event.value == -32767) {
-                            static bool sae_1_ACC = false;
                             if (sae_1_ACC == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
@@ -278,7 +274,6 @@ void XboxController::run()
                     case (BUTTON_CLICK_UP_DOWN):
                     {
                         if (this->event.value == 32767) {
-                            static bool sae_2 = false;
                             if (sae_2 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_2 = false;
@@ -292,7 +287,6 @@ void XboxController::run()
                                 sae_1_ACC = false;
                             }
                         } else if (this->event.value == -32767) {
-                            static bool sae_3 = false;
                             if (sae_3 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_3 = false;
