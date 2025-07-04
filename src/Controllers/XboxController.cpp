@@ -247,7 +247,6 @@ void XboxController::run()
                             static bool sae_1_LKAS = false;
                             if (sae_1_LKAS == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
@@ -261,7 +260,6 @@ void XboxController::run()
                         } else if (this->event.value == -32767) {
                             static bool sae_1_ACC = false;
                             if (sae_1_ACC == true) {
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
                             } else {
@@ -283,7 +281,6 @@ void XboxController::run()
                             static bool sae_2 = false;
                             if (sae_2 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_2 = false;
                             } else {
                                 publisher_->publishActiveAutonomyLevel("SAE_2");
@@ -297,7 +294,6 @@ void XboxController::run()
                         } else if (this->event.value == -32767) {
                             static bool sae_3 = false;
                             if (sae_3 == true) {
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_3 = false;
                             } else {
