@@ -20,6 +20,7 @@ private:
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
+    std::optional<zenoh::Subscriber<void>> LKAS_subscriber;
     
     float kp_;
     float ki_;
@@ -42,6 +43,8 @@ private:
     bool speed_lock_;
 
     float lane_departure_threshold_;
+    float laneProximity_ = 0.5f;
+    double lastLaneProximityMeasure_ = 0.0;
 
 private:
     //SAE_0
