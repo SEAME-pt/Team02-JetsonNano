@@ -229,6 +229,8 @@ void SpeedPidController::run()
             {
                 publisher_->publishSpeed(0);
                 std::cout << "Waiting for speed measurement..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                    static_cast<int>(fixed_delta_time_ * 1000)));
             } else {
                 if (sae_level.find("SAE_0") != std::string::npos) {
                     float manual_speed    = xboxController_->getManualSpeed();
