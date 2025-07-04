@@ -169,7 +169,7 @@ void PidController::LKASControl()
     double last_action    = 0.0; 
     if (current_time - lastLaneProximityMeasure_ < 0.3)
     {
-        if (LKASon && laneProximity_ < 0.35f && !LKAS_enable && manual_speed > 15)
+        if (LKASon && laneProximity_ < 0.35f && !LKAS_enable && manual_speed > 10)
         {
             float direction = 105;
             publisher_->publishLaneAlert("Left");
@@ -180,13 +180,13 @@ void PidController::LKASControl()
             LKASon = false;
             last_action = getCurrentTime();
         }
-        else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable && manual_speed > 15)
+        else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable && manual_speed > 10)
         {
             float direction = 75;
             publisher_->publishLaneAlert("Right");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             LKAS_enable = true;
             LKASon = false;
             last_action = getCurrentTime();
@@ -211,6 +211,7 @@ void PidController::LKASControl()
         publisher_->publishSAELevelAttributionError("SAE_1_LKAS");
         std::cout << "SAE_1_LKAS: Lane Proximity measure timeout, LKAS control not applied." << std::endl;
         LKAS_enable = false;
+        publisher_->publishLaneAlert("Off");
         manualControl();
         publisher_->publishSpeed(manual_speed);
 
