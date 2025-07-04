@@ -78,6 +78,9 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> frame_publisher_;
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
+    std::optional<zenoh::Publisher> lkas_publisher_;
+    std::optional<zenoh::Publisher> acc_publisher_;
+    std::optional<zenoh::Publisher> sae_2_enable_publisher_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
 
@@ -98,13 +101,13 @@ class TrajectoryDefinition
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
     std::vector<std::vector<cv::Point>> clusterLaneMask(const cv::Mat& laneMask, int kernelSize, int minArea, int maxLanes);
     void mergeLaneComponents(std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist, float maxVerticalGap);
-    void defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
+    void defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, std::vector<cv::Mat> &coeffsSave);
     void onePolyline(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void twoPolylines(std::vector<std::vector<cv::Point>> lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void drawPolyLanes(std::vector<std::vector<cv::Point>> lanePolylines);
     bool checkIfLeftLane(const std::vector<cv::Point>& lanePolyline);
 
-    void filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines);
+    void filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Mat> &coeffsSave);
     void lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
 
     float calculateHistoricalLaneWidth();
@@ -117,13 +120,19 @@ class TrajectoryDefinition
     void defineTrajectoryCurve(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void drawCurves(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void createMidPointError(std::vector<cv::Point>& midCurve);  
-    void defineLanePolyline(std::vector<cv::Point>& curve);
+    cv::Mat defineLanePolyline(std::vector<cv::Point>& curve);
+    void checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs);
+    bool isCurveStraight(const cv::Mat& coeffs, double threshold);
     
     bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishSpeedLock(const std::string &value_str);
 
     void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     void publishCoeffs(std::vector<cv::Point>& curve);
+
+    void publishLKAS(const std::string &value_str);
+    void publishACC(const std::string& value_str);
+    void publishSAE_2Enabler(const std::string& value_str);
 
     void mpcDebug(void);
 };
