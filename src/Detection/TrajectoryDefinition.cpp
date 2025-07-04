@@ -25,6 +25,12 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/LaneMask")));
     class_mask_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
+    lkas_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/LKAS")));
+    acc_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/ACC")));
+    sae_2_enable_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
 
     // cv_stream = cv::cuda::Stream();
 
@@ -206,6 +212,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     std::vector<cv::Point> rightCurve;
     std::vector<cv::Point> midCurve;
     std::vector<std::vector<cv::Point>> lanePolylines;
+    std::vector<cv::Mat> coeffsSave;
 
     currentFrame++;
     allPolylinesViz_ = frame.clone();
@@ -219,10 +226,10 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     // float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
     // mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
-    filterFalseLanes(lanePolylines);
+    filterFalseLanes(lanePolylines, coeffsSave);
 
     if (lanePolylines.size() >= 2) {
-        defineLaneEnv(lanePolylines, leftCurve, rightCurve);
+        defineLaneEnv(lanePolylines, leftCurve, rightCurve, coeffsSave);
     } else if (lanePolylines.size() == 1) {
         if (checkIfLeftLane(lanePolylines[0])) {
             leftCurve = lanePolylines[0];
@@ -255,17 +262,17 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     allPolylinesViz_.copyTo(frame);
 }
 
-void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines) {
+void TrajectoryDefinition::filterFalseLanes(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Mat> &coeffsSave) {
     for (int i = static_cast<int>(lanePolylines.size()) - 1; i >= 0; i--)
     {
         if (lanePolylines[i].size() < static_cast<unsigned int>(frameHeight_ * frameWidth_ / 3500))
             lanePolylines.erase(lanePolylines.begin() + i);
         else
-            defineLanePolyline(lanePolylines[i]);
+            coeffsSave.push_back(defineLanePolyline(lanePolylines[i]));
     }
 }
 
-void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve) {
+void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, std::vector<cv::Mat> &coeffsSave) {
     if (!prevRightCurve.empty() && !prevLeftCurve.empty()) {
         int bestLeftIdx = -1, bestRightIdx = -1;
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
@@ -303,6 +310,8 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             
             leftLaneLastUpdatedFrame = currentFrame;
             rightLaneLastUpdatedFrame = currentFrame;
+
+            checkAutomationLevel(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
         } else if (bestLeftIdx != -1) {
             leftCurve = lanePolylines[bestLeftIdx];
             
@@ -773,12 +782,31 @@ void TrajectoryDefinition::checkPredicedCurve(
     const std::vector<cv::Point>& realLane, bool isLeftLane)
 {
     float expectedWidth = calculateHistoricalLaneWidth();
-    float minDistance = calculateHistoricalLaneWidth() * 0.95;
-    float maxDistance = calculateHistoricalLaneWidth() * 1.15;
+    float minDistance = calculateHistoricalLaneWidth() * 0.90;
+    float maxDistance = calculateHistoricalLaneWidth() * 1.10;
 
     float realDistance = calculateLaneDistance(realLane, predictedCurve);
 
-    if (realDistance < minDistance || realDistance > maxDistance)
+    float avgX = 0.0f;
+    for (const auto& pt : predictedCurve)
+        avgX += pt.x;
+    avgX /= predictedCurve.size();
+
+    float avgXRealLane = 0.0f;
+    for (const auto& pt : realLane)
+        avgXRealLane += pt.x;
+    avgXRealLane /= realLane.size();
+
+    bool correctSide = true;
+
+    if (isLeftLane) {
+        if (avgXRealLane > avgX)
+            correctSide = false;
+    } else {
+        if (avgXRealLane < avgX)
+            correctSide = false;
+    }
+    if (realDistance < minDistance || realDistance > maxDistance || !correctSide)
     {
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
@@ -881,7 +909,7 @@ void TrajectoryDefinition::drawPolyLanes(
     }
 }
 
-void TrajectoryDefinition::defineLanePolyline(
+cv::Mat TrajectoryDefinition::defineLanePolyline(
     std::vector<cv::Point>& curve) 
 {
     std::sort(curve.begin(), curve.end(),
@@ -921,6 +949,8 @@ void TrajectoryDefinition::defineLanePolyline(
                           coeffs.at<double>(3) * yVal * yVal * yVal;
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+
+        return coeffs;
     }
     else if (x_values.size() >= 4)
     {
@@ -944,10 +974,13 @@ void TrajectoryDefinition::defineLanePolyline(
                           coeffs.at<double>(2) * yVal * yVal;
             curve.push_back(cv::Point(static_cast<int>(xVal), y));
         }
+
+        return coeffs;
     }
     else
     {
         std::cerr << "Not enough points to calculate coefficients" << std::endl;
+        return coeffs;
     }
 }
 
@@ -1104,6 +1137,46 @@ bool TrajectoryDefinition::checkIfLeftLane(
     }
 
     return (isLeftLane);
+}
+
+bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double threshold) {
+    if (coeffs.rows >= 4) {
+        double c = std::abs(coeffs.at<double>(1));
+        double d = std::abs(coeffs.at<double>(2));
+        double e = std::abs(coeffs.at<double>(3));
+        // std::cout << "c: " << c << " d: " << d << " e: " << e << std::endl;
+        return (c < 1 && d < threshold && e < threshold);
+    }
+    else if (coeffs.rows == 3) {
+        double c = std::abs(coeffs.at<double>(1));
+        double d = std::abs(coeffs.at<double>(2));
+        // std::cout << "c: " << c << " d: " << d << std::endl;
+        return (c < 1 && d < threshold);
+    }
+
+    return true;
+}
+
+void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
+    if (isCurveStraight(rightCoeffs, 1e-3) && isCurveStraight(leftCoeffs, 1e-3)) {
+        float centerX  = frameWidth_ / 2;
+        float laneWidth = calculateHistoricalLaneWidth();
+
+        float avgXLeftCurve = 0.0f;
+        for (const auto& pt : leftCurve)
+            avgXLeftCurve += pt.x;
+        avgXLeftCurve /= leftCurve.size();
+
+        float avgXRightCurve = 0.0f;
+        for (const auto& pt : rightCurve)
+            avgXRightCurve += pt.x;
+        avgXRightCurve /= rightCurve.size();
+
+        float diff = (centerX - avgXLeftCurve) / laneWidth;
+        
+        publishLKAS(std::to_string(diff));
+        std::cout << "Publishing lkas value: " << diff << std::endl;
+    }
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
@@ -1398,6 +1471,36 @@ void TrajectoryDefinition::mpcDebug(void) {
             cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
         }
     }
+}
+
+void TrajectoryDefinition::publishLKAS(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    lkas_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishACC(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    acc_publisher_->put(std::move(buf));
+}
+
+void TrajectoryDefinition::publishSAE_2Enabler(const std::string& value_str)
+{
+    const auto len = value_str.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), value_str.c_str(), len);
+    sae_2_enable_publisher_->put(std::move(buf));
 }
 
 void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
