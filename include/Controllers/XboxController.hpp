@@ -113,6 +113,13 @@ class XboxController
     std::atomic<float> manual_speed_{0.0f};
     std::atomic<bool> pidEnable_{true};
 
+    bool sae_4 = false;
+    bool sae_3 = false;
+    bool sae_2 = false;
+    bool sae_1_LKAS = false;
+    bool sae_1_ACC = false;
+  
+
   public:
     std::vector<struct axis_state*> axes;
     struct js_event event;
