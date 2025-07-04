@@ -241,11 +241,12 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
     
+    createMidPointError(midCurve);
+    publishCoeffs(midCurve);
     drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
     // // obstacleAvoidance(class_mask, midCurve);
-   
-    createMidPointError(midCurve);
+    
     
     // // checkForwardCollision(class_mask, midCurve);
 
@@ -827,8 +828,6 @@ void TrajectoryDefinition::defineTrajectoryCurve(
         midCurve.push_back(cv::Point(midX, midY));
 
     }
-    
-    publishCoeffs(midCurve);
 }
 
 void TrajectoryDefinition::drawCurves(

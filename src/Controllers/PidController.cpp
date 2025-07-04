@@ -69,6 +69,15 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             //           << std::endl;
         },
         zenoh::closures::none));
+    
+    LKAS_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/LKAS",
+        [this](const zenoh::Sample& sample)
+        {
+            laneProximity_ = std::stof(sample.get_payload().as_string());
+            lastLaneProximityMeasure_ = getCurrentTime();
+        },
+        zenoh::closures::none));
 
     std::cout << "PID controller created!" << std::endl;
 }
@@ -152,38 +161,47 @@ void PidController::manualControl()
 // SAE_1_LKAS
 void PidController::LKASControl()
 {
+    static bool LKAS_enable = false;
     double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
     float manual_speed    = xboxController_->getManualSpeed();
-    static bool LKAS_enable = false;
 
-    if (std::abs(cameraError_) > lane_departure_threshold_ &&
-        std::abs(cameraError_) < 0.5)
+    if (current_time - lastLaneProximityMeasure_ < 0.3)
     {
-        float direction = manual_steering + (steeringPID(cameraError_, current_time) - manual_steering) * 1.2f;
-        if (cameraError_ < 0)
+        LKAS_enable = true;
+        if (laneProximity_ < 0.35f)
         {
-            LKAS_enable = true;
+            float direction = 105;
             publisher_->publishLaneAlert("Left");
+            publisher_->publishSteering(direction);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        else if (laneProximity_ > 0.65)
+        {
+            float direction = 75;
+            publisher_->publishLaneAlert("Right");
+            publisher_->publishSteering(direction);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
         else
         {
-            LKAS_enable = true;
-            publisher_->publishLaneAlert("Right");
+            if (LKAS_enable)
+            {
+                publisher_->publishLaneAlert("Off");
+                LKAS_enable = false;
+            }
+            publisher_->publishSteering(manual_steering);
         }
-        publisher_->publishSteering(direction);
+        publisher_->publishSpeed(manual_speed);
     }
     else
     {
-        if (LKAS_enable)
-        {
-            publisher_->publishLaneAlert("Off");
-            LKAS_enable = false;
-        }
-        publisher_->publishSteering(manual_steering);
+        publisher_->publishSAELevelAttributionError("SAE_1_LKAS");
+        std::cout << "SAE_1_LKAS: Lane Proximity measure timeout, switching to manual control." << std::endl;
+        LKAS_enable = false;
+        publisher_->publishActiveAutonomyLevel("SAE_0");
+        manualControl();
     }
-    publisher_->publishSpeed(manual_speed);
-    
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
@@ -263,11 +281,11 @@ void PidController::run()
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
-            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos && getCurrentTime() - lastLaneProximityMeasure_ < 0.3) {
                 LKASControl();
-            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+            } else if (sae_level.find("SAE_1_ACC") != std::string::npos && getCurrentTime() - lastLaneProximityMeasure_ < 0.3) {
                 adaptiveCruiseControl();
-            } else if (sae_level.find("SAE_2") != std::string::npos) {
+            } else if (sae_level.find("SAE_2") != std::string::npos && getCurrentTime() - lastLaneProximityMeasure_ < 0.3) {
                 partialControl();
             } else if (sae_level.find("SAE_3") != std::string::npos) {
                 conditionalAutomation();

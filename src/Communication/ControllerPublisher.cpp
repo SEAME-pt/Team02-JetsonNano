@@ -43,6 +43,11 @@ ControllerPublisher::ControllerPublisher(
     laneAlert_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/LaneAlert")));
 
+    SAElevel_pub.emplace(session_->declare_publisher(
+        zenoh::KeyExpr("Vehicle/1/ADAS/SAELevelAttributionError")));
+
+    
+
     
 }
 
@@ -231,4 +236,14 @@ void ControllerPublisher::publishLaneAlert(std::string lane)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), lane.c_str(), len);
     laneAlert_pub->put(std::move(buf));
+}
+
+void ControllerPublisher::publishSAELevelAttributionError(std::string level)
+{
+    const auto len        = level.size() + 1;
+    auto alloc_result =
+        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    memcpy(buf.data(), level.c_str(), len);
+    SAElevelError_pub->put(std::move(buf));
 }

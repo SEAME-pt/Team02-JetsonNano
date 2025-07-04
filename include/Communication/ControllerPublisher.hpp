@@ -47,6 +47,7 @@ class ControllerPublisher
     void publishMpcTrajectory(const std::string trajectory);
     void publishDesiredSpeed(float speed);
     void publishLaneAlert(std::string lane);
+    void publishSAELevelAttributionError(std::string level);
 
   private:
     std::shared_ptr<zenoh::Session> session_;
@@ -68,4 +69,5 @@ class ControllerPublisher
     std::optional<zenoh::Publisher> mpcTrajectory_pub;
     std::optional<zenoh::Publisher> desiredSpeed_pub;
     std::optional<zenoh::Publisher> laneAlert_pub;
+    std::optional<zenoh::Publisher> SAElevelError_pub;
 };
