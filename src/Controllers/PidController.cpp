@@ -171,18 +171,18 @@ void PidController::LKASControl()
     {
         if (LKASon && laneProximity_ < 0.35f && !LKAS_enable && manual_speed > 10)
         {
-            float direction = 105;
+            float direction = 110;
             publisher_->publishLaneAlert("Left");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             LKAS_enable = true;
             LKASon = false;
             last_action = getCurrentTime();
         }
         else if (LKASon && laneProximity_ > 0.65 && !LKAS_enable && manual_speed > 10)
         {
-            float direction = 75;
+            float direction = 70;
             publisher_->publishLaneAlert("Right");
             std::cout << "Lane Proximity: " << laneProximity_ << std::endl;
             publisher_->publishSteering(direction);
@@ -195,7 +195,7 @@ void PidController::LKASControl()
         {
             if (LKAS_enable)
             {
-                if (getCurrentTime() - last_action < 2000)
+                if (getCurrentTime() - last_action < 1000)
                 {
                     publisher_->publishLaneAlert("Off");
                     LKAS_enable = false;
