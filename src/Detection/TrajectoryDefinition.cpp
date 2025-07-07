@@ -1197,12 +1197,13 @@ void TrajectoryDefinition::checkLKASEnvEnable(std::vector<cv::Point>& leftCurve,
 void TrajectoryDefinition::checkAutonomyEnvEnable(std::vector<cv::Point>& midCurve) {
     float avgX= 0.0f;
     float centerX = frameWidth_ / 2;
+    float laneWidth = calculateHistoricalLaneWidth();
 
     for (const auto& pt : midCurve)
         avgX += pt.x;
     avgX /= midCurve.size();
 
-    float diff = (centerX - avgXLeftCurve) / laneWidth;
+    float diff = (centerX - avgX) / laneWidth;
 
     std::cout << "Diff: " << diff << std::endl;
     if (diff < 0.50) {
