@@ -48,6 +48,20 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
+    autonomy_env_enable_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/Enable",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string autonomyEnvEnable = sample.get_payload().as_string();
+            if (autonomyEnvEnable.find("true") != std::string::npos)
+            {
+                autonomyEnvEnable = true;
+            } else {
+                autonomyEnvEnable false;
+            }
+        },
+        zenoh::closures::none));
+
     std::cout << "Remote controller created!" << std::endl;
 }
 
@@ -176,13 +190,17 @@ void XboxController::run()
                                 std::cout << "SAE_0 Driving" << std::endl;
                                 sae_4 = false;
                             } else {
-                                publisher_->publishActiveAutonomyLevel("SAE_4");
-                                std::cout << "SAE_4 Driving" << std::endl;
-                                sae_4 = true;
-                                sae_3 = false;
-                                sae_2 = false;
-                                sae_1_LKAS = false;
-                                sae_1_ACC = false;
+                                if (autonomyEnvEnable) {
+                                    publisher_->publishActiveAutonomyLevel("SAE_4");
+                                    std::cout << "SAE_4 Driving" << std::endl;
+                                    sae_4 = true;
+                                    sae_3 = false;
+                                    sae_2 = false;
+                                    sae_1_LKAS = false;
+                                    sae_1_ACC = false;
+                                } else {
+                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                }
                             }
                             break;
                         }
@@ -253,26 +271,34 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
                             } else {
-                                publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
-                                std::cout << "SAE_1_LKAS Driving" << std::endl;
-                                sae_4 = false;
-                                sae_3 = false;
-                                sae_2 = false;
-                                sae_1_LKAS = true;
-                                sae_1_ACC = false;
+                                if (autonomyEnvEnable) {
+                                    publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
+                                    std::cout << "SAE_1_LKAS Driving" << std::endl;
+                                    sae_4 = false;
+                                    sae_3 = false;
+                                    sae_2 = false;
+                                    sae_1_LKAS = true;
+                                    sae_1_ACC = false;
+                                } else {
+                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                }
                             }
                         } else if (this->event.value == -32767) {
                             if (sae_1_ACC == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
                             } else {
-                                publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
-                                std::cout << "SAE_1_ACC Driving" << std::endl;
-                                sae_4 = false;
-                                sae_3 = false;
-                                sae_2 = false;
-                                sae_1_LKAS = false;
-                                sae_1_ACC = true;
+                                if (autonomyEnvEnable) {
+                                    publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
+                                    std::cout << "SAE_1_ACC Driving" << std::endl;
+                                    sae_4 = false;
+                                    sae_3 = false;
+                                    sae_2 = false;
+                                    sae_1_LKAS = false;
+                                    sae_1_ACC = true;
+                                } else {
+                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                }
                             }
                         }
 
@@ -285,26 +311,34 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_2 = false;
                             } else {
-                                publisher_->publishActiveAutonomyLevel("SAE_2");
-                                std::cout << "SAE_2 Driving" << std::endl;
-                                sae_4 = false;
-                                sae_3 = false;
-                                sae_2 = true;
-                                sae_1_LKAS = false;
-                                sae_1_ACC = false;
+                                if (autonomyEnvEnable) {
+                                    publisher_->publishActiveAutonomyLevel("SAE_2");
+                                    std::cout << "SAE_2 Driving" << std::endl;
+                                    sae_4 = false;
+                                    sae_3 = false;
+                                    sae_2 = true;
+                                    sae_1_LKAS = false;
+                                    sae_1_ACC = false;
+                                } else {
+                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                }
                             }
                         } else if (this->event.value == -32767) {
                             if (sae_3 == true) {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_3 = false;
                             } else {
-                                publisher_->publishActiveAutonomyLevel("SAE_3");
-                                std::cout << "SAE_3 Driving" << std::endl;
-                                sae_4 = false;
-                                sae_3 = true;
-                                sae_2 = false;
-                                sae_1_LKAS = false;
-                                sae_1_ACC = false;
+                                if (autonomyEnvEnable) {
+                                    publisher_->publishActiveAutonomyLevel("SAE_3");
+                                    std::cout << "SAE_3 Driving" << std::endl;
+                                    sae_4 = false;
+                                    sae_3 = true;
+                                    sae_2 = false;
+                                    sae_1_LKAS = false;
+                                    sae_1_ACC = false;
+                                } else {
+                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                }
                             }
                         }
                         
