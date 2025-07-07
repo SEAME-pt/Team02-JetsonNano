@@ -131,6 +131,15 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         },
         zenoh::closures::none));
 
+    adaptiveCruiseControlSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/speedPid/ACCSpeed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            acc_speed_ = speed * 60.0 / (M_PI * 0.067);
+        },
+        zenoh::closures::none));
+
 
 }
 

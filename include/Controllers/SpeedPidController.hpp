@@ -41,10 +41,11 @@ private:
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> currentYaw_subscriber;
+    std::optional<zenoh::Subscriber<void>> adaptiveCruiseControlSpeed_subscriber;
 
     //calibration parameters
     // Straight-line FOPDT model
-    float Kp_s_= 6.5;
+    float Kp_s_= 7.5;
     float tau_s_ = 0.5;
     float L_s_ = 0.25;
     // Cornering FOPDT model
@@ -62,6 +63,7 @@ private:
     float kd_; // Derivative gain
     float desired_speed_;
     float current_speed_;
+    float acc_speed_;
     
     // PID variables
     float prev_error_;
