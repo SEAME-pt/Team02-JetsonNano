@@ -1206,7 +1206,7 @@ void TrajectoryDefinition::checkAutonomyEnvEnable(std::vector<cv::Point>& midCur
     float diff = (centerX - avgX) / laneWidth;
 
     std::cout << "Diff: " << diff << std::endl;
-    if (diff < 0.18 && diff > -0.18) {
+    if (diff < 0.35 && diff > -0.35) {
         publishAutonomyEnvEnable("true");
     } else {
         publishAutonomyEnvEnable("false");
