@@ -263,7 +263,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     drawCurves(midCurve, leftCurve, rightCurve);
 
-    checkForwardCollision(class_mask, midCurve);
+    if (activeAutonomyLevel_.find("SAE_0") == std::string::npos) {
+        checkForwardCollision(class_mask, midCurve);
+    } 
     
     if (activeAutonomyLevel_.find("SAE_2") != std::string::npos || 
         activeAutonomyLevel_.find("SAE_3") != std::string::npos || 
