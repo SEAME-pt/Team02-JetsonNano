@@ -55,9 +55,9 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
             std::string autonomyEnvEnable = sample.get_payload().as_string();
             if (autonomyEnvEnable.find("true") != std::string::npos)
             {
-                autonomyEnvEnable = true;
+                autonomyEnvEnable_ = true;
             } else {
-                autonomyEnvEnable = false;
+                autonomyEnvEnable_ = false;
             }
         },
         zenoh::closures::none));
