@@ -57,7 +57,7 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
             {
                 autonomyEnvEnable = true;
             } else {
-                autonomyEnvEnable false;
+                autonomyEnvEnable = false;
             }
         },
         zenoh::closures::none));
