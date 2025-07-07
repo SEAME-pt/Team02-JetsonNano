@@ -79,10 +79,18 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
     std::optional<zenoh::Publisher> lkas_publisher_;
-    std::optional<zenoh::Publisher> acc_publisher_;
-    std::optional<zenoh::Publisher> sae_2_enable_publisher_;
-    std::shared_ptr<LaneDetectorPublisher> publisher_;
+    std::optional<zenoh::Publisher> sae_2_disable_publisher_;
+    std::optional<zenoh::Publisher> autonomy_env_enable_;
+
     std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
+    std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber_;
+    
+    std::string activeAutonomyLevel_;
+
+    bool sae_3Enable_ = false;
+    bool sae_4Enable_ = false;
+    
+    std::shared_ptr<LaneDetectorPublisher> publisher_;
 
   public:
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
@@ -121,7 +129,8 @@ class TrajectoryDefinition
     void drawCurves(std::vector<cv::Point>& midCurve, std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve);
     void createMidPointError(std::vector<cv::Point>& midCurve);  
     cv::Mat defineLanePolyline(std::vector<cv::Point>& curve);
-    void checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs);
+    void checkLKASEnvEnable(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs);
+    void checkAutonomyEnvEnable(std::vector<cv::Point>& midCurve);
     bool isCurveStraight(const cv::Mat& coeffs, double threshold);
     
     bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);

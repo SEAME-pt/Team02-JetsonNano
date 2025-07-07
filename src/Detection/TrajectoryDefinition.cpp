@@ -27,15 +27,21 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
     lkas_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/LKAS")));
-    acc_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/ACC")));
-    sae_2_enable_publisher_.emplace(
+    sae_2_disable_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
+    autonomy_env_enable_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/Enable")));
 
-    // cv_stream = cv::cuda::Stream();
-
-    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
-
+    activeAutonomyLevel_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            activeAutonomyLevel_ = activeAutonomyLevel;
+        },
+        zenoh::closures::none));
+    
+        
     mpc_trajectory_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/MPC/Trajectory",
         [this](const zenoh::Sample& sample)
@@ -61,6 +67,11 @@ TrajectoryDefinition::TrajectoryDefinition(
             mpcPoints_ = points;
         },
         zenoh::closures::none));
+    
+    // cv_stream = cv::cuda::Stream();
+
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+
 
 }
 
@@ -227,6 +238,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     if (lanePolylines.size() >= 2) {
         defineLaneEnv(lanePolylines, leftCurve, rightCurve, coeffsSave);
+        defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
+        checkAutonomyEnvEnable(midCurve);
     } else if (lanePolylines.size() == 1) {
         if (checkIfLeftLane(lanePolylines[0])) {
             leftCurve = lanePolylines[0];
@@ -235,24 +248,31 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
             rightCurve = lanePolylines[0];
             onePolyline(leftCurve, rightCurve);
         }
+        defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
+        publishAutonomyEnvEnable("false");
     } else {
         leftCurve  = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
         rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
+
+        defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
+        publishAutonomyEnvEnable("false");
 
         leftCurve.clear();
         rightCurve.clear();
     }
 
-    defineTrajectoryCurve(midCurve, leftCurve, rightCurve);
-    
     drawCurves(midCurve, leftCurve, rightCurve);
-    (void) class_mask;
+
+    checkForwardCollision(class_mask, midCurve);
+    
+    if (activeAutonomyLevel_.find("SAE_2") != std::string::npos || 
+        activeAutonomyLevel_.find("SAE_3") != std::string::npos || 
+        activeAutonomyLevel_.find("SAE_4") != std::string::npos) {
+        createMidPointError(midCurve);
+        publishCoeffs(midCurve);
+    }
     // // obstacleAvoidance(class_mask, midCurve);
    
-    createMidPointError(midCurve);
-    
-    // // checkForwardCollision(class_mask, midCurve);
-
     mpcDebug();
 
     allPolylinesViz_.copyTo(frame);
@@ -307,7 +327,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             leftLaneLastUpdatedFrame = currentFrame;
             rightLaneLastUpdatedFrame = currentFrame;
 
-            checkAutomationLevel(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
+            checkLKASEnvEnable(leftCurve, rightCurve, coeffsSave[bestLeftIdx], coeffsSave[bestRightIdx]);
         } else if (bestLeftIdx != -1) {
             leftCurve = lanePolylines[bestLeftIdx];
             
@@ -852,8 +872,6 @@ void TrajectoryDefinition::defineTrajectoryCurve(
         midCurve.push_back(cv::Point(midX, midY));
 
     }
-    
-    publishCoeffs(midCurve);
 }
 
 void TrajectoryDefinition::drawCurves(
@@ -1155,7 +1173,7 @@ bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double thresho
     return true;
 }
 
-void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
+void TrajectoryDefinition::checkLKASEnvEnable(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
     if (isCurveStraight(rightCoeffs, 1e-2) && isCurveStraight(leftCoeffs, 1e-2)) {
         float centerX  = frameWidth_ / 2;
         float laneWidth = calculateHistoricalLaneWidth();
@@ -1173,7 +1191,25 @@ void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurv
         float diff = (centerX - avgXLeftCurve) / laneWidth;
         
         publishLKAS(std::to_string(diff));
-        std::cout << "Publishing lkas value: " << diff << std::endl;
+    }
+}
+
+void TrajectoryDefinition::checkAutonomyEnvEnable(std::vector<cv::Point>& midCurve) {
+    float avgX= 0.0f;
+    float centerX = frameWidth_ / 2;
+
+    for (const auto& pt : midCurve)
+        avgX += ptx;
+    avgX /= midCurve.size();
+
+    float diff = (centerX - avgXLeftCurve) / laneWidth;
+
+    std::cout << "Diff: " << diff << std::endl;
+    if (diff < 0.50) {
+        publishAutonomyEnvEnable("true");
+    }
+    else {
+        publishAutonomyEnvEnable("false");
     }
 }
 
@@ -1481,24 +1517,24 @@ void TrajectoryDefinition::publishLKAS(const std::string& value_str)
     lkas_publisher_->put(std::move(buf));
 }
 
-void TrajectoryDefinition::publishACC(const std::string& value_str)
+void TrajectoryDefinition::publishSAE2Disable(const std::string& value_str)
 {
     const auto len = value_str.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    acc_publisher_->put(std::move(buf));
+    sae_2_disable_publisher_->put(std::move(buf));
 }
 
-void TrajectoryDefinition::publishSAE_2Enabler(const std::string& value_str)
+void TrajectoryDefinition::publishAutonomyEnvEnable(const std::string& value_str)
 {
     const auto len = value_str.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    sae_2_enable_publisher_->put(std::move(buf));
+    autonomy_env_enable_->put(std::move(buf));
 }
 
 void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
