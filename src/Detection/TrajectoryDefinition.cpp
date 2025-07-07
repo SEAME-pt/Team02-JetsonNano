@@ -249,7 +249,11 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     publishCoeffs(midCurve);
     drawCurves(midCurve, leftCurve, rightCurve);
     (void) class_mask;
-    // // obstacleAvoidance(class_mask, midCurve);
+
+    // If in ACC
+    //adaptiveSpeedControl(class_mask, midCurve);
+
+    obstacleAvoidance(class_mask, midCurve);
     
     
     // // checkForwardCollision(class_mask, midCurve);
