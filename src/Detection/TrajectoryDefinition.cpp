@@ -1199,7 +1199,7 @@ void TrajectoryDefinition::checkAutonomyEnvEnable(std::vector<cv::Point>& midCur
     float centerX = frameWidth_ / 2;
 
     for (const auto& pt : midCurve)
-        avgX += ptx;
+        avgX += pt.x;
     avgX /= midCurve.size();
 
     float diff = (centerX - avgXLeftCurve) / laneWidth;
