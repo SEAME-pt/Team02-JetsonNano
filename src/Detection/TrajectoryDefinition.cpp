@@ -102,9 +102,9 @@ void TrajectoryDefinition::initLocalEnv() {
         float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        nearDistance_ = 0.01f;       // meters
-        farDistance_ = 0.5f;       // meters
-        laneWidth_ = 0.4f;      // meters
+        nearDistance_ = 0.0f;       // meters
+        farDistance_ = 0.6f;       // meters
+        laneWidth_ = 0.6f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
 
@@ -219,12 +219,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 3100, frameWidth_ * frameHeight_ / 3100, 6);
+    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 8000, frameWidth_ * frameHeight_ / 8000, 6);
     
     drawPolyLanes(lanePolylines);
-    // float maxHorizontalDistance = frameWidth_ * 0.10;  // 15% of frame width
-    // float maxVerticalGap        = frameHeight_ * 0.20; // 20% of frame height
-    // mergeLaneComponents(lanePolylines, maxHorizontalDistance, maxVerticalGap);
     
     filterFalseLanes(lanePolylines, coeffsSave);
 
@@ -1141,24 +1138,24 @@ bool TrajectoryDefinition::checkIfLeftLane(
 
 bool TrajectoryDefinition::isCurveStraight(const cv::Mat& coeffs, double threshold) {
     if (coeffs.rows >= 4) {
-        double c = std::abs(coeffs.at<double>(1));
+        // double c = std::abs(coeffs.at<double>(1));
         double d = std::abs(coeffs.at<double>(2));
         double e = std::abs(coeffs.at<double>(3));
         // std::cout << "c: " << c << " d: " << d << " e: " << e << std::endl;
-        return (c < 1 && d < threshold && e < threshold);
+        return (d < threshold && e < threshold);
     }
     else if (coeffs.rows == 3) {
-        double c = std::abs(coeffs.at<double>(1));
+        // double c = std::abs(coeffs.at<double>(1));
         double d = std::abs(coeffs.at<double>(2));
         // std::cout << "c: " << c << " d: " << d << std::endl;
-        return (c < 1 && d < threshold);
+        return (d < threshold);
     }
 
     return true;
 }
 
 void TrajectoryDefinition::checkAutomationLevel(std::vector<cv::Point>& leftCurve, std::vector<cv::Point>& rightCurve, cv::Mat& leftCoeffs, cv::Mat& rightCoeffs) {
-    if (isCurveStraight(rightCoeffs, 1e-3) && isCurveStraight(leftCoeffs, 1e-3)) {
+    if (isCurveStraight(rightCoeffs, 1e-2) && isCurveStraight(leftCoeffs, 1e-2)) {
         float centerX  = frameWidth_ / 2;
         float laneWidth = calculateHistoricalLaneWidth();
 
