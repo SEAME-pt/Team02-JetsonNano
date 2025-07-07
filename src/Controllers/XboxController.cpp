@@ -190,7 +190,7 @@ void XboxController::run()
                                 std::cout << "SAE_0 Driving" << std::endl;
                                 sae_4 = false;
                             } else {
-                                if (autonomyEnvEnable) {
+                                if (autonomyEnvEnable_) {
                                     publisher_->publishActiveAutonomyLevel("SAE_4");
                                     std::cout << "SAE_4 Driving" << std::endl;
                                     sae_4 = true;
@@ -271,7 +271,7 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
                             } else {
-                                if (autonomyEnvEnable) {
+                                if (autonomyEnvEnable_) {
                                     publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
                                     std::cout << "SAE_1_LKAS Driving" << std::endl;
                                     sae_4 = false;
@@ -288,7 +288,7 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
                             } else {
-                                if (autonomyEnvEnable) {
+                                if (autonomyEnvEnable_) {
                                     publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
                                     std::cout << "SAE_1_ACC Driving" << std::endl;
                                     sae_4 = false;
@@ -311,7 +311,7 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_2 = false;
                             } else {
-                                if (autonomyEnvEnable) {
+                                if (autonomyEnvEnable_) {
                                     publisher_->publishActiveAutonomyLevel("SAE_2");
                                     std::cout << "SAE_2 Driving" << std::endl;
                                     sae_4 = false;
@@ -328,7 +328,7 @@ void XboxController::run()
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_3 = false;
                             } else {
-                                if (autonomyEnvEnable) {
+                                if (autonomyEnvEnable_) {
                                     publisher_->publishActiveAutonomyLevel("SAE_3");
                                     std::cout << "SAE_3 Driving" << std::endl;
                                     sae_4 = false;
