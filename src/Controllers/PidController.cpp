@@ -91,7 +91,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         },
         zenoh::closures::none));
 
-    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+    currentSpeed_subscriber_.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
