@@ -52,7 +52,7 @@ private:
     
     // Detection parameters
     const int DETECTION_ZONE_WIDTH = 60;  // pixels on each side of trajectory
-    const float IGNORE_ZONE_RATIO = 0.8f; // ignore bottom 80% of frame
+    const float IGNORE_ZONE_RATIO = 0.9f; // ignore bottom 80% of frame
     
     // Helper functions
     int findObstacleOnTrajectory(const cv::Mat& segmentationMask, 
