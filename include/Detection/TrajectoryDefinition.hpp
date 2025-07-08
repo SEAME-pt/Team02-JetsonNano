@@ -74,9 +74,6 @@ class TrajectoryDefinition
 
     std::vector<cv::Point> mpcPoints_;
 
-    //Adjustable variables based on SAE_level
-    std::string saeLevel_ = "SAE_0";
-
     int distanceToObstacle_;
 
     
