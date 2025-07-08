@@ -20,6 +20,7 @@ private:
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
+    std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
     
     float kp_;
     float ki_;
