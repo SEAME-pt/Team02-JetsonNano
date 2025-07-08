@@ -145,7 +145,7 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         
         // If more than 30% of the detection zone is non-road, consider it an obstacle
         if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.1f) {
-            std::cout << "POINT IN TRJECTORY : " << trajPoint.y << std::cout;
+            std::cout << "POINT IN TRJECTORY : " << trajPoint.y << std::endl;
             return frameHeight_ - trajPoint.y;
         }
     }
