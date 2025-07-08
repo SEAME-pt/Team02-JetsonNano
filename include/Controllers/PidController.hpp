@@ -19,7 +19,8 @@ private:
     std::unique_ptr<ControllerPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
-    std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
+    std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
+    std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
     std::optional<zenoh::Subscriber<void>> LKAS_subscriber;
     
     float kp_;
@@ -32,15 +33,19 @@ private:
     float integral_;
     double last_time_;
     
-    float constant_speed_;
+    float desired_speed_;
+    float speed_limit_;
     float max_steering_angle_;
+
+    double last_danger_received_;
+    double last_crosswalk_received_;
 
     float fixed_delta_time_;
 
     std::string autonomousDrive_;
     XboxController* xboxController_;
 
-    bool speed_lock_;
+    bool emergency_brake_;
 
     float lane_departure_threshold_;
     float laneProximity_ = 0.5f;
@@ -69,6 +74,8 @@ private:
 
     //SAE_4
     void autonomousControl();
+
+    void speedDefinition();
 
 public:
     PidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);

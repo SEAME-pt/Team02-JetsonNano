@@ -14,7 +14,8 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     integral_    = 0.0f;
     last_time_   = 0.0f;
 
-    constant_speed_     = 0.0f;
+    desired_speed_     = 0.0f;
+    speed_limit_       = 0.0f;
     max_steering_angle_ = 90.0f;
 
     lane_departure_threshold_ = 0.1f;
@@ -25,7 +26,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 
     fixed_delta_time_   = 0.02f;
     autonomousDrive_    = "SAE_0";
-    speed_lock_         = false;
+    emergency_brake_    = false;
     xboxController_     = xbox_controller;
     session_ = session;
     
@@ -50,22 +51,22 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Lock",
+    emergency_brake_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Emergency",
         [this](const zenoh::Sample& sample)
         {
             std::string value_str = sample.get_payload().as_string();
 
-            bool lock_value = false;
+            bool emergency_value_ = false;
             if (value_str.find("1") != std::string::npos)
             {
-                lock_value = true;
+                emergency_value_ = true;
             }
 
-            speed_lock_ = lock_value;
+            emergency_brake_ = emergency_value_;
 
-            // std::cout << "Speed lock "
-            //           << (lock_value ? "activated" : "deactivated")
+            // std::cout << "Emergency Brake "
+            //           << (emergency_value_ ? "activated" : "deactivated")
             //           << std::endl;
         },
         zenoh::closures::none));
@@ -77,6 +78,39 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             laneProximity_ = std::stof(sample.get_payload().as_string());
             lastLaneProximityMeasure_ = getCurrentTime();
             LKASon = true;
+        },
+        zenoh::closures::none));
+
+    trafficSign_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/TrafficSign",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string value_str = sample.get_payload().as_string();
+
+            if (value_str.find("Speed 80km/h") != std::string::npos) {
+                speed_limit_ = 0.25;
+            } else if (value_str.find("Speed 50km/h") != std::string::npos) {
+                speed_limit_ = 0.20;
+            } else if (value_str.find("Danger") != std::string::npos) {
+                last_danger_received_ = getCurrentTime();
+            } else if (value_str.find("Crosswalk") != std::string::npos) {
+                last_crosswalk_received_ = getCurrentTime();
+            } else if (value_str.find("Stop") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_stop_received_ = getCurrentTime();
+            } else if (value_str.find("Yield") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_yield_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Green") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_green_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Red") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_red_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Yellow") != std::string::npos) {
+                desired_speed_ = 0.30;
+                // last_yellow_received_ = getCurrentTime();
+            }
         },
         zenoh::closures::none));
 
@@ -92,14 +126,15 @@ void PidController::init(float kp, float ki, float kd, float speed,
     kp_               = kp;
     ki_               = ki;
     kd_               = kd;
-    constant_speed_   = speed;
+    desired_speed_   = speed;
+    speed_limit_     = speed;
     fixed_delta_time_ = delta_time;
 
     prev_error_ = 0.0f;
     integral_   = 0.0f;
 
     std::cout << "PID Controller initialized with Kp=" << kp_ << ", Ki=" << ki_
-              << ", Kd=" << kd_ << ", speed=" << constant_speed_
+              << ", Kd=" << kd_ << ", speed=" << desired_speed_
               << ", dt=" << fixed_delta_time_ << std::endl;
 }
 
@@ -151,9 +186,7 @@ float PidController::steeringPID(float error, double current_time)
 // SAE_0
 void PidController::manualControl()
 {
-    // double current_time   = getCurrentTime();
     float manual_steering = xboxController_->getManualSteering();
-    // float manual_speed    = xboxController_->getManualSpeed();
 
     publisher_->publishSteering(manual_steering);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -232,25 +265,38 @@ void PidController::adaptiveCruiseControl()
 // SAE_2
 void PidController::partialControl()
 {
-    // double current_time   = getCurrentTime();
-    publisher_->publishSpeed(0);
+    double current_time   = getCurrentTime();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    float direction = steeringPID(cameraError_, current_time);
+
+    publisher_->publishSteering(direction);
+    
+    if (!this->emergency_brake_)
+    {
+        publisher_->publishDesiredSpeed(desired_speed_);
+        publisher_->publishCurrentGear(1);
+    }
+    else
+    {
+        publisher_->publishDesiredSpeed(0);
+        publisher_->publishCurrentGear(0);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(
+                static_cast<int>(fixed_delta_time_ * 1000)));
 }
 
 // SAE_3
 void PidController::conditionalAutomation()
 {
     double current_time   = getCurrentTime();
-    // float manual_steering = xboxController_->getManualSteering();
+
     float direction = steeringPID(cameraError_, current_time);
 
-    // publisher_->publishSteering(manual_steering);
     publisher_->publishSteering(direction);
-    // publisher_->publishSpeed(xboxController_->getManualSpeed());
-    if (!this->speed_lock_)
+    
+    if (!this->emergency_brake_)
     {
-        publisher_->publishDesiredSpeed(constant_speed_);
+        publisher_->publishDesiredSpeed(desired_speed_);
         publisher_->publishCurrentGear(1);
     }
     else
@@ -266,15 +312,14 @@ void PidController::conditionalAutomation()
 void PidController::autonomousControl()
 {
     double current_time   = getCurrentTime();
-    // float manual_steering = xboxController_->getManualSteering();
+
     float direction = steeringPID(cameraError_, current_time);
 
-    // publisher_->publishSteering(manual_steering);
     publisher_->publishSteering(direction);
-    // publisher_->publishSpeed(xboxController_->getManualSpeed());
-    if (!this->speed_lock_)
+
+    if (!this->emergency_brake_)
     {
-        publisher_->publishDesiredSpeed(constant_speed_);
+        publisher_->publishDesiredSpeed(desired_speed_);
         publisher_->publishCurrentGear(1);
     }
     else
@@ -286,12 +331,27 @@ void PidController::autonomousControl()
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }
 
+void PidController::speedDefinition(void) {
+    double current_time = getCurrentTime();
+    double threshold = 0.50;
+
+    if (std::abs(current_time -  last_danger_received_) < threshold) {
+        desired_speed_ = 0.18;
+    } else if (std::abs(current_time - last_crosswalk_received_) < threshold) {
+        desired_speed_ = 0.18;
+    } else {
+        desired_speed_ = speed_limit_;
+    }
+}
+
 void PidController::run()
 {
     while (true)
     {
         if (xboxController_->getPidEnable()) {
             std::string sae_level = getAutonomousDriveState();
+
+            speedDefinition();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
