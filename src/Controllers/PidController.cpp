@@ -365,11 +365,12 @@ void PidController::speedDefinition(void) {
     double threshold = 0.80;
 
     double active_speed = 0.0f;
-    if (std::abs(current_time -  last_acc_speed_receive_) < threshold) {
-        active_speed = acc_speed_;
-    } else {
-        active_speed = speed_limit_;
-    }
+    // if (std::abs(current_time -  last_acc_speed_receive_) < threshold) {
+    //     active_speed = acc_speed_;
+    // } else {
+    //     active_speed = speed_limit_;
+    // }
+    active_speed = acc_speed_;
 
     if (std::abs(current_time -  last_danger_received_) < threshold) {
         desired_speed_ = 0.16;
