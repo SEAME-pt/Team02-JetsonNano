@@ -284,10 +284,10 @@ void PidController::LKASControl()
 // SAE_1_ACC
 void PidController::adaptiveCruiseControl()
 {
-    // double current_time   = getCurrentTime();
-    // float manual_steering = xboxController_->getManualSteering();
-    // float manual_speed    = xboxController_->getManualSpeed();
-    publisher_->publishSpeed(0);
+    float manual_steering = xboxController_->getManualSteering();
+
+    publisher_->publishSteering(manual_steering);
+    publisher_->publishDesiredSpeed(desired_speed_);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
