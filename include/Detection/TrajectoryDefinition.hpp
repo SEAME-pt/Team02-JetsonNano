@@ -59,7 +59,7 @@ class TrajectoryDefinition
 
     std::optional<zenoh::Publisher> coeffs_publisher_;
   
-    std::optional<zenoh::Publisher> speed_lock_publisher_;
+    std::optional<zenoh::Publisher> emergency_brake_publisher_;
     bool is_emergency_stop = false;
 
     const int height_;
@@ -100,10 +100,16 @@ class TrajectoryDefinition
     void initCarlaEnv();
 
     cv::Mat process(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
+  
     void publishIPMFrame(const std::string& value_str);
     void publishOrigFrame(const std::string& value_str);
     void publishBinMask(const std::string& value_str);
     void publishClassMask(const std::string& value_str);
+    void publishEmergencyBrake(const std::string &value_str);
+    void publishCoeffs(std::vector<cv::Point>& curve);
+    void publishLKAS(const std::string &value_str);
+    void publishSAE2Disable(const std::string& value_str);
+    void publishAutonomyEnvEnable(const std::string& value_str);
   private:
 
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
@@ -134,14 +140,8 @@ class TrajectoryDefinition
     bool isCurveStraight(const cv::Mat& coeffs, double threshold);
     
     bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
-    void publishSpeedLock(const std::string &value_str);
 
     void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
-    void publishCoeffs(std::vector<cv::Point>& curve);
-
-    void publishLKAS(const std::string &value_str);
-    void publishSAE2Disable(const std::string& value_str);
-    void publishAutonomyEnvEnable(const std::string& value_str);
 
     void mpcDebug(void);
 };
