@@ -43,6 +43,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     
     // Find obstacle distance along trajectory
     int obstacleDistance = findObstacleOnTrajectory(segmentationMask, midCurve);
+    std::cout << "OBSTACLE DISTANCE : " << obstacleDistance << std::endl;
     
     // Update tracking history
     cv::Point obstaclePos = (obstacleDistance > 0) ? 
@@ -63,6 +64,8 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     const float CRITICAL_DISTANCE_M = 0.3f;
     const float SAFE_DISTANCE_M = 0.6f;
     const float COMFORT_DISTANCE_M = 0.9f;
+
+    std::cout << "Current Speed: " << currentSpeed_ << " Obstacle Speed: " << obstacleSpeed_ << std::endl;
     
     // Calculate absolute speed of obstacle (in m/s)
     float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
@@ -141,7 +144,7 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         }
         
         // If more than 30% of the detection zone is non-road, consider it an obstacle
-        if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.3f) {
+        if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.1f) {
             return frameHeight_ - trajPoint.y;
         }
     }
