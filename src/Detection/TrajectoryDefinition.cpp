@@ -282,7 +282,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     if (activeAutonomyLevel_ != "SAE_0") {
         checkForwardCollision(class_mask, midCurve);
     } 
-    else if (activeAutonomyLevel_ == "SAE_2" || 
+    
+    if (activeAutonomyLevel_ == "SAE_2" || 
         activeAutonomyLevel_ == "SAE_3" ||
         activeAutonomyLevel_ == "SAE_4") {
         if(activeAutonomyLevel_ == "SAE_4")
