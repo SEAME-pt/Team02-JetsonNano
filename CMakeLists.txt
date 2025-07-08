@@ -125,6 +125,7 @@ add_executable(Detection
     ./src/Detection/GPUInference.cpp
     ./src/Detection/TrajectoryDefinition.cpp
     ./src/Detection/TrafficSignClassifier.cpp
+    ./src/Detection/AdaptiveCruiseControl.cpp
     ./src/Detection/ObstacleAvoidance.cpp
     ./src/Detection/SynchronizedProcessor.cpp
     ./src/Detection/IPM.cpp

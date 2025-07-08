@@ -136,7 +136,7 @@ void TrajectoryDefinition::initLocalEnv() {
     try
     {
         this->avoidance = new ObstacleAvoidance(width_, height_, 4);
-        this->accontroller = new AdaptiveCruiseControl(width_, height_, nearDistance_, farDistance_, laneWidth_);
+        this->accontroller = new AdaptiveCruiseControl(session_, width_, height_, nearDistance_, farDistance_, laneWidth_);
     }
     catch (const std::exception& e)
     {
@@ -1536,7 +1536,7 @@ void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std:
     }
     
     // Publish speed recommendation
-    publishACC_(std::to_string(recommendedSpeed));
+    publishACC(std::to_string(recommendedSpeed));
 }
 
 void TrajectoryDefinition::publishLKAS(const std::string& value_str)

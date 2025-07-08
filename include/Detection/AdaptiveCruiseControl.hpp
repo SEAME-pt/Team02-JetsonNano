@@ -5,10 +5,12 @@
 #include <deque>
 #include <sys/time.h>
 #include <iostream>
+#include <zenoh.hxx>
+#include <optional> 
 
 class AdaptiveCruiseControl {
 public:
-    AdaptiveCruiseControl(int frameWidth, int frameHeight);
+    AdaptiveCruiseControl(std::shared_ptr<zenoh::Session> session, int frameWidth, int frameHeight, float nearDistance, float farDistance, float laneWidth);
     ~AdaptiveCruiseControl();
 
     float calculateAdaptiveSpeed(const cv::Mat& segmentationMask, 
@@ -22,6 +24,9 @@ public:
 
 private:
     // Frame dimensions
+
+    std::shared_ptr<zenoh::Session> session_;
+
     int frameWidth_;
     int frameHeight_;
     float nearDistance_;
@@ -44,12 +49,15 @@ private:
     cv::Point obstaclePosition_;
     float obstacleSpeed_;  // pixels per second
     bool obstacleDetected_;
-    double lastMeasurementTime_;
+    double lastMeasurementTime_= 0.0;
 
     //Calculating object speed
     float currentSpeed_ = 0.0f;
     float desiredSpeed_ = 0.0f;
     
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
+    std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
+
     // Detection parameters
     const int DETECTION_ZONE_WIDTH = 60;  // pixels on each side of trajectory
     const float IGNORE_ZONE_RATIO = 0.9f; // ignore bottom 80% of frame

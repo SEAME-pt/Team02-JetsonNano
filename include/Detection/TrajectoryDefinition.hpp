@@ -79,6 +79,8 @@ class TrajectoryDefinition
     //Adjustable variables based on SAE_level
     std::string saeLevel_ = "SAE_0";
 
+    int distanceToObstacle_;
+
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;

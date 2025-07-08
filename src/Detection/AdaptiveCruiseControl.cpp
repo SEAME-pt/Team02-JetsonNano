@@ -2,32 +2,31 @@
 #include <algorithm>
 #include <cmath>
 
-AdaptiveCruiseControl::AdaptiveCruiseControl(int frameWidth, int frameHeight, float nearDistance, float farDistance, float laneWidth)
-    : frameWidth_(frameWidth), frameHeight_(frameHeight),
+AdaptiveCruiseControl::AdaptiveCruiseControl(std::shared_ptr<zenoh::Session> session, int frameWidth, int frameHeight, float nearDistance, float farDistance, float laneWidth)
+    : session_(session),
+      frameWidth_(frameWidth), frameHeight_(frameHeight),
+      nearDistance_(nearDistance), farDistance_(farDistance),
+      laneWidth_(laneWidth),
       currentObstacleDistance_(-1), previousObstacleDistance_(-1),
       obstaclePosition_(cv::Point(-1, -1)), obstacleSpeed_(0.0f),
-      obstacleDetected_(false), lastMeasurementTime_(0.0),
-      nearDistance_(nearDistance), farDistance_(farDistance),
-      laneWidth_(laneWidth)
+      obstacleDetected_(false), lastMeasurementTime_(0.0)
 {
-
+    // Initialize Zenoh subscribers
     currentSpeed_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
-            float speed    = std::stof(sample.get_payload().as_string());
-            current_speed_ = speed / 60.0 * (M_PI * 0.067);;
-            last_measure_ = getCurrentTime();
-
+            float speed = std::stof(sample.get_payload().as_string());
+            currentSpeed_ = speed / 60.0 * (M_PI * 0.067);
         },
-        zenoh::closures::none))
+        zenoh::closures::none));
     
     desiredSpeed_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/speedPid/DesiredSpeed",
         [this](const zenoh::Sample& sample)
         {
-            float speed    = std::stof(sample.get_payload().as_string());
-            desired_speed_ = speed;
+            float speed = std::stof(sample.get_payload().as_string());
+            desiredSpeed_ = speed;
         },
         zenoh::closures::none));
 }
@@ -54,7 +53,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     obstacleSpeed_ = calculateObstacleSpeed();
     
     if (!obstacleDetected_) {
-        return desired_speed_; // Full speed - no obstacle
+        return desiredSpeed_; // Full speed - no obstacle
     }
     
     float obstacleDistanceMeters = static_cast<float>(currentObstacleDistance_) * 
@@ -66,7 +65,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     const float COMFORT_DISTANCE_M = 0.9f;   // 12 meters - ideal following distance
     
     // Calculate absolute speed of obstacle (in m/s)
-    float obstacleAbsoluteSpeed = current_speed_ + obstacleSpeed_; // obstacleSpeed_ is relative
+    float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
     
     // Make sure obstacle speed is not negative (stationary at minimum)
     obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
@@ -97,7 +96,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
         blendFactor = std::clamp(blendFactor, 0.0f, 1.0f);
         
         float targetSpeed = obstacleAbsoluteSpeed * (1.0f - blendFactor) + 
-                           desired_speed_ * blendFactor;
+                           desiredSpeed_ * blendFactor;
         
         std::cout << "TRANSITION: Distance " << obstacleDistanceMeters << "m, "
                   << "Blending to cruise speed: " << targetSpeed << "m/s" << std::endl;
@@ -220,8 +219,8 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
     double slope = (count * sumTimeDist - sumTime * sumDist) / 
                    (count * sumTimeSquared - sumTime * sumTime);
 
-    float obstacleAbsoluteSpeed = current_speed_ - static_cast<float>(slope);
-    float relativeSpeed = obstacleAbsoluteSpeed - current_speed_;
+    float obstacleAbsoluteSpeed = currentSpeed_ - static_cast<float>(slope);
+    float relativeSpeed = obstacleAbsoluteSpeed - currentSpeed_;
 
     std::cout << "Obstacle speed: " << obstacleAbsoluteSpeed << "m/s, "
           << "Relative: " << relativeSpeed << "m/s" << std::endl;
