@@ -23,20 +23,6 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
     if (js == -1)
         throw std::exception();
 
-    // Check if force feedback is supported
-    int features = 0;
-    if (device_ioctl(js, EVIOCGBIT(EV_FF, sizeof(features)), &features) >= 0) {
-        if (features & (1 << FF_RUMBLE)) {
-            // vibration_supported_ = true;
-            std::cout << "Force feedback (vibration) supported!" << std::endl;
-        }
-    }
-    else {
-        std::cerr << "Error checking force feedback support." << std::endl;
-        // vibration_supported_ = false;
-    }
-
-
     int numAxes = this->getAxisCount();
     for (int i = 0; i < numAxes; i++)
     {

@@ -35,6 +35,11 @@ public:
     void visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, 
                        cv::Mat& outputImage);
 
+    //For ACC
+    float calculateAdaptiveSpeed(const std::vector<cv::Point>& midCurve);
+    int findObstacleDistanceOnTrajectory(const std::vector<cv::Point>& midCurve);
+    void updateObstacleTracking(int obstacleDistance);
+
 private:
     int frameWidth_,  frameHeight_;
     int cellSizePx_;             // # of pixels per grid cell (e.g. 8 px)
@@ -82,5 +87,7 @@ private:
             return a.f > b.f; // min-heap on f
         }
     };
+
+
 
 };

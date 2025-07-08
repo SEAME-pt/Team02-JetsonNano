@@ -25,6 +25,7 @@
 #include "KalmanFilter.hpp"
 #include "GPUInference.hpp"
 #include "ObstacleAvoidance.hpp"
+#include "AdaptiveCruiseControl.hpp"
 
 #define WIDTH 256
 #define HEIGHT 128
@@ -41,6 +42,8 @@ class TrajectoryDefinition
     KalmanFilter* kalmanFilter;
     IPM* ipm;
     ObstacleAvoidance* avoidance;
+    AdaptiveCruiseControl* accontroller;
+
   
     std::vector<cv::Point> prevLeftCurve;
     std::vector<cv::Point> prevRightCurve;
@@ -72,6 +75,10 @@ class TrajectoryDefinition
 
 
     std::vector<cv::Point> mpcPoints_;
+
+    //Adjustable variables based on SAE_level
+    std::string saeLevel_ = "SAE_0";
+
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;
@@ -83,6 +90,7 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> sae_2_enable_publisher_;
     std::shared_ptr<LaneDetectorPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> mpc_trajectory_subscriber;
+    std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
 
   public:
     TrajectoryDefinition(std::shared_ptr<zenoh::Session> session, const int height, const int width);
@@ -135,4 +143,6 @@ class TrajectoryDefinition
     void publishSAE_2Enabler(const std::string& value_str);
 
     void mpcDebug(void);
-};
+    void setAutonomousDriveState(std::string activeAutonomyLevel);
+    void adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+};  
