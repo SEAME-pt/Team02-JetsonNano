@@ -38,6 +38,12 @@ private:
 
     double last_danger_received_;
     double last_crosswalk_received_;
+    double last_yield_received_;
+
+    bool stop_active_ = false;
+    bool green_active_ = false;
+    bool red_active_ = false;
+    bool yellow_active_ = false;
 
     float fixed_delta_time_;
 
