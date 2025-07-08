@@ -35,10 +35,12 @@ private:
     double last_time_;
     
     float desired_speed_;
+    float acc_speed_;
     float current_speed_;
     float speed_limit_;
     float max_steering_angle_;
 
+    double last_acc_speed_receive_;
     double last_danger_received_;
     double last_crosswalk_received_;
     double last_yield_received_;

@@ -31,6 +31,8 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
     autonomy_env_enable_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/Enable")));
+    acc_speed_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/acc_speed")));
 
     activeAutonomyLevel_subscriber_.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
@@ -52,9 +54,6 @@ TrajectoryDefinition::TrajectoryDefinition(
                 activeAutonomyLevel_ = "SAE_4";
         },
         zenoh::closures::none));
-    
-    acc_speed_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/acc_speed")));
 
     mpc_trajectory_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/MPC/Trajectory",

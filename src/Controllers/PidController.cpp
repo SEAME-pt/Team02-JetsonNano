@@ -15,9 +15,11 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     last_time_   = 0.0f;
 
     desired_speed_     = 0.0f;
+    acc_speed_         = 0.0f;
     speed_limit_       = 0.0f;
     max_steering_angle_ = 90.0f;
 
+    last_acc_speed_receive_ = 0.0f;
     last_crosswalk_received_ = 0.0f;
     last_danger_received_ = 0.0f;
     last_yield_received_ = 0.0f;
@@ -95,6 +97,16 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
+        },
+        zenoh::closures::none));
+
+    acc_speed_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/acc_speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            acc_speed_ = speed;
+            last_acc_speed_receive_ = getCurrentTime();
         },
         zenoh::closures::none));
 
@@ -352,6 +364,13 @@ void PidController::speedDefinition(void) {
     double current_time = getCurrentTime();
     double threshold = 0.80;
 
+    double active_speed = 0.0f;
+    if (std::abs(current_time -  last_acc_speed_receive_) < threshold) {
+        active_speed = acc_speed_;
+    } else {
+        active_speed = speed_limit_;
+    }
+
     if (std::abs(current_time -  last_danger_received_) < threshold) {
         desired_speed_ = 0.16;
     } else if (std::abs(current_time - last_crosswalk_received_) < threshold) {
@@ -363,11 +382,11 @@ void PidController::speedDefinition(void) {
             if (current_speed_ != 0)
                 desired_speed_ = 0;
             else {
-                desired_speed_ = speed_limit_;
+                desired_speed_ = active_speed;
                 stop_active_ = false;
             }
         } else {
-            desired_speed_ = speed_limit_;
+            desired_speed_ = active_speed;
             stop_active_ = false;
         }
     } else if (red_active_ || yellow_active_ || green_active_) {
@@ -379,25 +398,25 @@ void PidController::speedDefinition(void) {
                 if (current_speed_ != 0.30)
                     desired_speed_ = 0.30;
                 else {
-                    desired_speed_ = speed_limit_;
+                    desired_speed_ = active_speed;
                     red_active_ = false;
                 }
             } else {
-                desired_speed_ = speed_limit_;
+                desired_speed_ = active_speed;
                 yellow_active_ = false;
             }
         }
         if (green_active_) {
             if (std::abs(current_time - last_green_received_) < threshold) {
-                desired_speed_ = speed_limit_;
+                desired_speed_ = active_speed;
             } else {
-                desired_speed_ = speed_limit_;
+                desired_speed_ = active_speed;
                 green_active_ = false;
             }
         }
     }
     else {
-        desired_speed_ = speed_limit_;
+        desired_speed_ = active_speed;
     }
 }
 
