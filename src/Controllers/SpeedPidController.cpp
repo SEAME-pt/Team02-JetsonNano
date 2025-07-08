@@ -219,15 +219,15 @@ void SpeedPidController::run()
     while (true)
     {
         std::string sae_level = getAutonomousDriveState();
-        if (!speed_lock_)
+        if (sae_level.find("SAE_0") != std::string::npos) {
+            float manual_speed    = xboxController_->getManualSpeed();
+            publisher_->publishSpeed(manual_speed);
+            integral_ = 0;
+            last_time_ = getCurrentTime();
+        } 
+        else if (!speed_lock_)
         {
-            if (sae_level.find("SAE_0") != std::string::npos) {
-                float manual_speed    = xboxController_->getManualSpeed();
-                publisher_->publishSpeed(manual_speed);
-                integral_ = 0;
-                last_time_ = getCurrentTime();
-
-            } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+            if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
 
             } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
 
