@@ -206,7 +206,7 @@ void PidController::autonomousControl()
     // publisher_->publishSpeed(xboxController_->getManualSpeed());
     if (!this->speed_lock_)
     {
-        publisher_->publishDesiredSpeed(constant_speed_);
+        // publisher_->publishDesiredSpeed(constant_speed_);
         publisher_->publishCurrentGear(1);
     }
     else
