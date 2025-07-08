@@ -85,18 +85,6 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         {
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
-
-            if (logging_)
-            {
-                double now = getCurrentTime();
-                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
-            
-                if (now - log_start_time_ > 5.0) {
-                    logging_ = false;
-                    log_file_.close();
-                }
-            }
-
         },
         zenoh::closures::none));
 
@@ -118,7 +106,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
                 last_yield_received_ = getCurrentTime();
             } else if (value_str.find("Stop") != std::string::npos) {
                 stop_active_ = true;
-                last_stop_received = getCurrentTime();
+                last_stop_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Green") != std::string::npos) {
                 green_active_ = true;
                 last_green_received_ = getCurrentTime();
@@ -322,11 +310,11 @@ void PidController::speedDefinition(void) {
     } else if (std::abs(current_time - last_yield_received_) < threshold) {
         desired_speed_ = 0.16;
     } else if (stop_active_) {
-        if (std::abs(current_time - last_stop_received) < threshold) {
+        if (std::abs(current_time - last_stop_received_) < threshold) {
             if (current_speed_ != 0)
                 desired_speed_ = 0;
             else {
-                desired_speed_ = speed_limit_
+                desired_speed_ = speed_limit_;
                 stop_active_ = false;
             }
         } else {
@@ -340,7 +328,7 @@ void PidController::speedDefinition(void) {
             if (current_speed_ != 0)
                 desired_speed_ = 0;
             else {
-                desired_speed_ = speed_limit_
+                desired_speed_ = speed_limit_;
                 red_active_ = false;
             }
         } else {
@@ -354,7 +342,7 @@ void PidController::speedDefinition(void) {
             if (current_speed_ != 0.30)
                 desired_speed_ = 0.30;
             else {
-                desired_speed_ = speed_limit_
+                desired_speed_ = speed_limit_;
                 red_active_ = false;
             }
         } else {
