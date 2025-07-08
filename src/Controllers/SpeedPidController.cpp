@@ -69,23 +69,41 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Lock",
+    emergency_brake_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Emergency",
         [this](const zenoh::Sample& sample)
         {
             std::string value_str = sample.get_payload().as_string();
 
-            bool lock_value = false;
+            bool emergency_value = false;
             if (value_str.find("1") != std::string::npos)
             {
-                lock_value = true;
+                emergency_value = true;
             }
 
-            speed_lock_ = lock_value;
+            emergency_brake_ = emergency_value;
 
             // std::cout << "Speed lock "
-            //           << (lock_value ? "activated" : "deactivated")
+            //           << (emergency_value ? "activated" : "deactivated")
             //           << std::endl;
+        },
+        zenoh::closures::none));
+    
+    trafficSign_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/TrafficSign",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string value_str = sample.get_payload().as_string();
+
+            if (value_str.find("Speed 80km/h") != std::string::npos) {
+                desired_speed_ = 0.25;
+            } else if (value_str.find("Speed 50km/h") != std::string::npos) {
+                desired_speed_ = 0.20;
+            } else if (value_str.find("Danger") != std::string::npos) {
+                desired_speed_ = 0.18;
+            } else if (value_str.find("Crosswalk") != std::string::npos) {
+                desired_speed_ = 0.18;
+            }
         },
         zenoh::closures::none));
 

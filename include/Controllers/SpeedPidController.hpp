@@ -37,7 +37,7 @@ private:
     std::optional<zenoh::Subscriber<void>> ki_subscriber;
     std::optional<zenoh::Subscriber<void>> kd_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
-    std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
+    std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> currentYaw_subscriber;
