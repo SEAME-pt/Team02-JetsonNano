@@ -290,7 +290,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
     }
-    else if (activeAutonomyLevel_ == "SAE_1_LKAS")
+    else if (activeAutonomyLevel_ == "SAE_1_ACC")
         adaptiveSpeedControl(class_mask, midCurve);
 
     // // obstacleAvoidance(class_mask, midCurve);
