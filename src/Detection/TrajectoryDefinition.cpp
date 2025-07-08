@@ -62,6 +62,15 @@ TrajectoryDefinition::TrajectoryDefinition(
         },
         zenoh::closures::none));
 
+    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/ADAS/ActiveAutonomyLevel",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string activeAutonomyLevel = sample.get_payload().as_string();
+            setAutonomousDriveState(activeAutonomyLevel);
+        },
+        zenoh::closures::none));
+
 }
 
 TrajectoryDefinition::~TrajectoryDefinition()
@@ -72,6 +81,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
     delete kalmanFilter;
     delete ipm;
     delete avoidance;
+    delete accontroller;
 }
 
 void TrajectoryDefinition::initLocalEnv() {
@@ -113,6 +123,9 @@ void TrajectoryDefinition::initLocalEnv() {
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
                                        verticalFOV, nearDistance_, farDistance_,
                                        laneWidth_);
+
+        //For ACC usage
+        distanceToObstacle_ = img_height;
     }
     catch (const std::exception& e)
     {
@@ -122,10 +135,11 @@ void TrajectoryDefinition::initLocalEnv() {
     try
     {
         this->avoidance = new ObstacleAvoidance(width_, height_, 4);
+        this->accontroller = new AdaptiveCruiseControl(width_, height_, nearDistance_, farDistance_, laneWidth_);
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error initializing ObstacleAvoidance" << e.what() << std::endl;
+        std::cerr << "Error initializing ObstacleAvoidance and AdaptiveCruiseControl" << e.what() << std::endl;
     }
 }
 
@@ -162,6 +176,9 @@ void TrajectoryDefinition::initCarlaEnv() {
         this->ipm->calibrateFromCamera(cameraHeight, cameraPitch, horizontalFOV,
                                        verticalFOV, nearDistance_, farDistance_,
                                        laneWidth_);
+        
+        //For ACC usage
+        distanceToObstacle_ = img_height;
     }
     catch (const std::exception& e)
     {
@@ -251,12 +268,13 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     (void) class_mask;
 
     // If in ACC
-    //adaptiveSpeedControl(class_mask, midCurve);
-
-    obstacleAvoidance(class_mask, midCurve);
+    if (saeLevel_.find("SAE_1_LKAS") != std::string::npos)
+        adaptiveSpeedControl(class_mask, midCurve);
+    else if(saeLevel_.find("SAE_4") != std::string::npos)
+        obstacleAvoidance(class_mask, midCurve);
     
     
-    // // checkForwardCollision(class_mask, midCurve);
+    checkForwardCollision(class_mask, midCurve);
 
     mpcDebug();
 
@@ -1472,6 +1490,52 @@ void TrajectoryDefinition::mpcDebug(void) {
             cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
         }
     }
+}
+
+void TrajectoryDefinition::setAutonomousDriveState(std::string activeAutonomyLevel)
+{
+    saeLevel_ = activeAutonomyLevel;
+}
+
+void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+{
+    if (midCurve.empty()) {
+        cv::putText(allPolylinesViz_, "No trajectory for ACC", cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        return;
+    }
+    
+    // Calculate recommended speed
+    float recommendedSpeed = adaptiveCruiseControl_->calculateAdaptiveSpeed(class_mask, midCurve);
+    
+    // Get obstacle info for visualization
+    int obstacleDistance = adaptiveCruiseControl_->getCurrentObstacleDistance();
+    float obstacleSpeed = adaptiveCruiseControl_->getObstacleSpeed();
+    bool obstacleDetected = adaptiveCruiseControl_->isObstacleDetected();
+    cv::Point obstaclePos = adaptiveCruiseControl_->getObstaclePosition();
+    
+    // Update global distance variable
+    distanceToObstacle_ = obstacleDetected ? obstacleDistance : frameHeight_;
+    
+    // Visualize obstacle and information
+    if (obstacleDetected) {
+        cv::circle(allPolylinesViz_, obstaclePos, 15, cv::Scalar(255, 165, 0), -1);
+        cv::putText(allPolylinesViz_, "OBS", obstaclePos + cv::Point(-15, 5), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 2);
+        
+        // Display ACC info
+        std::string accInfo = "ACC: " + std::to_string(obstacleDistance) + "px, " + 
+                             std::to_string(obstacleSpeed).substr(0, 5) + "px/s, " +
+                             std::to_string(recommendedSpeed).substr(0, 4);
+        cv::putText(allPolylinesViz_, accInfo, cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
+    } else {
+        cv::putText(allPolylinesViz_, "ACC: Clear path", cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
+    }
+    
+    // Publish speed recommendation
+    publishACC(std::to_string(recommendedSpeed));
 }
 
 void TrajectoryDefinition::publishLKAS(const std::string& value_str)
