@@ -197,27 +197,12 @@ void SpeedPidController::run()
     while (true)
     {
         std::string sae_level = getAutonomousDriveState();
-        if (sae_level.find("SAE_0") != std::string::npos) {
-            // float manual_speed    = xboxController_->getManualSpeed();
-            // publisher_->publishSpeed(manual_speed);
-            // integral_ = 0;
-            // last_time_ = getCurrentTime();
-            double current_time = getCurrentTime();
-            float error = desired_speed_ - current_speed_;
-            double throttle = speedPID(error, current_time);
-            throttle = std::max(0.0, throttle); 
-            publisher_->publishSpeed(throttle);
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                        static_cast<int>(fixed_delta_time_ * 1000)));
-        } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
-
-        } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
-
-        } else if (sae_level.find("SAE_2") != std::string::npos) {
-
-        } else if (sae_level.find("SAE_3") != std::string::npos) {
-
-        } else if (sae_level.find("SAE_4") != std::string::npos) {
+        if (sae_level.find("SAE_0") != std::string::npos || sae_level.find("SAE_1_LKAS") != std::string::npos) {
+            float manual_speed    = xboxController_->getManualSpeed();
+            publisher_->publishSpeed(manual_speed);
+            integral_ = 0;
+            last_time_ = getCurrentTime();
+        } else {
             double current_time = getCurrentTime();
             float error = desired_speed_ - current_speed_;
             double throttle = speedPID(error, current_time);
@@ -226,8 +211,6 @@ void SpeedPidController::run()
             std::this_thread::sleep_for(std::chrono::milliseconds(
                         static_cast<int>(fixed_delta_time_ * 1000)));
             // runThrottleCalibration();
-        } else {
-
         }
     }
 
