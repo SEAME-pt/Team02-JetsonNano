@@ -27,8 +27,6 @@
 #include "ObstacleAvoidance.hpp"
 #include "AdaptiveCruiseControl.hpp"
 
-#define WIDTH 256
-#define HEIGHT 128
 
 class TrajectoryDefinition
 {
@@ -88,7 +86,7 @@ class TrajectoryDefinition
     std::optional<zenoh::Publisher> lane_mask_publisher_;
     std::optional<zenoh::Publisher> class_mask_publisher_;
     std::optional<zenoh::Publisher> lkas_publisher_;
-    std::optional<zenoh::Publisher> sae_2_disable_speed_publisher_;
+    std::optional<zenoh::Publisher> sae_2_disable_publisher_;
     std::optional<zenoh::Publisher> autonomy_env_enable_;
     std::optional<zenoh::Publisher> acc_speed_publisher_;
 
@@ -120,6 +118,8 @@ class TrajectoryDefinition
     void publishLKAS(const std::string &value_str);
     void publishSAE2Disable(const std::string& value_str);
     void publishAutonomyEnvEnable(const std::string& value_str);
+    void publishACC(const std::string& value_str);
+
   private:
 
     void createLanes(cv::Mat& frame, cv::Mat& binary_mask, cv::Mat& class_mask);
