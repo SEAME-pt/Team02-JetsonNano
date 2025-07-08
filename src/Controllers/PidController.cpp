@@ -15,6 +15,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     last_time_   = 0.0f;
 
     desired_speed_     = 0.0f;
+    speed_limit_       = 0.0f;
     max_steering_angle_ = 90.0f;
 
     lane_departure_threshold_ = 0.1f;
@@ -77,13 +78,28 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             std::string value_str = sample.get_payload().as_string();
 
             if (value_str.find("Speed 80km/h") != std::string::npos) {
-                desired_speed_ = 0.25;
+                speed_limit_ = 0.25;
             } else if (value_str.find("Speed 50km/h") != std::string::npos) {
-                desired_speed_ = 0.20;
+                speed_limit_ = 0.20;
             } else if (value_str.find("Danger") != std::string::npos) {
-                desired_speed_ = 0.18;
+                last_danger_received_ = getCurrentTime();
             } else if (value_str.find("Crosswalk") != std::string::npos) {
+                last_crosswalk_received_ = getCurrentTime();
+            } else if (value_str.find("Stop") != std::string::npos) {
                 desired_speed_ = 0.18;
+                // last_stop_received_ = getCurrentTime();
+            } else if (value_str.find("Yield") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_yield_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Green") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_green_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Red") != std::string::npos) {
+                desired_speed_ = 0.18;
+                // last_red_received_ = getCurrentTime();
+            } else if (value_str.find("Traffic Yellow") != std::string::npos) {
+                desired_speed_ = 0.30;
+                // last_yellow_received_ = getCurrentTime();
             }
         },
         zenoh::closures::none));
@@ -101,6 +117,7 @@ void PidController::init(float kp, float ki, float kd, float speed,
     ki_               = ki;
     kd_               = kd;
     desired_speed_   = speed;
+    speed_limit_     = speed;
     fixed_delta_time_ = delta_time;
 
     prev_error_ = 0.0f;
@@ -265,12 +282,27 @@ void PidController::autonomousControl()
                 static_cast<int>(fixed_delta_time_ * 1000)));
 }
 
+void PidController::speedDefinition(void) {
+    double current_time = getCurrentTime();
+    double threshold = 0.50;
+
+    if (std::abs(current_time -  last_danger_received_) < threshold) {
+        desired_speed_ = 0.18;
+    } else if (std::abs(current_time - last_crosswalk_received_) < threshold) {
+        desired_speed_ = 0.18;
+    } else {
+        desired_speed_ = speed_limit_;
+    }
+}
+
 void PidController::run()
 {
     while (true)
     {
         if (xboxController_->getPidEnable()) {
             std::string sae_level = getAutonomousDriveState();
+
+            speedDefinition();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
