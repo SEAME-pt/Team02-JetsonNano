@@ -22,6 +22,7 @@ private:
     std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
     std::optional<zenoh::Subscriber<void>> LKAS_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     
     float kp_;
     float ki_;
@@ -34,11 +35,22 @@ private:
     double last_time_;
     
     float desired_speed_;
+    float current_speed_;
     float speed_limit_;
     float max_steering_angle_;
 
     double last_danger_received_;
     double last_crosswalk_received_;
+    double last_yield_received_;
+    double last_stop_received_;
+    double last_red_received_;
+    double last_green_received_;
+    double last_yellow_received_;
+
+    bool stop_active_ = false;
+    bool green_active_ = false;
+    bool red_active_ = false;
+    bool yellow_active_ = false;
 
     float fixed_delta_time_;
 
