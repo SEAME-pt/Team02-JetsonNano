@@ -38,17 +38,17 @@ TrajectoryDefinition::TrajectoryDefinition(
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
 
-            if (activeAutonomyLevel.find("SAE_0") != std:string::npos)
+            if (activeAutonomyLevel.find("SAE_0") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_0";
-            else if (activeAutonomyLevel.find("SAE_1_LKAS") != std:string::npos)
+            else if (activeAutonomyLevel.find("SAE_1_LKAS") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_1_LKAS";
-            else if (activeAutonomyLevel.find("SAE_1_ACC") != std:string::npos)
+            else if (activeAutonomyLevel.find("SAE_1_ACC") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_1_ACC";
-            else if (activeAutonomyLevel.find("SAE_2") != std:string::npos)
+            else if (activeAutonomyLevel.find("SAE_2") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_2";
-            else if (activeAutonomyLevel.find("SAE_3") != std:string::npos)
+            else if (activeAutonomyLevel.find("SAE_3") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_3";
-            else if (activeAutonomyLevel.find("SAE_4") != std:string::npos)
+            else if (activeAutonomyLevel.find("SAE_4") != std::string::npos)
                 activeAutonomyLevel_ = "SAE_4";
         },
         zenoh::closures::none));
@@ -275,13 +275,13 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     drawCurves(midCurve, leftCurve, rightCurve);
 
-    if (activeAutonomyLevel_.find("SAE_0") == std::string::npos) {
+    if (activeAutonomyLevel_ != "SAE_0") {
         checkForwardCollision(class_mask, midCurve);
     } 
     
-    if (activeAutonomyLevel_.find("SAE_2") != std::string::npos || 
-        activeAutonomyLevel_.find("SAE_3") != std::string::npos || 
-        activeAutonomyLevel_.find("SAE_4") != std::string::npos) {
+    if (activeAutonomyLevel_ == "SAE_2" || 
+        activeAutonomyLevel_ == "SAE_3" ||
+        activeAutonomyLevel_ == "SAE_4") {
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
     }
