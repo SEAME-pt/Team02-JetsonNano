@@ -290,8 +290,10 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
     }
-    else if (activeAutonomyLevel_ == "SAE_1_ACC")
+    else if (activeAutonomyLevel_ == "SAE_1_ACC") {
+        std::cout << "ACC Mode" << std::endl;
         adaptiveSpeedControl(class_mask, midCurve);
+    }
 
     mpcDebug();
 
