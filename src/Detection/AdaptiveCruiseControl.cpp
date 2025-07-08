@@ -60,9 +60,9 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
                                   (farDistance_ - nearDistance_) / frameHeight_;
     
     // Define safety distances in meters
-    const float CRITICAL_DISTANCE_M = 0.3f;   // 2 meters - emergency stop
-    const float SAFE_DISTANCE_M = 0.6f;       // 6 meters - start following
-    const float COMFORT_DISTANCE_M = 0.9f;   // 12 meters - ideal following distance
+    const float CRITICAL_DISTANCE_M = 0.3f;
+    const float SAFE_DISTANCE_M = 0.6f;
+    const float COMFORT_DISTANCE_M = 0.9f;
     
     // Calculate absolute speed of obstacle (in m/s)
     float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
