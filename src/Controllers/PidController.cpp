@@ -322,12 +322,8 @@ void PidController::speedDefinition(void) {
             stop_active_ = false;
         }
     } else if (red_active_) {
-        green_active_ = false;
-        yellow_active_ = false;
         desired_speed_ = 0;
     } else if (yellow_active_) {
-        red_active_ = false;
-        green_active_ = false;
         if (std::abs(current_time - last_yellow_received_) < threshold) {
             if (current_speed_ != 0.30)
                 desired_speed_ = 0.30;
@@ -340,8 +336,6 @@ void PidController::speedDefinition(void) {
             yellow_active_ = false;
         }
     } else if (green_active_) {
-        red_active_ = false;
-        yellow_active_ = false;
         if (std::abs(current_time - last_green_received_) < threshold) {
             desired_speed_ = speed_limit_;
         } else {
