@@ -82,16 +82,6 @@ TrajectoryDefinition::TrajectoryDefinition(
         },
         zenoh::closures::none));
 
-
-    activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/ADAS/ActiveAutonomyLevel",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string activeAutonomyLevel = sample.get_payload().as_string();
-            setAutonomousDriveState(activeAutonomyLevel);
-        },
-        zenoh::closures::none));
-
 }
 
 TrajectoryDefinition::~TrajectoryDefinition()
@@ -1538,49 +1528,6 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
     {
         std::cerr << "Not enough points to calculate coefficients" << std::endl;
         return;
-    }
-}
-
-void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
-{
-    try {
-        avoidance->buildOccupancy(segmentation_mask);
-        avoidance->buildTrajectoryGrid(midCurve);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error in obstacle avoidance lalala: " << e.what() << std::endl;
-    }
-    
-    try {
-        if (avoidance->detectAllCollisions())
-        {
-            std::vector<cv::Point> adjustedTrajectory = avoidance->adjustTrajectory(midCurve);        
-            // Replace original trajectory with adjusted one
-            midCurve.clear();
-            midCurve = adjustedTrajectory;
-
-            cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
-            for (size_t i = 1; i < midCurve.size(); i++)
-            {
-                cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
-                        3);
-            }
-        }
-        // avoidance->visualizeGrid(&midCurve, segmentation_mask);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
-    }
-}
-
-void TrajectoryDefinition::mpcDebug(void) {
-    // Draw the predicted trajectory as a green polyline
-    if (mpcPoints_.size() > 1) {
-        for (size_t i = 1; i < mpcPoints_.size(); ++i) {
-            cv::line(allPolylinesViz_, mpcPoints_[i - 1], mpcPoints_[i], cv::Scalar(0, 255, 0), 2);
-        }
     }
 }
 
