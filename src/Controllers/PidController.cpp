@@ -21,6 +21,10 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     last_crosswalk_received_ = 0.0f;
     last_danger_received_ = 0.0f;
     last_yield_received_ = 0.0f;
+    last_stop_received_ = 0.0f;
+    last_red_received_ = 0.0f;
+    last_green_received_ = 0.0f;
+    last_yellow_received_ = 0.0f;
 
     lane_departure_threshold_ = 0.1f;
 
