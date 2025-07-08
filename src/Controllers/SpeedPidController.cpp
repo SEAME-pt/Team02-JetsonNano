@@ -23,7 +23,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
 
     fixed_delta_time_ = 0.02f;
     autonomousDrive_    = "SAE_0";
-    speed_lock_         = false;
+    emergency_brake_         = false;
     xboxController_     = xbox_controller;
 
     std::cout << "SpeedPID controller created!" << std::endl;
@@ -243,7 +243,7 @@ void SpeedPidController::run()
             integral_ = 0;
             last_time_ = getCurrentTime();
         } 
-        else if (!speed_lock_)
+        else if (!emergency_brake_)
         {
             if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
 

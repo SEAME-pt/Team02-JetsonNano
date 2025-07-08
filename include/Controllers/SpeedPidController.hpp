@@ -78,7 +78,7 @@ private:
 
     std::string autonomousDrive_;
     XboxController* xboxController_;
-    bool speed_lock_;
+    bool emergency_brake_;
 
 
     //calibration measurement parameters
