@@ -64,7 +64,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
 
             emergency_brake_ = emergency_value_;
 
-            // std::cout << "Speed lock "
+            // std::cout << "Emergency Brake "
             //           << (emergency_value_ ? "activated" : "deactivated")
             //           << std::endl;
         },
@@ -160,10 +160,8 @@ float PidController::steeringPID(float error, double current_time)
 void PidController::manualControl()
 {
     float manual_steering = xboxController_->getManualSteering();
-    float manual_speed    = xboxController_->getManualSpeed();
 
     publisher_->publishSteering(manual_steering);
-    publisher_->publishDesiredSpeed(manual_speed);
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
