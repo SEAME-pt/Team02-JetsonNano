@@ -31,7 +31,7 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
 
     acc_speed_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/acc_speed")));
 
     // cv_stream = cv::cuda::Stream();
 
