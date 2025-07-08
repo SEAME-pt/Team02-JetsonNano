@@ -26,9 +26,6 @@
 #include "GPUInference.hpp"
 #include "ObstacleAvoidance.hpp"
 
-#define WIDTH 256
-#define HEIGHT 128
-
 class TrajectoryDefinition
 {
   private:
