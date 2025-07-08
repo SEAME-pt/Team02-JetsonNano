@@ -27,9 +27,10 @@ TrajectoryDefinition::TrajectoryDefinition(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ObjMask")));
     lkas_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/LKAS")));
-    acc_publisher_.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/ACC")));
     sae_2_enable_publisher_.emplace(
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
+
+    acc_speed_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/SAE_2")));
 
     // cv_stream = cv::cuda::Stream();
@@ -1506,13 +1507,13 @@ void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std:
     }
     
     // Calculate recommended speed
-    float recommendedSpeed = adaptiveCruiseControl_->calculateAdaptiveSpeed(class_mask, midCurve);
+    float recommendedSpeed = accontroller->calculateAdaptiveSpeed(segmentation_mask, midCurve);
     
     // Get obstacle info for visualization
-    int obstacleDistance = adaptiveCruiseControl_->getCurrentObstacleDistance();
-    float obstacleSpeed = adaptiveCruiseControl_->getObstacleSpeed();
-    bool obstacleDetected = adaptiveCruiseControl_->isObstacleDetected();
-    cv::Point obstaclePos = adaptiveCruiseControl_->getObstaclePosition();
+    int obstacleDistance = accontroller->getCurrentObstacleDistance();
+    float obstacleSpeed = accontroller->getObstacleSpeed();
+    bool obstacleDetected = accontroller->isObstacleDetected();
+    cv::Point obstaclePos = accontroller->getObstaclePosition();
     
     // Update global distance variable
     distanceToObstacle_ = obstacleDetected ? obstacleDistance : frameHeight_;
@@ -1535,7 +1536,7 @@ void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std:
     }
     
     // Publish speed recommendation
-    publishACC(std::to_string(recommendedSpeed));
+    publishACC_(std::to_string(recommendedSpeed));
 }
 
 void TrajectoryDefinition::publishLKAS(const std::string& value_str)
@@ -1555,7 +1556,7 @@ void TrajectoryDefinition::publishACC(const std::string& value_str)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    acc_publisher_->put(std::move(buf));
+    acc_speed_publisher_->put(std::move(buf));
 }
 
 void TrajectoryDefinition::publishSAE_2Enabler(const std::string& value_str)
