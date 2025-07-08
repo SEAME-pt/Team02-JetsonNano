@@ -107,6 +107,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             float speed    = std::stof(sample.get_payload().as_string());
             acc_speed_ = speed;
             last_acc_speed_receive_ = getCurrentTime();
+            std::cout << "Acc speed received: " << acc_speed_ << std::endl;
         },
         zenoh::closures::none));
 
