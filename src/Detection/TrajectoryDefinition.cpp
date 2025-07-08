@@ -37,7 +37,19 @@ TrajectoryDefinition::TrajectoryDefinition(
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            activeAutonomyLevel_ = activeAutonomyLevel;
+
+            if (activeAutonomyLevel.find("SAE_0") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_0";
+            else if (activeAutonomyLevel.find("SAE_1_LKAS") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_1_LKAS";
+            else if (activeAutonomyLevel.find("SAE_1_ACC") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_1_ACC";
+            else if (activeAutonomyLevel.find("SAE_2") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_2";
+            else if (activeAutonomyLevel.find("SAE_3") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_3";
+            else if (activeAutonomyLevel.find("SAE_4") != std:string::npos)
+                activeAutonomyLevel_ = "SAE_4";
         },
         zenoh::closures::none));
     
@@ -113,8 +125,8 @@ void TrajectoryDefinition::initLocalEnv() {
         float img_width = static_cast<float>(width_);
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
-        nearDistance_ = 0.0f;       // meters
-        farDistance_ = 0.6f;       // meters
+        nearDistance_ = 0.3f;       // meters
+        farDistance_ = 1.2f;       // meters
         laneWidth_ = 0.6f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
