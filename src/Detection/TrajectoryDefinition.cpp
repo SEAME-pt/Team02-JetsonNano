@@ -293,8 +293,6 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     else if (activeAutonomyLevel_ == "SAE_1_ACC")
         adaptiveSpeedControl(class_mask, midCurve);
 
-    // // obstacleAvoidance(class_mask, midCurve);
-   
     mpcDebug();
 
     allPolylinesViz_.copyTo(frame);
