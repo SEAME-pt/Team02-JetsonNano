@@ -37,8 +37,6 @@ private:
     std::optional<zenoh::Subscriber<void>> ki_subscriber;
     std::optional<zenoh::Subscriber<void>> kd_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
-    std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
-    std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
     std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> currentYaw_subscriber;
@@ -78,7 +76,6 @@ private:
 
     std::string autonomousDrive_;
     XboxController* xboxController_;
-    bool emergency_brake_;
 
 
     //calibration measurement parameters
@@ -91,9 +88,6 @@ private:
     float prev_throttle_ = 0.0f;
     const float MAX_THROTTLE_RATE = 20.0f;
     float u_stiction = 30.0;
-
-
-
 
 public:
     SpeedPidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
