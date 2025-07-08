@@ -33,7 +33,11 @@ private:
     double last_time_;
     
     float desired_speed_;
+    float speed_limit_;
     float max_steering_angle_;
+
+    double last_danger_received_;
+    double last_crosswalk_received_;
 
     float fixed_delta_time_;
 
@@ -62,6 +66,8 @@ private:
 
     //SAE_4
     void autonomousControl();
+
+    void speedDefinition();
 
 public:
     PidController(std::shared_ptr<zenoh::Session> session, XboxController* xbox_controller);
