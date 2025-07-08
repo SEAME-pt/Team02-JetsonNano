@@ -22,7 +22,8 @@ private:
     std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
     std::optional<zenoh::Subscriber<void>> LKAS_subscriber;
-    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber_;
+    std::optional<zenoh::Subscriber<void>> acc_speed_subscriber_;
     
     float kp_;
     float ki_;
