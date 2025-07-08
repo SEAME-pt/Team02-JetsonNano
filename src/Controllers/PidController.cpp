@@ -79,6 +79,27 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
         },
         zenoh::closures::none));
 
+    currentSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            float speed    = std::stof(sample.get_payload().as_string());
+            current_speed_ = speed;
+
+            if (logging_)
+            {
+                double now = getCurrentTime();
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
+            
+                if (now - log_start_time_ > 5.0) {
+                    logging_ = false;
+                    log_file_.close();
+                }
+            }
+
+        },
+        zenoh::closures::none));
+
     trafficSign_subscriber_.emplace(session_->declare_subscriber(
         "Vehicle/1/TrafficSign",
         [this](const zenoh::Sample& sample)
@@ -124,6 +145,7 @@ void PidController::init(float kp, float ki, float kd, float speed,
     ki_               = ki;
     kd_               = kd;
     desired_speed_   = speed;
+    current_speed_   = 0.0f;
     speed_limit_     = speed;
     fixed_delta_time_ = delta_time;
 

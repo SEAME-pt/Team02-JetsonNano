@@ -21,6 +21,7 @@ private:
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
     std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     std::optional<zenoh::Subscriber<void>> trafficSign_subscriber_;
+    std::optional<zenoh::Subscriber<void>> currentSpeed_subscriber;
     
     float kp_;
     float ki_;
@@ -33,6 +34,7 @@ private:
     double last_time_;
     
     float desired_speed_;
+    float current_speed_;
     float speed_limit_;
     float max_steering_angle_;
 
