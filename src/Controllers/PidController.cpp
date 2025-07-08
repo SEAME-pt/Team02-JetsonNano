@@ -18,6 +18,10 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
     speed_limit_       = 0.0f;
     max_steering_angle_ = 90.0f;
 
+    last_crosswalk_received_ = 0.0f;
+    last_danger_received_ = 0.0f;
+    last_yield_received_ = 0.0f;
+
     lane_departure_threshold_ = 0.1f;
 
     kp_ = 1.0f;
@@ -85,21 +89,20 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
                 last_danger_received_ = getCurrentTime();
             } else if (value_str.find("Crosswalk") != std::string::npos) {
                 last_crosswalk_received_ = getCurrentTime();
-            } else if (value_str.find("Stop") != std::string::npos) {
-                desired_speed_ = 0.18;
-                // last_stop_received_ = getCurrentTime();
             } else if (value_str.find("Yield") != std::string::npos) {
-                desired_speed_ = 0.18;
-                // last_yield_received_ = getCurrentTime();
+                last_yield_received_ = getCurrentTime();
+            } else if (value_str.find("Stop") != std::string::npos) {
+                stop_active_ = true;
+                last_stop_received = getCurrentTime();
             } else if (value_str.find("Traffic Green") != std::string::npos) {
-                desired_speed_ = 0.18;
-                // last_green_received_ = getCurrentTime();
+                green_active_ = true;
+                last_green_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Red") != std::string::npos) {
-                desired_speed_ = 0.18;
-                // last_red_received_ = getCurrentTime();
+                red_active_ = true;
+                last_red_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Yellow") != std::string::npos) {
-                desired_speed_ = 0.30;
-                // last_yellow_received_ = getCurrentTime();
+                yellow_active_ = true;
+                last_yellow_received_ = getCurrentTime();
             }
         },
         zenoh::closures::none));
@@ -284,12 +287,63 @@ void PidController::autonomousControl()
 
 void PidController::speedDefinition(void) {
     double current_time = getCurrentTime();
-    double threshold = 0.50;
+    double threshold = 0.80;
 
     if (std::abs(current_time -  last_danger_received_) < threshold) {
-        desired_speed_ = 0.18;
+        desired_speed_ = 0.16;
     } else if (std::abs(current_time - last_crosswalk_received_) < threshold) {
-        desired_speed_ = 0.18;
+        desired_speed_ = 0.16;
+    } else if (std::abs(current_time - last_yield_received_) < threshold) {
+        desired_speed_ = 0.16;
+    } else if (stop_active_) {
+        if (std::abs(current_time - last_stop_received) < threshold) {
+            if (current_speed_ != 0)
+                desired_speed_ = 0;
+            else {
+                desired_speed_ = speed_limit_
+                stop_active_ = false;
+            }
+        } else {
+            desired_speed_ = speed_limit_;
+            stop_active_ = false;
+        }
+    } else if (red_active_) {
+        green_active_ = false;
+        yellow_active_ = false;
+        if (std::abs(current_time - last_red_received_) < threshold) {
+            if (current_speed_ != 0)
+                desired_speed_ = 0;
+            else {
+                desired_speed_ = speed_limit_
+                red_active_ = false;
+            }
+        } else {
+            desired_speed_ = speed_limit_;
+            red_active_ = false;
+        }
+    } else if (yellow_active_) {
+        red_active_ = false;
+        green_active_ = false;
+        if (std::abs(current_time - last_yellow_received_) < threshold) {
+            if (current_speed_ != 0.30)
+                desired_speed_ = 0.30;
+            else {
+                desired_speed_ = speed_limit_
+                red_active_ = false;
+            }
+        } else {
+            desired_speed_ = speed_limit_;
+            yellow_active_ = false;
+        }
+    } else if (green_active_) {
+        red_active_ = false;
+        yellow_active_ = false;
+        if (std::abs(current_time - last_green_received_) < threshold) {
+            desired_speed_ = speed_limit_;
+        } else {
+            desired_speed_ = speed_limit_;
+            green_active_ = false;
+        }
     } else {
         desired_speed_ = speed_limit_;
     }
