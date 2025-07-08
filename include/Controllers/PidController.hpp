@@ -31,7 +31,7 @@ private:
     float integral_;
     double last_time_;
     
-    float constant_speed_;
+    float desired_speed_;
     float max_steering_angle_;
 
     float fixed_delta_time_;
