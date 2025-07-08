@@ -69,44 +69,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         },
         zenoh::closures::none));
 
-    emergency_brake_subscriber_.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Emergency",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string value_str = sample.get_payload().as_string();
-
-            bool emergency_value = false;
-            if (value_str.find("1") != std::string::npos)
-            {
-                emergency_value = true;
-            }
-
-            emergency_brake_ = emergency_value;
-
-            // std::cout << "Speed lock "
-            //           << (emergency_value ? "activated" : "deactivated")
-            //           << std::endl;
-        },
-        zenoh::closures::none));
-    
-    trafficSign_subscriber_.emplace(session_->declare_subscriber(
-        "Vehicle/1/TrafficSign",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string value_str = sample.get_payload().as_string();
-
-            if (value_str.find("Speed 80km/h") != std::string::npos) {
-                desired_speed_ = 0.25;
-            } else if (value_str.find("Speed 50km/h") != std::string::npos) {
-                desired_speed_ = 0.20;
-            } else if (value_str.find("Danger") != std::string::npos) {
-                desired_speed_ = 0.18;
-            } else if (value_str.find("Crosswalk") != std::string::npos) {
-                desired_speed_ = 0.18;
-            }
-        },
-        zenoh::closures::none));
-
     currentSpeed_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
@@ -145,8 +107,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             steer_ = (steer - 90.0) / 90;
         },
         zenoh::closures::none));
-
-
 }
 
 SpeedPidController::~SpeedPidController() {}
@@ -238,52 +198,36 @@ void SpeedPidController::run()
     {
         std::string sae_level = getAutonomousDriveState();
         if (sae_level.find("SAE_0") != std::string::npos) {
-            float manual_speed    = xboxController_->getManualSpeed();
-            publisher_->publishSpeed(manual_speed);
-            integral_ = 0;
-            last_time_ = getCurrentTime();
-        } 
-        else if (!emergency_brake_)
-        {
-            if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
+            // float manual_speed    = xboxController_->getManualSpeed();
+            // publisher_->publishSpeed(manual_speed);
+            // integral_ = 0;
+            // last_time_ = getCurrentTime();
+            double current_time = getCurrentTime();
+            float error = desired_speed_ - current_speed_;
+            double throttle = speedPID(error, current_time);
+            throttle = std::max(0.0, throttle); 
+            publisher_->publishSpeed(throttle);
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                        static_cast<int>(fixed_delta_time_ * 1000)));
+        } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
+        } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_2") != std::string::npos) {
+        } else if (sae_level.find("SAE_2") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_3") != std::string::npos) {
+        } else if (sae_level.find("SAE_3") != std::string::npos) {
 
-            } else if (sae_level.find("SAE_4") != std::string::npos) {
-                double current_time = getCurrentTime();
-                float error = desired_speed_ - current_speed_;
-                double throttle = speedPID(error, current_time);
-                throttle = std::max(0.0, throttle); 
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 1000)));
-                // runThrottleCalibration();
-            } else {
+        } else if (sae_level.find("SAE_4") != std::string::npos) {
+            double current_time = getCurrentTime();
+            float error = desired_speed_ - current_speed_;
+            double throttle = speedPID(error, current_time);
+            throttle = std::max(0.0, throttle); 
+            publisher_->publishSpeed(throttle);
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                        static_cast<int>(fixed_delta_time_ * 1000)));
+            // runThrottleCalibration();
+        } else {
 
-            }
-        }
-        else
-        {
-            float manual_speed    = xboxController_->getManualSpeed();
-            if (manual_speed <= 0)
-            {
-                publisher_->publishSpeed(manual_speed);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 1000)));
-            }
-            else
-            {
-                double current_time = getCurrentTime();
-                float error = 0 - current_speed_;
-                double throttle = speedPID(error, current_time);
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
-            }
         }
     }
 

@@ -19,7 +19,7 @@ private:
     std::unique_ptr<ControllerPublisher> publisher_;
     std::optional<zenoh::Subscriber<void>> cameraError_subscriber;
     std::optional<zenoh::Subscriber<void>> activeAutonomyLevel_subscriber;
-    std::optional<zenoh::Subscriber<void>> speed_lock_subscriber;
+    std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     
     float kp_;
     float ki_;
@@ -39,7 +39,7 @@ private:
     std::string autonomousDrive_;
     XboxController* xboxController_;
 
-    bool speed_lock_;
+    bool emergency_brake_;
 
     float lane_departure_threshold_;
 
