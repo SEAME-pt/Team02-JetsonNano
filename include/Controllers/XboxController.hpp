@@ -107,7 +107,7 @@ class XboxController
     int js;
     std::shared_ptr<zenoh::Session> session_;
     std::unique_ptr<ControllerPublisher> publisher_;
-    std::optional<zenoh::Subscriber<void>> detectionEnable_subscriber;
+    std::optional<zenoh::Subscriber<void>> autonomy_env_enable_subscriber_;
 
     std::atomic<float> manual_steering_{90.0f};
     std::atomic<float> manual_speed_{0.0f};
@@ -118,7 +118,8 @@ class XboxController
     bool sae_2 = false;
     bool sae_1_LKAS = false;
     bool sae_1_ACC = false;
-  
+
+    bool autonomyEnvEnable_ = false;
 
   public:
     std::vector<struct axis_state*> axes;

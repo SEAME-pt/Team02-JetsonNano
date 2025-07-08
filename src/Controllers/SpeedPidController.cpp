@@ -23,7 +23,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
 
     fixed_delta_time_ = 0.02f;
     autonomousDrive_    = "SAE_0";
-    speed_lock_         = false;
     xboxController_     = xbox_controller;
     current_speed_ = 0.0f;
 
@@ -70,26 +69,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
         },
         zenoh::closures::none));
 
-    speed_lock_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Speed/Lock",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string value_str = sample.get_payload().as_string();
-
-            bool lock_value = false;
-            if (value_str.find("1") != std::string::npos)
-            {
-                lock_value = true;
-            }
-
-            speed_lock_ = lock_value;
-
-            // std::cout << "Speed lock "
-            //           << (lock_value ? "activated" : "deactivated")
-            //           << std::endl;
-        },
-        zenoh::closures::none));
-
     currentSpeed_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
@@ -130,17 +109,6 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             steer_ = (steer - 90.0) / 90;
         },
         zenoh::closures::none));
-
-    adaptiveCruiseControlSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/ADAS/speedPid/ACCSpeed",
-        [this](const zenoh::Sample& sample)
-        {
-            float speed    = std::stof(sample.get_payload().as_string());
-            acc_speed_ = speed * 60.0 / (M_PI * 0.067);
-        },
-        zenoh::closures::none));
-
-
 }
 
 SpeedPidController::~SpeedPidController() {}
@@ -232,70 +200,27 @@ void SpeedPidController::run()
     while (true)
     {
         std::string sae_level = getAutonomousDriveState();
-        if (!speed_lock_)
+        if (getCurrentTime() - last_measure_ > 0.3)
         {
-            if (getCurrentTime() - last_measure_ > 0.3)
-            {
-                publisher_->publishSpeed(0);
-                std::cout << "Waiting for speed measurement..." << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                    static_cast<int>(fixed_delta_time_ * 1000)));
-            } else {
-                if (sae_level.find("SAE_0") != std::string::npos) {
-                    float manual_speed    = xboxController_->getManualSpeed();
-                    publisher_->publishSpeed(manual_speed);
-                    integral_ = 0;
-                    last_time_ = getCurrentTime();
-                    
-                } else if (sae_level.find("SAE_1_LKAS") != std::string::npos) {
-                    
-                } else if (sae_level.find("SAE_1_ACC") != std::string::npos) {
-                    
-                } else if (sae_level.find("SAE_2") != std::string::npos) {
-                    
-                } else if (sae_level.find("SAE_3") != std::string::npos) {
-                    double current_time = getCurrentTime();
-                    float error = desired_speed_ - current_speed_;
-                    double throttle = speedPID(error, current_time);
-                    throttle = std::max(0.0, throttle); 
-                    publisher_->publishSpeed(throttle);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(
-                        static_cast<int>(fixed_delta_time_ * 1000)));
-                        
-                } else if (sae_level.find("SAE_4") != std::string::npos) {
-                    double current_time = getCurrentTime();
-                    float error = desired_speed_ - current_speed_;
-                    double throttle = speedPID(error, current_time);
-                    throttle = std::max(0.0, throttle);
-                    std::cout << "Current Speed: " << current_speed_ 
-                    << ", Desired Speed: " << desired_speed_ 
-                    << ", Throttle: " << throttle << std::endl;
-                    publisher_->publishSpeed(throttle);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(
-                        static_cast<int>(fixed_delta_time_ * 1000)));
-                        // runThrottleCalibration();
-                } else {
-                    
-                }
-            }
-        }
-        else
-        {
-            float manual_speed    = xboxController_->getManualSpeed();
-            if (manual_speed <= 0)
-            {
+            publisher_->publishSpeed(0);
+            std::cout << "Waiting for speed measurement..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                static_cast<int>(fixed_delta_time_ * 1000)));
+        } else {
+            if (sae_level.find("SAE_0") != std::string::npos || sae_level.find("SAE_1_LKAS") != std::string::npos) {
+                float manual_speed    = xboxController_->getManualSpeed();
                 publisher_->publishSpeed(manual_speed);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 1000)));
-            }
-            else
-            {
+                integral_ = 0;
+                last_time_ = getCurrentTime();
+            } else {
                 double current_time = getCurrentTime();
-                float error = 0 - current_speed_;
+                float error = desired_speed_ - current_speed_;
                 double throttle = speedPID(error, current_time);
+                throttle = std::max(0.0, throttle); 
                 publisher_->publishSpeed(throttle);
                 std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 10000)));
+                            static_cast<int>(fixed_delta_time_ * 1000)));
+                // runThrottleCalibration();
             }
         }
     }

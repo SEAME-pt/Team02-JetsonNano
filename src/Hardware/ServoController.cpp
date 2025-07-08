@@ -30,7 +30,7 @@ void ServoController::setAngle(int16_t angle)
     }
 
     uint16_t pulseWidth =
-        static_cast<uint16_t>(301 + ((angle - 90) * 150 / 90));
+        static_cast<uint16_t>(205 + (angle * 205 / 180));
     std::cout << "angle: " << angle << "pw: " << pulseWidth << std::endl;
     m_ServoPCA->setPWM(0, 0, pulseWidth);
 }
