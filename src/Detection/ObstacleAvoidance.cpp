@@ -9,7 +9,7 @@
 ObstacleAvoidance::ObstacleAvoidance(int frameW, int frameH, int cellSizePx)
     : frameWidth_(frameW),
       frameHeight_(frameH),
-      cellSizePx_(cellSizePx),
+      cellSizePx_(cellSizePx)
 {
     // Compute how many grid cells horizontally/vertically
     gridWidth_  = (frameWidth_  + cellSizePx_ - 1) / cellSizePx_;
