@@ -166,8 +166,7 @@ void AdaptiveCruiseControl::updateObstacleTracking(int obstacleDistance, const c
     obstaclePosition_ = obstaclePos;
     obstacleDetected_ = (obstacleDistance > 0);
     std::cout << "OBSTACLE DISTANCE : " << obstacleDistanceMeters << std::endl;
-    std::cout << "Time between mea : " << obstacleDistanceMeters << std::endl;
-
+    std::cout << "Time between measures : " << currentTime - lastMeasurementTime_ << std::endl;
     
     // Add to history if obstacle detected
     if (obstacleDetected_) {
