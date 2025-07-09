@@ -219,6 +219,9 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
         sumTimeSquared += t * t;
         count++;
     }
+    std::cout << "sumTime: " << sumTime << ", sumDist: " << sumDist 
+              << ", sumTimeDist: " << sumTimeDist << ", sumTimeSquared: " << sumTimeSquared 
+              << ", count: " << count << std::endl;
     
     if (count < 2 || sumTimeSquared == 0) return 0.0f;
     
