@@ -229,11 +229,23 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
     double slope = (count * sumTimeDist - sumTime * sumDist) / 
                    (count * sumTimeSquared - sumTime * sumTime);
 
-    float obstacleAbsoluteSpeed = currentSpeed_ - static_cast<float>(slope);
-    float relativeSpeed = obstacleAbsoluteSpeed - currentSpeed_;
-
-    std::cout << "Obstacle speed: " << obstacleAbsoluteSpeed << "m/s, "
-          << "Relative: " << relativeSpeed << "m/s" << std::endl;
+    std::cout << "Distance slope: " << slope << " m/s" << std::endl;
+    
+    // slope > 0 means distance increasing (obstacle moving away)
+    // slope < 0 means distance decreasing (obstacle approaching)
+    
+    // The relative speed is just the slope (rate of distance change)
+    float relativeSpeed = static_cast<float>(slope);
+    
+    // Calculate absolute obstacle speed
+    float obstacleAbsoluteSpeed = currentSpeed_ + relativeSpeed;
+    
+    // Make sure absolute speed is not negative
+    obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
+    
+    std::cout << "Vehicle speed: " << currentSpeed_ << "m/s, "
+              << "Distance rate: " << relativeSpeed << "m/s, "
+              << "Obstacle absolute speed: " << obstacleAbsoluteSpeed << "m/s" << std::endl;
     
     return relativeSpeed; // Positive = moving away, Negative = approaching
 }
