@@ -35,7 +35,7 @@ private:
     
     // Obstacle tracking
     struct ObstacleInfo {
-        int distance;
+        double distance;
         cv::Point position;
         double timestamp;
     };
@@ -44,8 +44,8 @@ private:
     const int MAX_HISTORY = 5;
     
     // Current state
-    int currentObstacleDistance_;
-    int previousObstacleDistance_;
+    double currentObstacleDistance_;
+    double previousObstacleDistance_;
     cv::Point obstaclePosition_;
     float obstacleSpeed_;  // pixels per second
     bool obstacleDetected_;

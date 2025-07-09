@@ -211,7 +211,7 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
     
     for (const auto& info : obstacleHistory_) {
         double t = info.timestamp - baseTime;
-        double d = static_cast<double>(info.distance);
+        double d = info.distance;
         
         sumTime += t;
         sumDist += d;
