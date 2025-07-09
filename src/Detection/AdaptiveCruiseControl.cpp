@@ -224,7 +224,7 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
               << ", count: " << count << std::endl;
     
     if (count < 2 || sumTimeSquared == 0) return 0.0f;
-    
+    std::cout << "Calculating obstacle speed with " << count << " points." << std::endl;
     // Calculate slope (speed)
     double slope = (count * sumTimeDist - sumTime * sumDist) / 
                    (count * sumTimeSquared - sumTime * sumTime);
