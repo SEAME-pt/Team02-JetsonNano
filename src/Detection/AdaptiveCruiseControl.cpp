@@ -43,7 +43,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     
     // Find obstacle distance along trajectory
     int obstacleDistance = findObstacleOnTrajectory(segmentationMask, midCurve);
-    std::cout << "OBSTACLE DISTANCE : " << obstacleDistance << std::endl;
+
     
     // Update tracking history
     cv::Point obstaclePos = (obstacleDistance > 0) ? 
@@ -148,8 +148,6 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         
         // If more than 10% of the detection zone is non-road, consider it an obstacle
         if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.1f) {
-            std::cout << "OBSTACLE FOUND AT Y: " << trajPoint.y << " (distance: " 
-                      << frameHeight_ - trajPoint.y << " pixels)" << std::endl;
             return frameHeight_ - trajPoint.y;
         }
     }
@@ -162,12 +160,14 @@ void AdaptiveCruiseControl::updateObstacleTracking(int obstacleDistance, const c
     double currentTime = getCurrentTime();
     float obstacleDistanceMeters = static_cast<float>(obstacleDistance) * (farDistance_ - nearDistance_) / frameHeight_;
     
-    
     // Update current state
     previousObstacleDistance_ = currentObstacleDistance_;
     currentObstacleDistance_ = obstacleDistance;
     obstaclePosition_ = obstaclePos;
     obstacleDetected_ = (obstacleDistance > 0);
+    std::cout << "OBSTACLE DISTANCE : " << obstacleDistanceMeters << std::endl;
+    std::cout << "Time between mea : " << obstacleDistanceMeters << std::endl;
+
     
     // Add to history if obstacle detected
     if (obstacleDetected_) {
