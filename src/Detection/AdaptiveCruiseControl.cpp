@@ -115,12 +115,15 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         return -1;
     }
     
-    // Start from the farthest point and work towards the car
-    for (int i = 0; i < static_cast<int>(midCurve.size()); i++) {
+    // Start from the NEAREST point (bottom/end of trajectory) and work towards the car
+    for (int i = static_cast<int>(midCurve.size()) - 1; i >= 0; i--) {
         cv::Point trajPoint = midCurve[i];
         
         // Skip points too close to bottom (ignore zone)
         if (trajPoint.y > frameHeight_ * IGNORE_ZONE_RATIO) continue;
+        
+        // Skip points too close to top (too far ahead)
+        if (trajPoint.y < frameHeight_ * 0.1) continue;
         
         // Check trajectory point and surrounding area
         int leftX = std::max(0, trajPoint.x - DETECTION_ZONE_WIDTH);
@@ -143,9 +146,10 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
             }
         }
         
-        // If more than 30% of the detection zone is non-road, consider it an obstacle
+        // If more than 10% of the detection zone is non-road, consider it an obstacle
         if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.1f) {
-            std::cout << "POINT IN TRJECTORY : " << trajPoint.y << std::endl;
+            std::cout << "OBSTACLE FOUND AT Y: " << trajPoint.y << " (distance: " 
+                      << frameHeight_ - trajPoint.y << " pixels)" << std::endl;
             return frameHeight_ - trajPoint.y;
         }
     }
