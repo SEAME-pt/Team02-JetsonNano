@@ -115,7 +115,7 @@ void TrajectoryDefinition::initLocalEnv() {
 
     try
     {
-        float cameraHeight = 0.137f;       // meters
+        float cameraHeight = 0.146f;       // meters
         float cameraPitch = 20.0f;       // degrees down from horizontal
         float horizontalFOV = 65.1f;     // degrees
         float img_height = static_cast<float>(height_);
