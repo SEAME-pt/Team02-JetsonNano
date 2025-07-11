@@ -43,6 +43,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     
     // Find obstacle distance along trajectory
     int obstacleDistance = findObstacleOnTrajectory(segmentationMask, midCurve);
+
     
     // Update tracking history
     cv::Point obstaclePos = (obstacleDistance > 0) ? 
@@ -60,9 +61,11 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
                                   (farDistance_ - nearDistance_) / frameHeight_;
     
     // Define safety distances in meters
-    const float CRITICAL_DISTANCE_M = 0.3f;   // 2 meters - emergency stop
-    const float SAFE_DISTANCE_M = 0.6f;       // 6 meters - start following
-    const float COMFORT_DISTANCE_M = 0.9f;   // 12 meters - ideal following distance
+    const float CRITICAL_DISTANCE_M = 0.3f;
+    const float SAFE_DISTANCE_M = 0.6f;
+    const float COMFORT_DISTANCE_M = 0.9f;
+
+    std::cout << "Current Speed: " << currentSpeed_ << " Obstacle Speed: " << obstacleSpeed_ << std::endl;
     
     // Calculate absolute speed of obstacle (in m/s)
     float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
@@ -112,12 +115,15 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         return -1;
     }
     
-    // Start from the farthest point and work towards the car
-    for (int i = 0; i < static_cast<int>(midCurve.size()); i++) {
+    // Start from the NEAREST point (bottom/end of trajectory) and work towards the car
+    for (int i = static_cast<int>(midCurve.size()) - 1; i >= 0; i--) {
         cv::Point trajPoint = midCurve[i];
         
         // Skip points too close to bottom (ignore zone)
         if (trajPoint.y > frameHeight_ * IGNORE_ZONE_RATIO) continue;
+        
+        // Skip points too close to top (too far ahead)
+        if (trajPoint.y < frameHeight_ * 0.1) continue;
         
         // Check trajectory point and surrounding area
         int leftX = std::max(0, trajPoint.x - DETECTION_ZONE_WIDTH);
@@ -140,8 +146,8 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
             }
         }
         
-        // If more than 30% of the detection zone is non-road, consider it an obstacle
-        if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.3f) {
+        // If more than 10% of the detection zone is non-road, consider it an obstacle
+        if (totalPixels > 0 && (static_cast<float>(nonRoadPixels) / totalPixels) > 0.1f) {
             return frameHeight_ - trajPoint.y;
         }
     }
@@ -154,12 +160,13 @@ void AdaptiveCruiseControl::updateObstacleTracking(int obstacleDistance, const c
     double currentTime = getCurrentTime();
     float obstacleDistanceMeters = static_cast<float>(obstacleDistance) * (farDistance_ - nearDistance_) / frameHeight_;
     
-    
     // Update current state
     previousObstacleDistance_ = currentObstacleDistance_;
     currentObstacleDistance_ = obstacleDistance;
     obstaclePosition_ = obstaclePos;
     obstacleDetected_ = (obstacleDistance > 0);
+    std::cout << "OBSTACLE DISTANCE : " << obstacleDistanceMeters << std::endl;
+    std::cout << "Time between measures : " << currentTime - lastMeasurementTime_ << std::endl;
     
     // Add to history if obstacle detected
     if (obstacleDetected_) {
@@ -204,7 +211,7 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
     
     for (const auto& info : obstacleHistory_) {
         double t = info.timestamp - baseTime;
-        double d = static_cast<double>(info.distance);
+        double d = info.distance;
         
         sumTime += t;
         sumDist += d;
@@ -212,18 +219,33 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
         sumTimeSquared += t * t;
         count++;
     }
+    std::cout << "sumTime: " << sumTime << ", sumDist: " << sumDist 
+              << ", sumTimeDist: " << sumTimeDist << ", sumTimeSquared: " << sumTimeSquared 
+              << ", count: " << count << std::endl;
     
     if (count < 2 || sumTimeSquared == 0) return 0.0f;
-    
+    std::cout << "Calculating obstacle speed with " << count << " points." << std::endl;
     // Calculate slope (speed)
     double slope = (count * sumTimeDist - sumTime * sumDist) / 
                    (count * sumTimeSquared - sumTime * sumTime);
 
-    float obstacleAbsoluteSpeed = currentSpeed_ - static_cast<float>(slope);
-    float relativeSpeed = obstacleAbsoluteSpeed - currentSpeed_;
-
-    std::cout << "Obstacle speed: " << obstacleAbsoluteSpeed << "m/s, "
-          << "Relative: " << relativeSpeed << "m/s" << std::endl;
+    std::cout << "Distance slope: " << slope << " m/s" << std::endl;
+    
+    // slope > 0 means distance increasing (obstacle moving away)
+    // slope < 0 means distance decreasing (obstacle approaching)
+    
+    // The relative speed is just the slope (rate of distance change)
+    float relativeSpeed = static_cast<float>(slope);
+    
+    // Calculate absolute obstacle speed
+    float obstacleAbsoluteSpeed = currentSpeed_ + relativeSpeed;
+    
+    // Make sure absolute speed is not negative
+    obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
+    
+    std::cout << "Vehicle speed: " << currentSpeed_ << "m/s, "
+              << "Distance rate: " << relativeSpeed << "m/s, "
+              << "Obstacle absolute speed: " << obstacleAbsoluteSpeed << "m/s" << std::endl;
     
     return relativeSpeed; // Positive = moving away, Negative = approaching
 }
