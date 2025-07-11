@@ -125,7 +125,7 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.2f;       // meters
-        farDistance_ = 0.6f;       // meters
+        farDistance_ = 1.0f;       // meters
         laneWidth_ = 0.6f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
@@ -281,15 +281,15 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     drawCurves(midCurve, leftCurve, rightCurve);
 
-    // if (activeAutonomyLevel_ != "SAE_0") {
-    //     checkForwardCollision(class_mask, midCurve);
-    // } 
+    if (activeAutonomyLevel_ != "SAE_0") {
+        checkForwardCollision(class_mask, midCurve);
+    } 
     
     if (activeAutonomyLevel_ == "SAE_2" || 
         activeAutonomyLevel_ == "SAE_3" ||
         activeAutonomyLevel_ == "SAE_4") {
-        // if(activeAutonomyLevel_ == "SAE_4")
-        //     obstacleAvoidance(class_mask, midCurve);
+        if(activeAutonomyLevel_ == "SAE_4")
+            obstacleAvoidance(class_mask, midCurve);
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
     }
@@ -558,6 +558,9 @@ TrajectoryDefinition::clusterLaneMask(const cv::Mat& laneMask, int kernelSize,
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 2));
     static cv::Mat horizontalKernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
+
+    int roi_top = laneMask.rows / 3;
+    laneMask(cv::Rect(0, 0, laneMask.cols, roi_top)) = 0;
 
     cv::Mat result = laneMask.clone();
     cv::morphologyEx(result, result, cv::MORPH_CLOSE, verticalKernel);
