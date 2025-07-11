@@ -125,7 +125,7 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.2f;       // meters
-        farDistance_ = 1.0f;       // meters
+        farDistance_ = 0.8f;       // meters
         laneWidth_ = 0.6f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
         cv::Size origSize = cv::Size(width_, height_);
@@ -248,7 +248,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, frameWidth_ * frameHeight_ / 8000, frameWidth_ * frameHeight_ / 8000, 6);
+    lanePolylines = clusterLaneMask(binary_mask, 30, 30, 6);
     
     drawPolyLanes(lanePolylines);
     
@@ -559,7 +559,7 @@ TrajectoryDefinition::clusterLaneMask(const cv::Mat& laneMask, int kernelSize,
     static cv::Mat horizontalKernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
 
-    int roi_top = laneMask.rows / 3;
+    int roi_top = laneMask.rows / 4;
     laneMask(cv::Rect(0, 0, laneMask.cols, roi_top)) = 0;
 
     cv::Mat result = laneMask.clone();
