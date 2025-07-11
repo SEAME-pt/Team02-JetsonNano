@@ -248,7 +248,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameWidth_      = frame.cols;
     frameHeight_     = frame.rows;
 
-    lanePolylines = clusterLaneMask(binary_mask, 30, 30, 6);
+    lanePolylines = clusterLaneMask(binary_mask, 2, 30, 6);
     
     drawPolyLanes(lanePolylines);
     
