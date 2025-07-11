@@ -326,7 +326,8 @@ void PidController::conditionalAutomation()
     
     if (!this->emergency_brake_)
     {
-        publisher_->publishDesiredSpeed(desired_speed_);
+        // publisher_->publishDesiredSpeed(desired_speed_);
+        publisher_->publishDesiredSpeed(400);
         publisher_->publishCurrentGear(1);
     }
     else
@@ -429,7 +430,7 @@ void PidController::run()
         if (xboxController_->getPidEnable()) {
             std::string sae_level = getAutonomousDriveState();
 
-            speedDefinition();
+            // speedDefinition();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
