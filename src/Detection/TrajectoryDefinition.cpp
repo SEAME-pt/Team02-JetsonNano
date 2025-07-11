@@ -850,8 +850,6 @@ void TrajectoryDefinition::checkPredicedCurve(
         cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
                     cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(255, 255, 0), 1);
-        std::cout << "Invalid curve prediction - using offset" << std::endl;
-
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
 
@@ -1228,7 +1226,6 @@ void TrajectoryDefinition::checkAutonomyEnvEnable(std::vector<cv::Point>& midCur
 
     float diff = (centerX - avgX) / laneWidth;
 
-    std::cout << "Diff: " << diff << std::endl;
     if (diff < 0.35 && diff > -0.35) {
         publishAutonomyEnvEnable("true");
     } else {
