@@ -286,8 +286,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     if (activeAutonomyLevel_ == "SAE_2" || 
         activeAutonomyLevel_ == "SAE_3" ||
         activeAutonomyLevel_ == "SAE_4") {
-        if(activeAutonomyLevel_ == "SAE_4")
-            obstacleAvoidance(class_mask, midCurve);
+        // if(activeAutonomyLevel_ == "SAE_4")
+        //     obstacleAvoidance(class_mask, midCurve);
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
     }
