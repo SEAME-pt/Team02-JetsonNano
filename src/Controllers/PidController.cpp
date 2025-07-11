@@ -327,7 +327,7 @@ void PidController::conditionalAutomation()
     if (!this->emergency_brake_)
     {
         // publisher_->publishDesiredSpeed(desired_speed_);
-        publisher_->publishDesiredSpeed(200);
+        publisher_->publishDesiredSpeed(100);
         publisher_->publishCurrentGear(1);
     }
     else
