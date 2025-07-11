@@ -34,6 +34,8 @@ TrajectoryDefinition::TrajectoryDefinition(
     acc_speed_publisher_.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/ADAS/acc_speed")));
 
+    publisher_ = std::make_shared<LaneDetectorPublisher>(session_);
+
     activeAutonomyLevel_subscriber_.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
