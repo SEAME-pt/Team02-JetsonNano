@@ -887,9 +887,19 @@ void TrajectoryDefinition::checkPredicedCurve(
                 // Compute normal (perpendicular)
                 cv::Point2f normal(-dir.y, dir.x);
 
-                // Offset along normal
+                // Try both directions and pick the one on the correct side
                 float offset = expectedWidth;
-                cv::Point2f newPt = pt + normal * offset;
+                cv::Point2f candidate1 = pt + normal * offset;
+                cv::Point2f candidate2 = pt - normal * offset;
+
+                // For right lane: predicted x should be > real x
+                // For left lane: predicted x should be < real x
+                cv::Point2f newPt;
+                if (isLeftLane) {
+                    newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
+                } else {
+                    newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
+                }
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
             }
@@ -926,9 +936,19 @@ void TrajectoryDefinition::checkPredicedCurve(
                 // Compute normal (perpendicular)
                 cv::Point2f normal(-dir.y, dir.x);
 
-                // Offset along normal
+                // Try both directions and pick the one on the correct side
                 float offset = expectedWidth;
-                cv::Point2f newPt = pt + normal * offset;
+                cv::Point2f candidate1 = pt + normal * offset;
+                cv::Point2f candidate2 = pt - normal * offset;
+
+                // For right lane: predicted x should be > real x
+                // For left lane: predicted x should be < real x
+                cv::Point2f newPt;
+                if (isLeftLane) {
+                    newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
+                } else {
+                    newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
+                }
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
             }
