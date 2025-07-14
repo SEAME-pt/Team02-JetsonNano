@@ -927,8 +927,8 @@ void TrajectoryDefinition::checkPredicedCurve(
                 cv::Point2f normal(-dir.y, dir.x);
 
                 // Offset along normal
-                float offset = -expectedWidth;
-                cv::Point2f newPt = pt - normal * offset;
+                float offset = expectedWidth;
+                cv::Point2f newPt = pt + normal * offset;
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
             }
