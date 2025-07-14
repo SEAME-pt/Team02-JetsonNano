@@ -146,7 +146,7 @@ void TrajectoryDefinition::initLocalEnv() {
 
     try
     {
-        this->avoidance = new ObstacleAvoidance(width_, height_, 16);
+        this->avoidance = new ObstacleAvoidance(width_, height_, 8);
         this->accontroller = new AdaptiveCruiseControl(session_, width_, height_, nearDistance_, farDistance_, laneWidth_);
     }
     catch (const std::exception& e)
