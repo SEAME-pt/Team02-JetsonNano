@@ -1442,12 +1442,12 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
             midCurve.clear();
             midCurve = adjustedTrajectory;
 
-            cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
-            for (size_t i = 1; i < midCurve.size(); i++)
-            {
-                cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
-                        3);
-            }
+            // cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
+            // for (size_t i = 1; i < midCurve.size(); i++)
+            // {
+            //     cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
+            //             3);
+            // }
         }
         avoidance->visualizeGrid(&midCurve, segmentation_mask);
     }
