@@ -257,6 +257,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                          << " to col " << newCol << std::endl;
             }
     }
+    std::cout << "Adjusted trajectory with " << adjustedTrajectory.size() << " points" << std::endl;
     
     // Apply a smoothing filter to prevent jerky movements
     // smoothTrajectory(adjustedTrajectory);
@@ -468,18 +469,18 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     //             cv::Scalar(255, 255, 255), 2);
 
     // Draw trajectory cells
-    for (const auto& cell : trajectoryCells_) {
-        int r = cell.first;
-        int c = cell.second;
+    // for (const auto& cell : trajectoryCells_) {
+    //     int r = cell.first;
+    //     int c = cell.second;
         
-        int x0 = static_cast<int>(c * cellSizePx_);
-        int y0 = static_cast<int>(r * cellSizePx_);
-        int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
-        int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+    //     int x0 = static_cast<int>(c * cellSizePx_);
+    //     int y0 = static_cast<int>(r * cellSizePx_);
+    //     int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+    //     int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
         
-        cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                    cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
-    }
+    //     cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+    //                 cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
+    // }
 
     overlay.copyTo(outputImage);
 }
