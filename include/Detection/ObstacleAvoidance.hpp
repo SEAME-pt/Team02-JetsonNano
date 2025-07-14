@@ -18,6 +18,7 @@ public:
     void buildTrajectoryGrid(const std::vector<cv::Point>& trajectory);
     bool detectAllCollisions();
     std::vector<cv::Point> adjustTrajectory(const std::vector<cv::Point>& originalTrajectory);
+    void smoothTrajectory(std::vector<cv::Point>& trajectory); 
 
     bool pixelToGrid(int px, int py, int& gridR, int& gridC) const;
     void gridToPixel(int gridR, int gridC, int& outPx, int& outPy) const;
@@ -34,11 +35,6 @@ public:
 
     void visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, 
                        cv::Mat& outputImage);
-
-    //For ACC
-    float calculateAdaptiveSpeed(const std::vector<cv::Point>& midCurve);
-    int findObstacleDistanceOnTrajectory(const std::vector<cv::Point>& midCurve);
-    void updateObstacleTracking(int obstacleDistance);
 
 private:
     int frameWidth_,  frameHeight_;
