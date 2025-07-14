@@ -161,19 +161,12 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
         }
     }
     
-    // Directly iterate through trajectoryGrid_ to find trajectory cells
-    for (int r = 0; r < gridHeight_; r++) {
-        for (int c = 0; c < gridWidth_; c++) {
-            // Skip cells that aren't part of the trajectory
-            if (!trajectoryGrid_[r][c]) {
-                continue;
-            }
-            
-            // Skip cells with no trajectory points (shouldn't happen, but just in case)
-            auto it = gridToTrajectoryPoints.find({r, c});
-            if (it == gridToTrajectoryPoints.end()) {
-                continue;
-            }
+    // Iterate directly through the mapping we just created
+    for (const auto& entry : gridToTrajectoryPoints) {
+        int r = entry.first.first;   // Grid row
+        int c = entry.first.second;  // Grid column
+        const auto& pointIndices = entry.second;  // Indices of trajectory points at this grid location
+        
             
             // Find obstacles in this row
             std::vector<int> obstacleColumns;
