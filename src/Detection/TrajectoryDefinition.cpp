@@ -814,6 +814,8 @@ void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& 
     float avgDistance = calculateLaneDistance(leftLane, rightLane);
 
     std::cout << "AVG Distance: " << avgDistance << std::endl;
+    std::cout << "Min Distance: " << frameWidth_ * 0.20 << std::endl;
+    std::cout << "Max Distance: " << frameWidth_ * 0.40 << std::endl;
     
     if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.40) {
         recentWidths.push_back(avgDistance);
