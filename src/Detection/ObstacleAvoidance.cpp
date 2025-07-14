@@ -253,14 +253,13 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
             gridToPixel(r, newCol, newX, newY);
             
             // Apply the adjustment to all trajectory points in this grid cell
-            for (size_t idx : it->second) {
+            for (size_t idx : pointIndices) {
                 // Keep the original y-coordinate for smooth vertical movement
                 adjustedTrajectory[idx].x = newX;
                 
                 std::cout << "Adjusted trajectory point " << idx << " from col " << c 
                          << " to col " << newCol << std::endl;
             }
-        }
     }
     
     // Apply a smoothing filter to prevent jerky movements
