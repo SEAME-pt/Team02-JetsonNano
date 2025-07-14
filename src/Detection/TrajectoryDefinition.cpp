@@ -945,9 +945,9 @@ void TrajectoryDefinition::checkPredicedCurve(
                 // For left lane: predicted x should be < real x
                 cv::Point2f newPt;
                 if (isLeftLane) {
-                    newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
-                } else {
                     newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
+                } else {
+                    newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
                 }
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
