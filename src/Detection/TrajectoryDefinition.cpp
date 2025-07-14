@@ -250,9 +250,9 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     lanePolylines = clusterLaneMask(binary_mask, 2, 30, 6);
     
-    drawPolyLanes(lanePolylines);
-    
     filterFalseLanes(lanePolylines, coeffsSave);
+    
+    drawPolyLanes(lanePolylines);
 
     if (lanePolylines.size() >= 2) {
         defineLaneEnv(lanePolylines, leftCurve, rightCurve, coeffsSave);
