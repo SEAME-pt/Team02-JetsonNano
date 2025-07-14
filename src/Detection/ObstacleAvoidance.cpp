@@ -432,23 +432,23 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
         //             cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
     }
 
-    if (adjustedTrajectory && !adjustedTrajectory->empty()) {
-        cv::putText(overlay, "Adjusted Trajectory", cv::Point(20, 120),
-                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    // if (adjustedTrajectory && !adjustedTrajectory->empty()) {
+    //     cv::putText(overlay, "Adjusted Trajectory", cv::Point(20, 120),
+    //                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
         
-        // Connect points with lines
-        for (size_t i = 0; i < adjustedTrajectory->size() - 1; i++) {
-            cv::line(overlay, 
-                    (*adjustedTrajectory)[i], 
-                    (*adjustedTrajectory)[i+1],
-                    cv::Scalar(0, 255, 255), 2); // Cyan line
-        }
+    //     // Connect points with lines
+    //     for (size_t i = 0; i < adjustedTrajectory->size() - 1; i++) {
+    //         cv::line(overlay, 
+    //                 (*adjustedTrajectory)[i], 
+    //                 (*adjustedTrajectory)[i+1],
+    //                 cv::Scalar(0, 255, 255), 2); // Cyan line
+    //     }
         
-        // Draw points
-        for (const auto& p : *adjustedTrajectory) {
-            cv::circle(overlay, p, 3, cv::Scalar(0, 255, 255), -1);
-        }
-    }
+    //     // Draw points
+    //     for (const auto& p : *adjustedTrajectory) {
+    //         cv::circle(overlay, p, 3, cv::Scalar(0, 255, 255), -1);
+    //     }
+    // }
 
     // int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
     // int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
