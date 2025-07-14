@@ -322,7 +322,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
             float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.40;
+            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
 
             if (leftDistance < rightDistance && leftDistance < maxDistance) {
                 if (leftDistance < minLeftDist) {
@@ -371,7 +371,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
             float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.40;
+            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
 
             if (leftDistance < minLeftDist && leftDistance < maxDistance) {
                 minLeftDist = leftDistance;
@@ -438,7 +438,7 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
             float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.40;
+            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
 
             if (rightDistance < minRightDist && rightDistance < maxDistance) {
                 minRightDist = rightDistance;
@@ -860,21 +860,79 @@ void TrajectoryDefinition::checkPredicedCurve(
 
         if (isLeftLane)
         {
-            for (const auto& pt : realLane)
+            for (size_t i = 0; i < realLane.size(); ++i)
             {
-                predictedCurve.push_back(
-                    cv::Point(pt.x + expectedWidth, pt.y));
+                cv::Point2f pt = realLane[i];
+
+                // Compute local direction (tangent)
+                cv::Point2f dir;
+                if (i == 0)
+                    dir = cv::Point2f(realLane[i + 1] - pt);
+                else if (i == realLane.size() - 1)
+                    dir = cv::Point2f(pt - realLane[i - 1]);
+                else
+                    dir = cv::Point2f(realLane[i + 1] - realLane[i - 1]);
+
+                // Normalize direction
+                float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+                if (len > 1e-3)
+                    dir /= len;
+                else
+                    dir = cv::Point2f(0, 1); // Default vertical
+
+                // Compute normal (perpendicular)
+                cv::Point2f normal(-dir.y, dir.x);
+
+                // Offset along normal
+                float offset = expectedWidth;
+                cv::Point2f newPt = pt + normal * offset;
+
+                predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
             }
+            // for (const auto& pt : realLane)
+            // {
+            //     predictedCurve.push_back(
+            //         cv::Point(pt.x + expectedWidth, pt.y));
+            // }
             
             kalmanFilter->updateLeftLaneFilter(predictedCurve);
         }
         else
         {
-            for (const auto& pt : realLane)
+            for (size_t i = 0; i < realLane.size(); ++i)
             {
-                predictedCurve.push_back(
-                    cv::Point(pt.x - expectedWidth, pt.y));
+                cv::Point2f pt = realLane[i];
+
+                // Compute local direction (tangent)
+                cv::Point2f dir;
+                if (i == 0)
+                    dir = cv::Point2f(realLane[i + 1] - pt);
+                else if (i == realLane.size() - 1)
+                    dir = cv::Point2f(pt - realLane[i - 1]);
+                else
+                    dir = cv::Point2f(realLane[i + 1] - realLane[i - 1]);
+
+                // Normalize direction
+                float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+                if (len > 1e-3)
+                    dir /= len;
+                else
+                    dir = cv::Point2f(0, 1); // Default vertical
+
+                // Compute normal (perpendicular)
+                cv::Point2f normal(-dir.y, dir.x);
+
+                // Offset along normal
+                float offset = -expectedWidth;
+                cv::Point2f newPt = pt + normal * offset;
+
+                predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
             }
+            // for (const auto& pt : realLane)
+            // {
+            //     predictedCurve.push_back(
+            //         cv::Point(pt.x - expectedWidth, pt.y));
+            // }
 
             kalmanFilter->updateRightLaneFilter(predictedCurve);
         }

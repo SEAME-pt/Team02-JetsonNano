@@ -51,7 +51,7 @@ class TrajectoryDefinition
     int frameHeight_;
 
     std::deque<float> recentWidths;
-    const int MAX_WIDTH_HISTORY = 15;
+    const int MAX_WIDTH_HISTORY = 30;
 
     int leftLaneLastUpdatedFrame = 0;
     int rightLaneLastUpdatedFrame = 0;
