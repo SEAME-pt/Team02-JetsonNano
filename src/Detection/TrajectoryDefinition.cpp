@@ -321,9 +321,12 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
             float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
             float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
-
+            
             float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
-
+            
+            std::cout "Left distance: " << leftDistance << std::endl;
+            std::cout "Right distance: " << rightDistance << std::endl;
+            std::cout "Max distance: " << maxDistance << std::endl;
             if (leftDistance < rightDistance && leftDistance < maxDistance) {
                 if (leftDistance < minLeftDist) {
                     minLeftDist = leftDistance;
