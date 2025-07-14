@@ -324,9 +324,6 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             
             float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
             
-            std::cout << "Left distance: " << leftDistance << std::endl;
-            std::cout << "Right distance: " << rightDistance << std::endl;
-            std::cout << "Max distance: " << maxDistance << std::endl;
             if (leftDistance < rightDistance && leftDistance < maxDistance) {
                 if (leftDistance < minLeftDist) {
                     minLeftDist = leftDistance;
@@ -815,6 +812,8 @@ float TrajectoryDefinition::calculateHistoricalLaneWidth() {
 void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& leftLane, 
                                                 const std::vector<cv::Point>& rightLane) {    
     float avgDistance = calculateLaneDistance(leftLane, rightLane);
+
+    std::cout << "AVG Distance: " << avgDistance << std::endl;
     
     if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.40) {
         recentWidths.push_back(avgDistance);
@@ -1439,9 +1438,9 @@ bool TrajectoryDefinition::checkForwardCollision(
                     cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
 
-        std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
-                     "VEHICLE ***\033[0m"
-                  << std::endl;
+        // std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
+        //              "VEHICLE ***\033[0m"
+        //           << std::endl;
 
         is_emergency_stop = true;
 
@@ -1464,8 +1463,8 @@ bool TrajectoryDefinition::checkForwardCollision(
         }
     else if (is_emergency_stop)
     {
-        std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
-                << std::endl;
+        // std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
+        //         << std::endl;
         is_emergency_stop = false;
 
         publishEmergencyBrake("0");
