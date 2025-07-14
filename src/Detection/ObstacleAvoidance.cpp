@@ -77,6 +77,7 @@ bool ObstacleAvoidance::detectAllCollisions()
     // Clear previous collision points
     collisionPoints_.clear();
     searchedCollisionPoints_.clear();
+    obstaclePoints_.clear();
     
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
@@ -84,42 +85,42 @@ bool ObstacleAvoidance::detectAllCollisions()
     // Track whether we found any collisions
     bool foundCollision = false;
     
-    // First, search from the bottom up to find the lowest collision
-    for (int r = ignoreZoneRowThreshold - proximityRadius_ - 1; r >= 0; --r) {
-        for (int c = 0; c < gridWidth_; ++c) {
-            // If this cell is on the trajectory
-            if (trajectoryGrid_[r][c]) {
-                // Check proximity around the trajectory point
-                for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-                    for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
-                        int checkR = r + dr;
-                        int checkC = c + dc;
-                        
-                        // Bounds checking
-                        if (checkR < 0 || checkR >= gridHeight_ || 
-                            checkC < 0 || checkC >= gridWidth_)
-                            continue;
+    // Iterate through all trajectory cells
+    for (const auto& trajCell : trajectoryCells_) {
+        int r = trajCell.first;
+        int c = trajCell.second;
+        
+        // Skip if in ignore zone
+        if (r >= ignoreZoneRowThreshold - proximityRadius_) {
+            continue;
+        }
+        
+        // Check proximity around the trajectory point
+        for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
+            for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
+                int checkR = r + dr;
+                int checkC = c + dc;
+                
+                // Bounds checking
+                if (checkR < 0 || checkR >= gridHeight_ || 
+                    checkC < 0 || checkC >= gridWidth_)
+                    continue;
 
-                        searchedCollisionPoints_.emplace_back(checkR, checkC);
-                        
-                        // If a nearby cell is occupied, it's a collision
-                        if (occupancy_[gridIndex(checkR, checkC)]) {
-                            // Store this collision point
-                            collisionPoints_.emplace_back(r, c);
-                            obstaclePoints_.emplace_back(checkR, checkC);
-                            
-                            // If this is the first collision found, set it as the primary one
-                            if (!foundCollision) {
-                                collisionRow_ = r;
-                                collisionCol_ = c;
-                                gridToPixel(r, c, collisionX_, collisionY_);
-                                needBypass_ = true;
-                                foundCollision = true;
-                            }
-                            
-                            // Continue searching for more collisions
-                            continue;
-                        }
+                searchedCollisionPoints_.emplace_back(checkR, checkC);
+                
+                // If a nearby cell is occupied, it's a collision
+                if (occupancy_[gridIndex(checkR, checkC)]) {
+                    // Store this collision point
+                    collisionPoints_.emplace_back(r, c);
+                    obstaclePoints_.emplace_back(checkR, checkC);
+                    
+                    // If this is the first collision found, set it as the primary one
+                    if (!foundCollision) {
+                        collisionRow_ = r;
+                        collisionCol_ = c;
+                        gridToPixel(r, c, collisionX_, collisionY_);
+                        needBypass_ = true;
+                        foundCollision = true;
                     }
                 }
             }
@@ -128,12 +129,7 @@ bool ObstacleAvoidance::detectAllCollisions()
     
     // Sort collision points by distance from bottom (closest to car first)
     std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
-              [](const auto& a, const auto& b) { return a.first > b.first; });
-    
-    // if (foundCollision) {
-    //     std::cout << "Found " << collisionPoints_.size() << " collision points. Lowest at: ("
-    //               << collisionRow_ << ", " << collisionCol_ << ")\n";
-    // }
+             [](const auto& a, const auto& b) { return a.first > b.first; });
     
     return foundCollision;
 }
@@ -311,105 +307,33 @@ void ObstacleAvoidance::gridToPixel(int gridR, int gridC, int& outPx, int& outPy
     outPy = gridR * cellSizePx_ + cellSizePx_ / 2;
 }
 
-std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, int startC,
-                                                                     int goalR,  int goalC)
-{
-    std::vector<std::pair<int,int>> emptyPath;
-    // Bounds check
-    if (startR < 0 || startR >= gridHeight_ || startC < 0 || startC >= gridWidth_) return emptyPath;
-    if (goalR  < 0 || goalR  >= gridHeight_ || goalC  < 0 || goalC  >= gridWidth_) return emptyPath;
-
-    int N = gridWidth_ * gridHeight_;
-    auto idxRC = [&](int r, int c){ return r * gridWidth_ + c; };
-
-    // If start or goal is occupied, no path
-    if (occupancy_[idxRC(startR,startC)] || occupancy_[idxRC(goalR,goalC)])
-        return emptyPath;
-
-    std::vector<double> gcost(N, std::numeric_limits<double>::infinity());
-    std::vector<int> parent(N, -1);
-    std::vector<bool> closed(N, false);
-
-    // Min-heap of (idx, g, f)
-    std::priority_queue<AStarNode, std::vector<AStarNode>, CompareAStar> openSet;
-    int startIdx = idxRC(startR, startC);
-    int goalIdx  = idxRC(goalR,  goalC);
-
-    // Heuristic function (Euclidean):
-    auto heuristic = [&](int r, int c){
-        double dr = double(r - goalR);
-        double dc = double(c - goalC);
-        return std::sqrt(dr*dr + dc*dc);
-    };
-
-    gcost[startIdx] = 0.0;
-    double h0 = heuristic(startR, startC);
-    openSet.push({ startIdx, 0.0, h0 });
-
-    // 8‐connected neighbor offsets
-    const int dR[8] = { -1, +1,  0,  0, -1, -1, +1, +1 };
-    const int dC[8] = {  0,  0, -1, +1, -1, +1, -1, +1 };
-
-    while (!openSet.empty())
-    {
-        AStarNode node = openSet.top(); 
-        openSet.pop();
-        int uIdx = node.idx;
-        if (closed[uIdx]) continue;
-        closed[uIdx] = true;
-
-        if (uIdx == goalIdx) break;
-
-        int ur = uIdx / gridWidth_;
-        int uc = uIdx % gridWidth_;
-
-        for (int k = 0; k < 8; ++k)
-        {
-            int vr = ur + dR[k];
-            int vc = uc + dC[k];
-            if (vr < 0 || vr >= gridHeight_ || vc < 0 || vc >= gridWidth_) continue;
-            int vIdx = idxRC(vr, vc);
-            if (occupancy_[vIdx]) continue; // blocked
-
-            double stepCost = (k < 4) ? 1.0 : 1.41421356; // straight vs diagonal
-            double tentative = gcost[uIdx] + stepCost;
-            if (tentative < gcost[vIdx])
-            {
-                gcost[vIdx] = tentative;
-                parent[vIdx] = uIdx;
-                double h = heuristic(vr, vc);
-                openSet.push({ vIdx, tentative, tentative + h });
-            }
-        }
-    }
-
-    // Reconstruct path if goal is reached
-    if (!closed[goalIdx]) 
-        return emptyPath; // no route found
-
-    std::vector<std::pair<int,int>> path;
-    for (int cur = goalIdx; cur != -1; cur = parent[cur])
-    {
-        int r = cur / gridWidth_;
-        int c = cur % gridWidth_;
-        path.emplace_back(r, c);
-    }
-    std::reverse(path.begin(), path.end());
-    return path;
-}
-
 void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajectory)
 {
-    std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
+    // Clear previous trajectory data
+    trajectoryCells_.clear();
+    trajectoryCellMap_.clear();
+    
     if (!trajectory.empty()) {
+        // Reserve space to avoid reallocation
+        trajectoryCells_.reserve(trajectory.size());
+        
         for (const auto& p : trajectory) {
             int gr, gc;
             if (pixelToGrid(p.x, p.y, gr, gc)) {
-                trajectoryGrid[gr][gc] = true;
+                // Add to list if not already there
+                int cellIdx = gridIndex(gr, gc);
+                if (trajectoryCellMap_.find(cellIdx) == trajectoryCellMap_.end()) {
+                    trajectoryCells_.emplace_back(gr, gc);
+                    trajectoryCellMap_[cellIdx] = true;
+                }
             }
         }
+        
+        // Sort cells by row for consistency
+        std::sort(trajectoryCells_.begin(), trajectoryCells_.end());
     }
-    trajectoryGrid_ = std::move(trajectoryGrid);
+    
+    std::cout << "Built trajectory with " << trajectoryCells_.size() << " cells" << std::endl;
 }
 
 void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, cv::Mat& outputImage)
@@ -542,6 +466,20 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     //             cv::Point(20, scaledIgnoreZoneStart + 30),
     //             cv::FONT_HERSHEY_SIMPLEX, 0.7, 
     //             cv::Scalar(255, 255, 255), 2);
+
+    // Draw trajectory cells
+    for (const auto& cell : trajectoryCells_) {
+        int r = cell.first;
+        int c = cell.second;
+        
+        int x0 = static_cast<int>(c * cellSizePx_);
+        int y0 = static_cast<int>(r * cellSizePx_);
+        int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+        int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+        
+        cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                    cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
+    }
 
     overlay.copyTo(outputImage);
 }

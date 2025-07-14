@@ -44,6 +44,8 @@ private:
     // occupancy_[r*gridWidth_ + c] == true  → cell is blocked / not drivable
     std::vector<bool> occupancy_;
     std::vector<std::vector<bool>> trajectoryGrid_;
+    std::vector<std::pair<int, int>> trajectoryCells_;
+    std::unordered_map<int, bool> trajectoryCellMap_;
 
     // Temporary: store the last collision index and row
     bool    needBypass_    = false;
