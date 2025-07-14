@@ -414,17 +414,13 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
             int collX1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
             int collY1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
             
-            // Use a color gradient from red to orange based on distance from bottom
-            // First collision (closest to car) is bright red, others fade to orange
-            int blue = 0;
-            int green = std::min(255, static_cast<int>(128.0 * i / obstaclePoints_.size()));
-            int red = 255;
-            
-            // Draw X over collision cell
-            cv::line(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
-                    cv::Scalar(blue, green, red), 2);
-            cv::line(overlay, cv::Point(collX0, collY1), cv::Point(collX1, collY0), 
-                    cv::Scalar(blue, green, red), 2);
+            // Fill collision cell with bright color and add border
+            cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+                        cv::Scalar(255, 0, 255), -1);  // Fill with bright magenta
+                        
+            // Add white border for contrast
+            cv::rectangle(overlay, cv::Point(collX0, collY0), cv::Point(collX1, collY1), 
+                        cv::Scalar(255, 255, 255), 2);  // White border
         }
         // cv::putText(overlay, "Obstacle Detected", cv::Point(20, 40),
         //             cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
