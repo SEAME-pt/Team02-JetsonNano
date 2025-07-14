@@ -1449,7 +1449,7 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
                         3);
             }
         }
-        avoidance->visualizeGrid(&midCurve, segmentation_mask);
+        // avoidance->visualizeGrid(&midCurve, segmentation_mask);
     }
     catch (const std::exception& e)
     {
