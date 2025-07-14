@@ -867,11 +867,11 @@ void TrajectoryDefinition::checkPredicedCurve(
                 // Compute local direction (tangent)
                 cv::Point2f dir;
                 if (i == 0)
-                    dir = cv::Point2f(realLane[i + 1] - pt);
+                    dir = cv::Point2f(realLane[i + 1]) - pt;
                 else if (i == realLane.size() - 1)
-                    dir = cv::Point2f(pt - realLane[i - 1]);
+                    dir = pt - cv::Point2f(realLane[i - 1]);
                 else
-                    dir = cv::Point2f(realLane[i + 1] - realLane[i - 1]);
+                    dir = cv::Point2f(realLane[i + 1]) - cv::Point2f(realLane[i - 1]);
 
                 // Normalize direction
                 float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
@@ -906,11 +906,11 @@ void TrajectoryDefinition::checkPredicedCurve(
                 // Compute local direction (tangent)
                 cv::Point2f dir;
                 if (i == 0)
-                    dir = cv::Point2f(realLane[i + 1] - pt);
+                    dir = cv::Point2f(realLane[i + 1]) - pt;
                 else if (i == realLane.size() - 1)
-                    dir = cv::Point2f(pt - realLane[i - 1]);
+                    dir = pt - cv::Point2f(realLane[i - 1]);
                 else
-                    dir = cv::Point2f(realLane[i + 1] - realLane[i - 1]);
+                    dir = cv::Point2f(realLane[i + 1]) - cv::Point2f(realLane[i - 1]);
 
                 // Normalize direction
                 float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
