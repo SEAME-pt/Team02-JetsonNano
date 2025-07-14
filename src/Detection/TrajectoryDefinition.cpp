@@ -324,9 +324,9 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             
             float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
             
-            std::cout "Left distance: " << leftDistance << std::endl;
-            std::cout "Right distance: " << rightDistance << std::endl;
-            std::cout "Max distance: " << maxDistance << std::endl;
+            std::cout << "Left distance: " << leftDistance << std::endl;
+            std::cout << "Right distance: " << rightDistance << std::endl;
+            std::cout << "Max distance: " << maxDistance << std::endl;
             if (leftDistance < rightDistance && leftDistance < maxDistance) {
                 if (leftDistance < minLeftDist) {
                     minLeftDist = leftDistance;
