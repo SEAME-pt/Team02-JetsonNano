@@ -38,7 +38,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
                                                    const std::vector<cv::Point>& midCurve)
 {
     if (midCurve.empty() || segmentationMask.empty()) {
-        return 1.0f; // Full speed if no data
+        return desiredSpeed_; // Full speed if no data
     }
     
     // Find obstacle distance along trajectory
@@ -51,59 +51,61 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     updateObstacleTracking(obstacleDistance, obstaclePos);
     
     // Calculate obstacle speed from history
-    obstacleSpeed_ = calculateObstacleSpeed();
     
     if (!obstacleDetected_) {
         return desiredSpeed_; // Full speed - no obstacle
     }
-    
-    float obstacleDistanceMeters = static_cast<float>(currentObstacleDistance_) * 
-                                  (farDistance_ - nearDistance_) / frameHeight_;
-    
-    // Define safety distances in meters
-    const float CRITICAL_DISTANCE_M = 0.3f;
-    const float SAFE_DISTANCE_M = 0.6f;
-    const float COMFORT_DISTANCE_M = 0.9f;
-
-    std::cout << "Current Speed: " << currentSpeed_ << " Obstacle Speed: " << obstacleSpeed_ << std::endl;
-    
-    // Calculate absolute speed of obstacle (in m/s)
-    float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
-    
-    // Make sure obstacle speed is not negative (stationary at minimum)
-    obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
-    
-    if (obstacleDistanceMeters < CRITICAL_DISTANCE_M) {
-        // Emergency stop
-        std::cout << "EMERGENCY: Obstacle at " << obstacleDistanceMeters << "m - STOPPING" << std::endl;
-        return 0.0f;
-    }
-    else if (obstacleDistanceMeters < SAFE_DISTANCE_M) {
-        // Close following: match obstacle speed but reduce slightly for safety
-        float targetSpeed = obstacleAbsoluteSpeed * 0.8f; // 80% of obstacle speed
-        std::cout << "CLOSE FOLLOW: Obstacle at " << obstacleDistanceMeters << "m, "
-                  << "Obstacle speed: " << obstacleAbsoluteSpeed << "m/s, "
-                  << "Target: " << targetSpeed << "m/s" << std::endl;
-        return targetSpeed;
-    }
-    else if (obstacleDistanceMeters < COMFORT_DISTANCE_M) {
-        // Normal following: match obstacle speed exactly
-        std::cout << "FOLLOWING: Obstacle at " << obstacleDistanceMeters << "m, "
-                  << "Matching speed: " << obstacleAbsoluteSpeed << "m/s" << std::endl;
-        return obstacleAbsoluteSpeed;
-    }
-    else {
-        // Far enough: gradually transition to desired cruise speed
-        float blendFactor = (obstacleDistanceMeters - COMFORT_DISTANCE_M) / 
-                           (COMFORT_DISTANCE_M * 0.5f); // Blend over 6m distance
-        blendFactor = std::clamp(blendFactor, 0.0f, 1.0f);
+    else
+    {
+        obstacleSpeed_ = calculateObstacleSpeed();
         
-        float targetSpeed = obstacleAbsoluteSpeed * (1.0f - blendFactor) + 
-                           desiredSpeed_ * blendFactor;
+        float obstacleDistanceMeters = static_cast<float>(currentObstacleDistance_) * 
+        (farDistance_ - nearDistance_) / frameHeight_;
         
-        std::cout << "TRANSITION: Distance " << obstacleDistanceMeters << "m, "
-                  << "Blending to cruise speed: " << targetSpeed << "m/s" << std::endl;
-        return targetSpeed;
+        // Define safety distances in meters
+        const float CRITICAL_DISTANCE_M = 0.3f;
+        const float SAFE_DISTANCE_M = 0.6f;
+        const float COMFORT_DISTANCE_M = 0.9f;
+        
+        
+        // Calculate absolute speed of obstacle (in m/s)
+        float obstacleAbsoluteSpeed = currentSpeed_ + obstacleSpeed_; // obstacleSpeed_ is relative
+        
+        // Make sure obstacle speed is not negative (stationary at minimum)
+        obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
+        
+        if (obstacleDistanceMeters < CRITICAL_DISTANCE_M) {
+            // Emergency stop
+            std::cout << "EMERGENCY: Obstacle at " << obstacleDistanceMeters << "m - STOPPING" << std::endl;
+            return 0.0f;
+        }
+        else if (obstacleDistanceMeters < SAFE_DISTANCE_M) {
+            // Close following: match obstacle speed but reduce slightly for safety
+            float targetSpeed = obstacleAbsoluteSpeed * 0.8f; // 80% of obstacle speed
+            std::cout << "CLOSE FOLLOW: Obstacle at " << obstacleDistanceMeters << "m, "
+            << "Obstacle speed: " << obstacleAbsoluteSpeed << "m/s, "
+            << "Target: " << targetSpeed << "m/s" << std::endl;
+            return targetSpeed;
+        }
+        else if (obstacleDistanceMeters < COMFORT_DISTANCE_M) {
+            // Normal following: match obstacle speed exactly
+            std::cout << "FOLLOWING: Obstacle at " << obstacleDistanceMeters << "m, "
+            << "Matching speed: " << obstacleAbsoluteSpeed << "m/s" << std::endl;
+            return obstacleAbsoluteSpeed;
+        }
+        else {
+            // Far enough: gradually transition to desired cruise speed
+            float blendFactor = (obstacleDistanceMeters - COMFORT_DISTANCE_M) / 
+            (COMFORT_DISTANCE_M * 0.5f);
+            blendFactor = std::clamp(blendFactor, 0.0f, 1.0f);
+            
+            float targetSpeed = obstacleAbsoluteSpeed * (1.0f - blendFactor) + 
+            desiredSpeed_ * blendFactor;
+            
+            std::cout << "TRANSITION: Distance " << obstacleDistanceMeters << "m, "
+            << "Blending to cruise speed: " << targetSpeed << "m/s" << std::endl;
+            return targetSpeed;
+        }
     }
 }
 
@@ -119,10 +121,8 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
     for (int i = static_cast<int>(midCurve.size()) - 1; i >= 0; i--) {
         cv::Point trajPoint = midCurve[i];
         
-        // Skip points too close to bottom (ignore zone)
+        // Skip points too close to bottom (ignore zone) and too far ahead
         if (trajPoint.y > frameHeight_ * IGNORE_ZONE_RATIO) continue;
-        
-        // Skip points too close to top (too far ahead)
         if (trajPoint.y < frameHeight_ * 0.1) continue;
         
         // Check trajectory point and surrounding area
@@ -203,7 +203,7 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
         return 0.0f;
     }
     
-    // Use linear regression over the recent history
+    // Linear regression over the recent history
     double sumTime = 0.0, sumDist = 0.0, sumTimeDist = 0.0, sumTimeSquared = 0.0;
     int count = 0;
     
@@ -219,35 +219,17 @@ float AdaptiveCruiseControl::calculateObstacleSpeed()
         sumTimeSquared += t * t;
         count++;
     }
-    std::cout << "sumTime: " << sumTime << ", sumDist: " << sumDist 
-              << ", sumTimeDist: " << sumTimeDist << ", sumTimeSquared: " << sumTimeSquared 
-              << ", count: " << count << std::endl;
     
     if (count < 2 || sumTimeSquared == 0) return 0.0f;
-    std::cout << "Calculating obstacle speed with " << count << " points." << std::endl;
+
     // Calculate slope (speed)
     double slope = (count * sumTimeDist - sumTime * sumDist) / 
                    (count * sumTimeSquared - sumTime * sumTime);
 
-    std::cout << "Distance slope: " << slope << " m/s" << std::endl;
-    
-    // slope > 0 means distance increasing (obstacle moving away)
-    // slope < 0 means distance decreasing (obstacle approaching)
-    
-    // The relative speed is just the slope (rate of distance change)
+    // Relative speed is the slope
     float relativeSpeed = static_cast<float>(slope);
     
-    // Calculate absolute obstacle speed
-    float obstacleAbsoluteSpeed = currentSpeed_ + relativeSpeed;
-    
-    // Make sure absolute speed is not negative
-    obstacleAbsoluteSpeed = std::max(0.0f, obstacleAbsoluteSpeed);
-    
-    std::cout << "Vehicle speed: " << currentSpeed_ << "m/s, "
-              << "Distance rate: " << relativeSpeed << "m/s, "
-              << "Obstacle absolute speed: " << obstacleAbsoluteSpeed << "m/s" << std::endl;
-    
-    return relativeSpeed; // Positive = moving away, Negative = approaching
+    return relativeSpeed;
 }
 
 bool AdaptiveCruiseControl::isRoadPixel(const cv::Vec3b& pixel)
