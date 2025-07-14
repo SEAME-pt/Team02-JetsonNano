@@ -343,31 +343,31 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     // Create overlay at the target size directly
     cv::Mat overlay = cv::Mat::zeros(actualSize, CV_8UC3);
     // Draw each occupied cell
-    for (int r = 0; r < gridHeight_; ++r) {
-        for (int c = 0; c < gridWidth_; ++c) {
+    // for (int r = 0; r < gridHeight_; ++r) {
+    //     for (int c = 0; c < gridWidth_; ++c) {
 
-            int x0 = static_cast<int>(c * cellSizePx_);
-            int y0 = static_cast<int>(r * cellSizePx_);
-            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
-            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+    //         int x0 = static_cast<int>(c * cellSizePx_);
+    //         int y0 = static_cast<int>(r * cellSizePx_);
+    //         int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+    //         int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
             
 
-            if (trajectoryGrid_[r][c]) {
-                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
-            }
-            else if (occupancy_[gridIndex(r, c)]) {
-                // Occupied cell (obstacle)
-                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 0, 150), -1); // Red fill
-            }
-            else {
-                // Free cell
-                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                          cv::Scalar(0, 150, 0), -1); // Green fill
-            }
-        }
-    }
+    //         if (trajectoryGrid_[r][c]) {
+    //             cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+    //                       cv::Scalar(255, 255, 0), -1); // Purple fill for trajectory cells
+    //         }
+    //         else if (occupancy_[gridIndex(r, c)]) {
+    //             // Occupied cell (obstacle)
+    //             cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+    //                       cv::Scalar(0, 0, 150), -1); // Red fill
+    //         }
+    //         else {
+    //             // Free cell
+    //             cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+    //                       cv::Scalar(0, 150, 0), -1); // Green fill
+    //         }
+    //     }
+    // }
 
     for (int r = 0; r < gridHeight_; ++r) {
         for (int c = 0; c < gridWidth_; ++c) {
@@ -449,23 +449,23 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
         }
     }
 
-    int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
-    int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
-    cv::rectangle(overlay, 
-                cv::Point(0, scaledIgnoreZoneStart), 
-                cv::Point(actualSize.width, actualSize.height),
-                cv::Scalar(100, 100, 100), // Gray color
-                -1); // Filled rectangle
+    // int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
+    // int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
+    // cv::rectangle(overlay, 
+    //             cv::Point(0, scaledIgnoreZoneStart), 
+    //             cv::Point(actualSize.width, actualSize.height),
+    //             cv::Scalar(100, 100, 100), // Gray color
+    //             -1); // Filled rectangle
 
-    cv::line(overlay, 
-            cv::Point(0, scaledIgnoreZoneStart), 
-            cv::Point(actualSize.width, scaledIgnoreZoneStart),
-            cv::Scalar(255, 0, 255), 2); // Magenta line
+    // cv::line(overlay, 
+    //         cv::Point(0, scaledIgnoreZoneStart), 
+    //         cv::Point(actualSize.width, scaledIgnoreZoneStart),
+    //         cv::Scalar(255, 0, 255), 2); // Magenta line
 
-    cv::putText(overlay, "Ignore Zone", 
-                cv::Point(20, scaledIgnoreZoneStart + 30),
-                cv::FONT_HERSHEY_SIMPLEX, 0.7, 
-                cv::Scalar(255, 255, 255), 2);
+    // cv::putText(overlay, "Ignore Zone", 
+    //             cv::Point(20, scaledIgnoreZoneStart + 30),
+    //             cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+    //             cv::Scalar(255, 255, 255), 2);
 
     overlay.copyTo(outputImage);
 }
