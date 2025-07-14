@@ -319,10 +319,10 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         float minLeftDist = FLT_MAX, minRightDist = FLT_MAX;
 
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
-            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
-            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+            float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+            float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
+            float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
 
             if (leftDistance < rightDistance && leftDistance < maxDistance) {
                 if (leftDistance < minLeftDist) {
@@ -363,15 +363,16 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
             onePolyline(leftCurve, rightCurve);
         } else {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
+            std::cout << "Lower Point Lane Definition in prev history for both lanes" << std::endl;
         }
     } else if (!prevLeftCurve.empty()) {
         int bestLeftIdx = -1;
         float minLeftDist = FLT_MAX;
 
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
-            float leftDistance = prevLeftCurve.empty() ? FLT_MAX : calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
+            float leftDistance = calculateLaneDistance(prevLeftCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
+            float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
 
             if (leftDistance < minLeftDist && leftDistance < maxDistance) {
                 minLeftDist = leftDistance;
@@ -436,9 +437,9 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
         float minRightDist = FLT_MAX;
 
         for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++) {
-            float rightDistance = prevRightCurve.empty() ? FLT_MAX : calculateLaneDistance(prevRightCurve, lanePolylines[i]);
+            float rightDistance = calculateLaneDistance(prevRightCurve, lanePolylines[i]);
 
-            float maxDistance = calculateHistoricalLaneWidth() * 0.50;
+            float maxDistance = calculateHistoricalLaneWidth() * distance_percentage;
 
             if (rightDistance < minRightDist && rightDistance < maxDistance) {
                 minRightDist = rightDistance;
@@ -884,7 +885,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 cv::Point2f normal(-dir.y, dir.x);
 
                 // Offset along normal
-                float offset = -expectedWidth;
+                float offset = expectedWidth;
                 cv::Point2f newPt = pt + normal * offset;
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
@@ -923,7 +924,7 @@ void TrajectoryDefinition::checkPredicedCurve(
                 cv::Point2f normal(-dir.y, dir.x);
 
                 // Offset along normal
-                float offset = expectedWidth;
+                float offset = -expectedWidth;
                 cv::Point2f newPt = pt + normal * offset;
 
                 predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));

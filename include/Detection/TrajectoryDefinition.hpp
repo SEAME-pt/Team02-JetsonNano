@@ -53,6 +53,8 @@ class TrajectoryDefinition
     std::deque<float> recentWidths;
     const int MAX_WIDTH_HISTORY = 15;
 
+    const int distance_percentage = 0.75;
+
     int leftLaneLastUpdatedFrame = 0;
     int rightLaneLastUpdatedFrame = 0;
     int currentFrame = 0;
