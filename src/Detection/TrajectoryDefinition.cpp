@@ -798,7 +798,7 @@ float TrajectoryDefinition::calculateLaneDistance(
 
 float TrajectoryDefinition::calculateHistoricalLaneWidth() {    
     if (recentWidths.empty()) {
-        return frameWidth_ * 0.50;
+        return frameWidth_ * 0.30;
     } else {
         float sum = 0.0f;
         for (const float& width : recentWidths) {
