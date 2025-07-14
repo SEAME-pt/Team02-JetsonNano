@@ -403,7 +403,7 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
         cv::putText(overlay, "Obstacles Detected: " + std::to_string(obstaclePoints_.size()),
                     cv::Point(20, 40), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
         
-        Visualize all collision points
+        // Visualize all collision points
         for (size_t i = 0; i < obstaclePoints_.size(); i++) {
             int r = obstaclePoints_[i].first;
             int c = obstaclePoints_[i].second;
