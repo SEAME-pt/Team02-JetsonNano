@@ -370,21 +370,20 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     //     }
     // }
 
-    for (int r = 0; r < gridHeight_; ++r) {
-        for (int c = 0; c < gridWidth_; ++c) {
-
-            int x0 = static_cast<int>(c * cellSizePx_);
-            int y0 = static_cast<int>(r * cellSizePx_);
-            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
-            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
-            
-
-            if (trajectoryGrid_[r][c]) {
-                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                        cv::Scalar(255, 255, 0), -1);
-            }
-        }
-    }            
+    // Draw trajectory cells
+    for (const auto& trajCell : trajectoryCells_) {
+        int r = trajCell.first;
+        int c = trajCell.second;
+        
+        int x0 = static_cast<int>(c * cellSizePx_);
+        int y0 = static_cast<int>(r * cellSizePx_);
+        int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+        int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+        
+        cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
+    }
+        
 
     // Draw grid lines with proper scaling
     // for (int r = 0; r <= gridHeight_; ++r) {
@@ -432,23 +431,23 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
         //             cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
     }
 
-    // if (adjustedTrajectory && !adjustedTrajectory->empty()) {
-    //     cv::putText(overlay, "Adjusted Trajectory", cv::Point(20, 120),
-    //                cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
+    if (adjustedTrajectory && !adjustedTrajectory->empty()) {
+        cv::putText(overlay, "Adjusted Trajectory", cv::Point(20, 120),
+                   cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255), 2);
         
-    //     // Connect points with lines
-    //     for (size_t i = 0; i < adjustedTrajectory->size() - 1; i++) {
-    //         cv::line(overlay, 
-    //                 (*adjustedTrajectory)[i], 
-    //                 (*adjustedTrajectory)[i+1],
-    //                 cv::Scalar(0, 255, 255), 2); // Cyan line
-    //     }
+        // Connect points with lines
+        for (size_t i = 0; i < adjustedTrajectory->size() - 1; i++) {
+            cv::line(overlay, 
+                    (*adjustedTrajectory)[i], 
+                    (*adjustedTrajectory)[i+1],
+                    cv::Scalar(0, 255, 255), 2); // Cyan line
+        }
         
-    //     // Draw points
-    //     for (const auto& p : *adjustedTrajectory) {
-    //         cv::circle(overlay, p, 3, cv::Scalar(0, 255, 255), -1);
-    //     }
-    // }
+        // Draw points
+        for (const auto& p : *adjustedTrajectory) {
+            cv::circle(overlay, p, 3, cv::Scalar(0, 255, 255), -1);
+        }
+    }
 
     // int ignoreZoneStart = static_cast<int>(frameHeight_ * 4.5 / 6.0);
     // int scaledIgnoreZoneStart = static_cast<int>(ignoreZoneStart);
