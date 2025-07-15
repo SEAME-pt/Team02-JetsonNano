@@ -361,17 +361,17 @@ void Signals::run()
                         memcpy(&speed, data, 4);
                         speed = ntohl(speed);
                         
-                        // Apply the same wheel diameter conversion as Raspberry Pi
-                        double wheelDiameter = 0.067;
-                        double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
+                        // // Apply the same wheel diameter conversion as Raspberry Pi
+                        // double wheelDiameter = 0.067;
+                        // double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
                         
-                        // Basic range check only
-                        if (convertedSpeed < 0 || convertedSpeed > 200) {
-                            convertedSpeed = 0;
-                        }
+                        // // Basic range check only
+                        // if (convertedSpeed < 0 || convertedSpeed > 200) {
+                        //     convertedSpeed = 0;
+                        // }
                         
                         // Always publish (no complex validation)
-                        std::string speed_str = std::to_string(convertedSpeed);
+                        std::string speed_str = std::to_string(speed);
                         publisher_->publishSpeed(std::stof(speed_str));
                         
                         std::cout << "Published speed: " << convertedSpeed << std::endl;
