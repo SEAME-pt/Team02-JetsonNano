@@ -365,16 +365,18 @@ void Signals::run()
                         // double wheelDiameter = 0.067;
                         // double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
                         
-                        // // Basic range check only
-                        // if (convertedSpeed < 0 || convertedSpeed > 200) {
-                        //     convertedSpeed = 0;
-                        // }
+                        // Basic range check only
+                        if (speed < 0 || speed > 200) {
+
+                        }
+                        else{
+                            std::string speed_str = std::to_string(speed);
+                            publisher_->publishSpeed(std::stof(speed_str));
+                        }
                         
                         // Always publish (no complex validation)
-                        std::string speed_str = std::to_string(speed);
-                        publisher_->publishSpeed(std::stof(speed_str));
                         
-                        std::cout << "Published speed: " << convertedSpeed << std::endl;
+                        // std::cout << "Published speed: " << convertedSpeed << std::endl;
                     }
                     
                     // Handle other message types like Raspberry Pi does
