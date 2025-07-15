@@ -282,7 +282,7 @@ void Signals::run()
                         speed = 0;
 
                     bool validReading = true;
-                    int speedChange = speed - lastValidSpeed;
+                    // int speedChange = speed - lastValidSpeed;
 
                     // // Keep your existing validation logic
                     // if (!isFirstReading) {
