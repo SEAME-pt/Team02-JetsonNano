@@ -162,12 +162,12 @@ void Signals::run()
                 // int size        = 0;
                 uint8_t data[8] = {0};
                 this->canBus->readMessage(buffer, can_id, data);
-                // std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
-                //           << ", Data: ";
-                // for (int i = 0; i < 8; i++) {
-                //     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
-                // }
-                // std::cout << std::dec << std::endl;
+                std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
+                          << ", Data: ";
+                for (int i = 0; i < 8; i++) {
+                    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
+                }
+                std::cout << std::dec << std::endl;
                 if (can_id == 0x01)
                 {
                     int speed;
@@ -182,13 +182,13 @@ void Signals::run()
 
                     bool validReading = true;
                     int speedChange = speed - lastValidSpeed;
-                    if (!isFirstReading) {
-                        if (std::abs(speedChange) > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
-                            printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
-                                   speed, speedChange, lastValidSpeed);
-                            validReading = false;
-                        }
-                    }
+                    // if (!isFirstReading) {
+                    //     if (std::abs(speedChange) > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
+                    //         printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
+                    //                speed, speedChange, lastValidSpeed);
+                    //         validReading = false;
+                    //     }
+                    // }
                     
                     if (validReading) {
                         lastValidSpeed = speed;
