@@ -378,7 +378,7 @@ void ObstacleAvoidance::smoothTrajectory(std::vector<cv::Point>& trajectory)
     if (firstAdjustedIdx < 0) return; // No adjustment found
     
     // Look ahead 3-5 cells from first adjustment to find the avoidance zone
-    int lookAhead = std::min(5, static_cast<int>(trajectory.size() - firstAdjustedIdx - 1));
+    int lookAhead = std::min(15, static_cast<int>(trajectory.size() - firstAdjustedIdx - 1));
     lastAdjustedIdx = firstAdjustedIdx + lookAhead;
     
     // Create pre-transition point (start curving earlier)
