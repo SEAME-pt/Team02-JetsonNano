@@ -9,7 +9,7 @@ User=team02
 Environment=DISPLAY=:0
 WorkingDirectory=/opt/vehicle/bin
 ExecStartPre=/bin/sleep 2
-ExecStart=/opt/vehicle/bin/LaneDetector /opt/vehicle/etc/zenoh/LaneDetectorConfig.json
+ExecStart=/opt/vehicle/bin/LaneDetector -C /opt/vehicle/etc/zenoh/DetectorConfig.json
 Restart=always
 RestartSec=3
 StandardOutput=journal
