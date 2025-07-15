@@ -1508,6 +1508,50 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
     }
 }
 
+void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+{
+    if (midCurve.empty()) {
+        cv::putText(allPolylinesViz_, "No trajectory for ACC", cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
+        return;
+    }
+    
+    // Calculate recommended speed
+    float recommendedSpeed = accontroller->calculateAdaptiveSpeed(segmentation_mask, midCurve);
+    
+    // Get obstacle info for visualization
+    int obstacleDistance = accontroller->getCurrentObstacleDistance();
+    float obstacleSpeed = accontroller->getObstacleSpeed();
+    bool obstacleDetected = accontroller->isObstacleDetected();
+    cv::Point obstaclePos = accontroller->getObstaclePosition();
+    
+    // Update global distance variable
+    distanceToObstacle_ = obstacleDetected ? obstacleDistance : frameHeight_;
+    
+    // Visualize obstacle and information
+    if (obstacleDetected) {
+        cv::circle(allPolylinesViz_, obstaclePos, 15, cv::Scalar(255, 165, 0), -1);
+        cv::putText(allPolylinesViz_, "OBS", obstaclePos + cv::Point(-15, 5), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 2);
+        
+        // Display ACC info
+        std::string accInfo = "ACC: " + std::to_string(obstacleDistance) + "px, " + 
+                             std::to_string(obstacleSpeed).substr(0, 5) + "px/s, " +
+                             std::to_string(recommendedSpeed).substr(0, 4);
+        cv::putText(allPolylinesViz_, accInfo, cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
+    } else {
+        cv::putText(allPolylinesViz_, "ACC: Clear path", cv::Point(20, 140), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
+    }
+    if (recommendedSpeed > 0){
+        publishACC(std::to_string(recommendedSpeed));
+    } else {
+
+    }
+}
+
+
 void TrajectoryDefinition::mpcDebug(void) {
     // Draw the predicted trajectory as a green polyline
     if (mpcPoints_.size() > 1) {
@@ -1582,47 +1626,6 @@ void TrajectoryDefinition::publishCoeffs(std::vector<cv::Point>& curve)
         std::cerr << "Not enough points to calculate coefficients" << std::endl;
         return;
     }
-}
-
-void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
-{
-    if (midCurve.empty()) {
-        cv::putText(allPolylinesViz_, "No trajectory for ACC", cv::Point(20, 140), 
-                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2);
-        return;
-    }
-    
-    // Calculate recommended speed
-    float recommendedSpeed = accontroller->calculateAdaptiveSpeed(segmentation_mask, midCurve);
-    
-    // Get obstacle info for visualization
-    int obstacleDistance = accontroller->getCurrentObstacleDistance();
-    float obstacleSpeed = accontroller->getObstacleSpeed();
-    bool obstacleDetected = accontroller->isObstacleDetected();
-    cv::Point obstaclePos = accontroller->getObstaclePosition();
-    
-    // Update global distance variable
-    distanceToObstacle_ = obstacleDetected ? obstacleDistance : frameHeight_;
-    
-    // Visualize obstacle and information
-    if (obstacleDetected) {
-        cv::circle(allPolylinesViz_, obstaclePos, 15, cv::Scalar(255, 165, 0), -1);
-        cv::putText(allPolylinesViz_, "OBS", obstaclePos + cv::Point(-15, 5), 
-                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 255), 2);
-        
-        // Display ACC info
-        std::string accInfo = "ACC: " + std::to_string(obstacleDistance) + "px, " + 
-                             std::to_string(obstacleSpeed).substr(0, 5) + "px/s, " +
-                             std::to_string(recommendedSpeed).substr(0, 4);
-        cv::putText(allPolylinesViz_, accInfo, cv::Point(20, 140), 
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
-    } else {
-        cv::putText(allPolylinesViz_, "ACC: Clear path", cv::Point(20, 140), 
-                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
-    }
-    
-    // Publish speed recommendation
-    publishACC(std::to_string(recommendedSpeed));
 }
 
 void TrajectoryDefinition::publishLKAS(const std::string& value_str)
