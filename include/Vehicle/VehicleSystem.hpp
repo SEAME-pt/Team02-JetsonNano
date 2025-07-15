@@ -31,9 +31,6 @@ class VehicleSystem
     std::shared_ptr<I2C> getI2C() const;
     void setI2C(const std::shared_ptr<I2C>& value);
 
-    std::shared_ptr<CAN> getCAN() const;
-    void setCAN(const std::shared_ptr<CAN>& value);
-
     std::shared_ptr<MotorController> getMotorController() const;
     void setMotorController(const std::shared_ptr<MotorController>& value);
 
