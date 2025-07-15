@@ -44,7 +44,7 @@ private:
 
     //calibration parameters
     // Straight-line FOPDT model
-    float Kp_s_= 7.30;
+    float Kp_s_= 7.3075;
     float tau_s_ = 0.5995;
     float L_s_ = 0.2285;
     // Cornering FOPDT model
