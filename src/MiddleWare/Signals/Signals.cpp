@@ -331,92 +331,92 @@ void Signals::run()
 // }
 
 
-void Signals::run()
-{
-    std::cout << "Starting CAN message processing loop..." << std::endl;
+// void Signals::run()
+// {
+//     std::cout << "Starting CAN message processing loop..." << std::endl;
     
-    while (1)
-    {
-        if (this->canBus) {
-            // Wait for a message (blocking, like Raspberry Pi read())
-            if (this->canBus->waitForMessage(100)) { // 100ms timeout
+//     while (1)
+//     {
+//         if (this->canBus) {
+//             // Wait for a message (blocking, like Raspberry Pi read())
+//             if (this->canBus->waitForMessage(100)) { // 100ms timeout
                 
-                // Check which buffer has the message
-                int buffer = this->canBus->checktheReceive();
-                if (buffer != -1) {
-                    uint32_t can_id = 0;
-                    uint8_t data[8] = {0};
-                    this->canBus->readMessage(buffer, can_id, data);
+//                 // Check which buffer has the message
+//                 int buffer = this->canBus->checktheReceive();
+//                 if (buffer != -1) {
+//                     uint32_t can_id = 0;
+//                     uint8_t data[8] = {0};
+//                     this->canBus->readMessage(buffer, can_id, data);
                     
-                    // Log the message exactly like Raspberry Pi/candump
-                    std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
-                    std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
-                    for (int i = 0; i < 8; i++) {
-                        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
-                    }
-                    std::cout << std::dec << std::endl;
+//                     // Log the message exactly like Raspberry Pi/candump
+//                     std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
+//                     std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
+//                     for (int i = 0; i < 8; i++) {
+//                         std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+//                     }
+//                     std::cout << std::dec << std::endl;
                     
-                    // Process speed message (simplified like Raspberry Pi)
-                    if (can_id == 0x01) {
-                        int speed;
-                        memcpy(&speed, data, 4);
-                        speed = ntohl(speed);
+//                     // Process speed message (simplified like Raspberry Pi)
+//                     if (can_id == 0x01) {
+//                         int speed;
+//                         memcpy(&speed, data, 4);
+//                         speed = ntohl(speed);
                         
-                        // // Apply the same wheel diameter conversion as Raspberry Pi
-                        // double wheelDiameter = 0.067;
-                        // double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
+//                         // // Apply the same wheel diameter conversion as Raspberry Pi
+//                         // double wheelDiameter = 0.067;
+//                         // double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
                         
-                        // Basic range check only
-                        if (speed < 0 || speed > 200) {
+//                         // Basic range check only
+//                         if (speed < 0 || speed > 200) {
 
-                        }
-                        else{
-                            std::string speed_str = std::to_string(speed);
-                            publisher_->publishSpeed(std::stof(speed_str));
-                        }
+//                         }
+//                         else{
+//                             std::string speed_str = std::to_string(speed);
+//                             publisher_->publishSpeed(std::stof(speed_str));
+//                         }
                         
-                        // Always publish (no complex validation)
+//                         // Always publish (no complex validation)
                         
-                        // std::cout << "Published speed: " << convertedSpeed << std::endl;
-                    }
+//                         // std::cout << "Published speed: " << convertedSpeed << std::endl;
+//                     }
                     
-                    // Handle other message types like Raspberry Pi does
-                    else if (can_id == 0x02) {
-                        // Battery message
-                        double battery;
-                        memcpy(&battery, data, sizeof(double));
+//                     // Handle other message types like Raspberry Pi does
+//                     else if (can_id == 0x02) {
+//                         // Battery message
+//                         double battery;
+//                         memcpy(&battery, data, sizeof(double));
                         
-                        float percentage = ((battery - 9.5f) / (12.6f - 9.5f)) * 100.0f;
-                        battery = std::min(100.0f, std::max(0.0f, percentage));
+//                         float percentage = ((battery - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+//                         battery = std::min(100.0f, std::max(0.0f, percentage));
                         
-                        // Publish battery state if you have a publisher for it
-                        std::cout << "Battery: " << battery << "%" << std::endl;
-                    }
+//                         // Publish battery state if you have a publisher for it
+//                         std::cout << "Battery: " << battery << "%" << std::endl;
+//                     }
                     
-                    else if (can_id == 0x03) {
-                        // Lights message
-                        char lights;
-                        memcpy(&lights, data, sizeof(char));
+//                     else if (can_id == 0x03) {
+//                         // Lights message
+//                         char lights;
+//                         memcpy(&lights, data, sizeof(char));
                         
-                        std::cout << "Lights: ";
-                        for (int i = 7; i >= 0; i--) {
-                            std::cout << ((lights >> i) & 0x01);
-                        }
-                        std::cout << std::endl;
-                    }
+//                         std::cout << "Lights: ";
+//                         for (int i = 7; i >= 0; i--) {
+//                             std::cout << ((lights >> i) & 0x01);
+//                         }
+//                         std::cout << std::endl;
+//                     }
                     
-                    else if (can_id == 0x04) {
-                        // Gear message
-                        int gear;
-                        memcpy(&gear, data, sizeof(gear));
-                        std::cout << "Gear: " << gear << std::endl;
-                    }
-                }
-            }
-            // No message received within timeout - continue loop
-        } else {
-            // No CAN bus available
-            usleep(100000); // 100ms
-        }
-    }
-}
+//                     else if (can_id == 0x04) {
+//                         // Gear message
+//                         int gear;
+//                         memcpy(&gear, data, sizeof(gear));
+//                         std::cout << "Gear: " << gear << std::endl;
+//                     }
+//                 }
+//             }
+//             // No message received within timeout - continue loop
+//         } else {
+//             // No CAN bus available
+//             usleep(100000); // 100ms
+//         }
+//     }
+// }
