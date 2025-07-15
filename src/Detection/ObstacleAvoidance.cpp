@@ -326,7 +326,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
             
             // Find obstacles that are close to this trajectory column
             std::vector<int> nearbyObstacleColumns;
-            int searchRange = safeDistanceCells * 2;  // Look ahead by twice the safe distance
+            int searchRange = safeDistanceCells;  // Look ahead by twice the safe distance
             
             // Find obstacles within relevant range
             for (int obsCol : obstacleColumns) {
