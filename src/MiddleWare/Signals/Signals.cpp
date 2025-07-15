@@ -238,6 +238,98 @@ void Signals::initCarlaEnv() {
 // }
 
 
+// void Signals::run()
+// {
+//     std::cout << "Starting CAN message processing loop..." << std::endl;
+    
+//     while (1)
+//     {
+//         if (this->canBus) {
+//             // Process all available messages in the buffer before sleeping
+//             bool messagesProcessed = false;
+//             int messageCount = 0;
+            
+//             // Process up to 10 messages per batch to avoid getting stuck
+//             // This is similar to how candump processes multiple messages in sequence
+//             while (messageCount < 10) {
+//                 int buffer = this->canBus->checktheReceive();
+//                 if (buffer == -1) break;  // No more messages
+                
+//                 messagesProcessed = true;
+//                 messageCount++;
+                
+//                 // Process this message
+//                 uint32_t can_id = 0;
+//                 uint8_t data[8] = {0};
+//                 this->canBus->readMessage(buffer, can_id, data);
+                
+//                 // Log the message like candump does
+//                 std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
+//                 std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
+//                 for (int i = 0; i < 8; i++) {
+//                     std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+//                 }
+//                 std::cout << std::dec << std::endl;
+                
+//                 // Process speed message
+//                 if (can_id == 0x01)
+//                 {
+//                     int speed;
+//                     memcpy(&speed, data, 4);
+//                     speed = ntohl(speed);
+                    
+//                     if (speed < 0 || speed > 2000)
+//                         speed = 0;
+
+//                     bool validReading = true;
+//                     // int speedChange = speed - lastValidSpeed;
+
+//                     // // Keep your existing validation logic
+//                     // if (!isFirstReading) {
+//                     //     // Check for unreasonable changes
+//                     //     if (std::abs(speedChange) > 30) {
+//                     //         // Check for specific bit patterns that indicate noise
+//                     //         uint8_t highByte = (speed >> 8) & 0xFF;
+                            
+//                     //         // Check if multiple high bits are set (pattern seen in noise)
+//                     //         if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
+//                     //             std::cout << "Detected bit-pattern noise: 0x" 
+//                     //                     << std::hex << (int)highByte << std::dec 
+//                     //                     << " in reading: " << speed << std::endl;
+//                     //             validReading = false;
+//                     //         }
+                            
+//                     //         // Check if this is exactly a power of 2 jump (single bit flip)
+//                     //         int absDiff = std::abs(speedChange);
+//                     //         if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
+//                     //             std::cout << "Detected single bit flip of " << absDiff 
+//                     //                     << " in reading: " << speed << std::endl;
+//                     //             validReading = false;
+//                     //         }
+//                     //     }
+//                     // }
+                    
+//                     if (validReading) {
+//                         lastValidSpeed = speed;
+//                         isFirstReading = false;
+//                         std::string speed_str = std::to_string(speed);
+//                         publisher_->publishSpeed(std::stof(speed_str));
+//                     }
+//                 }
+//             }
+            
+//             // Only sleep if no messages were processed in this iteration
+//             if (!messagesProcessed) {
+//                 usleep(1000);  // Short 1ms sleep when no messages
+//             }
+//         } else {
+//             // No CAN bus, sleep to avoid CPU hogging
+//             usleep(10000);  // 10ms
+//         }
+//     }
+// }
+
+
 void Signals::run()
 {
     std::cout << "Starting CAN message processing loop..." << std::endl;
@@ -245,86 +337,83 @@ void Signals::run()
     while (1)
     {
         if (this->canBus) {
-            // Process all available messages in the buffer before sleeping
-            bool messagesProcessed = false;
-            int messageCount = 0;
-            
-            // Process up to 10 messages per batch to avoid getting stuck
-            // This is similar to how candump processes multiple messages in sequence
-            while (messageCount < 10) {
+            // Wait for a message (blocking, like Raspberry Pi read())
+            if (this->canBus->waitForMessage(100)) { // 100ms timeout
+                
+                // Check which buffer has the message
                 int buffer = this->canBus->checktheReceive();
-                if (buffer == -1) break;  // No more messages
-                
-                messagesProcessed = true;
-                messageCount++;
-                
-                // Process this message
-                uint32_t can_id = 0;
-                uint8_t data[8] = {0};
-                this->canBus->readMessage(buffer, can_id, data);
-                
-                // Log the message like candump does
-                std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
-                std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
-                for (int i = 0; i < 8; i++) {
-                    std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
-                }
-                std::cout << std::dec << std::endl;
-                
-                // Process speed message
-                if (can_id == 0x01)
-                {
-                    int speed;
-                    memcpy(&speed, data, 4);
-                    speed = ntohl(speed);
+                if (buffer != -1) {
+                    uint32_t can_id = 0;
+                    uint8_t data[8] = {0};
+                    this->canBus->readMessage(buffer, can_id, data);
                     
-                    if (speed < 0 || speed > 2000)
-                        speed = 0;
-
-                    bool validReading = true;
-                    // int speedChange = speed - lastValidSpeed;
-
-                    // // Keep your existing validation logic
-                    // if (!isFirstReading) {
-                    //     // Check for unreasonable changes
-                    //     if (std::abs(speedChange) > 30) {
-                    //         // Check for specific bit patterns that indicate noise
-                    //         uint8_t highByte = (speed >> 8) & 0xFF;
-                            
-                    //         // Check if multiple high bits are set (pattern seen in noise)
-                    //         if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
-                    //             std::cout << "Detected bit-pattern noise: 0x" 
-                    //                     << std::hex << (int)highByte << std::dec 
-                    //                     << " in reading: " << speed << std::endl;
-                    //             validReading = false;
-                    //         }
-                            
-                    //         // Check if this is exactly a power of 2 jump (single bit flip)
-                    //         int absDiff = std::abs(speedChange);
-                    //         if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
-                    //             std::cout << "Detected single bit flip of " << absDiff 
-                    //                     << " in reading: " << speed << std::endl;
-                    //             validReading = false;
-                    //         }
-                    //     }
-                    // }
+                    // Log the message exactly like Raspberry Pi/candump
+                    std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
+                    std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
+                    for (int i = 0; i < 8; i++) {
+                        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
+                    }
+                    std::cout << std::dec << std::endl;
                     
-                    if (validReading) {
-                        lastValidSpeed = speed;
-                        isFirstReading = false;
-                        std::string speed_str = std::to_string(speed);
+                    // Process speed message (simplified like Raspberry Pi)
+                    if (can_id == 0x01) {
+                        int speed;
+                        memcpy(&speed, data, 4);
+                        speed = ntohl(speed);
+                        
+                        // Apply the same wheel diameter conversion as Raspberry Pi
+                        double wheelDiameter = 0.067;
+                        double convertedSpeed = wheelDiameter * 3.14 * speed * 10 / 60;
+                        
+                        // Basic range check only
+                        if (convertedSpeed < 0 || convertedSpeed > 200) {
+                            convertedSpeed = 0;
+                        }
+                        
+                        // Always publish (no complex validation)
+                        std::string speed_str = std::to_string(convertedSpeed);
                         publisher_->publishSpeed(std::stof(speed_str));
+                        
+                        std::cout << "Published speed: " << convertedSpeed << std::endl;
+                    }
+                    
+                    // Handle other message types like Raspberry Pi does
+                    else if (can_id == 0x02) {
+                        // Battery message
+                        double battery;
+                        memcpy(&battery, data, sizeof(double));
+                        
+                        float percentage = ((battery - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+                        battery = std::min(100.0f, std::max(0.0f, percentage));
+                        
+                        // Publish battery state if you have a publisher for it
+                        std::cout << "Battery: " << battery << "%" << std::endl;
+                    }
+                    
+                    else if (can_id == 0x03) {
+                        // Lights message
+                        char lights;
+                        memcpy(&lights, data, sizeof(char));
+                        
+                        std::cout << "Lights: ";
+                        for (int i = 7; i >= 0; i--) {
+                            std::cout << ((lights >> i) & 0x01);
+                        }
+                        std::cout << std::endl;
+                    }
+                    
+                    else if (can_id == 0x04) {
+                        // Gear message
+                        int gear;
+                        memcpy(&gear, data, sizeof(gear));
+                        std::cout << "Gear: " << gear << std::endl;
                     }
                 }
             }
-            
-            // Only sleep if no messages were processed in this iteration
-            if (!messagesProcessed) {
-                usleep(1000);  // Short 1ms sleep when no messages
-            }
+            // No message received within timeout - continue loop
         } else {
-            // No CAN bus, sleep to avoid CPU hogging
-            usleep(10000);  // 10ms
+            // No CAN bus available
+            usleep(100000); // 100ms
         }
     }
 }
