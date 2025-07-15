@@ -337,10 +337,29 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                 continue;
             }
 
+            int leftFreeSpace = 0;
+            for (int col = leftmostObstacle - 1; col >= 0; col--) {
+                if (!occupancy_[gridIndex(r, col)]) {
+                    leftFreeSpace++;
+                } else {
+                    break; // Stop at first obstacle
+                }
+            }
+            
+            // Calculate free space to the right of rightmost obstacle
+            int rightFreeSpace = 0;
+            for (int col = rightmostObstacle + 1; col < gridWidth_; col++) {
+                if (!occupancy_[gridIndex(r, col)]) {
+                    rightFreeSpace++;
+                } else {
+                    break; // Stop at first obstacle
+                }
+            }
+
             // Determine which side to move to based on position relative to obstacle region
             bool moveLeft = false;
-            int distanceToLeftEdge = c - leftmostObstacle;
-            int distanceToRightEdge = rightmostObstacle - c;
+            // int distanceToLeftEdge = c - leftmostObstacle;
+            // int distanceToRightEdge = rightmostObstacle - c;
 
             // If trajectory is inside obstacle region, choose side with more space
             if (c >= leftmostObstacle && c <= rightmostObstacle) {
