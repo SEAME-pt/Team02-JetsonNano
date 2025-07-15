@@ -149,9 +149,9 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
-    float alpha = std::min(1.0f, std::fabs(steer_));
+    // float alpha = std::min(1.0f, std::fabs(steer_));
     // alpha = std::max(0.5f, alpha);
-    // float alpha = 1;
+    float alpha = 0;
 
     // Interpolate process model parameters
     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
@@ -198,62 +198,65 @@ float SpeedPidController::speedPID(float error, double current_time)
 
 void SpeedPidController::run()
 {
-    // while (true)
-    // {
-    //     std::string sae_level = getAutonomousDriveState();
-    //     // if (getCurrentTime() - last_measure_ > 0.3)
-    //     // {
-    //     //     publisher_->publishSpeed(0);
-    //     //     std::cout << "Waiting for speed measurement..." << std::endl;
-    //     //     std::this_thread::sleep_for(std::chrono::milliseconds(
-    //     //         static_cast<int>(fixed_delta_time_ * 1000)));
-    //     // } else {
-    //         if (sae_level.find("SAE_0") != std::string::npos || sae_level.find("SAE_1_LKAS") != std::string::npos) {
-    //             float manual_speed    = xboxController_->getManualSpeed();
-    //             publisher_->publishSpeed(manual_speed);
-    //             integral_ = 0;
-    //             last_time_ = getCurrentTime();
-    //         } else {
-    //             double current_time = getCurrentTime();
-    //             float error = desired_speed_ - current_speed_;
-    //             double throttle = speedPID(error, current_time);
-    //             throttle = std::max(0.0, throttle); 
-    //             publisher_->publishSpeed(throttle);
-    //             std::this_thread::sleep_for(std::chrono::milliseconds(
-    //                         static_cast<int>(fixed_delta_time_ * 1000)));
-    //             // runThrottleCalibration();
-    //         }
-    //     // }
-    // }
+    while (true)
+    {
+        std::string sae_level = getAutonomousDriveState();
+        // if (getCurrentTime() - last_measure_ > 0.3)
+        // {
+        //     publisher_->publishSpeed(0);
+        //     std::cout << "Waiting for speed measurement..." << std::endl;
+        //     std::this_thread::sleep_for(std::chrono::milliseconds(
+        //         static_cast<int>(fixed_delta_time_ * 1000)));
+        // } else {
+            if (sae_level.find("SAE_0") != std::string::npos || sae_level.find("SAE_1_LKAS") != std::string::npos) {
+                float manual_speed    = xboxController_->getManualSpeed();
+                publisher_->publishSpeed(manual_speed);
+                integral_ = 0;
+                last_time_ = getCurrentTime();
+            } else {
+                double current_time = getCurrentTime();
+                float error = desired_speed_ - current_speed_;
+                double throttle = speedPID(error, current_time);
+                throttle = std::max(0.0, throttle);
+                std::cout << "Current Speed: " << current_speed_ 
+                          << " | Desired Speed: " << desired_speed_ 
+                          << " | Throttle: " << throttle << std::endl;
+                publisher_->publishSpeed(throttle);
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                            static_cast<int>(fixed_delta_time_ * 1000)));
+                // runThrottleCalibration();
+            }
+        // }
+    }
 
     // //calibration
-    while (true){
-        std::string sae_level = getAutonomousDriveState();
-        if (sae_level.find("SAE_4") != std::string::npos){
-            break;
-        }
-    }
+    // while (true){
+    //     std::string sae_level = getAutonomousDriveState();
+    //     if (sae_level.find("SAE_4") != std::string::npos){
+    //         break;
+    //     }
+    // }
 
-    double throttle = 25;
-    publisher_->publishSpeed(throttle);
+    // double throttle = 25;
+    // publisher_->publishSpeed(throttle);
     
-    // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
-    std::this_thread::sleep_for(std::chrono::milliseconds(8000));
+    // // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
+    // std::this_thread::sleep_for(std::chrono::milliseconds(8000));
     
     
-    // Start logging
-    double now = getCurrentTime();
-    log_start_time_ = getCurrentTime();
-    log_file_.open("curved_speed_pid_log.csv");
-    log_file_ << "time,speed,throttle\n";
-    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
-    logging_ = true;
-    while (logging_) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
-        throttle = 35;
-        publisher_->publishSpeed(throttle);
-    }
-    publisher_->publishSpeed(0);
+    // // Start logging
+    // double now = getCurrentTime();
+    // log_start_time_ = getCurrentTime();
+    // log_file_.open("curved_speed_pid_log.csv");
+    // log_file_ << "time,speed,throttle\n";
+    // log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
+    // logging_ = true;
+    // while (logging_) {
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
+    //     throttle = 35;
+    //     publisher_->publishSpeed(throttle);
+    // }
+    // publisher_->publishSpeed(0);
 
     //calibration of minimum speed to make the wheels turn
     // std::cout << "Starting minimum throttle calibration..." << std::endl;
