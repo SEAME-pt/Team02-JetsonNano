@@ -36,14 +36,11 @@ class VSSSubscriber
 
     // Constructor with callback to send messages to CAN.
     VSSSubscriber(Vehicle& vehicle,
-                  std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN,
                   std::shared_ptr<zenoh::Session> session);
 
   private:
     Vehicle& vehicle_;
     std::shared_ptr<zenoh::Session> session_;
-
-    std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN_;
 
     std::optional<zenoh::Subscriber<void>> throttle_subscriber;
     std::optional<zenoh::Subscriber<void>> steering_subscriber;

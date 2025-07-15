@@ -4,16 +4,14 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
                              std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle)
 {
-    sendToCAN_ = [](uint32_t, uint8_t*, size_t) {};
     session_   = session;
 
     setupSubscriptions();
 }
 
 VSSSubscriber::VSSSubscriber(
-    Vehicle& vehicle, std::function<void(uint32_t, uint8_t*, size_t)> sendToCAN,
-    std::shared_ptr<zenoh::Session> session)
-    : vehicle_(vehicle), sendToCAN_(sendToCAN)
+    Vehicle& vehicle, std::shared_ptr<zenoh::Session> session)
+    : vehicle_(vehicle)
 {
     session_ = session;
 
@@ -58,8 +56,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "Low" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x702, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x702, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -78,8 +76,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "High" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x703, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x703, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -110,8 +108,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "Parking" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x707, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x707, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -129,8 +127,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "RearFog" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x705, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x705, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -149,8 +147,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "FrontFog" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x704, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x704, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -181,8 +179,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "Hazard" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x706, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x706, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
     directionIndicatorLeft_subscriber.emplace(session_->declare_subscriber(
@@ -200,8 +198,8 @@ void VSSSubscriber::setupSubscriptions()
 
             std::cout << "Left" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x700, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x700, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -221,8 +219,8 @@ void VSSSubscriber::setupSubscriptions()
             // CAN communication
             std::cout << "Right" << std::endl;
             state = !state;
-            uint8_t onOff = static_cast<uint8_t>(state);
-            this->sendToCAN_(0x701, &onOff, sizeof(uint8_t));
+            // uint8_t onOff = static_cast<uint8_t>(state);
+            // this->sendToCAN_(0x701, &onOff, sizeof(uint8_t));
         },
         zenoh::closures::none));
 
@@ -286,9 +284,9 @@ void VSSSubscriber::setupSubscriptions()
             this->vehicle_.get_mutable_powertrain()
                 .get_mutable_transmission()
                 .set_current_gear(currentGear);
-            uint8_t gearData[1];
-            gearData[0] = static_cast<uint8_t>(currentGear);
-            this->sendToCAN_(0x04, gearData, sizeof(gearData));
+            // uint8_t gearData[1];
+            // gearData[0] = static_cast<uint8_t>(currentGear);
+            // this->sendToCAN_(0x04, gearData, sizeof(gearData));
         },
         zenoh::closures::none));
 

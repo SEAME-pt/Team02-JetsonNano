@@ -10,8 +10,6 @@ VehicleSystem::VehicleSystem()
 
     i2c_ = std::make_shared<I2C>();
     i2c_->init("/dev/i2c-1");
-    CAN_ = std::make_shared<CAN>();
-    CAN_->init("/dev/spidev0.0");
 
     motor_controller_ = std::make_unique<MotorController>(i2c_);
     servo_controller_ = std::make_unique<ServoController>(i2c_);
@@ -26,8 +24,7 @@ VehicleSystem::VehicleSystem()
         hardware_observer);
 
     vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, [this](uint32_t can_id, uint8_t* data, size_t len)
-        { this->CAN_->writeMessage(can_id, data, len); }, session);
+        vehicle_, session);
 
     vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
 }
@@ -42,8 +39,6 @@ VehicleSystem::VehicleSystem(const std::string& configFile)
 
     i2c_ = std::make_shared<I2C>();
     i2c_->init("/dev/i2c-1");
-    CAN_ = std::make_shared<CAN>();
-    CAN_->init("/dev/spidev0.0");
 
     motor_controller_ = std::make_unique<MotorController>(i2c_);
     servo_controller_ = std::make_unique<ServoController>(i2c_);
@@ -58,8 +53,7 @@ VehicleSystem::VehicleSystem(const std::string& configFile)
         hardware_observer);
 
     vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, [this](uint32_t can_id, uint8_t* data, size_t len)
-        { this->CAN_->writeMessage(can_id, data, len); }, session);
+        vehicle_, session);
 
     vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
 }
@@ -115,16 +109,6 @@ std::shared_ptr<I2C> VehicleSystem::getI2C() const
 void VehicleSystem::setI2C(const std::shared_ptr<I2C>& value)
 {
     i2c_ = value;
-}
-
-// CAN getters
-std::shared_ptr<CAN> VehicleSystem::getCAN() const
-{
-    return CAN_;
-}
-void VehicleSystem::setCAN(const std::shared_ptr<CAN>& value)
-{
-    CAN_ = value;
 }
 
 std::shared_ptr<MotorController> VehicleSystem::getMotorController() const
