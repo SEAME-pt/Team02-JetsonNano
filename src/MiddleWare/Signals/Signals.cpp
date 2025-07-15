@@ -4,12 +4,12 @@
 #define SESSION_OPEN zenoh::Session::open
 
 
-// Add this helper method to get current time (like candump timestamp)
-double static getCurrentTime() {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return ts.tv_sec + (ts.tv_nsec / 1.0e9);
-}
+// // Add this helper method to get current time (like candump timestamp)
+// double static getCurrentTime() {
+//     struct timespec ts;
+//     clock_gettime(CLOCK_REALTIME, &ts);
+//     return ts.tv_sec + (ts.tv_nsec / 1.0e9);
+// }
 
 Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<SensoringPublisher> publisher)
 {
