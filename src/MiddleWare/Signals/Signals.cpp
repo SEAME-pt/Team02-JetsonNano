@@ -3,6 +3,14 @@
 #include <sys/stat.h>
 #define SESSION_OPEN zenoh::Session::open
 
+
+// Add this helper method to get current time (like candump timestamp)
+double static getCurrentTime() {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec + (ts.tv_nsec / 1.0e9);
+}
+
 Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<SensoringPublisher> publisher)
 {
     publisher_   = publisher;
@@ -146,44 +154,137 @@ void Signals::initCarlaEnv() {
     this->canBus = NULL;
 }
 
+// void Signals::run()
+// {
+//     while (1)
+//     {
+//         usleep(2500);  
+
+//         if (this->canBus) {
+//             int buffer = this->canBus->checktheReceive();
+//             // printf("Buffer: %d\n", buffer);
+
+//             if (buffer != -1)
+//             {
+//                 uint32_t can_id = 0;
+//                 // int size        = 0;
+//                 uint8_t data[8] = {0};
+//                 this->canBus->readMessage(buffer, can_id, data);
+//                 std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
+//                           << ", Data: ";
+//                 for (int i = 0; i < 8; i++) {
+//                     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
+//                 }
+//                 std::cout << std::dec << std::endl;
+//                 if (can_id == 0x01)
+//                 {
+//                     int speed;
+//                     // double wheelDiame = 0.067;
+    
+//                     memcpy(&speed, data, 4);
+    
+//                     speed = ntohl(speed);
+//                     // speed = wheelDiame * 3.14 * speed * 10 / 60;
+//                     if (speed < 0 || speed > 2000)
+//                         speed = 0;
+
+//                     bool validReading = true;
+//                     int speedChange = speed - lastValidSpeed;
+
+//                     // Add bit pattern detection
+//                     if (!isFirstReading) {
+//                         // Check for unreasonable changes
+//                         if (std::abs(speedChange) > 30) {
+//                             // Check for specific bit patterns that indicate noise
+//                             uint8_t highByte = (speed >> 8) & 0xFF;
+                            
+//                             // Check if multiple high bits are set (pattern seen in noise)
+//                             if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
+//                                 std::cout << "Detected bit-pattern noise: 0x" 
+//                                         << std::hex << (int)highByte << std::dec 
+//                                         << " in reading: " << speed << std::endl;
+//                                 validReading = false;
+//                             }
+                            
+//                             // Check if this is exactly a power of 2 jump (single bit flip)
+//                             int absDiff = std::abs(speedChange);
+//                             if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
+//                                 std::cout << "Detected single bit flip of " << absDiff 
+//                                         << " in reading: " << speed << std::endl;
+//                                 validReading = false;
+//                             }
+//                         }
+//                     }
+                    
+//                     if (validReading) {
+//                         lastValidSpeed = speed;
+//                         isFirstReading = false;
+//                         // printf("Publishing speed: '%d'\n", speed);
+//                         std::string speed_str = std::to_string(speed);
+//                         publisher_->publishSpeed(std::stof(speed_str));
+//                     }
+//                     // else
+//                     // {
+//                     //     std::string speed_str = std::to_string(speed + speedChange / 3);
+//                     //     publisher_->publishSpeed(std::stof(speed_str));
+//                     // }
+//                     // printf("Publishing speed: '%d'\n", speed);
+//                     // std::string speed_str = std::to_string(speed);
+//                     // publisher_->publishSpeed(std::stof(speed_str));
+//                 }
+//             }
+//         }
+//     }
+// }
+
+
 void Signals::run()
 {
+    std::cout << "Starting CAN message processing loop..." << std::endl;
+    
     while (1)
     {
-        usleep(250);  
-
         if (this->canBus) {
-            int buffer = this->canBus->checktheReceive();
-            // printf("Buffer: %d\n", buffer);
-
-            if (buffer != -1)
-            {
+            // Process all available messages in the buffer before sleeping
+            bool messagesProcessed = false;
+            int messageCount = 0;
+            
+            // Process up to 10 messages per batch to avoid getting stuck
+            // This is similar to how candump processes multiple messages in sequence
+            while (messageCount < 10) {
+                int buffer = this->canBus->checktheReceive();
+                if (buffer == -1) break;  // No more messages
+                
+                messagesProcessed = true;
+                messageCount++;
+                
+                // Process this message
                 uint32_t can_id = 0;
-                // int size        = 0;
                 uint8_t data[8] = {0};
                 this->canBus->readMessage(buffer, can_id, data);
-                std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
-                          << ", Data: ";
+                
+                // Log the message like candump does
+                std::cout << "(" << std::fixed << std::setprecision(6) << getCurrentTime() << ") ";
+                std::cout << "can0 " << std::hex << std::setw(3) << std::setfill('0') << can_id << "#";
                 for (int i = 0; i < 8; i++) {
-                    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
+                    std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i];
                 }
                 std::cout << std::dec << std::endl;
+                
+                // Process speed message
                 if (can_id == 0x01)
                 {
                     int speed;
-                    // double wheelDiame = 0.067;
-    
                     memcpy(&speed, data, 4);
-    
                     speed = ntohl(speed);
-                    // speed = wheelDiame * 3.14 * speed * 10 / 60;
+                    
                     if (speed < 0 || speed > 2000)
                         speed = 0;
 
                     bool validReading = true;
                     int speedChange = speed - lastValidSpeed;
 
-                    // Add bit pattern detection
+                    // Keep your existing validation logic
                     if (!isFirstReading) {
                         // Check for unreasonable changes
                         if (std::abs(speedChange) > 30) {
@@ -211,20 +312,19 @@ void Signals::run()
                     if (validReading) {
                         lastValidSpeed = speed;
                         isFirstReading = false;
-                        // printf("Publishing speed: '%d'\n", speed);
                         std::string speed_str = std::to_string(speed);
                         publisher_->publishSpeed(std::stof(speed_str));
                     }
-                    // else
-                    // {
-                    //     std::string speed_str = std::to_string(speed + speedChange / 3);
-                    //     publisher_->publishSpeed(std::stof(speed_str));
-                    // }
-                    // printf("Publishing speed: '%d'\n", speed);
-                    // std::string speed_str = std::to_string(speed);
-                    // publisher_->publishSpeed(std::stof(speed_str));
                 }
             }
+            
+            // Only sleep if no messages were processed in this iteration
+            if (!messagesProcessed) {
+                usleep(1000);  // Short 1ms sleep when no messages
+            }
+        } else {
+            // No CAN bus, sleep to avoid CPU hogging
+            usleep(10000);  // 10ms
         }
     }
 }
