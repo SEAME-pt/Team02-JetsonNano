@@ -122,6 +122,202 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             }
         },
         zenoh::closures::none));
+
+        beamLow_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Beam/Low",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_beam_low(
+                value);
+
+            std::cout << "Low" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x702, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    beamHigh_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Beam/High",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body()
+                .get_mutable_lights()
+                .set_beam_high(value);
+
+            std::cout << "High" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x703, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    running_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Running",
+        [this](const zenoh::Sample& sample)
+        {
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_running(
+                value);
+        },
+        zenoh::closures::none));
+
+    parking_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Parking",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_parking(
+                value);
+
+            std::cout << "Parking" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x707, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    fogRear_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Fog/Rear",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_fog_rear(
+                value);
+
+            std::cout << "RearFog" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x705, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    fogFront_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Fog/Front",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_on(isOn);
+            this->vehicle_.get_mutable_body()
+                .get_mutable_lights()
+                .set_fog_front(value);
+
+            std::cout << "FrontFog" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x704, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    brake_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Brake",
+        [this](const zenoh::Sample& sample)
+        {
+            BrakeLights value;
+            bool isActive = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_active(isActive);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_brake(
+                value);
+        },
+        zenoh::closures::none));
+
+    hazard_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Hazard",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_signaling(isSignaling);
+            this->vehicle_.get_mutable_body().get_mutable_lights().set_hazard(
+                value);
+
+            std::cout << "Hazard" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x706, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    directionIndicatorLeft_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/DirectionIndicator/Left",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_signaling(isSignaling);
+            this->vehicle_.get_mutable_body()
+                .get_mutable_lights()
+                .set_direction_indicator_left(value);
+
+            std::cout << "Left" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x700, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    directionIndicatorRight_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/DirectionIndicator/Right",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            value.set_is_signaling(isSignaling);
+            this->vehicle_.get_mutable_body()
+                .get_mutable_lights()
+                .set_direction_indicator_right(value);
+
+            std::cout << "Right" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x701, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    currentGear_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Powertrain/Transmission/CurrentGear",
+        [this](const zenoh::Sample& sample)
+        {
+            int8_t currentGear = std::stoi(sample.get_payload().as_string());
+            this->vehicle_.get_mutable_powertrain()
+                .get_mutable_transmission()
+                .set_current_gear(currentGear);
+            uint8_t gearData[1];
+            gearData[0] = static_cast<uint8_t>(currentGear);
+            this->canBus->writeMessage(0x04, gearData, sizeof(gearData));
+        },
+        zenoh::closures::none));
 }
 
 Signals::~Signals() {}
