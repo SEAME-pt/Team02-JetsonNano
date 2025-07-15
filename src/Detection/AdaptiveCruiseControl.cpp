@@ -38,7 +38,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
                                                    const std::vector<cv::Point>& midCurve)
 {
     if (midCurve.empty() || segmentationMask.empty()) {
-        return desiredSpeed_; // Full speed if no data
+        return -1; // Full speed if no data
     }
     
     // Find obstacle distance along trajectory
@@ -53,7 +53,7 @@ float AdaptiveCruiseControl::calculateAdaptiveSpeed(const cv::Mat& segmentationM
     // Calculate obstacle speed from history
     
     if (!obstacleDetected_) {
-        return desiredSpeed_; // Full speed - no obstacle
+        return -1; // Full speed - no obstacle
     }
     else
     {
