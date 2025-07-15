@@ -323,74 +323,51 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
         for (auto& colEntry : rowEntry.second) {
             int c = colEntry.first;  // Trajectory column
             const auto& pointIndices = colEntry.second;  // Indices of points at this position
-            
-            // Find closest obstacle column
-            int closestObstacleCol = -1;
-            int minDistance = gridWidth_;
+            // Find edge obstacle columns instead of closest
+            int leftmostObstacle = gridWidth_;
+            int rightmostObstacle = -1;
+
             for (int obsCol : obstacleColumns) {
-                int distance = std::abs(c - obsCol);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestObstacleCol = obsCol;
-                }
+                leftmostObstacle = std::min(leftmostObstacle, obsCol);
+                rightmostObstacle = std::max(rightmostObstacle, obsCol);
             }
-            
-            // Skip if already at safe distance
-            if (minDistance >= safeDistanceCells) {
+
+            // Skip if no obstacles found (shouldn't happen)
+            if (leftmostObstacle > rightmostObstacle) {
                 continue;
             }
-            
-            std::cout << "  Traj col " << c << " is too close to obstacle at col " << closestObstacleCol 
-                     << " (distance: " << minDistance << ", need: " << safeDistanceCells << ")" << std::endl;
-            
-            // Determine which side has more drivable area
-            int leftFreeSpace = 0;
-            int rightFreeSpace = 0;
-            
-            // Count free cells to the left
-            for (int col = closestObstacleCol - 1; col >= 0; col--) {
-                if (!occupancy_[gridIndex(r, col)]) {
-                    leftFreeSpace++;
+
+            // Determine which side to move to based on position relative to obstacle region
+            bool moveLeft = false;
+            int distanceToLeftEdge = c - leftmostObstacle;
+            int distanceToRightEdge = rightmostObstacle - c;
+
+            // If trajectory is inside obstacle region, choose side with more space
+            if (c >= leftmostObstacle && c <= rightmostObstacle) {
+                // We're inside the obstacle region - check which side has more space
+                if (leftmostObstacle <= 0 && rightmostObstacle < gridWidth_ - 1) {
+                    // Left edge is against wall, move right
+                    moveLeft = false;
+                } else if (rightmostObstacle >= gridWidth_ - 1 && leftmostObstacle > 0) {
+                    // Right edge is against wall, move left
+                    moveLeft = true;
                 } else {
-                    break; // Stop at first obstacle
-                }
-            }
-            
-            // Count free cells to the right
-            for (int col = closestObstacleCol + 1; col < gridWidth_; col++) {
-                if (!occupancy_[gridIndex(r, col)]) {
-                    rightFreeSpace++;
-                } else {
-                    break; // Stop at first obstacle
-                }
-            }
-            
-            std::cout << "  Left space: " << leftFreeSpace << ", Right space: " << rightFreeSpace << std::endl;
-            
-            // Decide which way to move based on available space
-            int newCol;
-            if (c < closestObstacleCol) {
-                // Trajectory is left of obstacle, stay left if possible
-                if (leftFreeSpace >= safeDistanceCells) {
-                    newCol = closestObstacleCol - safeDistanceCells;
-                } else if (rightFreeSpace > leftFreeSpace + safeDistanceCells) {
-                    // Not enough space on left, go right if significantly more space
-                    newCol = closestObstacleCol + safeDistanceCells;
-                } else {
-                    // Stay left but as far as possible
-                    newCol = std::max(0, closestObstacleCol - leftFreeSpace);
+                    // Choose side with more free space
+                    moveLeft = (leftFreeSpace >= rightFreeSpace);
                 }
             } else {
-                // Trajectory is right of obstacle, stay right if possible
-                if (rightFreeSpace >= safeDistanceCells) {
-                    newCol = closestObstacleCol + safeDistanceCells;
-                } else if (leftFreeSpace > rightFreeSpace + safeDistanceCells) {
-                    // Not enough space on right, go left if significantly more space
-                    newCol = closestObstacleCol - safeDistanceCells;
-                } else {
-                    // Stay right but as far as possible
-                    newCol = std::min(gridWidth_ - 1, closestObstacleCol + rightFreeSpace);
-                }
+                // We're outside obstacle region, stay on same side
+                moveLeft = (c < leftmostObstacle);
+            }
+
+            // Calculate new column position
+            int newCol;
+            if (moveLeft) {
+                // Move to left of obstacle region with safe margin
+                newCol = std::max(0, leftmostObstacle - safeDistanceCells);
+            } else {
+                // Move to right of obstacle region with safe margin
+                newCol = std::min(gridWidth_ - 1, rightmostObstacle + safeDistanceCells);
             }
             
             // Convert new position back to pixel coordinates
