@@ -154,88 +154,89 @@ void Signals::initCarlaEnv() {
     this->canBus = NULL;
 }
 
-// void Signals::run()
-// {
-//     while (1)
-//     {
-//         usleep(2500);  
+void Signals::run()
+{
+    while (1)
+    {
+        usleep(2500);  
 
-//         if (this->canBus) {
-//             int buffer = this->canBus->checktheReceive();
-//             // printf("Buffer: %d\n", buffer);
+        if (this->canBus) {
+            int buffer = this->canBus->checktheReceive();
+            // printf("Buffer: %d\n", buffer);
 
-//             if (buffer != -1)
-//             {
-//                 uint32_t can_id = 0;
-//                 // int size        = 0;
-//                 uint8_t data[8] = {0};
-//                 this->canBus->readMessage(buffer, can_id, data);
-//                 std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
-//                           << ", Data: ";
-//                 for (int i = 0; i < 8; i++) {
-//                     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
-//                 }
-//                 std::cout << std::dec << std::endl;
-//                 if (can_id == 0x01)
-//                 {
-//                     int speed;
-//                     // double wheelDiame = 0.067;
+            if (buffer != -1)
+            {
+                uint32_t can_id = 0;
+                // int size        = 0;
+                uint8_t data[8] = {0};
+                this->canBus->readMessage(buffer, can_id, data);
+                std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
+                          << ", Data: ";
+                for (int i = 0; i < 8; i++) {
+                    std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
+                }
+                std::cout << std::dec << std::endl;
+                if (can_id == 0x01)
+                {
+                    int speed;
+                    // double wheelDiame = 0.067;
     
-//                     memcpy(&speed, data, 4);
+                    memcpy(&speed, data, 4);
     
-//                     speed = ntohl(speed);
-//                     // speed = wheelDiame * 3.14 * speed * 10 / 60;
-//                     if (speed < 0 || speed > 2000)
-//                         speed = 0;
-
-//                     bool validReading = true;
-//                     int speedChange = speed - lastValidSpeed;
-
-//                     // Add bit pattern detection
-//                     if (!isFirstReading) {
-//                         // Check for unreasonable changes
-//                         if (std::abs(speedChange) > 30) {
-//                             // Check for specific bit patterns that indicate noise
-//                             uint8_t highByte = (speed >> 8) & 0xFF;
+                    speed = ntohl(speed);
+                    // speed = wheelDiame * 3.14 * speed * 10 / 60;
+                    if (speed < 0 || speed > 200)
+                    {}
+                    else{
+                        bool validReading = true;
+                        // int speedChange = speed - lastValidSpeed;
+                        
+                        // // Add bit pattern detection
+                        // if (!isFirstReading) {
+                            //     // Check for unreasonable changes
+                            //     if (std::abs(speedChange) > 30) {
+                                //         // Check for specific bit patterns that indicate noise
+                                //         uint8_t highByte = (speed >> 8) & 0xFF;
+                                
+                                //         // Check if multiple high bits are set (pattern seen in noise)
+                    //         if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
+                    //             std::cout << "Detected bit-pattern noise: 0x" 
+                    //                     << std::hex << (int)highByte << std::dec 
+                    //                     << " in reading: " << speed << std::endl;
+                    //             validReading = false;
+                    //         }
                             
-//                             // Check if multiple high bits are set (pattern seen in noise)
-//                             if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
-//                                 std::cout << "Detected bit-pattern noise: 0x" 
-//                                         << std::hex << (int)highByte << std::dec 
-//                                         << " in reading: " << speed << std::endl;
-//                                 validReading = false;
-//                             }
-                            
-//                             // Check if this is exactly a power of 2 jump (single bit flip)
-//                             int absDiff = std::abs(speedChange);
-//                             if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
-//                                 std::cout << "Detected single bit flip of " << absDiff 
-//                                         << " in reading: " << speed << std::endl;
-//                                 validReading = false;
-//                             }
-//                         }
-//                     }
-                    
-//                     if (validReading) {
-//                         lastValidSpeed = speed;
-//                         isFirstReading = false;
-//                         // printf("Publishing speed: '%d'\n", speed);
-//                         std::string speed_str = std::to_string(speed);
-//                         publisher_->publishSpeed(std::stof(speed_str));
-//                     }
-//                     // else
-//                     // {
-//                     //     std::string speed_str = std::to_string(speed + speedChange / 3);
-//                     //     publisher_->publishSpeed(std::stof(speed_str));
-//                     // }
-//                     // printf("Publishing speed: '%d'\n", speed);
-//                     // std::string speed_str = std::to_string(speed);
-//                     // publisher_->publishSpeed(std::stof(speed_str));
-//                 }
-//             }
-//         }
-//     }
-// }
+                    //         // Check if this is exactly a power of 2 jump (single bit flip)
+                    //         int absDiff = std::abs(speedChange);
+                    //         if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
+                        //             std::cout << "Detected single bit flip of " << absDiff 
+                        //                     << " in reading: " << speed << std::endl;
+                        //             validReading = false;
+                        //         }
+                        //     }
+                        // }
+                        
+                        if (validReading) {
+                            lastValidSpeed = speed;
+                            isFirstReading = false;
+                            // printf("Publishing speed: '%d'\n", speed);
+                                std::string speed_str = std::to_string(speed);
+                                publisher_->publishSpeed(std::stof(speed_str));
+                            }
+                    // else
+                    // {
+                    //     std::string speed_str = std::to_string(speed + speedChange / 3);
+                    //     publisher_->publishSpeed(std::stof(speed_str));
+                    // }
+                    // printf("Publishing speed: '%d'\n", speed);
+                    // std::string speed_str = std::to_string(speed);
+                    // publisher_->publishSpeed(std::stof(speed_str));
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 // void Signals::run()
