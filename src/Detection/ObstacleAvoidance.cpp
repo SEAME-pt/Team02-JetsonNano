@@ -338,7 +338,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     std::cout << "Adjusted trajectory with " << adjustedTrajectory.size() << " points" << std::endl;
     
     // // Apply a smoothing filter to prevent jerky movements
-    // smoothTrajectory(adjustedTrajectory);
+    smoothTrajectory(adjustedTrajectory);
     
     return adjustedTrajectory;
 }
