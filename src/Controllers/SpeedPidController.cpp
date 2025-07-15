@@ -79,7 +79,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             if (logging_)
             {
                 double now = getCurrentTime();
-                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "40" << "\n";
             
                 if (now - log_start_time_ > 5.0) {
                     logging_ = false;
@@ -149,9 +149,9 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
-    // float alpha = std::min(1.0f, std::fabs(steer_));
+    float alpha = std::min(1.0f, std::fabs(steer_));
     // alpha = std::max(0.5f, alpha);
-    float alpha = 1;
+    // float alpha = 1;
 
     // Interpolate process model parameters
     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
@@ -182,10 +182,11 @@ float SpeedPidController::speedPID(float error, double current_time)
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
 
-    float u_ff = a0_ + a1_ * desired_speed_;
+    // float u_ff = a0_ + a1_ * desired_speed_;
     
     // Combine feed-forward and PID
-    float throttle = u_ff + p_term + i_term + d_term;
+    // float throttle = u_ff + p_term + i_term + d_term;
+    float throttle = p_term + i_term + d_term;
     
     // std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
     //           << " FF:" << u_ff << " | Integral:" << integral_ 
@@ -245,7 +246,7 @@ void SpeedPidController::run()
     log_start_time_ = getCurrentTime();
     log_file_.open("straight_speed_pid_log.csv");
     log_file_ << "time,speed,throttle\n";
-    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
+    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "30" << "\n";
     logging_ = true;
     while (logging_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
