@@ -79,7 +79,7 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             if (logging_)
             {
                 double now = getCurrentTime();
-                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "40" << "\n";
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
             
                 if (now - log_start_time_ > 5.0) {
                     logging_ = false;
@@ -234,7 +234,7 @@ void SpeedPidController::run()
         }
     }
 
-    double throttle = 30;
+    double throttle = 25;
     publisher_->publishSpeed(throttle);
     
     // Wait for a trigger to increase throttle (could be a timer, button, or code logic)
@@ -246,11 +246,11 @@ void SpeedPidController::run()
     log_start_time_ = getCurrentTime();
     log_file_.open("curved_speed_pid_log.csv");
     log_file_ << "time,speed,throttle\n";
-    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "30" << "\n";
+    log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
     logging_ = true;
     while (logging_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(25)); // Log at 40 Hz
-        throttle = 40;
+        throttle = 35;
         publisher_->publishSpeed(throttle);
     }
     publisher_->publishSpeed(0);
