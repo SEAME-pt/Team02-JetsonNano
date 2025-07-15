@@ -9,15 +9,6 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
     setupSubscriptions();
 }
 
-VSSSubscriber::VSSSubscriber(
-    Vehicle& vehicle, std::shared_ptr<zenoh::Session> session)
-    : vehicle_(vehicle)
-{
-    session_ = session;
-
-    setupSubscriptions();
-}
-
 void VSSSubscriber::setupSubscriptions()
 {
     throttle_subscriber.emplace(session_->declare_subscriber(
