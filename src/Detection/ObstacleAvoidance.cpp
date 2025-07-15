@@ -346,27 +346,73 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
 // Add this method to apply smoothing to the trajectory
 void ObstacleAvoidance::smoothTrajectory(std::vector<cv::Point>& trajectory) 
 {
-    if (trajectory.size() < 3) return;
+    if (trajectory.size() < 6) return; // Need sufficient points
     
     std::vector<cv::Point> smoothed = trajectory;
     
-    // Simple moving average filter
+    // Find first and last adjusted points
+    int firstAdjustedIdx = -1;
+    int lastAdjustedIdx = -1;
+    
+    // Sort trajectory by Y (bottom to top)
+    std::vector<size_t> indices(trajectory.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        indices[i] = i;
+    }
+    
+    std::sort(indices.begin(), indices.end(), [&trajectory](size_t a, size_t b) {
+        return trajectory[a].y > trajectory[b].y;
+    });
+    
+    // Find first significant lateral change (possible obstacle avoidance)
+    for (size_t i = 1; i < indices.size(); i++) {
+        int idx = indices[i];
+        int prevIdx = indices[i-1];
+        
+        if (std::abs(trajectory[idx].x - trajectory[prevIdx].x) > cellSizePx_) {
+            firstAdjustedIdx = std::min(prevIdx, idx);
+            break;
+        }
+    }
+    
+    if (firstAdjustedIdx < 0) return; // No adjustment found
+    
+    // Look ahead 3-5 cells from first adjustment to find the avoidance zone
+    int lookAhead = std::min(5, static_cast<int>(trajectory.size() - firstAdjustedIdx - 1));
+    lastAdjustedIdx = firstAdjustedIdx + lookAhead;
+    
+    // Create pre-transition point (start curving earlier)
+    int preTransitionIdx = std::max(0, firstAdjustedIdx - 5);
+    
+    // Create post-transition point
+    int postTransitionIdx = std::min(static_cast<int>(trajectory.size()) - 1, lastAdjustedIdx + 5);
+    
+    // Apply cubic interpolation between these points
+    for (int i = preTransitionIdx; i <= postTransitionIdx; i++) {
+        double t = static_cast<double>(i - preTransitionIdx) / (postTransitionIdx - preTransitionIdx);
+        
+        // Cubic interpolation factor (slow start, fast middle, slow end)
+        double factor = t * t * (3 - 2 * t); // Cubic Hermite spline
+        
+        int startX = trajectory[preTransitionIdx].x;
+        int endX = trajectory[postTransitionIdx].x;
+        
+        // Apply smooth transition
+        smoothed[i].x = startX + static_cast<int>(factor * (endX - startX));
+    }
+    
+    // Apply additional moving average smoothing for extra smoothness
     const int windowSize = 5;
     
     for (size_t i = windowSize/2; i < trajectory.size() - windowSize/2; i++) {
         int sumX = 0;
-        int sumY = 0;
         
         for (int j = -windowSize/2; j <= windowSize/2; j++) {
-            sumX += trajectory[i + j].x;
-            sumY += trajectory[i + j].y;
+            sumX += smoothed[i + j].x;
         }
         
-        smoothed[i].x = sumX / windowSize;
-        smoothed[i].y = sumY / windowSize;
+        trajectory[i].x = sumX / windowSize;
     }
-    
-    trajectory = smoothed;
 }
 
 bool ObstacleAvoidance::pixelToGrid(int px, int py, int& gr, int& gc) const
