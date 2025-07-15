@@ -1544,7 +1544,7 @@ void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std:
         cv::putText(allPolylinesViz_, "ACC: Clear path", cv::Point(20, 140), 
                     cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 255, 0), 2);
     }
-    if (recommendedSpeed > 0){
+    if (recommendedSpeed >= 0){
         publishACC(std::to_string(recommendedSpeed));
     } else {
 
