@@ -284,30 +284,30 @@ void Signals::run()
                     bool validReading = true;
                     int speedChange = speed - lastValidSpeed;
 
-                    // Keep your existing validation logic
-                    if (!isFirstReading) {
-                        // Check for unreasonable changes
-                        if (std::abs(speedChange) > 30) {
-                            // Check for specific bit patterns that indicate noise
-                            uint8_t highByte = (speed >> 8) & 0xFF;
+                    // // Keep your existing validation logic
+                    // if (!isFirstReading) {
+                    //     // Check for unreasonable changes
+                    //     if (std::abs(speedChange) > 30) {
+                    //         // Check for specific bit patterns that indicate noise
+                    //         uint8_t highByte = (speed >> 8) & 0xFF;
                             
-                            // Check if multiple high bits are set (pattern seen in noise)
-                            if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
-                                std::cout << "Detected bit-pattern noise: 0x" 
-                                        << std::hex << (int)highByte << std::dec 
-                                        << " in reading: " << speed << std::endl;
-                                validReading = false;
-                            }
+                    //         // Check if multiple high bits are set (pattern seen in noise)
+                    //         if (highByte > 0xF0 || (highByte & 0x80 && highByte & 0x40)) {
+                    //             std::cout << "Detected bit-pattern noise: 0x" 
+                    //                     << std::hex << (int)highByte << std::dec 
+                    //                     << " in reading: " << speed << std::endl;
+                    //             validReading = false;
+                    //         }
                             
-                            // Check if this is exactly a power of 2 jump (single bit flip)
-                            int absDiff = std::abs(speedChange);
-                            if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
-                                std::cout << "Detected single bit flip of " << absDiff 
-                                        << " in reading: " << speed << std::endl;
-                                validReading = false;
-                            }
-                        }
-                    }
+                    //         // Check if this is exactly a power of 2 jump (single bit flip)
+                    //         int absDiff = std::abs(speedChange);
+                    //         if ((absDiff & (absDiff-1)) == 0 && absDiff > 64) {
+                    //             std::cout << "Detected single bit flip of " << absDiff 
+                    //                     << " in reading: " << speed << std::endl;
+                    //             validReading = false;
+                    //         }
+                    //     }
+                    // }
                     
                     if (validReading) {
                         lastValidSpeed = speed;
