@@ -45,8 +45,8 @@ int main(int argc, char** argv)
 
         if (mode == "local") {
             std::cout << "Running in LOCAL mode" << std::endl;
-            jetsonBat.initLocalEnv("/dev/i2c-1", INA_ADDRESS, "/dev/spidev0.0");
-            allSigs.initLocalEnv("/dev/spidev0.0");
+            jetsonBat.initLocalEnv("/dev/i2c-1", INA_ADDRESS, "can0");
+            allSigs.initLocalEnv("can0");
         } else {
             std::cout << "Running in CARLA mode" << std::endl;
             jetsonBat.initCarlaEnv();
