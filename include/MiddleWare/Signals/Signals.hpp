@@ -58,7 +58,6 @@ class Signals
     std::optional<zenoh::Subscriber<void>> directionIndicatorLeft_subscriber;
     std::optional<zenoh::Subscriber<void>> directionIndicatorRight_subscriber;
     std::optional<zenoh::Subscriber<void>> currentGear_subscriber;
-    std::optional<zenoh::Subscriber<void>> zenohSpeed_subscriber;
 
     int lastValidSpeed = 0;
     const int MAX_SPEED_CHANGE = 30;
