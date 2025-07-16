@@ -77,6 +77,7 @@ bool ObstacleAvoidance::detectAllCollisions()
     // Clear previous collision points
     collisionPoints_.clear();
     searchedCollisionPoints_.clear();
+    obstaclePoints_.clear();
     
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
@@ -84,42 +85,42 @@ bool ObstacleAvoidance::detectAllCollisions()
     // Track whether we found any collisions
     bool foundCollision = false;
     
-    // First, search from the bottom up to find the lowest collision
-    for (int r = ignoreZoneRowThreshold - proximityRadius_ - 1; r >= 0; --r) {
-        for (int c = 0; c < gridWidth_; ++c) {
-            // If this cell is on the trajectory
-            if (trajectoryGrid_[r][c]) {
-                // Check proximity around the trajectory point
-                for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-                    for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
-                        int checkR = r + dr;
-                        int checkC = c + dc;
-                        
-                        // Bounds checking
-                        if (checkR < 0 || checkR >= gridHeight_ || 
-                            checkC < 0 || checkC >= gridWidth_)
-                            continue;
+    // Iterate through all trajectory cells
+    for (const auto& trajCell : trajectoryCells_) {
+        int r = trajCell.first;
+        int c = trajCell.second;
+        
+        // Skip if in ignore zone
+        if (r >= ignoreZoneRowThreshold - proximityRadius_) {
+            continue;
+        }
+        
+        // Check proximity around the trajectory point
+        for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
+            for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
+                int checkR = r + dr;
+                int checkC = c + dc;
+                
+                // Bounds checking
+                if (checkR < 0 || checkR >= gridHeight_ || 
+                    checkC < 0 || checkC >= gridWidth_)
+                    continue;
 
-                        searchedCollisionPoints_.emplace_back(checkR, checkC);
-                        
-                        // If a nearby cell is occupied, it's a collision
-                        if (occupancy_[gridIndex(checkR, checkC)]) {
-                            // Store this collision point
-                            collisionPoints_.emplace_back(r, c);
-                            obstaclePoints_.emplace_back(checkR, checkC);
-                            
-                            // If this is the first collision found, set it as the primary one
-                            if (!foundCollision) {
-                                collisionRow_ = r;
-                                collisionCol_ = c;
-                                gridToPixel(r, c, collisionX_, collisionY_);
-                                needBypass_ = true;
-                                foundCollision = true;
-                            }
-                            
-                            // Continue searching for more collisions
-                            continue;
-                        }
+                searchedCollisionPoints_.emplace_back(checkR, checkC);
+                
+                // If a nearby cell is occupied, it's a collision
+                if (occupancy_[gridIndex(checkR, checkC)]) {
+                    // Store this collision point
+                    collisionPoints_.emplace_back(r, c);
+                    obstaclePoints_.emplace_back(checkR, checkC);
+                    
+                    // If this is the first collision found, set it as the primary one
+                    if (!foundCollision) {
+                        collisionRow_ = r;
+                        collisionCol_ = c;
+                        gridToPixel(r, c, collisionX_, collisionY_);
+                        needBypass_ = true;
+                        foundCollision = true;
                     }
                 }
             }
@@ -128,16 +129,10 @@ bool ObstacleAvoidance::detectAllCollisions()
     
     // Sort collision points by distance from bottom (closest to car first)
     std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
-              [](const auto& a, const auto& b) { return a.first > b.first; });
-    
-    // if (foundCollision) {
-    //     std::cout << "Found " << collisionPoints_.size() << " collision points. Lowest at: ("
-    //               << collisionRow_ << ", " << collisionCol_ << ")\n";
-    // }
+             [](const auto& a, const auto& b) { return a.first > b.first; });
     
     return foundCollision;
 }
-
 
 std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv::Point>& originalTrajectory)
 {
@@ -150,28 +145,39 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     
     // Convert proximity radius from grid cells to pixels
     safeDistancePx_ = proximityRadius_ * cellSizePx_;
+    int safeDistanceCells = proximityRadius_ + 1; // Add safety margin
     
-    // Create a row-based map of trajectory points
-    std::map<int, std::vector<size_t>> rowToTrajectoryPoints;
+    // First, group trajectory points by row for consistent adjustment within rows
+    std::map<int, std::vector<std::pair<int, std::vector<size_t>>>> rowToColumnPoints;
+    
+    // Create a direct mapping from grid cells to trajectory point indices
     for (size_t i = 0; i < originalTrajectory.size(); i++) {
         int r, c;
         if (pixelToGrid(originalTrajectory[i].x, originalTrajectory[i].y, r, c)) {
-            rowToTrajectoryPoints[r].push_back(i);
+            // Insert into row-based map
+            bool found = false;
+            for (auto& colPoints : rowToColumnPoints[r]) {
+                if (colPoints.first == c) {
+                    colPoints.second.push_back(i);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                rowToColumnPoints[r].push_back({c, {i}});
+            }
         }
     }
     
-    // For each grid row, adjust trajectory points based on obstacles
-    for (int r = 0; r < gridHeight_; r++) {
-        // Skip if no trajectory points in this row
-        if (rowToTrajectoryPoints.find(r) == rowToTrajectoryPoints.end()) {
-            continue;
-        }
+    // Process each row separately to ensure consistent avoidance behavior
+    for (auto& rowEntry : rowToColumnPoints) {
+        int r = rowEntry.first;  // Current row
         
-        // Find obstacles in this row
+        // Find all obstacles in this row
         std::vector<int> obstacleColumns;
-        for (int c = 0; c < gridWidth_; c++) {
-            if (occupancy_[gridIndex(r, c)]) {
-                obstacleColumns.push_back(c);
+        for (int col = 0; col < gridWidth_; col++) {
+            if (occupancy_[gridIndex(r, col)]) {
+                obstacleColumns.push_back(col);
             }
         }
         
@@ -180,92 +186,158 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
             continue;
         }
         
-        // Process each trajectory point in this row
-        for (size_t idx : rowToTrajectoryPoints[r]) {
-            int trajR, trajC;
-            pixelToGrid(originalTrajectory[idx].x, originalTrajectory[idx].y, trajR, trajC);
+        std::cout << "Row " << r << " has " << obstacleColumns.size() << " obstacles" << std::endl;
+        
+        // Process each trajectory column in this row
+        for (auto& colEntry : rowEntry.second) {
+            int c = colEntry.first;  // Trajectory column
+            const auto& pointIndices = colEntry.second;  // Indices of points at this position
             
-            // Find closest obstacle column
-            int closestObstacleCol = -1;
-            int minDistance = gridWidth_;
-            for (int obsC : obstacleColumns) {
-                int distance = std::abs(trajC - obsC);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestObstacleCol = obsC;
+            // Find obstacles that are close to this trajectory column
+            std::vector<int> nearbyObstacleColumns;
+            int searchRange = safeDistanceCells * 2;  // Look ahead by twice the safe distance
+            
+            // Find obstacles within relevant range
+            for (int obsCol : obstacleColumns) {
+                if (std::abs(obsCol - c) <= searchRange) {
+                    nearbyObstacleColumns.push_back(obsCol);
                 }
             }
             
-            // Skip if already at safe distance
-            int safeDistanceCells = safeDistancePx_ / cellSizePx_ + 1; // +1 for safety margin
-            if (minDistance >= safeDistanceCells) {
+            // Skip if no nearby obstacles
+            if (nearbyObstacleColumns.empty()) {
                 continue;
             }
             
-            // Determine which side has more drivable area
-            int leftFreeSpace = 0;
-            int rightFreeSpace = 0;
+            // Find the left and right edges of the obstacle cluster in front of the trajectory
+            int leftEdge = gridWidth_;
+            int rightEdge = -1;
             
-            // Count free cells to the left
-            for (int c = closestObstacleCol - 1; c >= 0; c--) {
-                if (!occupancy_[gridIndex(r, c)]) {
+            // First, find the general obstacle area
+            for (int obsCol : nearbyObstacleColumns) {
+                // Obstacles to the right of trajectory that are close
+                if (obsCol >= c && obsCol <= c + searchRange) {
+                    leftEdge = std::min(leftEdge, obsCol);
+                    rightEdge = std::max(rightEdge, obsCol);
+                }
+                // Obstacles to the left that are close
+                else if (obsCol < c && obsCol >= c - searchRange) {
+                    leftEdge = std::min(leftEdge, obsCol);
+                    rightEdge = std::max(rightEdge, obsCol);
+                }
+            }
+            
+            // Skip if no relevant obstacles found
+            if (leftEdge > rightEdge) {
+                continue;
+            }
+            
+            std::cout << "Row " << r << ", Traj col " << c 
+                    << ", Obstacle left edge: " << leftEdge 
+                    << ", Obstacle right edge: " << rightEdge << std::endl;
+            
+            // Calculate free space to the left of obstacle cluster
+            int leftFreeSpace = 0;
+            for (int col = leftEdge - 1; col >= 0; col--) {
+                if (!occupancy_[gridIndex(r, col)]) {
                     leftFreeSpace++;
                 } else {
                     break; // Stop at first obstacle
                 }
             }
             
-            // Count free cells to the right
-            for (int c = closestObstacleCol + 1; c < gridWidth_; c++) {
-                if (!occupancy_[gridIndex(r, c)]) {
+            // Calculate free space to the right of obstacle cluster
+            int rightFreeSpace = 0;
+            for (int col = rightEdge + 1; col < gridWidth_; col++) {
+                if (!occupancy_[gridIndex(r, col)]) {
                     rightFreeSpace++;
                 } else {
                     break; // Stop at first obstacle
                 }
             }
             
-            std::cout << "Row " << r << ", Traj col " << trajC << ", Obstacle col " << closestObstacleCol 
-                     << ", Left space: " << leftFreeSpace << ", Right space: " << rightFreeSpace << std::endl;
+            std::cout << "  Left space: " << leftFreeSpace 
+                    << ", Right space: " << rightFreeSpace << std::endl;
             
-            // Decide which way to move based on available space
-            int newCol;
-            if (trajC < closestObstacleCol) {
-                // Trajectory is left of obstacle, stay left if possible
-                if (leftFreeSpace >= safeDistanceCells) {
-                    newCol = closestObstacleCol - safeDistanceCells;
-                } else if (rightFreeSpace > leftFreeSpace + safeDistanceCells) {
-                    // Not enough space on left, go right if significantly more space
-                    newCol = closestObstacleCol + safeDistanceCells;
+            // Determine which side to move to
+            bool moveLeft = false;
+            
+            // If trajectory is inside obstacle region, choose side with more space
+            if (c >= leftEdge && c <= rightEdge) {
+                // We're inside the obstacle - check which side has more space
+                if (leftEdge <= 0) {
+                    // Left edge is against wall, must move right
+                    moveLeft = false;
+                } else if (rightEdge >= gridWidth_ - 1) {
+                    // Right edge is against wall, must move left
+                    moveLeft = true;
                 } else {
-                    // Stay left but as far as possible
-                    newCol = std::max(0, closestObstacleCol - leftFreeSpace);
+                    // Choose side with more free space
+                    moveLeft = (leftFreeSpace >= rightFreeSpace);
                 }
             } else {
-                // Trajectory is right of obstacle, stay right if possible
-                if (rightFreeSpace >= safeDistanceCells) {
-                    newCol = closestObstacleCol + safeDistanceCells;
-                } else if (leftFreeSpace > rightFreeSpace + safeDistanceCells) {
-                    // Not enough space on right, go left if significantly more space
-                    newCol = closestObstacleCol - safeDistanceCells;
-                } else {
-                    // Stay right but as far as possible
-                    newCol = std::min(gridWidth_ - 1, closestObstacleCol + rightFreeSpace);
+                // We're outside the obstacle region
+                // If trajectory is to the left of obstacle, stay left
+                // If trajectory is to the right of obstacle, stay right
+                moveLeft = (c < leftEdge);
+            }
+            
+            // Calculate new column position
+            int newCol;
+            if (moveLeft) {
+                // Move to left of obstacle with safe margin
+                newCol = std::max(0, leftEdge - safeDistanceCells);
+            } else {
+                // Move to right of obstacle with safe margin
+                newCol = std::min(gridWidth_ - 1, rightEdge + safeDistanceCells);
+            }
+
+            // Find closest obstacle column to original position
+            int closestObstacleCol = -1;
+            int minDistance = gridWidth_;
+            for (int obsCol : nearbyObstacleColumns) {
+                int distance = std::abs(c - obsCol);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestObstacleCol = obsCol;
                 }
             }
+
+            // Check if new position is actually farther from obstacles
+            if (closestObstacleCol != -1) {
+                // Distance from original position to closest obstacle
+                int originalDistance = std::abs(c - closestObstacleCol);
+                
+                // Distance from new position to closest obstacle
+                int newDistance = std::abs(newCol - closestObstacleCol);
+                
+                // If new position is closer to obstacle, revert to original
+                if (newDistance < originalDistance) {
+                    std::cout << "  Warning: New position is closer to obstacle! Reverting to original." << std::endl;
+                    newCol = c;  // Keep original column
+                }
+            }
+
             
             // Convert new position back to pixel coordinates
             int newX, newY;
             gridToPixel(r, newCol, newX, newY);
             
-            // Keep the original y-coordinate for smooth vertical movement
-            adjustedTrajectory[idx].x = newX;
-            
-            std::cout << "Adjusted trajectory point " << idx << " from col " << trajC 
-                     << " to col " << newCol << std::endl;
+            // Apply the adjustment to all trajectory points in this grid cell
+            for (size_t idx : pointIndices) {
+                // Keep the original y-coordinate for smooth vertical movement
+                adjustedTrajectory[idx].x = newX;
+                
+                std::cout << "  Adjusted trajectory point " << idx << " from col " << c 
+                        << " to col " << newCol << " (X: " << originalTrajectory[idx].x 
+                        << " -> " << newX << ")" << std::endl;
+            }
         }
     }
     
-    // Apply a smoothing filter to prevent jerky movements
+    std::cout << "Adjusted trajectory with " << adjustedTrajectory.size() << " points" << std::endl;
+    
+    // // Apply a smoothing filter to prevent jerky movements
     smoothTrajectory(adjustedTrajectory);
     
     return adjustedTrajectory;
@@ -274,27 +346,73 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
 // Add this method to apply smoothing to the trajectory
 void ObstacleAvoidance::smoothTrajectory(std::vector<cv::Point>& trajectory) 
 {
-    if (trajectory.size() < 3) return;
+    if (trajectory.size() < 6) return; // Need sufficient points
     
     std::vector<cv::Point> smoothed = trajectory;
     
-    // Simple moving average filter
+    // Find first and last adjusted points
+    int firstAdjustedIdx = -1;
+    int lastAdjustedIdx = -1;
+    
+    // Sort trajectory by Y (bottom to top)
+    std::vector<size_t> indices(trajectory.size());
+    for (size_t i = 0; i < indices.size(); i++) {
+        indices[i] = i;
+    }
+    
+    std::sort(indices.begin(), indices.end(), [&trajectory](size_t a, size_t b) {
+        return trajectory[a].y > trajectory[b].y;
+    });
+    
+    // Find first significant lateral change (possible obstacle avoidance)
+    for (size_t i = 1; i < indices.size(); i++) {
+        int idx = indices[i];
+        int prevIdx = indices[i-1];
+        
+        if (std::abs(trajectory[idx].x - trajectory[prevIdx].x) > cellSizePx_) {
+            firstAdjustedIdx = std::min(prevIdx, idx);
+            break;
+        }
+    }
+    
+    if (firstAdjustedIdx < 0) return; // No adjustment found
+    
+    // Look ahead 3-5 cells from first adjustment to find the avoidance zone
+    int lookAhead = std::min(20, static_cast<int>(trajectory.size() - firstAdjustedIdx - 1));
+    lastAdjustedIdx = firstAdjustedIdx + lookAhead;
+    
+    // Create pre-transition point (start curving earlier)
+    int preTransitionIdx = std::max(0, firstAdjustedIdx - 5);
+    
+    // Create post-transition point
+    int postTransitionIdx = std::min(static_cast<int>(trajectory.size()) - 1, lastAdjustedIdx + 5);
+    
+    // Apply cubic interpolation between these points
+    for (int i = preTransitionIdx; i <= postTransitionIdx; i++) {
+        double t = static_cast<double>(i - preTransitionIdx) / (postTransitionIdx - preTransitionIdx);
+        
+        // Cubic interpolation factor (slow start, fast middle, slow end)
+        double factor = t * t * (3 - 2 * t); // Cubic Hermite spline
+        
+        int startX = trajectory[preTransitionIdx].x;
+        int endX = trajectory[postTransitionIdx].x;
+        
+        // Apply smooth transition
+        smoothed[i].x = startX + static_cast<int>(factor * (endX - startX));
+    }
+    
+    // Apply additional moving average smoothing for extra smoothness
     const int windowSize = 5;
     
     for (size_t i = windowSize/2; i < trajectory.size() - windowSize/2; i++) {
         int sumX = 0;
-        int sumY = 0;
         
         for (int j = -windowSize/2; j <= windowSize/2; j++) {
-            sumX += trajectory[i + j].x;
-            sumY += trajectory[i + j].y;
+            sumX += smoothed[i + j].x;
         }
         
-        smoothed[i].x = sumX / windowSize;
-        smoothed[i].y = sumY / windowSize;
+        trajectory[i].x = sumX / windowSize;
     }
-    
-    trajectory = smoothed;
 }
 
 bool ObstacleAvoidance::pixelToGrid(int px, int py, int& gr, int& gc) const
@@ -314,105 +432,33 @@ void ObstacleAvoidance::gridToPixel(int gridR, int gridC, int& outPx, int& outPy
     outPy = gridR * cellSizePx_ + cellSizePx_ / 2;
 }
 
-std::vector<std::pair<int,int>> ObstacleAvoidance::computeAstarPath(int startR, int startC,
-                                                                     int goalR,  int goalC)
-{
-    std::vector<std::pair<int,int>> emptyPath;
-    // Bounds check
-    if (startR < 0 || startR >= gridHeight_ || startC < 0 || startC >= gridWidth_) return emptyPath;
-    if (goalR  < 0 || goalR  >= gridHeight_ || goalC  < 0 || goalC  >= gridWidth_) return emptyPath;
-
-    int N = gridWidth_ * gridHeight_;
-    auto idxRC = [&](int r, int c){ return r * gridWidth_ + c; };
-
-    // If start or goal is occupied, no path
-    if (occupancy_[idxRC(startR,startC)] || occupancy_[idxRC(goalR,goalC)])
-        return emptyPath;
-
-    std::vector<double> gcost(N, std::numeric_limits<double>::infinity());
-    std::vector<int> parent(N, -1);
-    std::vector<bool> closed(N, false);
-
-    // Min-heap of (idx, g, f)
-    std::priority_queue<AStarNode, std::vector<AStarNode>, CompareAStar> openSet;
-    int startIdx = idxRC(startR, startC);
-    int goalIdx  = idxRC(goalR,  goalC);
-
-    // Heuristic function (Euclidean):
-    auto heuristic = [&](int r, int c){
-        double dr = double(r - goalR);
-        double dc = double(c - goalC);
-        return std::sqrt(dr*dr + dc*dc);
-    };
-
-    gcost[startIdx] = 0.0;
-    double h0 = heuristic(startR, startC);
-    openSet.push({ startIdx, 0.0, h0 });
-
-    // 8‐connected neighbor offsets
-    const int dR[8] = { -1, +1,  0,  0, -1, -1, +1, +1 };
-    const int dC[8] = {  0,  0, -1, +1, -1, +1, -1, +1 };
-
-    while (!openSet.empty())
-    {
-        AStarNode node = openSet.top(); 
-        openSet.pop();
-        int uIdx = node.idx;
-        if (closed[uIdx]) continue;
-        closed[uIdx] = true;
-
-        if (uIdx == goalIdx) break;
-
-        int ur = uIdx / gridWidth_;
-        int uc = uIdx % gridWidth_;
-
-        for (int k = 0; k < 8; ++k)
-        {
-            int vr = ur + dR[k];
-            int vc = uc + dC[k];
-            if (vr < 0 || vr >= gridHeight_ || vc < 0 || vc >= gridWidth_) continue;
-            int vIdx = idxRC(vr, vc);
-            if (occupancy_[vIdx]) continue; // blocked
-
-            double stepCost = (k < 4) ? 1.0 : 1.41421356; // straight vs diagonal
-            double tentative = gcost[uIdx] + stepCost;
-            if (tentative < gcost[vIdx])
-            {
-                gcost[vIdx] = tentative;
-                parent[vIdx] = uIdx;
-                double h = heuristic(vr, vc);
-                openSet.push({ vIdx, tentative, tentative + h });
-            }
-        }
-    }
-
-    // Reconstruct path if goal is reached
-    if (!closed[goalIdx]) 
-        return emptyPath; // no route found
-
-    std::vector<std::pair<int,int>> path;
-    for (int cur = goalIdx; cur != -1; cur = parent[cur])
-    {
-        int r = cur / gridWidth_;
-        int c = cur % gridWidth_;
-        path.emplace_back(r, c);
-    }
-    std::reverse(path.begin(), path.end());
-    return path;
-}
-
 void ObstacleAvoidance::buildTrajectoryGrid(const std::vector<cv::Point>& trajectory)
 {
-    std::vector<std::vector<bool>> trajectoryGrid(gridHeight_, std::vector<bool>(gridWidth_, false));
+    // Clear previous trajectory data
+    trajectoryCells_.clear();
+    trajectoryCellMap_.clear();
+    
     if (!trajectory.empty()) {
+        // Reserve space to avoid reallocation
+        trajectoryCells_.reserve(trajectory.size());
+        
         for (const auto& p : trajectory) {
             int gr, gc;
             if (pixelToGrid(p.x, p.y, gr, gc)) {
-                trajectoryGrid[gr][gc] = true;
+                // Add to list if not already there
+                int cellIdx = gridIndex(gr, gc);
+                if (trajectoryCellMap_.find(cellIdx) == trajectoryCellMap_.end()) {
+                    trajectoryCells_.emplace_back(gr, gc);
+                    trajectoryCellMap_[cellIdx] = true;
+                }
             }
         }
+        
+        // Sort cells by row for consistency
+        std::sort(trajectoryCells_.begin(), trajectoryCells_.end());
     }
-    trajectoryGrid_ = std::move(trajectoryGrid);
+    
+    std::cout << "Built trajectory with " << trajectoryCells_.size() << " cells" << std::endl;
 }
 
 void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTrajectory, cv::Mat& outputImage)
@@ -448,21 +494,20 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     //     }
     // }
 
-    for (int r = 0; r < gridHeight_; ++r) {
-        for (int c = 0; c < gridWidth_; ++c) {
-
-            int x0 = static_cast<int>(c * cellSizePx_);
-            int y0 = static_cast<int>(r * cellSizePx_);
-            int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
-            int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
-            
-
-            if (trajectoryGrid_[r][c]) {
-                cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
-                        cv::Scalar(255, 255, 0), -1);
-            }
-        }
-    }            
+    // Draw trajectory cells
+    for (const auto& trajCell : trajectoryCells_) {
+        int r = trajCell.first;
+        int c = trajCell.second;
+        
+        int x0 = static_cast<int>(c * cellSizePx_);
+        int y0 = static_cast<int>(r * cellSizePx_);
+        int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+        int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+        
+        cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+                cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
+    }
+        
 
     // Draw grid lines with proper scaling
     // for (int r = 0; r <= gridHeight_; ++r) {
@@ -545,6 +590,20 @@ void ObstacleAvoidance::visualizeGrid(const std::vector<cv::Point>* adjustedTraj
     //             cv::Point(20, scaledIgnoreZoneStart + 30),
     //             cv::FONT_HERSHEY_SIMPLEX, 0.7, 
     //             cv::Scalar(255, 255, 255), 2);
+
+    // Draw trajectory cells
+    // for (const auto& cell : trajectoryCells_) {
+    //     int r = cell.first;
+    //     int c = cell.second;
+        
+    //     int x0 = static_cast<int>(c * cellSizePx_);
+    //     int y0 = static_cast<int>(r * cellSizePx_);
+    //     int x1 = static_cast<int>(std::min((c+1) * cellSizePx_, frameWidth_));
+    //     int y1 = static_cast<int>(std::min((r+1) * cellSizePx_, frameHeight_));
+        
+    //     cv::rectangle(overlay, cv::Point(x0, y0), cv::Point(x1, y1), 
+    //                 cv::Scalar(255, 255, 0), -1); // Yellow fill for trajectory cells
+    // }
 
     overlay.copyTo(outputImage);
 }

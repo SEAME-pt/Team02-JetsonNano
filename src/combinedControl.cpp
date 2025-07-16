@@ -52,7 +52,7 @@ int main(int argc, char** argv)
         if (mode == "local") {
             std::cout << "Running in LOCAL mode" << std::endl;
             // PID controller values
-            float kp                = 100;
+            float kp                = 130;
             float ki                = 0.000001;
             float kd                = 10;
             float constant_speed    = 0.35;
