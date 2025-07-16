@@ -87,7 +87,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask, cv::Mat
 
                 if (bestClass != -1) {
                     static const std::string classes[9] = {
-                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Traffic Green", "Traffic Red", "Traffic Yellow"
+                        "Speed 50km/h", "Speed 80km/h", "Yield", "Stop", "Danger", "Crosswalk", "Traffic Green", "Traffic Red", "Traffic Yellow", "Unknown"
                     };
     
                     publishTrafficSign(classes[bestClass]);
