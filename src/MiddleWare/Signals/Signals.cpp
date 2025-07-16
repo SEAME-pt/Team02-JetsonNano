@@ -292,16 +292,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             this->canBus->writeMessage(0x04, gearData, sizeof(gearData));
         },
         zenoh::closures::none));
-
-    zenohSpeed_subscriber.emplace(session_->declare_subscriber(
-        "Vehicle/1/Zenoh/Speed",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string speed = sample.get_payload().as_string();
-
-            publisher_->publishSpeed(std::stof(speed));
-        },
-        zenoh::closures::none));
 }
 
 Signals::~Signals() {}
