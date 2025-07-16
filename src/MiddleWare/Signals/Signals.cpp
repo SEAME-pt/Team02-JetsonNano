@@ -292,6 +292,16 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             this->canBus->writeMessage(0x04, gearData, sizeof(gearData));
         },
         zenoh::closures::none));
+
+    zenohSpeed_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Zenoh/Speed",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string speed = sample.get_payload().as_string();
+
+            publisher_->publishSpeed(std::stof(speed));
+        },
+        zenoh::closures::none));
 }
 
 Signals::~Signals() {}
@@ -328,54 +338,54 @@ void Signals::run()
 
             if (buffer != -1)
             {
-                uint32_t can_id = 0;
-                // int size        = 0;
-                uint8_t data[8] = {0};
-                this->canBus->readMessage(buffer, can_id, data);
+                // uint32_t can_id = 0;
+                // // int size        = 0;
+                // uint8_t data[8] = {0};
+                // this->canBus->readMessage(buffer, can_id, data);
                 // std::cout << "Received CAN ID: 0x" << std::hex << std::setw(3) << std::setfill('0') << can_id 
                 //           << ", Data: ";
                 // for (int i = 0; i < 8; i++) {
                 //     std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
                 // }
                 // std::cout << std::dec << std::endl;
-                if (can_id == 0x01)
-                {
-                    int speed;
-                    // double wheelDiame = 0.067;
+                // if (can_id == 0x01)
+                // {
+                //     int speed;
+                //     // double wheelDiame = 0.067;
     
-                    memcpy(&speed, data, 4);
+                //     memcpy(&speed, data, 4);
     
-                    speed = ntohl(speed);
-                    // speed = wheelDiame * 3.14 * speed * 10 / 60;
-                    if (speed < 0 || speed > 2000)
-                        speed = 0;
+                //     speed = ntohl(speed);
+                //     // speed = wheelDiame * 3.14 * speed * 10 / 60;
+                //     if (speed < 0 || speed > 2000)
+                //         speed = 0;
 
-                    bool validReading = true;
-                    // int speedChange = speed - lastValidSpeed;
-                    // if (!isFirstReading) {
-                    //     if (std::abs(speedChange) > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
-                    //         printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
-                    //                speed, speedChange, lastValidSpeed);
-                    //         validReading = false;
-                    //     }
-                    // }
+                //     bool validReading = true;
+                //     // int speedChange = speed - lastValidSpeed;
+                //     // if (!isFirstReading) {
+                //     //     if (std::abs(speedChange) > MAX_SPEED_CHANGE && speedChange < MAX_SPEED_CHANGE * 2) {
+                //     //         printf("Rejecting speed reading %d (change of %d from last valid %d)\n", 
+                //     //                speed, speedChange, lastValidSpeed);
+                //     //         validReading = false;
+                //     //     }
+                //     // }
                     
-                    if (validReading) {
-                        lastValidSpeed = speed;
-                        isFirstReading = false;
-                        // printf("Publishing speed: '%d'\n", speed);
-                        std::string speed_str = std::to_string(speed);
-                        publisher_->publishSpeed(std::stof(speed_str));
-                    }
-                    // else
-                    // {
-                    //     std::string speed_str = std::to_string(speed + speedChange / 3);
-                    //     publisher_->publishSpeed(std::stof(speed_str));
-                    // }
-                    // printf("Publishing speed: '%d'\n", speed);
-                    // std::string speed_str = std::to_string(speed);
-                    // publisher_->publishSpeed(std::stof(speed_str));
-                }
+                //     if (validReading) {
+                //         lastValidSpeed = speed;
+                //         isFirstReading = false;
+                //         // printf("Publishing speed: '%d'\n", speed);
+                //         std::string speed_str = std::to_string(speed);
+                //         publisher_->publishSpeed(std::stof(speed_str));
+                //     }
+                //     // else
+                //     // {
+                //     //     std::string speed_str = std::to_string(speed + speedChange / 3);
+                //     //     publisher_->publishSpeed(std::stof(speed_str));
+                //     // }
+                //     // printf("Publishing speed: '%d'\n", speed);
+                //     // std::string speed_str = std::to_string(speed);
+                //     // publisher_->publishSpeed(std::stof(speed_str));
+                // }
             }
         }
     }
