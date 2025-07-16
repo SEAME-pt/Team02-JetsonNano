@@ -225,6 +225,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         {
             BrakeLights value;
             bool isActive = std::stoi(sample.get_payload().as_string());
+
+            (void) isActive;
         },
         zenoh::closures::none));
 
