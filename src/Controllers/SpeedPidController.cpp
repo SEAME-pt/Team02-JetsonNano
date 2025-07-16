@@ -76,16 +76,16 @@ SpeedPidController::SpeedPidController(std::shared_ptr<zenoh::Session> session, 
             float speed    = std::stof(sample.get_payload().as_string());
             current_speed_ = speed;
 
-            // if (logging_)
-            // {
-            //     double now = getCurrentTime();
-            //     log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
+            if (logging_)
+            {
+                double now = getCurrentTime();
+                log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "35" << "\n";
             
-            //     if (now - log_start_time_ > 5.0) {
-            //         logging_ = false;
-            //         log_file_.close();
-            //     }
-            // }
+                if (now - log_start_time_ > 5.0) {
+                    logging_ = false;
+                    log_file_.close();
+                }
+            }
 
             last_measure_ = getCurrentTime();
 
@@ -186,6 +186,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
+    // float throttle = p_term + i_term + d_term;
     
     // std::cout << "dt : " << dt << " | P:" << p_term << " I:" << i_term << " D:" << d_term 
     //           << " FF:" << u_ff << " | Integral:" << integral_ 
@@ -216,7 +217,10 @@ void SpeedPidController::run()
                 double current_time = getCurrentTime();
                 float error = desired_speed_ - current_speed_;
                 double throttle = speedPID(error, current_time);
-                throttle = std::max(0.0, throttle); 
+                throttle = std::max(0.0, throttle);
+                std::cout << "Current Speed: " << current_speed_ 
+                          << " | Desired Speed: " << desired_speed_ 
+                          << " | Throttle: " << throttle << std::endl;
                 publisher_->publishSpeed(throttle);
                 std::this_thread::sleep_for(std::chrono::milliseconds(
                             static_cast<int>(fixed_delta_time_ * 1000)));
@@ -225,7 +229,7 @@ void SpeedPidController::run()
         // }
     }
 
-    //calibration
+    // //calibration
     // while (true){
     //     std::string sae_level = getAutonomousDriveState();
     //     if (sae_level.find("SAE_4") != std::string::npos){
@@ -243,7 +247,7 @@ void SpeedPidController::run()
     // // Start logging
     // double now = getCurrentTime();
     // log_start_time_ = getCurrentTime();
-    // log_file_.open("corner_speed_pid_log.csv");
+    // log_file_.open("curved_speed_pid_log.csv");
     // log_file_ << "time,speed,throttle\n";
     // log_file_ << (now - log_start_time_) << "," << current_speed_ << "," << "25" << "\n";
     // logging_ = true;
