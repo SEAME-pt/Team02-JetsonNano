@@ -8,7 +8,7 @@ TrafficSignClassifier::TrafficSignClassifier(const std::string& enginePath,
     : height_(height), width_(width)
 {
     try {
-        this->gpuInference = new GPUInference(enginePath, 3, 9, height_, width_);
+        this->gpuInference = new GPUInference(enginePath, 3, 10, height_, width_);
         this->gpuInference->init();
     } catch (const std::exception& e) {
         std::cerr << "Error initializing GPUInference: " << e.what() << std::endl;

@@ -166,8 +166,8 @@ int main(int argc, char** argv)
     const int widthCameraFrame = 640;
     const int heightModelInf = 128;
     const int widthModelInf = 256;
-    const int heightTrafficModelInf = 60;
-    const int widthTrafficModelInf = 60;
+    const int heightTrafficModelInf = 80;
+    const int widthTrafficModelInf = 80;
 
     try
     {
