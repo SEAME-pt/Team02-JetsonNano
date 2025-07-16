@@ -176,6 +176,8 @@ void Signals::run()
             speed                 = ntohl(speed);
             speed                 = wheelDiame * 3.14 * speed * 10 / 60;
             std::string speed_str = std::to_string(speed);
+
+            std::cout << speed << std::endl;
             
             this->publisher_->publishSpeed(speed);
         }
