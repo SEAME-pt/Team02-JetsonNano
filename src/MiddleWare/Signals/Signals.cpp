@@ -131,6 +131,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
+            (void) isOn;
+
             std::cout << "Low" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -146,6 +148,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
+            (void) isOn;
+            
             std::cout << "High" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -159,6 +163,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         {
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
         },
         zenoh::closures::none));
 
@@ -169,6 +175,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
 
             std::cout << "Parking" << std::endl;
             state = !state;
@@ -185,6 +193,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
+            (void) isOn;
+
             std::cout << "RearFog" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -199,6 +209,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
 
             std::cout << "FrontFog" << std::endl;
             state = !state;
@@ -224,6 +236,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
+            (void) isSignaling;
+
             std::cout << "Hazard" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -239,6 +253,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
+            (void) isSignaling;
+
             std::cout << "Left" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -253,6 +269,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             static bool state = 0;
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            (void) isSignaling;
 
             std::cout << "Right" << std::endl;
             state = !state;
