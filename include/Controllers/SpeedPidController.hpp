@@ -52,7 +52,8 @@ private:
     float tau_c_ = 0.5574;
     float L_c_ = 0.1750;
 
-    float a0_ = 12.93f;
+    // float a0_ = 12.93f;
+    float a0_ = 13.93f;
     float a1_ = 0.130f;
     // Saturation limits
     
