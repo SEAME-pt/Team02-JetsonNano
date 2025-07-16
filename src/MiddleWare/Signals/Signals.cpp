@@ -131,10 +131,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_beam_low(
-                value);
-
             std::cout << "Low" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -150,11 +146,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body()
-                .get_mutable_lights()
-                .set_beam_high(value);
-
             std::cout << "High" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -168,10 +159,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         {
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
-
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_running(
-                value);
         },
         zenoh::closures::none));
 
@@ -182,10 +169,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             static bool state = 0;
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
-
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_parking(
-                value);
 
             std::cout << "Parking" << std::endl;
             state = !state;
@@ -202,10 +185,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_fog_rear(
-                value);
-
             std::cout << "RearFog" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -221,11 +200,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_on(isOn);
-            this->vehicle_.get_mutable_body()
-                .get_mutable_lights()
-                .set_fog_front(value);
-
             std::cout << "FrontFog" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -239,10 +213,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         {
             BrakeLights value;
             bool isActive = std::stoi(sample.get_payload().as_string());
-
-            value.set_is_active(isActive);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_brake(
-                value);
         },
         zenoh::closures::none));
 
@@ -253,10 +223,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             static bool state = 0;
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
-
-            value.set_is_signaling(isSignaling);
-            this->vehicle_.get_mutable_body().get_mutable_lights().set_hazard(
-                value);
 
             std::cout << "Hazard" << std::endl;
             state = !state;
@@ -273,11 +239,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_signaling(isSignaling);
-            this->vehicle_.get_mutable_body()
-                .get_mutable_lights()
-                .set_direction_indicator_left(value);
-
             std::cout << "Left" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -293,11 +254,6 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
-            value.set_is_signaling(isSignaling);
-            this->vehicle_.get_mutable_body()
-                .get_mutable_lights()
-                .set_direction_indicator_right(value);
-
             std::cout << "Right" << std::endl;
             state = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
@@ -310,9 +266,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         [this](const zenoh::Sample& sample)
         {
             int8_t currentGear = std::stoi(sample.get_payload().as_string());
-            this->vehicle_.get_mutable_powertrain()
-                .get_mutable_transmission()
-                .set_current_gear(currentGear);
+
             uint8_t gearData[1];
             gearData[0] = static_cast<uint8_t>(currentGear);
             this->canBus->writeMessage(0x04, gearData, sizeof(gearData));
