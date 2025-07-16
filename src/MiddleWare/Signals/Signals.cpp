@@ -136,12 +136,12 @@ Signals::~Signals() {}
 
 void Signals::initLocalEnv(const std::string& canDevice) {
     try {
-        struct stat buffer;
-        if (stat(canDevice.c_str(), &buffer) != 0) {
-            std::cerr << "Can device " << canDevice << " does not exist!" << std::endl;
-            this->canBus = NULL;
-            throw std::runtime_error("Error on can device");
-        }
+        // struct stat buffer;
+        // if (stat(canDevice.c_str(), &buffer) != 0) {
+        //     std::cerr << "Can device " << canDevice << " does not exist!" << std::endl;
+        //     this->canBus = NULL;
+        //     throw std::runtime_error("Error on can device");
+        // }
         this->canBus     = new CAN();
         this->canBus->init(canDevice);
     } catch (...) {
