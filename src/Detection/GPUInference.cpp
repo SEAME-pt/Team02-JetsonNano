@@ -239,7 +239,8 @@ int GPUInference::copyToCPUTrafficOutput()
         "Crosswalk",
         "Traffic Green",
         "Traffic Red",
-        "Traffic Yellow"
+        "Traffic Yellow",
+        "Unknown"
     };
 
     // Apply softmax to outputData
