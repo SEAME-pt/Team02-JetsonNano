@@ -1463,6 +1463,29 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
                 cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i], midCurveColor,
                         3);
             }
+
+            // Sample point at 30% of height from bottom
+            int targetY = frameHeight_ - (0.30 * frameHeight_);
+            
+            // Find closest point in adjusted trajectory at target Y
+            cv::Point adjustedPoint = findClosestPointAtY(adjustedTrajectory, targetY);
+            
+            // Find lane boundaries at same Y level
+            cv::Point leftLanePoint = findClosestPointAtY(prevLeftCurve, targetY);
+            cv::Point rightLanePoint = findClosestPointAtY(prevRightCurve, targetY);
+
+            if (adjustedPoint.x < leftLanePoint.x) {
+                // Trajectory crossed left - swap lanes
+                prevRightCurve = prevLeftCurve;
+                prevLeftCurve.clear();
+                std::cout << "Trajectory crossed right" << std::endl;
+            }
+            else if (adjustedPoint.x > rightLanePoint.x) {
+                // Trajectory crossed right - swap lanes
+                prevLeftCurve = prevRightCurve;
+                prevRightCurve.clear();
+                std::cout << "Trajectory crossed right" << std::endl;
+            }
         }
         avoidance->visualizeGrid(&midCurve, segmentation_mask);
     }
@@ -1470,6 +1493,26 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
     {
         std::cerr << "Error in obstacle avoidance: " << e.what() << std::endl;
     }
+}
+
+cv::Point TrajectoryDefinition::findClosestPointAtY(const std::vector<cv::Point>& curve, int targetY)
+{
+    if (curve.empty()) {
+        return cv::Point(0, targetY);
+    }
+    
+    cv::Point closestPoint = curve[0];
+    int minDistance = std::abs(curve[0].y - targetY);
+    
+    for (const auto& point : curve) {
+        int distance = std::abs(point.y - targetY);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPoint = point;
+        }
+    }
+    
+    return closestPoint;
 }
 
 void TrajectoryDefinition::adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
