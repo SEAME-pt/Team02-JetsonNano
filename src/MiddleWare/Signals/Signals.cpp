@@ -131,7 +131,23 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         },
         zenoh::closures::none));
 
-        beamLow_subscriber.emplace(session_->declare_subscriber(
+    emergency_brake_subscriber_.emplace(session_->declare_subscriber(
+        "Vehicle/1/Speed/Emergency",
+        [this](const zenoh::Sample& sample)
+        {
+            std::string emergency = sample.get_payload().as_string();
+            if (this->canBus) {
+                if (emergency.find("1") != std::string::npos) {
+                    uint8_t value[8];
+                    memcpy(value, "DANGER", sizeof(value));
+    
+                    this->canBus->writeMessage(0x200, value, sizeof(value));
+                }
+            }
+        },
+        zenoh::closures::none));
+
+    beamLow_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/Body/Lights/Beam/Low",
         [this](const zenoh::Sample& sample)
         {

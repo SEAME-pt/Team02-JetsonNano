@@ -47,6 +47,7 @@ class Signals
     std::optional<zenoh::Subscriber<void>> trafficSign_subscriber;
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> laneAlert_subscriber;
+    std::optional<zenoh::Subscriber<void>> emergency_brake_subscriber_;
     std::optional<zenoh::Subscriber<void>> beamLow_subscriber;
     std::optional<zenoh::Subscriber<void>> beamHigh_subscriber;
     std::optional<zenoh::Subscriber<void>> running_subscriber;

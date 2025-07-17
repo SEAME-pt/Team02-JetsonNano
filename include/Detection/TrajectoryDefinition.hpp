@@ -36,7 +36,6 @@ class TrajectoryDefinition
 
     // cv::cuda::Stream cv_stream;
   
-    CAN* canBus;
     KalmanFilter* kalmanFilter;
     IPM* ipm;
     ObstacleAvoidance* avoidance;

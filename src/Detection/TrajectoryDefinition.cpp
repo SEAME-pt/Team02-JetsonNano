@@ -87,9 +87,6 @@ TrajectoryDefinition::TrajectoryDefinition(
 
 TrajectoryDefinition::~TrajectoryDefinition()
 {
-    if (canBus) {
-        delete canBus;
-    }
     delete kalmanFilter;
     delete ipm;
     delete avoidance;
@@ -97,14 +94,6 @@ TrajectoryDefinition::~TrajectoryDefinition()
 }
 
 void TrajectoryDefinition::initLocalEnv() {
-    try {
-        this->canBus     = new CAN();
-        this->canBus->init("can0");
-    } catch (...) {
-        std::cerr << "Error on initializing can" << std::endl;
-        this->canBus = NULL;
-    }
-
     try
     {
         this->kalmanFilter = new ::KalmanFilter();
@@ -157,8 +146,6 @@ void TrajectoryDefinition::initLocalEnv() {
 }
 
 void TrajectoryDefinition::initCarlaEnv() {
-    this->canBus = NULL;
-
     try
     {
         this->kalmanFilter = new ::KalmanFilter();
@@ -816,7 +803,7 @@ float TrajectoryDefinition::calculateLaneDistance(
 
 float TrajectoryDefinition::calculateHistoricalLaneWidth() {    
     if (recentWidths.empty()) {
-        return frameWidth_ * 0.25;
+        return frameWidth_ * 0.30;
     } else {
         float sum = 0.0f;
         for (const float& width : recentWidths) {
@@ -832,9 +819,9 @@ void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& 
 
     std::cout << "AVG Distance: " << avgDistance << std::endl;
     std::cout << "Min Distance: " << frameWidth_ * 0.20 << std::endl;
-    std::cout << "Max Distance: " << frameWidth_ * 0.30 << std::endl;
+    std::cout << "Max Distance: " << frameWidth_ * 0.35 << std::endl;
     
-    if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.30) {
+    if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.35) {
         recentWidths.push_back(avgDistance);
         
         if (recentWidths.size() > static_cast<unsigned int>(MAX_WIDTH_HISTORY)) {
@@ -882,14 +869,13 @@ void TrajectoryDefinition::checkPredicedCurve(
 
         std::vector<cv::Point> sortedRealLane = realLane;
         std::sort(sortedRealLane.begin(), sortedRealLane.end(), [](const cv::Point& a, const cv::Point& b) {
-            return a.y > b.y; // bottom (large y) to top (small y)
+            return a.y > b.y;
         });
 
         for (size_t i = 0; i < sortedRealLane.size(); ++i)
         {
             cv::Point2f pt = sortedRealLane[i];
 
-            // Compute local direction (tangent)
             cv::Point2f dir;
             if (i == 0)
                 dir = cv::Point2f(sortedRealLane[i + 1]) - pt;
@@ -898,24 +884,19 @@ void TrajectoryDefinition::checkPredicedCurve(
             else
                 dir = cv::Point2f(sortedRealLane[i + 1]) - cv::Point2f(sortedRealLane[i - 1]);
 
-            // Normalize direction
             float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
             if (len > 1e-3)
                 dir /= len;
             else
                 dir = cv::Point2f(0, 1); // Default vertical
 
-            // Compute both possible normals
             cv::Point2f normal1(-dir.y, dir.x);
             cv::Point2f normal2(dir.y, -dir.x);
 
-            // Generate both candidates
             float offset = expectedWidth;
             cv::Point2f candidate1 = pt + normal1 * offset;
             cv::Point2f candidate2 = pt + normal2 * offset;
 
-            // For right lane: predicted x should be > real x (in image coordinates)
-            // For left lane: predicted x should be < real x
             cv::Point2f newPt;
             if (isLeftLane) {
                 newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
@@ -925,27 +906,6 @@ void TrajectoryDefinition::checkPredicedCurve(
 
             predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
         }
-
-        // if (isLeftLane)
-        // {
-        //     for (const auto& pt : realLane)
-        //     {
-        //         predictedCurve.push_back(
-        //             cv::Point(pt.x + expectedWidth, pt.y));
-        //     }
-            
-        //     kalmanFilter->updateLeftLaneFilter(predictedCurve);
-        // }
-        // else
-        // {
-        //     for (const auto& pt : realLane)
-        //     {
-        //         predictedCurve.push_back(
-        //             cv::Point(pt.x - expectedWidth, pt.y));
-        //     }
-
-        //     kalmanFilter->updateRightLaneFilter(predictedCurve);
-        // }
 
         defineLanePolyline(predictedCurve);
     }
@@ -1464,20 +1424,7 @@ bool TrajectoryDefinition::checkForwardCollision(
         is_emergency_stop = true;
 
         publishEmergencyBrake("1");
-        if (this->canBus) {
-            try
-            {
-                uint8_t value[8];
-                memcpy(value, "DANGER", sizeof(value));
 
-            this->canBus->writeMessage(0x200, value, sizeof(value));
-            }
-            catch (const std::exception& e)
-            {
-                std::cerr << "Error sending CAN message on Object Detector: "
-                        << e.what() << std::endl;
-            }
-        }
         return true;
         }
     else if (is_emergency_stop)
