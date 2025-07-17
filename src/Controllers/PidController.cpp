@@ -439,7 +439,7 @@ void PidController::run()
         if (xboxController_->getPidEnable()) {
             std::string sae_level = getAutonomousDriveState();
 
-            // speedDefinition();
+            speedDefinition();
 
             if (sae_level.find("SAE_0") != std::string::npos) {
                 manualControl();
