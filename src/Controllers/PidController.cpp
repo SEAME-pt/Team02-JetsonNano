@@ -388,7 +388,7 @@ void PidController::speedDefinition(void) {
         else 
             desired_speed_ = active_speed;
     } else if (stop_active_) {
-        static stop_activated = 0;
+        static int stop_activated = 0;
         if (current_speed_ != 0 && stop_activated != 1)
             desired_speed_ = 0;
             stop_activated = 1;
