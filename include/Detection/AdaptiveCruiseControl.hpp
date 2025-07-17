@@ -59,7 +59,7 @@ private:
     std::optional<zenoh::Subscriber<void>> desiredSpeed_subscriber;
 
     // Detection parameters
-    const int DETECTION_ZONE_WIDTH = 60;  // pixels on each side of trajectory
+    const int DETECTION_ZONE_WIDTH = 50;  // pixels on each side of trajectory
     const float IGNORE_ZONE_RATIO = 0.9f; // ignore bottom 80% of frame
     
     // Helper functions
@@ -68,5 +68,6 @@ private:
     void updateObstacleTracking(int obstacleDistance, const cv::Point& obstaclePos);
     float calculateObstacleSpeed();
     bool isRoadPixel(const cv::Vec3b& pixel);
+    cv::Vec2f calculateTrajectoryDirection(const std::vector<cv::Point>& midCurve, int currentIndex);
     double getCurrentTime();
 };
