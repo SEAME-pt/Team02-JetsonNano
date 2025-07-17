@@ -360,7 +360,7 @@ void Signals::run()
             speed                 = ntohl(speed);
             // speed                 = wheelDiame * 3.14 * speed * 10 / 60;
 
-            float fspeed = static_cast<float>(speed)
+            float fspeed = static_cast<float>(speed);
             std::cout << fspeed << std::endl;
             
             this->publisher_->publishSpeed(fspeed);
