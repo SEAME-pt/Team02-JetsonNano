@@ -389,9 +389,10 @@ void PidController::speedDefinition(void) {
             desired_speed_ = active_speed;
     } else if (stop_active_) {
         static int stop_activated = 0;
-        if (current_speed_ != 0 && stop_activated != 1)
+        if (current_speed_ != 0 && stop_activated != 1) {
             desired_speed_ = 0;
             stop_activated = 1;
+        }
         else {
             if (std::abs(current_time - last_stop_received_) > threshold) {
                 stop_activated = 0;
