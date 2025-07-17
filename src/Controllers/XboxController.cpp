@@ -34,19 +34,19 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 
     publisher_ = std::make_unique<ControllerPublisher>(session_);
 
-    autonomy_env_enable_subscriber_.emplace(session_->declare_subscriber(
-        "Vehicle/1/ADAS/Enable",
-        [this](const zenoh::Sample& sample)
-        {
-            std::string autonomyEnvEnable = sample.get_payload().as_string();
-            if (autonomyEnvEnable.find("true") != std::string::npos)
-            {
-                autonomyEnvEnable_ = true;
-            } else {
-                autonomyEnvEnable_ = false;
-            }
-        },
-        zenoh::closures::none));
+    // autonomy_env_enable_subscriber_.emplace(session_->declare_subscriber(
+    //     "Vehicle/1/ADAS/Enable",
+    //     [this](const zenoh::Sample& sample)
+    //     {
+    //         std::string autonomyEnvEnable = sample.get_payload().as_string();
+    //         if (autonomyEnvEnable.find("true") != std::string::npos)
+    //         {
+    //             autonomyEnvEnable_ = true;
+    //         } else {
+    //             autonomyEnvEnable_ = false;
+    //         }
+    //     },
+    //     zenoh::closures::none));
 
     std::cout << "Remote controller created!" << std::endl;
 }
