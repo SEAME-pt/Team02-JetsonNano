@@ -125,19 +125,32 @@ int AdaptiveCruiseControl::findObstacleOnTrajectory(const cv::Mat& segmentationM
         if (trajPoint.y > frameHeight_ * IGNORE_ZONE_RATIO) continue;
         if (trajPoint.y < frameHeight_ * 0.1) continue;
         
-        // Check trajectory point and surrounding area
-        int leftX = std::max(0, trajPoint.x - DETECTION_ZONE_WIDTH);
-        int rightX = std::min(frameWidth_ - 1, trajPoint.x + DETECTION_ZONE_WIDTH);
+        // Calculate trajectory slope at this point
+        cv::Vec2f trajectoryDirection = calculateTrajectoryDirection(midCurve, i);
+        
+        // Create perpendicular vector to trajectory direction for detection line
+        cv::Vec2f perpendicular(-trajectoryDirection[1], trajectoryDirection[0]);
+        
+        // Normalize perpendicular vector
+        float perpLength = std::sqrt(perpendicular[0] * perpendicular[0] + perpendicular[1] * perpendicular[1]);
+        if (perpLength > 0) {
+            perpendicular[0] /= perpLength;
+            perpendicular[1] /= perpLength;
+        }
         
         int nonRoadPixels = 0;
         int totalPixels = 0;
         
-        // Check horizontal line across detection zone
-        for (int x = leftX; x <= rightX; x++) {
-            if (trajPoint.y >= 0 && trajPoint.y < frameHeight_ && 
-                x >= 0 && x < frameWidth_) {
+        // Check along perpendicular line across detection zone
+        for (int offset = -DETECTION_ZONE_WIDTH; offset <= DETECTION_ZONE_WIDTH; offset++) {
+            // Calculate point along perpendicular line
+            int checkX = static_cast<int>(trajPoint.x + offset * perpendicular[0]);
+            int checkY = static_cast<int>(trajPoint.y + offset * perpendicular[1]);
+            
+            if (checkY >= 0 && checkY < frameHeight_ && 
+                checkX >= 0 && checkX < frameWidth_) {
                 
-                cv::Vec3b pixel = segmentationMask.at<cv::Vec3b>(trajPoint.y, x);
+                cv::Vec3b pixel = segmentationMask.at<cv::Vec3b>(checkY, checkX);
                 totalPixels++;
                 
                 if (!isRoadPixel(pixel)) {
@@ -243,6 +256,35 @@ bool AdaptiveCruiseControl::isRoadPixel(const cv::Vec3b& pixel)
     }
 
     return false; // Non-road pixel
+}
+
+cv::Vec2f AdaptiveCruiseControl::calculateTrajectoryDirection(const std::vector<cv::Point>& midCurve, int currentIndex)
+{
+    cv::Vec2f direction(0.0f, 1.0f); // Default to vertical (downward)
+    
+    int lookAhead = 3; // Number of points to look ahead/behind for slope calculation
+    
+    // Get previous and next points for slope calculation
+    int prevIndex = std::max(0, currentIndex - lookAhead);
+    int nextIndex = std::min(static_cast<int>(midCurve.size()) - 1, currentIndex + lookAhead);
+    
+    if (prevIndex != nextIndex) {
+        cv::Point prevPoint = midCurve[prevIndex];
+        cv::Point nextPoint = midCurve[nextIndex];
+        
+        // Calculate direction vector
+        float dx = static_cast<float>(nextPoint.x - prevPoint.x);
+        float dy = static_cast<float>(nextPoint.y - prevPoint.y);
+        
+        // Normalize direction vector
+        float length = std::sqrt(dx * dx + dy * dy);
+        if (length > 0) {
+            direction[0] = dx / length;
+            direction[1] = dy / length;
+        }
+    }
+    
+    return direction;
 }
 
 double AdaptiveCruiseControl::getCurrentTime()
