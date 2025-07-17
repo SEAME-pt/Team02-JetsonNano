@@ -119,7 +119,7 @@ class XboxController
     bool sae_1_LKAS = false;
     bool sae_1_ACC = false;
 
-    bool autonomyEnvEnable_ = true;
+    bool autonomyEnvEnable_ = false;
 
   public:
     std::vector<struct axis_state*> axes;
