@@ -44,13 +44,13 @@ private:
 
     //calibration parameters
     // Straight-line FOPDT model
-    float Kp_s_= 0.8;
-    float tau_s_ = 0.40;
-    float L_s_ = 0.3;
+    float Kp_s_= 5.9665;
+    float tau_s_ = 0.4996;
+    float L_s_ = 0.0;
     // Cornering FOPDT model
-    float Kp_c_ = 1.2;
-    float tau_c_ = 0.25;
-    float L_c_ = 0.3;
+    float Kp_c_ = 7.2154;
+    float tau_c_ = 0.3257;
+    float L_c_ = 0.1999;
 
     float a0_ = 20.0f;
     // float a0_ = 14.93f;
