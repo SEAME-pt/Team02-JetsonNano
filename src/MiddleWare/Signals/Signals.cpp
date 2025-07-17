@@ -359,11 +359,11 @@ void Signals::run()
             memcpy(&speed, frame.data, sizeof(int));
             speed                 = ntohl(speed);
             // speed                 = wheelDiame * 3.14 * speed * 10 / 60;
-            std::string speed_str = std::to_string(speed);
 
-            std::cout << speed << std::endl;
+            float fspeed = static_cast<float>(speed)
+            std::cout << fspeed << std::endl;
             
-            this->publisher_->publishSpeed(speed);
+            this->publisher_->publishSpeed(fspeed);
         }
         usleep(10);
     }
