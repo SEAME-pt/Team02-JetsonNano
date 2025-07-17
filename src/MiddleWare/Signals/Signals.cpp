@@ -136,13 +136,11 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         [this](const zenoh::Sample& sample)
         {
             std::string emergency = sample.get_payload().as_string();
-            if (this->canBus) {
-                if (emergency.find("1") != std::string::npos) {
-                    uint8_t value[8];
-                    memcpy(value, "DANGER", sizeof(value));
-    
-                    this->canBus->writeMessage(0x200, value, sizeof(value));
-                }
+            if (emergency.find("1") != std::string::npos) {
+                uint8_t value[8];
+                memcpy(value, "DANGER", sizeof(value));
+
+                this->canBus->writeMessage(0x200, value, sizeof(value));
             }
         },
         zenoh::closures::none));
