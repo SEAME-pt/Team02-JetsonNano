@@ -133,7 +133,6 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
                 green_active_ = true;
                 last_green_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Red") != std::string::npos) {
-                red_active_ = true;
                 last_red_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Yellow") != std::string::npos) {
                 yellow_active_ = true;
@@ -363,6 +362,7 @@ void PidController::autonomousControl()
 void PidController::speedDefinition(void) {
     double current_time = getCurrentTime();
     double threshold = 0.80;
+    double red_threshold = 5.0;
     double active_speed = 0.0f;
 
     if (std::abs(current_time -  last_acc_speed_receive_) < threshold) {
@@ -386,11 +386,19 @@ void PidController::speedDefinition(void) {
             desired_speed_ = 0.25;
         else 
             desired_speed_ = active_speed;
-    } else {
-        desired_speed_ = active_speed;
-    } 
-    
-    if (std::abs(current_time - last_stop_received_) < threshold) {
+    } else if (std::abs(current_time - last_red_received_) < red_threshold) {
+        desired_speed_ = 0;
+    } else if (std::abs(current_time - last_yellow_received_ < threshold)) {
+        if (active_speed > 0.25)
+            desired_speed_ = 0.25;
+        else 
+            desired_speed_ = active_speed;
+    } else if (std::abs(current_time - last_green_received_) < threshold) {
+        if (active_speed > speed_limit_)
+            desired_speed_ = speed_limit_;
+        else 
+            desired_speed_ = active_speed;
+    } else if (std::abs(current_time - last_stop_received_) < threshold) {
         if (current_speed_ != 0 && !stop_active_) {
             desired_speed_ = 0;
             stop_active_ = true;
@@ -398,37 +406,8 @@ void PidController::speedDefinition(void) {
             desired_speed_ = active_speed;
         }
     } else {
-        stop_active_ = false;
-    }
-    
-    if (red_active_ || yellow_active_ || green_active_) {
-        if (red_active_) {
-            desired_speed_ = 0;
-        }
-        if (yellow_active_) {
-            if (std::abs(current_time - last_yellow_received_) < threshold) {
-                if (current_speed_ != 0.30)
-                    desired_speed_ = 0.30;
-                else {
-                    desired_speed_ = active_speed;
-                    red_active_ = false;
-                }
-            } else {
-                desired_speed_ = active_speed;
-                yellow_active_ = false;
-            }
-        }
-        if (green_active_) {
-            if (std::abs(current_time - last_green_received_) < threshold) {
-                desired_speed_ = active_speed;
-            } else {
-                desired_speed_ = active_speed;
-                green_active_ = false;
-            }
-        }
-    }
-    else {
         desired_speed_ = active_speed;
+        stop_active_ = false;
     }
 }
 
