@@ -43,7 +43,7 @@ VehicleSystem::VehicleSystem(const std::string& configFile)
     i2c_ = std::make_shared<I2C>();
     i2c_->init("/dev/i2c-1");
     CAN_ = std::make_shared<CAN>();
-    CAN_->init("/dev/spidev0.0");
+    CAN_->init("can0");
 
     motor_controller_ = std::make_unique<MotorController>(i2c_);
     servo_controller_ = std::make_unique<ServoController>(i2c_);
