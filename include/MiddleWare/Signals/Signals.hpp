@@ -47,6 +47,17 @@ class Signals
     std::optional<zenoh::Subscriber<void>> trafficSign_subscriber;
     std::optional<zenoh::Subscriber<void>> carlaSpeed_subscriber;
     std::optional<zenoh::Subscriber<void>> laneAlert_subscriber;
+    std::optional<zenoh::Subscriber<void>> beamLow_subscriber;
+    std::optional<zenoh::Subscriber<void>> beamHigh_subscriber;
+    std::optional<zenoh::Subscriber<void>> running_subscriber;
+    std::optional<zenoh::Subscriber<void>> parking_subscriber;
+    std::optional<zenoh::Subscriber<void>> fogRear_subscriber;
+    std::optional<zenoh::Subscriber<void>> fogFront_subscriber;
+    std::optional<zenoh::Subscriber<void>> brake_subscriber;
+    std::optional<zenoh::Subscriber<void>> hazard_subscriber;
+    std::optional<zenoh::Subscriber<void>> directionIndicatorLeft_subscriber;
+    std::optional<zenoh::Subscriber<void>> directionIndicatorRight_subscriber;
+    std::optional<zenoh::Subscriber<void>> currentGear_subscriber;
 
     int lastValidSpeed = 0;
     const int MAX_SPEED_CHANGE = 30;

@@ -230,7 +230,7 @@ int GPUInference::copyToCPUTrafficOutput()
 
     cudaStreamSynchronize(stream);
 
-    const std::string classes[9] = {
+    const std::string classes[10] = {
         "Speed 50km/h",
         "Speed 80km/h",
         "Yield",
@@ -239,7 +239,8 @@ int GPUInference::copyToCPUTrafficOutput()
         "Crosswalk",
         "Traffic Green",
         "Traffic Red",
-        "Traffic Yellow"
+        "Traffic Yellow",
+        "Unknown"
     };
 
     // Apply softmax to outputData

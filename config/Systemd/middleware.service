@@ -9,7 +9,7 @@ User=team02
 Environment=DISPLAY=:0
 WorkingDirectory=/opt/vehicle/bin
 ExecStartPre=/bin/sleep 2
-ExecStart=/opt/vehicle/bin/MiddleWare /opt/vehicle/etc/zenoh/MiddleWareConfig.json
+ExecStart=/opt/vehicle/bin/MiddleWare -C /opt/vehicle/etc/zenoh/MiddleWareConfig.json
 Restart=always
 RestartSec=3
 StandardOutput=journal

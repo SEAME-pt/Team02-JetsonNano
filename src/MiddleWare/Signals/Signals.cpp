@@ -130,6 +130,176 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             }
         },
         zenoh::closures::none));
+
+        beamLow_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Beam/Low",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+
+            std::cout << "Low" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x702, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    beamHigh_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Beam/High",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+            
+            std::cout << "High" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x703, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    running_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Running",
+        [this](const zenoh::Sample& sample)
+        {
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+        },
+        zenoh::closures::none));
+
+    parking_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Parking",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+
+            std::cout << "Parking" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x707, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    fogRear_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Fog/Rear",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+
+            std::cout << "RearFog" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x705, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    fogFront_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Fog/Front",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            StaticLights value;
+            bool isOn = std::stoi(sample.get_payload().as_string());
+
+            (void) isOn;
+
+            std::cout << "FrontFog" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x704, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    brake_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Brake",
+        [this](const zenoh::Sample& sample)
+        {
+            BrakeLights value;
+            bool isActive = std::stoi(sample.get_payload().as_string());
+
+            (void) isActive;
+        },
+        zenoh::closures::none));
+
+    hazard_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/Hazard",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            (void) isSignaling;
+
+            std::cout << "Hazard" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x706, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    directionIndicatorLeft_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/DirectionIndicator/Left",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            (void) isSignaling;
+
+            std::cout << "Left" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x700, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    directionIndicatorRight_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Body/Lights/DirectionIndicator/Right",
+        [this](const zenoh::Sample& sample)
+        {
+            static bool state = 0;
+            SignalingLights value;
+            bool isSignaling = std::stoi(sample.get_payload().as_string());
+
+            (void) isSignaling;
+
+            std::cout << "Right" << std::endl;
+            state = !state;
+            uint8_t onOff = static_cast<uint8_t>(state);
+            this->canBus->writeMessage(0x701, &onOff, sizeof(uint8_t));
+        },
+        zenoh::closures::none));
+
+    currentGear_subscriber.emplace(session_->declare_subscriber(
+        "Vehicle/1/Powertrain/Transmission/CurrentGear",
+        [this](const zenoh::Sample& sample)
+        {
+            int8_t currentGear = std::stoi(sample.get_payload().as_string());
+
+            uint8_t gearData[1];
+            gearData[0] = static_cast<uint8_t>(currentGear);
+            this->canBus->writeMessage(0x04, gearData, sizeof(gearData));
+        },
+        zenoh::closures::none));
 }
 
 Signals::~Signals() {}
