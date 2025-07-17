@@ -283,8 +283,8 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     drawCurves(midCurve, leftCurve, rightCurve);
 
     if (activeAutonomyLevel_ == "SAE_0") {
-        leftCurve.clear();
-        rightCurve.clear();
+        prevLeftCurve.clear();
+        prevRightCurve.clear();
         recentWidths.clear();
     } else {
         // checkForwardCollision(class_mask, midCurve);
