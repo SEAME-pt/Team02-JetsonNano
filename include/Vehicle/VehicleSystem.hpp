@@ -6,7 +6,6 @@
 #include "ServoController.hpp"
 #include "HardwareObserver.hpp"
 #include "I2C.hpp"
-#include "CAN.hpp"
 
 class VehicleSystem
 {
@@ -31,9 +30,6 @@ class VehicleSystem
     std::shared_ptr<I2C> getI2C() const;
     void setI2C(const std::shared_ptr<I2C>& value);
 
-    std::shared_ptr<CAN> getCAN() const;
-    void setCAN(const std::shared_ptr<CAN>& value);
-
     std::shared_ptr<MotorController> getMotorController() const;
     void setMotorController(const std::shared_ptr<MotorController>& value);
 
@@ -47,7 +43,6 @@ class VehicleSystem
     std::unique_ptr<VSSSubscriber> vss_subscriber_;
     std::unique_ptr<VSSQueryable> vss_queryable_;
     std::shared_ptr<I2C> i2c_;
-    std::shared_ptr<CAN> CAN_;
     std::shared_ptr<MotorController> motor_controller_;
     std::shared_ptr<ServoController> servo_controller_;
 };

@@ -125,6 +125,7 @@ void TrajectoryDefinition::initLocalEnv() {
         float h_fov_rad = horizontalFOV * CV_PI / 180.0f;
         float verticalFOV = 2.0f * std::atan((img_height/img_width) * std::tan(h_fov_rad/2.0f)) * 180.0f / CV_PI;
         nearDistance_ = 0.2f;       // meters
+        nearDistance_ = 0.2f;       // meters
         farDistance_ = 0.8f;       // meters
         laneWidth_ = 0.6f;      // meters
         cv::Size bevSize = cv::Size(width_, height_);
@@ -281,9 +282,13 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
 
     drawCurves(midCurve, leftCurve, rightCurve);
 
-    // if (activeAutonomyLevel_ != "SAE_0") {
-    //     checkForwardCollision(class_mask, midCurve);
-    // } 
+    if (activeAutonomyLevel_ == "SAE_0") {
+        leftCurve.clear();
+        rightCurve.clear();
+        recentWidths.clear();
+    } else {
+        checkForwardCollision(class_mask, midCurve);
+    }
     
     if (activeAutonomyLevel_ == "SAE_2" || 
         activeAutonomyLevel_ == "SAE_3" ||
@@ -292,6 +297,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
             obstacleAvoidance(class_mask, midCurve);
         createMidPointError(midCurve);
         publishCoeffs(midCurve);
+        // adaptiveSpeedControl(class_mask, midCurve);
     }
     else if (activeAutonomyLevel_ == "SAE_1_ACC") {
         std::cout << "ACC Mode" << std::endl;
