@@ -513,26 +513,37 @@ void TrajectoryDefinition::defineLaneEnv(std::vector<std::vector<cv::Point>> &la
 void TrajectoryDefinition::lowerPointLaneDefinition(std::vector<std::vector<cv::Point>> &lanePolylines, std::vector<cv::Point>& leftCurve,
     std::vector<cv::Point>& rightCurve) {
     int centerX = frameWidth_ / 2;
-    float minLeftDist = FLT_MAX;
-    float minRightDist = FLT_MAX;
-    int leftIdx = -1;
-    int rightIdx = -1;
+    int leftIdx = -1, rightIdx = -1;
+    int minLeftDist = INT_MAX, minRightDist = INT_MAX;
 
-    for (int i = 0; i < static_cast<int>(lanePolylines.size()); i++)
-    {
-        float avgX = 0.0f;
-        for (const auto& pt : lanePolylines[i])
-            avgX += pt.x;
-        avgX /= lanePolylines[i].size();
+    std::vector<int> lowestXs;
+    std::vector<int> lowestYs;
 
-        if (avgX < centerX) {
-            float dist = centerX - avgX;
+    // Find lowest point for each polyline
+    for (const auto& poly : lanePolylines) {
+        int lowestY = -1;
+        int lowestX = -1;
+        for (const auto& pt : poly) {
+            if (pt.y > lowestY) {
+                lowestY = pt.y;
+                lowestX = pt.x;
+            }
+        }
+        lowestXs.push_back(lowestX);
+        lowestYs.push_back(lowestY);
+    }
+
+    // Find closest to center from left and right
+    for (size_t i = 0; i < lowestXs.size(); ++i) {
+        int x = lowestXs[i];
+        if (x < centerX) {
+            int dist = centerX - x;
             if (dist < minLeftDist) {
                 minLeftDist = dist;
                 leftIdx = i;
             }
         } else {
-            float dist = avgX - centerX;
+            int dist = x - centerX;
             if (dist < minRightDist) {
                 minRightDist = dist;
                 rightIdx = i;
@@ -805,7 +816,7 @@ float TrajectoryDefinition::calculateLaneDistance(
 
 float TrajectoryDefinition::calculateHistoricalLaneWidth() {    
     if (recentWidths.empty()) {
-        return frameWidth_ * 0.30;
+        return frameWidth_ * 0.25;
     } else {
         float sum = 0.0f;
         for (const float& width : recentWidths) {
@@ -821,9 +832,9 @@ void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& 
 
     std::cout << "AVG Distance: " << avgDistance << std::endl;
     std::cout << "Min Distance: " << frameWidth_ * 0.20 << std::endl;
-    std::cout << "Max Distance: " << frameWidth_ * 0.40 << std::endl;
+    std::cout << "Max Distance: " << frameWidth_ * 0.30 << std::endl;
     
-    if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.35) {
+    if (avgDistance > frameWidth_ * 0.20 && avgDistance < frameWidth_ * 0.30) {
         recentWidths.push_back(avgDistance);
         
         if (recentWidths.size() > static_cast<unsigned int>(MAX_WIDTH_HISTORY)) {
