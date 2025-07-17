@@ -149,9 +149,9 @@ float SpeedPidController::speedPID(float error, double current_time)
 
     // PID
     // Gain-scheduling index from steering (-1..1 -> 0..1)
-    float alpha = std::min(1.0f, std::fabs(steer_));
+    // float alpha = std::min(1.0f, std::fabs(steer_));
     // alpha = std::max(0.5f, alpha);
-    // float alpha = 1;
+    float alpha = 0;
 
     // Interpolate process model parameters
     float Kp_model = (1.0f - alpha) * Kp_s_ + alpha * Kp_c_;
@@ -175,12 +175,16 @@ float SpeedPidController::speedPID(float error, double current_time)
     // PID terms with anti-windup
     float p_term = kp_ * error;
     integral_  += error * dt;
-    // max_integral_ = 40 / ki_;
+    // max_integral_ = 10 / ki_;
     // // std::cout << "Max Integral: " << max_integral_ << std::endl;
     // // Limit integral term to prevent windup
     // integral_   = std::clamp(integral_, -max_integral_, max_integral_);
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
+    std::cout << "ALPHA : " << alpha << std::endl;
+    std::cout << "kp : " << kp_ << " | ki : " << ki_ << " | kd : " << kd_ << std::endl;
+    std::cout << "p_term : " << p_term << " | i_term : " << i_term 
+              << " | d_term : " << d_term << std::endl;
 
     // float u_ff = a0_ + a1_ * desired_speed_;
     
@@ -197,7 +201,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     //           << " | Output:" << throttle << std::endl;
 
     last_time_ = current_time;
-    throttle = std::min(throttle, 45.0f);
+    throttle = std::min(throttle, 55.0f);
     return throttle;
 }
 
