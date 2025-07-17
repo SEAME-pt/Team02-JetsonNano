@@ -363,8 +363,8 @@ void PidController::autonomousControl()
 void PidController::speedDefinition(void) {
     double current_time = getCurrentTime();
     double threshold = 0.80;
-
     double active_speed = 0.0f;
+
     if (std::abs(current_time -  last_acc_speed_receive_) < threshold) {
         active_speed = acc_speed_;
     } else {
@@ -386,14 +386,22 @@ void PidController::speedDefinition(void) {
             desired_speed_ = 0.25;
         else 
             desired_speed_ = active_speed;
-    } else if (std::abs(current_time - last_stop_received_) < threshold) {
+    } else {
+        desired_speed_ = active_speed;
+    } 
+    
+    if (std::abs(current_time - last_stop_received_) < threshold) {
         if (current_speed_ != 0 && !stop_active_) {
             desired_speed_ = 0;
             stop_active_ = true;
         } else {
             desired_speed_ = active_speed;
         }
-    } else if (red_active_ || yellow_active_ || green_active_) {
+    } else {
+        stop_active_ = false;
+    }
+    
+    if (red_active_ || yellow_active_ || green_active_) {
         if (red_active_) {
             desired_speed_ = 0;
         }
@@ -421,7 +429,6 @@ void PidController::speedDefinition(void) {
     }
     else {
         desired_speed_ = active_speed;
-        stop_active_ = false;
     }
 }
 
