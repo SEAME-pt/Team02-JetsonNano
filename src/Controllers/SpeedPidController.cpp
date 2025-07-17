@@ -200,7 +200,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     //           << " | Output:" << throttle << std::endl;
 
     last_time_ = current_time;
-    throttle = std::min(throttle, 45.0f);
+    throttle = std::min(throttle, 55.0f);
     return throttle;
 }
 
