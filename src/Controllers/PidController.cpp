@@ -128,7 +128,6 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             } else if (value_str.find("Yield") != std::string::npos) {
                 last_yield_received_ = getCurrentTime();
             } else if (value_str.find("Stop") != std::string::npos) {
-                stop_active_ = true;
                 last_stop_received_ = getCurrentTime();
             } else if (value_str.find("Traffic Green") != std::string::npos) {
                 green_active_ = true;
@@ -387,17 +386,12 @@ void PidController::speedDefinition(void) {
             desired_speed_ = 0.25;
         else 
             desired_speed_ = active_speed;
-    } else if (stop_active_) {
-        static int stop_activated = 0;
-        if (current_speed_ != 0 && stop_activated != 1) {
+    } else if (std::abs(current_time - last_stop_received_) < threshold) {
+        if (current_speed_ != 0 && !stop_active_) {
             desired_speed_ = 0;
-            stop_activated = 1;
+            stop_active_ = true;
         } else {
-            if (std::abs(current_time - last_stop_received_) > threshold) {
-                stop_activated = 0;
-            }
             desired_speed_ = active_speed;
-            stop_active_ = false;
         }
     } else if (red_active_ || yellow_active_ || green_active_) {
         if (red_active_) {
@@ -427,6 +421,7 @@ void PidController::speedDefinition(void) {
     }
     else {
         desired_speed_ = active_speed;
+        stop_active_ = false;
     }
 }
 
