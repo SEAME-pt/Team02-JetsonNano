@@ -99,7 +99,7 @@ TrajectoryDefinition::~TrajectoryDefinition()
 void TrajectoryDefinition::initLocalEnv() {
     try {
         this->canBus     = new CAN();
-        this->canBus->init("/dev/spidev0.0");
+        this->canBus->init("can0");
     } catch (...) {
         std::cerr << "Error on initializing can" << std::endl;
         this->canBus = NULL;
