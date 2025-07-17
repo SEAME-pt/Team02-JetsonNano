@@ -178,7 +178,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // max_integral_ = 40 / ki_;
     // // std::cout << "Max Integral: " << max_integral_ << std::endl;
     // // Limit integral term to prevent windup
-    integral_   = std::clamp(integral_, -max_integral_, max_integral_);
+    // integral_   = std::clamp(integral_, -max_integral_, max_integral_);
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
 
