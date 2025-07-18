@@ -51,7 +51,7 @@ void ObstacleAvoidance::buildOccupancy(const cv::Mat& segmentationMask)
                     cv::Vec3b pixel = resizedMask.at<cv::Vec3b>(yy, xx);
                     
                     // Check if this is a non-road pixel
-                    if (!(pixel == cv::Vec3b(128, 64, 128)))
+                    if (!(pixel == cv::Vec3b(128, 64, 128)) && !(pixel == cv::Vec3b(0, 0, 0)))
                     {
                         anyNonRoad = true;
                         break;
@@ -86,46 +86,91 @@ bool ObstacleAvoidance::detectAllCollisions()
     bool foundCollision = false;
     
     // Iterate through all trajectory cells
-    for (const auto& trajCell : trajectoryCells_) {
-        int r = trajCell.first;
-        int c = trajCell.second;
+    // for (const auto& trajCell : trajectoryCells_) {
+    //     int r = trajCell.first;
+    //     int c = trajCell.second;
         
+    //     // Skip if in ignore zone
+    //     if (r >= ignoreZoneRowThreshold - proximityRadius_) {
+    //         continue;
+    //     }
+        
+        // // Check proximity around the trajectory point
+        // for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
+        //     for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
+        //         int checkR = r + dr;
+        //         int checkC = c + dc;
+                
+        //         // Bounds checking
+        //         if (checkR < 0 || checkR >= gridHeight_ || 
+        //             checkC < 0 || checkC >= gridWidth_)
+        //             continue;
+
+        //         searchedCollisionPoints_.emplace_back(checkR, checkC);
+                
+        //         // If a nearby cell is occupied, it's a collision
+        //         if (occupancy_[gridIndex(checkR, checkC)]) {
+        //             // Store this collision point
+        //             collisionPoints_.emplace_back(r, c);
+        //             obstaclePoints_.emplace_back(checkR, checkC);
+                    
+        //             // If this is the first collision found, set it as the primary one
+        //             if (!foundCollision) {
+        //                 collisionRow_ = r;
+        //                 collisionCol_ = c;
+        //                 gridToPixel(r, c, collisionX_, collisionY_);
+        //                 needBypass_ = true;
+        //                 foundCollision = true;
+        //             }
+        //         }
+        //     }
+        // }
+
+
+
+    // }
+    
+    // // Sort collision points by distance from bottom (closest to car first)
+    // std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
+    //          [](const auto& a, const auto& b) { return a.first > b.first; });
+    
+    // return foundCollision;
+
+    for (int r = 0; r < gridHeight_; r++) {
         // Skip if in ignore zone
-        if (r >= ignoreZoneRowThreshold - proximityRadius_) {
+        if (r >= ignoreZoneRowThreshold) {
             continue;
         }
         
-        // Check proximity around the trajectory point
-        for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-            for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
-                int checkR = r + dr;
-                int checkC = c + dc;
+        for (int c = 0; c < gridWidth_; c++) {
+            // If this cell is occupied, it's a collision point
+            if (occupancy_[gridIndex(r, c)]) {
+                obstaclePoints_.emplace_back(r, c);
                 
-                // Bounds checking
-                if (checkR < 0 || checkR >= gridHeight_ || 
-                    checkC < 0 || checkC >= gridWidth_)
-                    continue;
-
-                searchedCollisionPoints_.emplace_back(checkR, checkC);
-                
-                // If a nearby cell is occupied, it's a collision
-                if (occupancy_[gridIndex(checkR, checkC)]) {
-                    // Store this collision point
-                    collisionPoints_.emplace_back(r, c);
-                    obstaclePoints_.emplace_back(checkR, checkC);
-                    
-                    // If this is the first collision found, set it as the primary one
-                    if (!foundCollision) {
-                        collisionRow_ = r;
-                        collisionCol_ = c;
-                        gridToPixel(r, c, collisionX_, collisionY_);
-                        needBypass_ = true;
-                        foundCollision = true;
-                    }
+                // If this is the first collision found, set it as the primary one
+                if (!foundCollision) {
+                    collisionRow_ = r;
+                    collisionCol_ = c;
+                    gridToPixel(r, c, collisionX_, collisionY_);
+                    needBypass_ = true;
+                    foundCollision = true;
                 }
             }
         }
     }
+    
+    // For collision points, you could either:
+    // 1. Use all obstacle points as collision points
+    collisionPoints_ = obstaclePoints_;
+    
+    // 2. Or find trajectory cells that are affected (if you still want this logic)
+    // for (const auto& trajCell : trajectoryCells_) {
+    //     int r = trajCell.first;
+    //     int c = trajCell.second;
+    //     if (r < ignoreZoneRowThreshold && occupancy_[gridIndex(r, c)]) {
+    //         collisionPoints_.emplace_back(r, c);
+    //     }
+    // }
     
     // Sort collision points by distance from bottom (closest to car first)
     std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
