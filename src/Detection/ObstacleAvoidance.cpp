@@ -293,7 +293,44 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                 }
             }
 
-            // Check if new position is actually farther from obstacles AND not on an obstacle
+            // // Check if new position is actually farther from obstacles AND not on an obstacle
+            // if (closestObstacleCol != -1) {
+            //     // Distance from original position to closest obstacle
+            //     int originalDistance = std::abs(c - closestObstacleCol);
+                
+            //     // Distance from new position to closest obstacle
+            //     int newDistance = std::abs(newCol - closestObstacleCol);
+                
+            //     // Check if new position is occupied by an obstacle
+            //     bool newPositionOccupied = occupancy_[gridIndex(r, newCol)];
+                
+            //     // If new position is closer to obstacle OR on an obstacle, revert to original
+            //     if (newDistance < originalDistance || newPositionOccupied) {
+            //         if (newPositionOccupied) {
+            //             std::cout << "  Warning: New position is on an obstacle! Reverting to original." << std::endl;
+            //         } else {
+            //             std::cout << "  Warning: New position is closer to obstacle! Reverting to original." << std::endl;
+            //         }
+            //         newCol = c;  // Keep original column
+            //     }
+            // } else {
+            //     // Even if no nearby obstacles found, check if new position is occupied
+            //     if (occupancy_[gridIndex(r, newCol)]) {
+            //         std::cout << "  Warning: New position is on an obstacle! Reverting to original." << std::endl;
+            //         newCol = c;  // Keep original column
+            //     }
+            // }
+
+
+            // Check if new position is occupied by an obstacle - if so, don't update trajectory at all
+            bool newPositionOccupied = occupancy_[gridIndex(r, newCol)];
+            
+            if (newPositionOccupied) {
+                std::cout << "  Warning: New position is on an obstacle! No trajectory update." << std::endl;
+                continue; // Skip this trajectory adjustment entirely
+            }
+            
+            // Additional check: if we have nearby obstacles, ensure new position is actually better
             if (closestObstacleCol != -1) {
                 // Distance from original position to closest obstacle
                 int originalDistance = std::abs(c - closestObstacleCol);
@@ -301,26 +338,12 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                 // Distance from new position to closest obstacle
                 int newDistance = std::abs(newCol - closestObstacleCol);
                 
-                // Check if new position is occupied by an obstacle
-                bool newPositionOccupied = occupancy_[gridIndex(r, newCol)];
-                
-                // If new position is closer to obstacle OR on an obstacle, revert to original
-                if (newDistance < originalDistance || newPositionOccupied) {
-                    if (newPositionOccupied) {
-                        std::cout << "  Warning: New position is on an obstacle! Reverting to original." << std::endl;
-                    } else {
-                        std::cout << "  Warning: New position is closer to obstacle! Reverting to original." << std::endl;
-                    }
-                    newCol = c;  // Keep original column
-                }
-            } else {
-                // Even if no nearby obstacles found, check if new position is occupied
-                if (occupancy_[gridIndex(r, newCol)]) {
-                    std::cout << "  Warning: New position is on an obstacle! Reverting to original." << std::endl;
-                    newCol = c;  // Keep original column
+                // If new position is closer to obstacle, don't update
+                if (newDistance < originalDistance) {
+                    std::cout << "  Warning: New position is closer to obstacle! No trajectory update." << std::endl;
+                    continue; // Skip this trajectory adjustment entirely
                 }
             }
-
             
             // Convert new position back to pixel coordinates
             int newX, newY;
