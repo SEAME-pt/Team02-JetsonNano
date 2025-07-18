@@ -70,7 +70,7 @@ void BatterySensor::initCarlaEnv() {
 
 void BatterySensor::run(void)
 {
-    double prev_voltage = 0;
+    // double prev_voltage = 0;
     while (1)
     {
         usleep(100000);
