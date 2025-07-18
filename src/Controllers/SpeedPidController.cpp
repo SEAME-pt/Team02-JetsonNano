@@ -190,7 +190,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     
     // Combine feed-forward and PID
     float throttle = u_ff + p_term + i_term + d_term;
-    float throttle = p_term + i_term + d_term;
+    // float throttle = p_term + i_term + d_term;
     if (throttle >= 5)
     {
         throttle = std::max(throttle, a0_ - 5);
