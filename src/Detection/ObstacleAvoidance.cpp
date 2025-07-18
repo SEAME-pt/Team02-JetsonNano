@@ -140,7 +140,6 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
         return originalTrajectory;
     }
     
-    // Create a copy of the trajectory we'll modify
     std::vector<cv::Point> adjustedTrajectory = originalTrajectory;
     
     // Convert proximity radius from grid cells to pixels
@@ -150,7 +149,6 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     // First, group trajectory points by row for consistent adjustment within rows
     std::map<int, std::vector<std::pair<int, std::vector<size_t>>>> rowToColumnPoints;
     
-    // Create a direct mapping from grid cells to trajectory point indices
     for (size_t i = 0; i < originalTrajectory.size(); i++) {
         int r, c;
         if (pixelToGrid(originalTrajectory[i].x, originalTrajectory[i].y, r, c)) {

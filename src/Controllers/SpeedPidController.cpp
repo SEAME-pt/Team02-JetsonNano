@@ -331,7 +331,7 @@ void SpeedPidController::runThrottleCalibration()
     std::cout << "Starting throttle calibration..." << std::endl;
     
     // Throttle values to test
-    std::vector<double> throttle_values = {10, 15, 20, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
+    std::vector<double> throttle_values = {15, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
     
     const int STABILIZATION_TIME_MS = 5000;  // 5 seconds to stabilize
     const int LOGGING_TIME_MS = 3000;       // 3 seconds of data collection
