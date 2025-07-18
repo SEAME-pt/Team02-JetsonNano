@@ -51,12 +51,12 @@ private:
     // float Kp_c_ = 7.2154;
     // float tau_c_ = 0.3257;
     // float L_c_ = 0.1999;
-    float Kp_c_ = -93.7119;
+    float Kp_c_ = -21.29;
     float tau_c_ = 0.4741;
     float L_c_ = 0.2009;
 
-    float a0_ = 28.0f;
-    float a1_ = 0.21f;
+    float a0_ = -3.48f;
+    float a1_ = 0.24f;
     // // Saturation limits
     
     // PID constants
