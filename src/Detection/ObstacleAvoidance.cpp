@@ -82,59 +82,7 @@ bool ObstacleAvoidance::detectAllCollisions()
     // Calculate the starting point of the bottom "ignore zone"
     int ignoreZoneRowThreshold = static_cast<int>(frameHeight_ * 4.5 / 6.0) / cellSizePx_;
 
-    // Track whether we found any collisions
     bool foundCollision = false;
-    
-    // Iterate through all trajectory cells
-    // for (const auto& trajCell : trajectoryCells_) {
-    //     int r = trajCell.first;
-    //     int c = trajCell.second;
-        
-    //     // Skip if in ignore zone
-    //     if (r >= ignoreZoneRowThreshold - proximityRadius_) {
-    //         continue;
-    //     }
-        
-        // // Check proximity around the trajectory point
-        // for (int dr = -proximityRadius_; dr <= proximityRadius_; dr++) {
-        //     for (int dc = -proximityRadius_; dc <= proximityRadius_; dc++) {
-        //         int checkR = r + dr;
-        //         int checkC = c + dc;
-                
-        //         // Bounds checking
-        //         if (checkR < 0 || checkR >= gridHeight_ || 
-        //             checkC < 0 || checkC >= gridWidth_)
-        //             continue;
-
-        //         searchedCollisionPoints_.emplace_back(checkR, checkC);
-                
-        //         // If a nearby cell is occupied, it's a collision
-        //         if (occupancy_[gridIndex(checkR, checkC)]) {
-        //             // Store this collision point
-        //             collisionPoints_.emplace_back(r, c);
-        //             obstaclePoints_.emplace_back(checkR, checkC);
-                    
-        //             // If this is the first collision found, set it as the primary one
-        //             if (!foundCollision) {
-        //                 collisionRow_ = r;
-        //                 collisionCol_ = c;
-        //                 gridToPixel(r, c, collisionX_, collisionY_);
-        //                 needBypass_ = true;
-        //                 foundCollision = true;
-        //             }
-        //         }
-        //     }
-        // }
-
-
-
-    // }
-    
-    // // Sort collision points by distance from bottom (closest to car first)
-    // std::sort(collisionPoints_.begin(), collisionPoints_.end(), 
-    //          [](const auto& a, const auto& b) { return a.first > b.first; });
-    
-    // return foundCollision;
 
     for (int r = 0; r < gridHeight_; r++) {
         // Skip if in ignore zone
@@ -189,7 +137,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     
     // Convert proximity radius from grid cells to pixels
     safeDistancePx_ = proximityRadius_ * cellSizePx_;
-    int safeDistanceCells = proximityRadius_ + 8; // Add safety margin
+    int safeDistanceCells = proximityRadius_ + 5; // Add safety margin
     
     // First, group trajectory points by row for consistent adjustment within rows
     std::map<int, std::vector<std::pair<int, std::vector<size_t>>>> rowToColumnPoints;

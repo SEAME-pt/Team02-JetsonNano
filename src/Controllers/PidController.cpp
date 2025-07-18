@@ -372,25 +372,25 @@ void PidController::speedDefinition(void) {
     }
 
     if (std::abs(current_time -  last_danger_received_) < threshold) {
-        if (active_speed > 0.40)
-            desired_speed_ = 0.40;
+        if (active_speed > 0.38)
+            desired_speed_ = 0.38;
         else 
             desired_speed_ = active_speed;
     } else if (std::abs(current_time - last_crosswalk_received_) < threshold) {
-        if (active_speed > 0.40)
-            desired_speed_ = 0.40;
+        if (active_speed > 0.38)
+            desired_speed_ = 0.38;
         else 
             desired_speed_ = active_speed;
     } else if (std::abs(current_time - last_yield_received_) < threshold) {
-        if (active_speed > 0.40)
-            desired_speed_ = 0.40;
+        if (active_speed > 0.38)
+            desired_speed_ = 0.38;
         else 
             desired_speed_ = active_speed;
     } else if (std::abs(current_time - last_red_received_) < red_threshold) {
         desired_speed_ = 0;
     } else if (std::abs(current_time - last_yellow_received_ < threshold)) {
-        if (active_speed > 0.25)
-            desired_speed_ = 0.25;
+        if (active_speed > 0.35)
+            desired_speed_ = 0.35;
         else 
             desired_speed_ = active_speed;
     } else if (std::abs(current_time - last_green_received_) < threshold) {
