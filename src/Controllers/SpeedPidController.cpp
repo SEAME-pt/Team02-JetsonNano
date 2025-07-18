@@ -223,17 +223,17 @@ void SpeedPidController::run()
                 integral_ = 0;
                 last_time_ = getCurrentTime();
             } else {
-                double current_time = getCurrentTime();
-                float error = desired_speed_ - current_speed_;
-                double throttle = speedPID(error, current_time);
-                throttle = std::max(0.0, throttle);
-                std::cout << "Current Speed: " << current_speed_ 
-                          << " | Desired Speed: " << desired_speed_ 
-                          << " | Throttle: " << throttle << std::endl;
-                publisher_->publishSpeed(throttle);
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                            static_cast<int>(fixed_delta_time_ * 1000)));
-                // runThrottleCalibration();
+                // double current_time = getCurrentTime();
+                // float error = desired_speed_ - current_speed_;
+                // double throttle = speedPID(error, current_time);
+                // throttle = std::max(0.0, throttle);
+                // std::cout << "Current Speed: " << current_speed_ 
+                //           << " | Desired Speed: " << desired_speed_ 
+                //           << " | Throttle: " << throttle << std::endl;
+                // publisher_->publishSpeed(throttle);
+                // std::this_thread::sleep_for(std::chrono::milliseconds(
+                //             static_cast<int>(fixed_delta_time_ * 1000)));
+                runThrottleCalibration();
             }
         // }
     }
