@@ -341,7 +341,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                 // If new position is closer to obstacle, don't update
                 if (newDistance < originalDistance) {
                     std::cout << "  Warning: New position is closer to obstacle! No trajectory update." << std::endl;
-                    return originalTrajectory; // Skip this trajectory adjustment entirely
+                    continue; // Skip this trajectory adjustment entirely
                 }
             }
             
