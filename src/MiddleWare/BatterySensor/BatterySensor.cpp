@@ -77,24 +77,26 @@ void BatterySensor::run(void)
 
         if (this->batteryINA) {
             double voltage = this->batteryINA->readVoltage(0x02);
-            if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.04)
-                voltage = prev_voltage;
+            // if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.04)
+            //     voltage = prev_voltage;
     
-            float alpha            = 0.01f;
-            double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
+            // float alpha            = 0.01f;
+            // double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
 
             if (this->canBus) {
                 uint8_t value[8];
-                memcpy(value, &smoothedVoltage, sizeof(value));
+                memcpy(value, &voltage, sizeof(value));
+                // memcpy(value, &smoothedVoltage, sizeof(value));
 
                 this->canBus->writeMessage(0x02, value, sizeof(value));
             }
 
-            float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+            float percentage = ((voltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+            // float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
             percentage       = std::min(100.0f, std::max(0.0f, percentage));
             std::string battery_str = std::to_string(percentage);
             publisher_->publishStateOfCharge(std::stof(battery_str));
-            prev_voltage = voltage;
+            // prev_voltage = voltage;
         }
     }
     return;
