@@ -1,5 +1,6 @@
 #include "BatterySensor.hpp"
 #include <sys/stat.h>
+#include <cmath>
 
 BatterySensor::BatterySensor(std::shared_ptr<SensoringPublisher> publisher)
 {   
