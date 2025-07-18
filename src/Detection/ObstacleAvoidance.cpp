@@ -144,7 +144,7 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
     
     // Convert proximity radius from grid cells to pixels
     safeDistancePx_ = proximityRadius_ * cellSizePx_;
-    int safeDistanceCells = proximityRadius_ + 1; // Add safety margin
+    int safeDistanceCells = proximityRadius_ + 8; // Add safety margin
     
     // First, group trajectory points by row for consistent adjustment within rows
     std::map<int, std::vector<std::pair<int, std::vector<size_t>>>> rowToColumnPoints;
