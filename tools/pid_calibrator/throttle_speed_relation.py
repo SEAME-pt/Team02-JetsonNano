@@ -41,8 +41,8 @@ def analyze_throttle_speed_relationship():
         
         # Filter out outliers and zero speeds (motor stopped)
         clean_data = df[(df['speed'] >= lower_bound) & 
-                       (df['speed'] <= upper_bound)]
-                    #    (df['speed'] > 0)]
+                       (df['speed'] <= upper_bound) &
+                       (df['speed'] > 0)]
         
         if len(clean_data) > 0:
             # Calculate steady-state speed (mean of last 50% of data points)

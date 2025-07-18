@@ -199,8 +199,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Feed-forward coefficients
-A0 = 7.16  # throttle units at zero speed
-A1 = 0.13   # throttle units per RPM
+A0 = 28  # throttle units at zero speed
+A1 = 0.21   # throttle units per RPM
 
 
 def load_data(filepath):

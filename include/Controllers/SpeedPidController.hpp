@@ -52,9 +52,8 @@ private:
     float tau_c_ = 0.3257;
     float L_c_ = 0.1999;
 
-    float a0_ = 20.0f;
-    // float a0_ = 14.93f;
-    // float a1_ = 0.130f;
+    float a0_ = 28.0f;
+    float a1_ = 0.21f;
     // // Saturation limits
     
     // PID constants
