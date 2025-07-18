@@ -185,7 +185,7 @@ float SpeedPidController::speedPID(float error, double current_time)
     // integral_   = std::clamp(integral_, -max_integral_, max_integral_);
     float i_term = ki_ * integral_;
     float d_term = kd_ * ((error - prev_error_) / dt);
-    std::cout << "ALPHA : " << alpha << std::endl;
+    // std::cout << "ALPHA : " << alpha << std::endl;
     std::cout << "kp : " << kp_ << " | ki : " << ki_ << " | kd : " << kd_ << std::endl;
     std::cout << "p_term : " << p_term << " | i_term : " << i_term 
               << " | d_term : " << d_term << std::endl;
