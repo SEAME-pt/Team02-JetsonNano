@@ -150,6 +150,8 @@ class TrajectoryDefinition
     bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
 
     void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+    cv::Point findClosestPointAtY(const std::vector<cv::Point>& curve, int targetY);
+
 
     void mpcDebug(void);
     void setAutonomousDriveState(std::string activeAutonomyLevel);
