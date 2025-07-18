@@ -202,7 +202,6 @@ std::vector<cv::Point> ObstacleAvoidance::adjustTrajectory(const std::vector<cv:
                 }
             }
             
-            // Skip if no nearby obstacles
             if (nearbyObstacleColumns.empty()) {
                 continue;
             }
