@@ -70,33 +70,37 @@ void BatterySensor::initCarlaEnv() {
 
 void BatterySensor::run(void)
 {
-    // double prev_voltage = 0;
+    double voltage_ema = 0.0;
+    const double alpha = 0.1;
+    float last_published_percentage = -1.0f;
+    const float publish_threshold = 1.0f;
     while (1)
     {
         usleep(100000);
 
         if (this->batteryINA) {
             double voltage = this->batteryINA->readVoltage(0x02);
-            // if (prev_voltage > 0 && abs(prev_voltage - voltage) > 0.04)
-            //     voltage = prev_voltage;
-    
-            // float alpha            = 0.01f;
-            // double smoothedVoltage = alpha * voltage + (1 - alpha) * voltage;
+
+            // Exponential moving average
+            if (voltage_ema == 0.0)
+                voltage_ema = voltage;
+            else
+                voltage_ema = alpha * voltage + (1 - alpha) * voltage_ema;
 
             if (this->canBus) {
                 uint8_t value[8];
-                memcpy(value, &voltage, sizeof(value));
-                // memcpy(value, &smoothedVoltage, sizeof(value));
-
+                memcpy(value, &voltage_ema, sizeof(value));
                 this->canBus->writeMessage(0x02, value, sizeof(value));
             }
 
-            float percentage = ((voltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
-            // float percentage = ((smoothedVoltage - 9.5f) / (12.6f - 9.5f)) * 100.0f;
-            percentage       = std::min(100.0f, std::max(0.0f, percentage));
-            std::string battery_str = std::to_string(percentage);
-            publisher_->publishStateOfCharge(std::stof(battery_str));
-            // prev_voltage = voltage;
+            float percentage = ((voltage_ema - 9.5f) / (12.6f - 9.5f)) * 100.0f;
+            percentage = std::min(100.0f, std::max(0.0f, percentage));
+
+            // Only publish if change is significant
+            if (fabs(percentage - last_published_percentage) > publish_threshold) {
+                last_published_percentage = percentage;
+                publisher_->publishStateOfCharge(percentage);
+            }
         }
     }
     return;
