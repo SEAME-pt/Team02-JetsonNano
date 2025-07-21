@@ -731,8 +731,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     std::vector<cv::Point>& rightCurve) {
     if (rightCurve.empty())
     {
-        rightCurve = kalmanFilter->predictRightLaneCurve(frameHeight_, frameWidth_);
-        checkPredicedCurve(rightCurve, leftCurve, true);
+        predictCurve(rightCurve, leftCurve, true);
         
         kalmanFilter->updateLeftLaneFilter(leftCurve);
 
@@ -745,8 +744,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     }
     else
     {
-        leftCurve = kalmanFilter->predictLeftLaneCurve(frameHeight_, frameWidth_);
-        checkPredicedCurve(leftCurve, rightCurve, false);
+        predictCurve(leftCurve, rightCurve, false);
         
         kalmanFilter->updateRightLaneFilter(rightCurve);
 
@@ -825,87 +823,55 @@ void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& 
     }
 }
 
-void TrajectoryDefinition::checkPredicedCurve(
+void TrajectoryDefinition::predictCurve(
     std::vector<cv::Point>& predictedCurve,
     const std::vector<cv::Point>& realLane, bool isLeftLane)
 {
     float expectedWidth = calculateHistoricalLaneWidth();
-    float minDistance = calculateHistoricalLaneWidth() * 0.90;
-    float maxDistance = calculateHistoricalLaneWidth() * 1.10;
 
-    float realDistance = calculateLaneDistance(realLane, predictedCurve);
+    predictedCurve.reserve(realLane.size());
 
-    float avgX = 0.0f;
-    for (const auto& pt : predictedCurve)
-        avgX += pt.x;
-    avgX /= predictedCurve.size();
+    std::vector<cv::Point> sortedRealLane = realLane;
+    std::sort(sortedRealLane.begin(), sortedRealLane.end(), [](const cv::Point& a, const cv::Point& b) {
+        return a.y > b.y;
+    });
 
-    float avgXRealLane = 0.0f;
-    for (const auto& pt : realLane)
-        avgXRealLane += pt.x;
-    avgXRealLane /= realLane.size();
-
-    bool correctSide = true;
-
-    if (isLeftLane) {
-        if (avgXRealLane > avgX)
-            correctSide = false;
-    } else {
-        if (avgXRealLane < avgX)
-            correctSide = false;
-    }
-    if (realDistance < minDistance || realDistance > maxDistance || !correctSide)
+    for (size_t i = 0; i < sortedRealLane.size(); ++i)
     {
-        // cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
-        //             cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
-        //             cv::Scalar(255, 255, 0), 1);
+        cv::Point2f pt = sortedRealLane[i];
 
-        std::cout << "Invalid curve prediction - using offset" << std::endl;
-        predictedCurve.clear();
-        predictedCurve.reserve(realLane.size());
+        cv::Point2f dir;
+        if (i == 0)
+            dir = cv::Point2f(sortedRealLane[i + 1]) - pt;
+        else if (i == sortedRealLane.size() - 1)
+            dir = pt - cv::Point2f(sortedRealLane[i - 1]);
+        else
+            dir = cv::Point2f(sortedRealLane[i + 1]) - cv::Point2f(sortedRealLane[i - 1]);
 
-        std::vector<cv::Point> sortedRealLane = realLane;
-        std::sort(sortedRealLane.begin(), sortedRealLane.end(), [](const cv::Point& a, const cv::Point& b) {
-            return a.y > b.y;
-        });
+        float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (len > 1e-3)
+            dir /= len;
+        else
+            dir = cv::Point2f(0, 1); // Default vertical
 
-        for (size_t i = 0; i < sortedRealLane.size(); ++i)
-        {
-            cv::Point2f pt = sortedRealLane[i];
+        cv::Point2f normal1(-dir.y, dir.x);
+        cv::Point2f normal2(dir.y, -dir.x);
 
-            cv::Point2f dir;
-            if (i == 0)
-                dir = cv::Point2f(sortedRealLane[i + 1]) - pt;
-            else if (i == sortedRealLane.size() - 1)
-                dir = pt - cv::Point2f(sortedRealLane[i - 1]);
-            else
-                dir = cv::Point2f(sortedRealLane[i + 1]) - cv::Point2f(sortedRealLane[i - 1]);
+        float offset = expectedWidth;
+        cv::Point2f candidate1 = pt + normal1 * offset;
+        cv::Point2f candidate2 = pt + normal2 * offset;
 
-            float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-            if (len > 1e-3)
-                dir /= len;
-            else
-                dir = cv::Point2f(0, 1); // Default vertical
-
-            cv::Point2f normal1(-dir.y, dir.x);
-            cv::Point2f normal2(dir.y, -dir.x);
-
-            float offset = expectedWidth;
-            cv::Point2f candidate1 = pt + normal1 * offset;
-            cv::Point2f candidate2 = pt + normal2 * offset;
-
-            cv::Point2f newPt;
-            if (isLeftLane) {
-                newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
-            } else {
-                newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
-            }
-
-            predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
+        cv::Point2f newPt;
+        if (isLeftLane) {
+            newPt = (candidate1.x > pt.x) ? candidate1 : candidate2;
+        } else {
+            newPt = (candidate1.x < pt.x) ? candidate1 : candidate2;
         }
 
-        defineLanePolyline(predictedCurve);
+        predictedCurve.push_back(cv::Point(static_cast<int>(newPt.x), static_cast<int>(newPt.y)));
+
     }
+    defineLanePolyline(predictedCurve);
 }
 
 void TrajectoryDefinition::defineTrajectoryCurve(
