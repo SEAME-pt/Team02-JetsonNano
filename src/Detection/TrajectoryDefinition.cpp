@@ -1438,7 +1438,7 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask, std::ve
             }
 
             // Sample point at 30% of height from bottom
-            int targetY = frameHeight_ - (0.75 * frameHeight_);
+            int targetY = frameHeight_ - (0.65 * frameHeight_);
             
             // Find closest point in adjusted trajectory at target Y
             cv::Point adjustedPoint = findClosestPointAtY(adjustedTrajectory, targetY);

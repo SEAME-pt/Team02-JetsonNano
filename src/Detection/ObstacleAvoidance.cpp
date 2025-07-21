@@ -378,7 +378,7 @@ void ObstacleAvoidance::smoothTrajectory(std::vector<cv::Point>& trajectory)
     lastAdjustedIdx = firstAdjustedIdx + lookAhead;
     
     // Create pre-transition point (start curving earlier)
-    int preTransitionIdx = std::max(0, firstAdjustedIdx - 10);
+    int preTransitionIdx = std::max(0, firstAdjustedIdx - 5);
     
     // Create post-transition point
     int postTransitionIdx = std::min(static_cast<int>(trajectory.size()) - 1, lastAdjustedIdx + 5);
