@@ -661,87 +661,6 @@ void TrajectoryDefinition::clusterObjMask(const cv::Mat& classMask, int kernelSi
     cv::morphologyEx(classMask, classMask, cv::MORPH_CLOSE, horizontalKernel);
 }
 
-void TrajectoryDefinition::mergeLaneComponents(
-    std::vector<std::vector<cv::Point>>& lanePolylines, float maxHorizontalDist,
-    float maxVerticalGap)
-{
-    if (lanePolylines.size() <= 1)
-        return;
-
-    bool mergePerformed = true;
-     while (mergePerformed)
-    {
-        mergePerformed = false;
-
-        for (size_t i = 0; i < lanePolylines.size() && !mergePerformed; i++)
-        {
-            for (size_t j = i + 1; j < lanePolylines.size() && !mergePerformed; j++)
-            {
-                float minDistance = FLT_MAX;
-                cv::Point closestPt1, closestPt2;
-                
-                for (const auto& pt1 : lanePolylines[i]) {
-                    for (const auto& pt2 : lanePolylines[j]) {
-                        float dist = cv::norm(pt1 - pt2);
-                        if (dist < minDistance) {
-                            minDistance = dist;
-                            closestPt1 = pt1;
-                            closestPt2 = pt2;
-                        }
-                    }
-                }
-                
-                float avgX1 = 0, avgX2 = 0;
-                int minY1 = INT_MAX, maxY1 = 0;
-                int minY2 = INT_MAX, maxY2 = 0;
-
-                for (const auto& pt : lanePolylines[i])
-                {
-                    minY1 = std::min(minY1, pt.y);
-                    maxY1 = std::max(maxY1, pt.y);
-                    avgX1 += pt.x;
-                }
-                avgX1 /= lanePolylines[i].size();
-
-                for (const auto& pt : lanePolylines[j])
-                {
-                    minY2 = std::min(minY2, pt.y);
-                    maxY2 = std::max(maxY2, pt.y);
-                    avgX2 += pt.x;
-                }
-                avgX2 /= lanePolylines[j].size();
-                
-                float directDistance = minDistance;
-                
-                bool similarDirection = true;
-                if (!lanePolylines[i].empty() && lanePolylines[i].size() > 1 &&
-                    !lanePolylines[j].empty() && lanePolylines[j].size() > 1)
-                {
-                    cv::Point dir1 = lanePolylines[i].back() - lanePolylines[i].front();
-
-                    cv::Point dir2 = lanePolylines[j].back() - lanePolylines[j].front();
-
-                    float dotProduct = dir1.x * dir2.x + dir1.y * dir2.y;
-                    similarDirection = (dotProduct > 0); // Positive dot product means similar direction
-                }
-                
-                float combinedThreshold = std::sqrt(maxHorizontalDist * maxHorizontalDist + 
-                                                  maxVerticalGap * maxVerticalGap);
-
-                if (directDistance <= combinedThreshold && similarDirection)
-                {
-                    lanePolylines[i].insert(lanePolylines[i].end(),
-                                           lanePolylines[j].begin(),
-                                           lanePolylines[j].end());
-                    lanePolylines.erase(lanePolylines.begin() + j);
-                    mergePerformed = true;
-                    break;
-                }
-            }
-        }
-    }
-}
-
 void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
     std::vector<cv::Point>& rightCurve) {
     if (rightCurve.empty())
@@ -902,7 +821,6 @@ void TrajectoryDefinition::defineTrajectoryCurve(
         int midX = (leftCurve[leftIdx].x + rightCurve[rightIdx].x) / 2;
         int midY = (leftCurve[leftIdx].y + rightCurve[rightIdx].y) / 2;
         midCurve.push_back(cv::Point(midX, midY));
-
     }
 }
 
