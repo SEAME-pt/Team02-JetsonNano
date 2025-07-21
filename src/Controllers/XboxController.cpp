@@ -42,7 +42,9 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
             if (autonomyEnvEnable.find("true") != std::string::npos)
             {
                 autonomyEnvEnable_ = true;
-            } else {
+            }
+            else
+            {
                 autonomyEnvEnable_ = false;
             }
         },
@@ -93,7 +95,7 @@ int XboxController::getAxisCount(void)
 int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
-    
+
     if (axis < 3)
     {
         if (event.number % 2 == 0)
@@ -171,41 +173,50 @@ void XboxController::run()
                         }
                         case BUTTON_START:
                         {
-                            if (sae_4 == true) {
+                            if (sae_4 == true)
+                            {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 std::cout << "SAE_0 Driving" << std::endl;
                                 sae_4 = false;
-                            } else {
-                                if (autonomyEnvEnable_) {
-                                    publisher_->publishActiveAutonomyLevel("SAE_4");
+                            }
+                            else
+                            {
+                                if (autonomyEnvEnable_)
+                                {
+                                    publisher_->publishActiveAutonomyLevel(
+                                        "SAE_4");
                                     std::cout << "SAE_4 Driving" << std::endl;
-                                    sae_4 = true;
-                                    sae_3 = false;
-                                    sae_2 = false;
+                                    sae_4      = true;
+                                    sae_3      = false;
+                                    sae_2      = false;
                                     sae_1_LKAS = false;
-                                    sae_1_ACC = false;
-                                } else {
-                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                    sae_1_ACC  = false;
+                                }
+                                else
+                                {
+                                    std::cout << "Autonomy Env not ready"
+                                              << std::endl;
                                 }
                             }
                             break;
                         }
                         case BUTTON_SELECT:
                         {
-                            pidEnable_.load() ? pidEnable_.store(false) : pidEnable_.store(true);
+                            pidEnable_.load() ? pidEnable_.store(false)
+                                              : pidEnable_.store(true);
                             std::cout << "Control Type Switch" << std::endl;
                             break;
                         }
-                        
+
                         default:
                             break;
                     }
-                } 
+                }
                 break;
             }
             case JS_EVENT_AXIS:
             {
-                axis = this->getAxisState();
+                axis   = this->getAxisState();
                 button = this->event.number;
                 switch (axis)
                 {
@@ -234,7 +245,8 @@ void XboxController::run()
                     {
                         float direction = 90 + this->axes[axis]->x * 90 / 32767;
 
-                        if (sae_2 || sae_3 || sae_4) {
+                        if (sae_2 || sae_3 || sae_4)
+                        {
                             publisher_->publishActiveAutonomyLevel("SAE_0");
                             sae_2 = false;
                             sae_3 = false;
@@ -248,42 +260,63 @@ void XboxController::run()
                     default:
                         break;
                 }
-                switch (button) 
+                switch (button)
                 {
                     case (BUTTON_CLICK_LEFT_RIGHT):
                     {
-                        if (this->event.value == 32767) {
-                            if (sae_1_LKAS == true) {
+                        if (this->event.value == 32767)
+                        {
+                            if (sae_1_LKAS == true)
+                            {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_LKAS = false;
-                            } else {
-                                if (autonomyEnvEnable_) {
-                                    publisher_->publishActiveAutonomyLevel("SAE_1_LKAS");
-                                    std::cout << "SAE_1_LKAS Driving" << std::endl;
-                                    sae_4 = false;
-                                    sae_3 = false;
-                                    sae_2 = false;
+                            }
+                            else
+                            {
+                                if (autonomyEnvEnable_)
+                                {
+                                    publisher_->publishActiveAutonomyLevel(
+                                        "SAE_1_LKAS");
+                                    std::cout << "SAE_1_LKAS Driving"
+                                              << std::endl;
+                                    sae_4      = false;
+                                    sae_3      = false;
+                                    sae_2      = false;
                                     sae_1_LKAS = true;
-                                    sae_1_ACC = false;
-                                } else {
-                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                    sae_1_ACC  = false;
+                                }
+                                else
+                                {
+                                    std::cout << "Autonomy Env not ready"
+                                              << std::endl;
                                 }
                             }
-                        } else if (this->event.value == -32767) {
-                            if (sae_1_ACC == true) {
+                        }
+                        else if (this->event.value == -32767)
+                        {
+                            if (sae_1_ACC == true)
+                            {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_1_ACC = false;
-                            } else {
-                                if (autonomyEnvEnable_) {
-                                    publisher_->publishActiveAutonomyLevel("SAE_1_ACC");
-                                    std::cout << "SAE_1_ACC Driving" << std::endl;
-                                    sae_4 = false;
-                                    sae_3 = false;
-                                    sae_2 = false;
+                            }
+                            else
+                            {
+                                if (autonomyEnvEnable_)
+                                {
+                                    publisher_->publishActiveAutonomyLevel(
+                                        "SAE_1_ACC");
+                                    std::cout << "SAE_1_ACC Driving"
+                                              << std::endl;
+                                    sae_4      = false;
+                                    sae_3      = false;
+                                    sae_2      = false;
                                     sae_1_LKAS = false;
-                                    sae_1_ACC = true;
-                                } else {
-                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                    sae_1_ACC  = true;
+                                }
+                                else
+                                {
+                                    std::cout << "Autonomy Env not ready"
+                                              << std::endl;
                                 }
                             }
                         }
@@ -292,42 +325,61 @@ void XboxController::run()
                     }
                     case (BUTTON_CLICK_UP_DOWN):
                     {
-                        if (this->event.value == 32767) {
-                            if (sae_2 == true) {
+                        if (this->event.value == 32767)
+                        {
+                            if (sae_2 == true)
+                            {
                                 publisher_->publishActiveAutonomyLevel("SAE_0");
                                 sae_2 = false;
-                            } else {
-                                if (autonomyEnvEnable_) {
-                                    publisher_->publishActiveAutonomyLevel("SAE_2");
-                                    std::cout << "SAE_2 Driving" << std::endl;
-                                    sae_4 = false;
-                                    sae_3 = false;
-                                    sae_2 = true;
-                                    sae_1_LKAS = false;
-                                    sae_1_ACC = false;
-                                } else {
-                                    std::cout << "Autonomy Env not ready" << std::endl;
-                                }
                             }
-                        } else if (this->event.value == -32767) {
-                            if (sae_3 == true) {
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
-                                sae_3 = false;
-                            } else {
-                                if (autonomyEnvEnable_) {
-                                    publisher_->publishActiveAutonomyLevel("SAE_3");
-                                    std::cout << "SAE_3 Driving" << std::endl;
-                                    sae_4 = false;
-                                    sae_3 = true;
-                                    sae_2 = false;
+                            else
+                            {
+                                if (autonomyEnvEnable_)
+                                {
+                                    publisher_->publishActiveAutonomyLevel(
+                                        "SAE_2");
+                                    std::cout << "SAE_2 Driving" << std::endl;
+                                    sae_4      = false;
+                                    sae_3      = false;
+                                    sae_2      = true;
                                     sae_1_LKAS = false;
-                                    sae_1_ACC = false;
-                                } else {
-                                    std::cout << "Autonomy Env not ready" << std::endl;
+                                    sae_1_ACC  = false;
+                                }
+                                else
+                                {
+                                    std::cout << "Autonomy Env not ready"
+                                              << std::endl;
                                 }
                             }
                         }
-                        
+                        else if (this->event.value == -32767)
+                        {
+                            if (sae_3 == true)
+                            {
+                                publisher_->publishActiveAutonomyLevel("SAE_0");
+                                sae_3 = false;
+                            }
+                            else
+                            {
+                                if (autonomyEnvEnable_)
+                                {
+                                    publisher_->publishActiveAutonomyLevel(
+                                        "SAE_3");
+                                    std::cout << "SAE_3 Driving" << std::endl;
+                                    sae_4      = false;
+                                    sae_3      = true;
+                                    sae_2      = false;
+                                    sae_1_LKAS = false;
+                                    sae_1_ACC  = false;
+                                }
+                                else
+                                {
+                                    std::cout << "Autonomy Env not ready"
+                                              << std::endl;
+                                }
+                            }
+                        }
+
                         break;
                     }
                     default:

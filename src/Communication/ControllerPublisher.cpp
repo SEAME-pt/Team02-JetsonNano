@@ -45,10 +45,6 @@ ControllerPublisher::ControllerPublisher(
 
     SAElevelError_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/ADAS/SAELevelAttributionError")));
-
-    
-
-    
 }
 
 void ControllerPublisher::publishSpeed(float speed)
@@ -205,8 +201,7 @@ void ControllerPublisher::publishActiveAutonomyLevel(std::string level)
     activeAutonomyLevel_pub->put(std::move(buf));
 }
 
-void ControllerPublisher::publishMpcTrajectory(
-    const std::string trajectory)
+void ControllerPublisher::publishMpcTrajectory(const std::string trajectory)
 {
     std::string value_str = trajectory;
     const auto len        = value_str.size() + 1;
@@ -230,7 +225,7 @@ void ControllerPublisher::publishDesiredSpeed(float speed)
 
 void ControllerPublisher::publishLaneAlert(std::string lane)
 {
-    const auto len        = lane.size() + 1;
+    const auto len = lane.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
@@ -240,7 +235,7 @@ void ControllerPublisher::publishLaneAlert(std::string lane)
 
 void ControllerPublisher::publishSAELevelAttributionError(std::string level)
 {
-    const auto len        = level.size() + 1;
+    const auto len = level.size() + 1;
     auto alloc_result =
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));

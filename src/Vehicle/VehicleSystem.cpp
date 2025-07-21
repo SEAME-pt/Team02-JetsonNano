@@ -23,8 +23,7 @@ VehicleSystem::VehicleSystem()
     vehicle_.get_mutable_chassis().get_mutable_steering_wheel().addObserver(
         hardware_observer);
 
-    vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, session);
+    vss_subscriber_ = std::make_unique<VSSSubscriber>(vehicle_, session);
 
     vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
 }
@@ -52,8 +51,7 @@ VehicleSystem::VehicleSystem(const std::string& configFile)
     vehicle_.get_mutable_chassis().get_mutable_steering_wheel().addObserver(
         hardware_observer);
 
-    vss_subscriber_ = std::make_unique<VSSSubscriber>(
-        vehicle_, session);
+    vss_subscriber_ = std::make_unique<VSSSubscriber>(vehicle_, session);
 
     vss_queryable_ = std::make_unique<VSSQueryable>(vehicle_, session);
 }

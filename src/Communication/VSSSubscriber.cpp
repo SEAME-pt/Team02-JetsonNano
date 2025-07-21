@@ -4,7 +4,7 @@ VSSSubscriber::VSSSubscriber(Vehicle& vehicle,
                              std::shared_ptr<zenoh::Session> session)
     : vehicle_(vehicle)
 {
-    session_   = session;
+    session_ = session;
 
     setupSubscriptions();
 }

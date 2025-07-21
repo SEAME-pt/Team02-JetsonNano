@@ -2,7 +2,7 @@
 #include <iostream>
 #include <future>
 #include <chrono>
-#include <thread> 
+#include <thread>
 
 using namespace cv;
 using namespace std;
@@ -17,20 +17,25 @@ Camera::~Camera()
     stopCapture();
 }
 
-void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibrationFile) {
+void Camera::initLocalEnv(const std::string& pipeline,
+                          const std::string& calibrationFile)
+{
     useZenohSubscription = false;
 
     cap.open(pipeline, cv::CAP_GSTREAMER);
-    
-    if (!cap.isOpened()) {
-        std::cerr << "Failed to open camera with pipeline: " << pipeline << std::endl;
+
+    if (!cap.isOpened())
+    {
+        std::cerr << "Failed to open camera with pipeline: " << pipeline
+                  << std::endl;
         throw std::runtime_error("Failed to open camera");
     }
 
     cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
     cap >> currentFrame;
-    if (currentFrame.empty()) {
+    if (currentFrame.empty())
+    {
         cv::destroyAllWindows();
         throw std::runtime_error("Error reading initial frame");
     }
@@ -38,16 +43,18 @@ void Camera::initLocalEnv(const std::string& pipeline, const std::string& calibr
     this->setCalibrationParameters(calibrationFile);
 
     Size imageSize = currentFrame.size();
-    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(),
-                            cameraMatrix, imageSize, CV_16SC2, map1, map2);
+    initUndistortRectifyMap(cameraMatrix, distCoeffs, Mat(), cameraMatrix,
+                            imageSize, CV_16SC2, map1, map2);
 }
 
-void Camera::initLVideoTestEnv(const std::string& video) {
+void Camera::initLVideoTestEnv(const std::string& video)
+{
     useZenohSubscription = false;
 
     cap.open(video);
-    
-    if (!cap.isOpened()) {
+
+    if (!cap.isOpened())
+    {
         std::cerr << "Failed to open video: " << video << std::endl;
         throw std::runtime_error("Failed to open camera");
     }
@@ -58,13 +65,15 @@ void Camera::initLVideoTestEnv(const std::string& video) {
     cap.set(cv::CAP_PROP_FPS, 1);
 
     cap >> currentFrame;
-    if (currentFrame.empty()) {
+    if (currentFrame.empty())
+    {
         cv::destroyAllWindows();
         throw std::runtime_error("Error reading initial frame");
     }
 }
 
-void Camera::initCarlaEnv() {
+void Camera::initCarlaEnv()
+{
     useZenohSubscription = true;
 
     {
@@ -73,24 +82,31 @@ void Camera::initCarlaEnv() {
     }
 
     carla_frame.emplace(session_->declare_subscriber(
-    "carla/frame",
-    [this](const zenoh::Sample& sample)
-    {
-        try {
-            std::vector<uint8_t> data = sample.get_payload().as_vector();
-            cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-            
-            if (!img.empty()) {
-                std::lock_guard<std::mutex> lock(frameMutex);
-                currentFrame = img.clone();
-            } else {
-                std::cerr << "Failed to decode image" << std::endl;
+        "carla/frame",
+        [this](const zenoh::Sample& sample)
+        {
+            try
+            {
+                std::vector<uint8_t> data = sample.get_payload().as_vector();
+                cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
+
+                if (!img.empty())
+                {
+                    std::lock_guard<std::mutex> lock(frameMutex);
+                    currentFrame = img.clone();
+                }
+                else
+                {
+                    std::cerr << "Failed to decode image" << std::endl;
+                }
             }
-        } catch (const std::exception& e) {
-            std::cerr << "Error processing image data: " << e.what() << std::endl;
-        }
-    },
-    zenoh::closures::none));
+            catch (const std::exception& e)
+            {
+                std::cerr << "Error processing image data: " << e.what()
+                          << std::endl;
+            }
+        },
+        zenoh::closures::none));
 }
 
 void Camera::setCalibrationParameters(const std::string& calibrationFile)
@@ -133,10 +149,12 @@ void Camera::captureLoop()
     {
         Mat frame;
 
-        if (!useZenohSubscription) {
+        if (!useZenohSubscription)
+        {
             cap >> frame;
 
-            if (frame.empty()) {
+            if (frame.empty())
+            {
                 std::cerr << "Empty frame encountered" << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
