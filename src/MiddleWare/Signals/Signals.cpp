@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 #define SESSION_OPEN zenoh::Session::open
 
-
 // // Add this helper method to get current time (like candump timestamp)
 // double static getCurrentTime() {
 //     struct timespec ts;
@@ -11,18 +10,20 @@
 //     return ts.tv_sec + (ts.tv_nsec / 1.0e9);
 // }
 
-Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<SensoringPublisher> publisher)
+Signals::Signals(std::shared_ptr<zenoh::Session> session,
+                 std::shared_ptr<SensoringPublisher> publisher)
 {
-    publisher_   = publisher;
+    publisher_ = publisher;
 
     session_ = session;
-    
+
     activeAutonomyLevel_subscriber.emplace(session_->declare_subscriber(
         "Vehicle/1/ADAS/ActiveAutonomyLevel",
         [this](const zenoh::Sample& sample)
         {
             std::string activeAutonomyLevel = sample.get_payload().as_string();
-            if (this->canBus) {
+            if (this->canBus)
+            {
                 if (activeAutonomyLevel.find("SAE_4") != std::string::npos)
                 {
                     uint8_t value[8];
@@ -44,48 +45,70 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         [this](const zenoh::Sample& sample)
         {
             std::string trafficSign = sample.get_payload().as_string();
-            if (this->canBus) {
+            if (this->canBus)
+            {
                 uint8_t value[8];
-                if (trafficSign.find("Speed 50km/h") != std::string::npos) {
+                if (trafficSign.find("Speed 50km/h") != std::string::npos)
+                {
                     std::cout << "\033[32mSpeed 50\033[0m" << std::endl;
                     int speed = 50;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x500, value, sizeof(value));
-                } else if (trafficSign.find("Speed 80km/h") != std::string::npos) {
+                }
+                else if (trafficSign.find("Speed 80km/h") != std::string::npos)
+                {
                     std::cout << "\033[36mSpeed 80\033[0m" << std::endl;
                     int speed = 80;
                     memcpy(value, &speed, sizeof(value));
                     this->canBus->writeMessage(0x505, value, sizeof(value));
-                } else if (trafficSign.find("Yield") != std::string::npos) {
+                }
+                else if (trafficSign.find("Yield") != std::string::npos)
+                {
                     std::cout << "\033[33mYield\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x502, value, sizeof(value));
-                } else if (trafficSign.find("Stop") != std::string::npos) {
+                }
+                else if (trafficSign.find("Stop") != std::string::npos)
+                {
                     std::cout << "\033[31mStop\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x501, value, sizeof(value));
-                } else if (trafficSign.find("Danger") != std::string::npos) {
+                }
+                else if (trafficSign.find("Danger") != std::string::npos)
+                {
                     std::cout << "\033[35mDanger\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x504, value, sizeof(value));
-                } else if (trafficSign.find("Crosswalk") != std::string::npos) {
+                }
+                else if (trafficSign.find("Crosswalk") != std::string::npos)
+                {
                     std::cout << "\033[34mCrosswalk\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x503, value, sizeof(value));
-                } else if (trafficSign.find("Traffic Yellow") != std::string::npos) {
+                }
+                else if (trafficSign.find("Traffic Yellow") !=
+                         std::string::npos)
+                {
                     std::cout << "\033[37mTraffic Yellow\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x600, value, sizeof(value));
-                } else if (trafficSign.find("Traffic Green") != std::string::npos) {
+                }
+                else if (trafficSign.find("Traffic Green") != std::string::npos)
+                {
                     std::cout << "\033[38mTraffic Green\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x601, value, sizeof(value));
-                } else if (trafficSign.find("Traffic Red") != std::string::npos) {
+                }
+                else if (trafficSign.find("Traffic Red") != std::string::npos)
+                {
                     std::cout << "\033[39mTraffic Red\033[0m" << std::endl;
                     memcpy(value, &trafficSign, sizeof(value));
                     this->canBus->writeMessage(0x602, value, sizeof(value));
-                } else {
-                    std::cout << "\033[37mUnknown traffic sign!\033[0m" << std::endl;
+                }
+                else
+                {
+                    std::cout << "\033[37mUnknown traffic sign!\033[0m"
+                              << std::endl;
                 }
             }
         },
@@ -105,7 +128,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         [this](const zenoh::Sample& sample)
         {
             std::string lane = sample.get_payload().as_string();
-            if (this->canBus) {
+            if (this->canBus)
+            {
                 if (lane.find("Left") != std::string::npos)
                 {
                     uint8_t value[8];
@@ -136,7 +160,8 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
         [this](const zenoh::Sample& sample)
         {
             std::string emergency = sample.get_payload().as_string();
-            if (emergency.find("1") != std::string::npos) {
+            if (emergency.find("1") != std::string::npos)
+            {
                 uint8_t value[8];
                 memcpy(value, "DANGER", sizeof(value));
 
@@ -153,10 +178,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
+            (void)isOn;
 
             std::cout << "Low" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x702, &onOff, sizeof(uint8_t));
         },
@@ -170,10 +195,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
-            
+            (void)isOn;
+
             std::cout << "High" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x703, &onOff, sizeof(uint8_t));
         },
@@ -186,7 +211,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
+            (void)isOn;
         },
         zenoh::closures::none));
 
@@ -198,10 +223,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
+            (void)isOn;
 
             std::cout << "Parking" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x707, &onOff, sizeof(uint8_t));
         },
@@ -215,10 +240,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
+            (void)isOn;
 
             std::cout << "RearFog" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x705, &onOff, sizeof(uint8_t));
         },
@@ -232,10 +257,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             StaticLights value;
             bool isOn = std::stoi(sample.get_payload().as_string());
 
-            (void) isOn;
+            (void)isOn;
 
             std::cout << "FrontFog" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x704, &onOff, sizeof(uint8_t));
         },
@@ -248,7 +273,7 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             BrakeLights value;
             bool isActive = std::stoi(sample.get_payload().as_string());
 
-            (void) isActive;
+            (void)isActive;
         },
         zenoh::closures::none));
 
@@ -260,10 +285,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
-            (void) isSignaling;
+            (void)isSignaling;
 
             std::cout << "Hazard" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x706, &onOff, sizeof(uint8_t));
         },
@@ -277,10 +302,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
-            (void) isSignaling;
+            (void)isSignaling;
 
             std::cout << "Left" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x700, &onOff, sizeof(uint8_t));
         },
@@ -294,10 +319,10 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
             SignalingLights value;
             bool isSignaling = std::stoi(sample.get_payload().as_string());
 
-            (void) isSignaling;
+            (void)isSignaling;
 
             std::cout << "Right" << std::endl;
-            state = !state;
+            state         = !state;
             uint8_t onOff = static_cast<uint8_t>(state);
             this->canBus->writeMessage(0x701, &onOff, sizeof(uint8_t));
         },
@@ -318,23 +343,28 @@ Signals::Signals(std::shared_ptr<zenoh::Session> session, std::shared_ptr<Sensor
 
 Signals::~Signals() {}
 
-void Signals::initLocalEnv(const std::string& canDevice) {
-    try {
+void Signals::initLocalEnv(const std::string& canDevice)
+{
+    try
+    {
         // struct stat buffer;
         // if (stat(canDevice.c_str(), &buffer) != 0) {
-        //     std::cerr << "Can device " << canDevice << " does not exist!" << std::endl;
-        //     this->canBus = NULL;
-        //     throw std::runtime_error("Error on can device");
+        //     std::cerr << "Can device " << canDevice << " does not exist!" <<
+        //     std::endl; this->canBus = NULL; throw std::runtime_error("Error
+        //     on can device");
         // }
-        this->canBus     = new CAN();
+        this->canBus = new CAN();
         this->canBus->init(canDevice);
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::cerr << "Error on initializing can" << std::endl;
         this->canBus = NULL;
     }
 }
 
-void Signals::initCarlaEnv() {
+void Signals::initCarlaEnv()
+{
     this->canBus = NULL;
 }
 
@@ -344,7 +374,7 @@ void Signals::run()
     while (1)
     {
         struct can_frame frame;
-        
+
         int nbytes = read(canSocket, &frame, sizeof(struct can_frame));
         if (nbytes < 0)
         {
@@ -355,14 +385,14 @@ void Signals::run()
         {
             int speed;
             // double wheelDiame = 0.067;
-            
+
             memcpy(&speed, frame.data, sizeof(int));
-            speed                 = ntohl(speed);
+            speed = ntohl(speed);
             // speed                 = wheelDiame * 3.14 * speed * 10 / 60;
 
             float fspeed = static_cast<float>(speed);
             std::cout << fspeed << std::endl;
-            
+
             this->publisher_->publishSpeed(fspeed);
         }
         usleep(10);

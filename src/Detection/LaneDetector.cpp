@@ -8,11 +8,13 @@ using namespace cv;
 using namespace std;
 using namespace zenoh;
 
-LaneDetector::LaneDetector(const std::string& enginePath, int height, int width) : height_(height), width_(width)
+LaneDetector::LaneDetector(const std::string& enginePath, int height, int width)
+    : height_(height), width_(width)
 {
     try
     {
-        this->gpuInference = new GPUInference(enginePath, 3, 1, height_, width_);
+        this->gpuInference =
+            new GPUInference(enginePath, 3, 1, height_, width_);
         this->gpuInference->init();
     }
     catch (const std::exception& e)
@@ -46,8 +48,9 @@ void LaneDetector::detect(cv::Mat& frame, cv::Mat& result)
 void LaneDetector::preProcess(cv::Mat& frame, cv::Mat& preprocessedFrame)
 {
     cv::Mat resized;
-    
-    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0, cv::INTER_LINEAR);
-    
+
+    cv::resize(frame, resized, cv::Size(width_, height_), 0, 0,
+               cv::INTER_LINEAR);
+
     cv::cvtColor(resized, preprocessedFrame, cv::COLOR_BGR2RGB);
 }
