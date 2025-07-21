@@ -227,7 +227,7 @@ void XboxController::run()
                             publisher_->publishCurrentGear(0);
                         }
                         manual_speed_.store(speed);
-                        // std::cout << "Speed" << std::endl;
+                        std::cout << "Speed" << std::endl;
                         break;
                     }
                     case (AXIS_RIGHT_STICK):
@@ -242,7 +242,7 @@ void XboxController::run()
                         }
                         // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
-                        // std::cout << "Direction" << std::endl;
+                        std::cout << "Direction" << std::endl;
                         break;
                     }
                     default:
