@@ -399,8 +399,6 @@ void PidController::speedDefinition(void) {
             desired_speed_ = 0;
         else
             desired_speed_ = active_speed;
-    } else {
-        desired_speed_ = active_speed;
     }
 }
 
