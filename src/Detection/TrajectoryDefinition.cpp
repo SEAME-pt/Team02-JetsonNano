@@ -957,7 +957,7 @@ void TrajectoryDefinition::createMidPointError(std::vector<cv::Point>& midCurve)
     if (!midCurve.empty())
     {
         // int targetY = frameHeight_ - (1.5 * frameHeight_ / 3); // 3/6 up from bottom
-        int targetY = frameHeight_ - (0.5 * frameHeight_ / 3); // 1/3 up from bottom
+        int targetY = frameHeight_ - (0.7 * frameHeight_ / 3); // 1/3 up from bottom
 
         // Find closest point to target Y
         size_t closestIdx = 0;
