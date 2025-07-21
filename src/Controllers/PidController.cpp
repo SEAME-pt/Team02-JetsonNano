@@ -391,9 +391,7 @@ void PidController::speedDefinition(void) {
         static int counter = 0;
 
         if (counter % 10 != 0)
-            stop_active_ = true;
-        else
-            stop_active_ = false;
+            stop_active_ != stop_active_;
         
         counter++;
 
