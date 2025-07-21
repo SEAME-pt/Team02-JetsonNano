@@ -34,7 +34,7 @@ void cameraThreadFunction(Camera* camera, SynchronizedProcessor* processor)
             processor->setNewFrame(frame);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -54,7 +54,7 @@ void laneDetectionThreadFunction(LaneDetector* detector,
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
@@ -75,7 +75,7 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
@@ -123,7 +123,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
@@ -147,7 +147,7 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
             {
                 std::vector<uchar> buffer_trafficSign_frame;
                 std::vector<int> params_trafficSign = {cv::IMWRITE_JPEG_QUALITY,
-                                                       100};
+                                                       50};
                 cv::imencode(".jpg", result, buffer_trafficSign_frame,
                              params_trafficSign);
                 trafficSignClassifier->publishTrafficSignFrame(
@@ -157,7 +157,7 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
         }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
