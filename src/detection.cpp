@@ -17,13 +17,6 @@ using namespace zenoh;
 
 std::atomic<bool> running(true);
 
-static double getCurrentTime()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
-}
-
 void signalHandler(int signum)
 {
     std::cout << "Interrupt signal (" << signum << ") received.\n";
@@ -98,10 +91,8 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         if (!original_frame.empty() && !lane_mask.empty() &&
             !object_mask.empty())
         {
-            double time = getCurrentTime();
             cv::Mat new_frame =
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
-            std::cout << "Time: " << getCurrentTime() - time << std::endl;
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
