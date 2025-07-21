@@ -741,10 +741,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
 
         leftLaneLastUpdatedFrame = currentFrame;
 
-        cv::putText(allPolylinesViz_, "Left (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 255), 3);
-        cv::putText(allPolylinesViz_, "Right (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
+        std::cout << "Left (Valid) | Right (Predicted)" << std::endl;
     }
     else
     {
@@ -758,10 +755,8 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
 
         rightLaneLastUpdatedFrame = currentFrame;
 
-        cv::putText(allPolylinesViz_, "Right (valid)", cv::Point(10, 10),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 255), 3);
-        cv::putText(allPolylinesViz_, "Left (predicted)", cv::Point(20, 160),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 3);
+        std::cout << "Right (Valid) | Left (Predicted)" << std::endl;
+
     }
 }
 
@@ -817,7 +812,7 @@ void TrajectoryDefinition::updateLaneWidthHistory(const std::vector<cv::Point>& 
                                                 const std::vector<cv::Point>& rightLane) {    
     float avgDistance = calculateLaneDistance(leftLane, rightLane);
 
-    std::cout << "AVG Distance: " << avgDistance << std::endl;
+    // std::cout << "AVG Distance: " << avgDistance << std::endl;
     // std::cout << "Min Distance: " << frameWidth_ * 0.20 << std::endl;
     // std::cout << "Max Distance: " << frameWidth_ * 0.35 << std::endl;
     
@@ -861,9 +856,11 @@ void TrajectoryDefinition::checkPredicedCurve(
     }
     if (realDistance < minDistance || realDistance > maxDistance || !correctSide)
     {
-        cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
-                    cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                    cv::Scalar(255, 255, 0), 1);
+        // cv::putText(allPolylinesViz_, "Invalid curve prediction - using offset",
+        //             cv::Point(20, 340), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+        //             cv::Scalar(255, 255, 0), 1);
+
+        std::cout << "Invalid curve prediction - using offset" << std::endl;
         predictedCurve.clear();
         predictedCurve.reserve(realLane.size());
 
@@ -1177,15 +1174,19 @@ bool TrajectoryDefinition::checkIfLeftLane(
             "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") +
             " (L:" + std::to_string(leftDistance).substr(0, 5) +
             "/R:" + std::to_string(rightDistance).substr(0, 5) + ")";
-        cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+        // cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80),
+        //             cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0), 2);
+
+        std::cout << debugMsg << std::endl;
 
         std::string staleMsg =
             "Staleness - L:" +
             std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
             " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
-        cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
+        // cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100),
+        //             cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 1);
+
+        std::cout << staleMsg << std::endl;
     }
     else
     {
@@ -1194,15 +1195,15 @@ bool TrajectoryDefinition::checkIfLeftLane(
 
         if (!hasValidLeftMemory || !hasValidRightMemory)
         {
-            cv::putText(allPolylinesViz_, "Memory expired - using position",
-                        cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.6,
-                        cv::Scalar(0, 0, 255), 2);
+            // cv::putText(allPolylinesViz_, "Memory expired - using position",
+            //             cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.6,
+            //             cv::Scalar(0, 0, 255), 2);
         }
         else
         {
-            cv::putText(allPolylinesViz_, "Position-based detection",
-                        cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.6,
-                        cv::Scalar(255, 255, 0), 2);
+            // cv::putText(allPolylinesViz_, "Position-based detection",
+            //             cv::Point(20, 80), cv::FONT_HERSHEY_SIMPLEX, 0.6,
+            //             cv::Scalar(255, 255, 0), 2);
         }
     }
 
