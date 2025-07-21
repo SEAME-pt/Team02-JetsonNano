@@ -285,7 +285,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
         publishCoeffs(midCurve);
         if(activeAutonomyLevel_ == "SAE_4") {
             obstacleAvoidance(class_mask, midCurve);
-        } else if (activeAutonomyLevel_ == "SAE_3") {
+        } else if (activeAutonomyLevel_ == "SAE_2") {
             adaptiveSpeedControl(class_mask, midCurve);
         }
     }
