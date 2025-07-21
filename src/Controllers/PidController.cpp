@@ -118,9 +118,9 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session, XboxContro
             std::string value_str = sample.get_payload().as_string();
 
             if (value_str.find("Speed 80km/h") != std::string::npos) {
-                speed_limit_ = 0.25;
+                speed_limit_ = 0.35;
             } else if (value_str.find("Speed 50km/h") != std::string::npos) {
-                speed_limit_ = 0.20;
+                speed_limit_ = 0.30;
             } else if (value_str.find("Danger") != std::string::npos) {
                 last_danger_received_ = getCurrentTime();
             } else if (value_str.find("Crosswalk") != std::string::npos) {
