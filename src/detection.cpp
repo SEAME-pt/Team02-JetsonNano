@@ -171,8 +171,8 @@ int main(int argc, char** argv)
     const int widthCameraFrame      = 640;
     const int heightModelInf        = 128;
     const int widthModelInf         = 256;
-    const int heightTrafficModelInf = 80;
-    const int widthTrafficModelInf  = 80;
+    const int heightTrafficModelInf = 128;
+    const int widthTrafficModelInf  = 128;
 
     try
     {
@@ -244,7 +244,7 @@ int main(int argc, char** argv)
                 "/home/team02/Models/engine/"
                 "obj_Mob_local_pretrained_BDD100k3_epoch_100.engine";
             trafficClassifierFile =
-                "/home/team02/Models/engine/traffic_sign_model3.engine";
+                "/home/team02/Models/engine/traffic_sign_model5.engine";
         }
         else if (mode == "carla")
         {
