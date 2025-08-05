@@ -6,7 +6,7 @@ MotorController::MotorController(std::shared_ptr<I2C> i2c)
     m_MotorPCA  = std::make_unique<PCA9685>();
 
     m_MotorPCA->init(i2c, 0x60);
-    m_MotorPCA->setPWMFreq(1600);
+    m_MotorPCA->setPWMFreq(200);
 }
 
 MotorController::~MotorController() {}
