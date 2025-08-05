@@ -382,7 +382,7 @@ void PidController::speedDefinition(void)
 {
     double current_time   = getCurrentTime();
     double threshold      = 1.0;
-    double red_threshold  = 1.5;
+    double red_threshold  = 50.0;
     double stop_threshold = 2.0;
     double active_speed   = speed_limit_;
 
