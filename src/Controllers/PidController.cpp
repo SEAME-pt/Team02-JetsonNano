@@ -142,6 +142,7 @@ PidController::PidController(std::shared_ptr<zenoh::Session> session,
             }
             else if (value_str.find("Traffic Green") != std::string::npos)
             {
+                std::cout << "Green" << std::endl;
                 green_active_        = true;
                 last_green_received_ = getCurrentTime();
             }
