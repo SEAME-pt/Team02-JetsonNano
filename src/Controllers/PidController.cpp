@@ -411,17 +411,17 @@ void PidController::speedDefinition(void)
     {
         desired_speed_ = active_speed - 0.05;
     }
-    else if (std::abs(current_time - last_red_received_) < red_threshold)
+    else if (std::abs(current_time - last_green_received_) < threshold)
     {
-        desired_speed_ = 0;
+        desired_speed_ = active_speed;
     }
     else if (std::abs(current_time - last_yellow_received_ < threshold))
     {
         desired_speed_ = active_speed - 0.05;
     }
-    else if (std::abs(current_time - last_green_received_) < threshold)
+    else if (std::abs(current_time - last_red_received_) < red_threshold)
     {
-        desired_speed_ = active_speed;
+        desired_speed_ = 0;
     }
     else if (std::abs(current_time - last_stop_received_) < stop_threshold)
     {
