@@ -244,7 +244,7 @@ int main(int argc, char** argv)
                 "/home/team02/Models/engine/"
                 "obj_Mob_local_pretrained_BDD100k3_epoch_100.engine";
             trafficClassifierFile =
-                "/home/team02/Models/engine/traffic_sign_model5.engine";
+                "/home/team02/Models/engine/traffic_sign_model6.engine";
         }
         else if (mode == "carla")
         {
