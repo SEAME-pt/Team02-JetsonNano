@@ -5,10 +5,7 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     speed_pub.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"),
-    zenoh::PublisherOptions{
-        .priority = zenoh::Priority::Z_PRIORITY_REAL_TIME
-    }));
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
     current_voltage_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentVoltage")));
     current_current_pub.emplace(session_->declare_publisher(
@@ -27,7 +24,12 @@ void SensoringPublisher::publishSpeed(float speed)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    speed_pub->put(std::move(buf));
+
+    // Set high priority for speed data
+    auto put_options = zenoh::Publisher::PutOptions::create_default();
+    put_options.priority = zenoh::Priority::Z_PRIORITY_REAL_TIME;
+    
+    speed_pub->put(std::move(buf), std::move(put_options));
 }
 
 void SensoringPublisher::publishCurrentVoltage(float voltage)
