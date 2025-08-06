@@ -5,7 +5,10 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
     speed_pub.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"),
+    zenoh::PublisherOptions{
+        .priority = zenoh::Priority::Z_PRIORITY_REAL_TIME
+    }));
     current_voltage_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentVoltage")));
     current_current_pub.emplace(session_->declare_publisher(
