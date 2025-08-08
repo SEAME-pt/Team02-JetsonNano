@@ -61,10 +61,9 @@ enum Axis
     AXIS_LEFT_STICK  = 1,
 };
 
-struct axis_state
-{
-    int x = 0;
-    int y = 0;
+struct axis_state {
+    int16_t x{0};
+    int16_t y{0};
 };
 
 /**

@@ -23,12 +23,9 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
     if (js == -1)
         throw std::exception();
 
-    int numAxes = this->getAxisCount();
-    for (int i = 0; i < numAxes; i++)
-    {
-        struct axis_state* axis = new struct axis_state();
-        axes.push_back(axis);
-    }
+    int numAxes = getAxisCount();
+    axes.clear();
+    axes.resize(numAxes);
 
     session_ = session;
 
@@ -55,22 +52,15 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 
 XboxController::~XboxController()
 {
-    for (unsigned int i = 0; i < axes.size(); i++)
-    {
-        delete axes[i];
-    }
-
     device_close(js);
 }
-int XboxController::readEvent(void)
+
+int XboxController::readEvent()
 {
-    int bytes;
-
-    bytes = read(js, &event, sizeof(event));
-
-    if (bytes == sizeof(event))
-        return 0;
-
+    std::memset(&event, 0, sizeof(event));
+    ssize_t bytes = device_read(js, &event, sizeof(event));
+    if (bytes == sizeof(event)) return 0;
+    if (bytes < 0 && (errno == EAGAIN || errno == EINTR)) return -2;
     return -1;
 }
 
