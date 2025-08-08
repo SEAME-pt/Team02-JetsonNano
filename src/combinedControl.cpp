@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         XboxController manualController(session);
         // PidController pidController(session, &manualController);
         // ModelPredictiveController MPController(session, &manualController);
-        // SpeedPidController speedPidController(session, &manualController);
+        SpeedPidController speedPidController(session, &manualController);
 
         if (mode == "local")
         {
@@ -135,8 +135,8 @@ int main(int argc, char** argv)
         std::thread manualThread(&XboxController::run, &manualController);
         // std::thread pidThread(&PidController::run, &pidController);
         // std::thread MPCThread(&ModelPredictiveController::run, &MPController);
-        // std::thread speedPidThread(&SpeedPidController::run,
-        //                            &speedPidController);
+        std::thread speedPidThread(&SpeedPidController::run,
+                                   &speedPidController);
 
         std::thread monitorThread([]() {
             while(true) {
@@ -160,10 +160,10 @@ int main(int argc, char** argv)
         //     MPCThread.join();
         // }
 
-        // if (speedPidThread.joinable())
-        // {
-        //     speedPidThread.join();
-        // }
+        if (speedPidThread.joinable())
+        {
+            speedPidThread.join();
+        }
     }
     catch (const std::exception& e)
     {
