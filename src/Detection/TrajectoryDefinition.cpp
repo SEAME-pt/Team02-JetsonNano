@@ -1311,12 +1311,176 @@ void TrajectoryDefinition::checkAutonomyEnvEnable(
     }
 }
 
+// bool TrajectoryDefinition::checkForwardCollision(
+//     const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+// {
+//     if (midCurve.empty())
+//     {
+//         // Draw a message when no trajectory is available
+//         cv::putText(allPolylinesViz_,
+//                     "No trajectory available for collision check",
+//                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                     cv::Scalar(0, 0, 255), 2);
+//         return false;
+//     }
+
+//     // Check if segmentation mask is valid
+//     if (segmentation_mask.empty() || segmentation_mask.channels() != 3)
+//     {
+//         cv::putText(allPolylinesViz_,
+//                     "Invalid segmentation mask format: " +
+//                         std::to_string(segmentation_mask.channels()) +
+//                         " channels",
+//                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                     cv::Scalar(0, 0, 255), 2);
+//         return false;
+//     }
+
+//     const int zoneWidth = frameWidth_ * 0.20; // Width of zone around trajectory
+//     int total_pixels    = 0;
+//     int road_pixels     = 0;
+
+//     std::vector<cv::Point> rightPoints;
+//     std::vector<cv::Point> polygonPoints;
+
+//     for (size_t i = 0; i < midCurve.size(); i++)
+//     {
+//         if (midCurve[i].y < frameHeight_ * 0.25)
+//             continue;
+
+//         cv::Point direction;
+//         if (i > 0)
+//         {
+//             direction = midCurve[i] - midCurve[i - 1];
+//         }
+//         else if (i < midCurve.size() - 1)
+//         {
+//             direction = midCurve[i + 1] - midCurve[i];
+//         }
+//         else
+//         {
+//             direction = cv::Point(0, 1); // Default vertical
+//         }
+
+//         float length =
+//             std::sqrt(direction.x * direction.x + direction.y * direction.y);
+//         if (length > 0)
+//         {
+//             direction.x = direction.x / length;
+//             direction.y = direction.y / length;
+//         }
+
+//         // Create perpendicular vector for width
+//         cv::Point perpendicular(-direction.y, direction.x);
+
+//         // Left and right boundary points
+//         polygonPoints.push_back(
+//             cv::Point(midCurve[i].x - perpendicular.x * zoneWidth / 2,
+//                       midCurve[i].y - perpendicular.y * zoneWidth / 2));
+
+//         // Store right points separately to create a complete polygon later
+//         rightPoints.push_back(
+//             cv::Point(midCurve[i].x + perpendicular.x * zoneWidth / 2,
+//                       midCurve[i].y + perpendicular.y * zoneWidth / 2));
+//     }
+
+//     if (polygonPoints.size() < 3 || rightPoints.empty())
+//     {
+//         // Not enough points to create a polygon
+//         cv::putText(allPolylinesViz_,
+//                     "Insufficient trajectory points for collision check",
+//                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                     cv::Scalar(0, 0, 255), 2);
+//         return true;
+//     }
+
+//     // Add right points in reverse order to complete the polygon
+//     for (int i = rightPoints.size() - 1; i >= 0; i--)
+//     {
+//         polygonPoints.push_back(rightPoints[i]);
+//     }
+
+//     // Create a mask for the polygon
+//     cv::Mat polygonMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC1);
+//     std::vector<std::vector<cv::Point>> contours = {polygonPoints};
+
+//     if (polygonPoints.empty())
+//     {
+//         cv::putText(allPolylinesViz_,
+//                     "Empty polygon - cannot check for collision",
+//                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                     cv::Scalar(0, 0, 255), 2);
+//         return true;
+//     }
+
+//     // After creating the polygon mask
+//     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
+
+//     // Count road pixels in the polygon
+//     for (int y = 0; y < polygonMask.rows && y < segmentation_mask.rows; y++)
+//     {
+//         const uchar* maskRow    = polygonMask.ptr<uchar>(y);
+//         const cv::Vec3b* segRow = segmentation_mask.ptr<cv::Vec3b>(y);
+
+//         for (int x = 0; x < polygonMask.cols && x < segmentation_mask.cols; x++)
+//         {
+//             // Only check pixels inside the polygon
+//             if (maskRow[x] > 0)
+//             {
+//                 total_pixels++;
+
+//                 // Check road pixel using safer comparison
+//                 cv::Vec3b pixel = segRow[x];
+
+//                 // Use a more tolerant color comparison
+//                 if ((std::abs(pixel[0] - 128) < 10 &&
+//                      std::abs(pixel[1] - 64) < 10 &&
+//                      std::abs(pixel[2] - 128) < 10) ||
+//                     (pixel[0] < 10 && pixel[1] < 10 && pixel[2] < 10))
+//                 {
+//                     road_pixels++;
+//                 }
+//             }
+//         }
+//     }
+
+//     // Draw the polygon for visualization
+//     cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
+
+//     // Calculate road percentage and check for danger
+//     float road_percentage = static_cast<float>(road_pixels) /
+//                             (total_pixels + 1); // Avoid division by zero
+//     const float SAFE_ROAD_THRESHOLD = 0.3;      // 30% of zone should be road
+//     bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
+
+//     if (danger_detected)
+//     {
+//         cv::putText(allPolylinesViz_, "OBSTACLE DETECTED!",
+//                     cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
+//                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
+
+//         is_emergency_stop = true;
+
+//         publishEmergencyBrake("1");
+
+//         return true;
+//     }
+//     else if (is_emergency_stop)
+//     {
+//         // std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
+//         //         << std::endl;
+//         is_emergency_stop = false;
+
+//         publishEmergencyBrake("0");
+//     }
+//     return false;
+// }
+
 bool TrajectoryDefinition::checkForwardCollision(
     const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
 {
     if (midCurve.empty())
     {
-        // Draw a message when no trajectory is available
         cv::putText(allPolylinesViz_,
                     "No trajectory available for collision check",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
@@ -1324,7 +1488,6 @@ bool TrajectoryDefinition::checkForwardCollision(
         return false;
     }
 
-    // Check if segmentation mask is valid
     if (segmentation_mask.empty() || segmentation_mask.channels() != 3)
     {
         cv::putText(allPolylinesViz_,
@@ -1336,57 +1499,44 @@ bool TrajectoryDefinition::checkForwardCollision(
         return false;
     }
 
-    const int zoneWidth = frameWidth_ * 0.20; // Width of zone around trajectory
-    int total_pixels    = 0;
-    int road_pixels     = 0;
+    const float zoneWidthRatio = 0.25f; // Adjustable width ratio (25% of frame width)
+    const int zoneWidth = frameWidth_ * zoneWidthRatio;
+    int total_pixels = 0;
+    int road_pixels = 0;
 
-    std::vector<cv::Point> rightPoints;
+    std::vector<cv::Point> leftBoundary;
+    std::vector<cv::Point> rightBoundary;
     std::vector<cv::Point> polygonPoints;
 
+    // Create smooth boundaries that follow trajectory curvature
     for (size_t i = 0; i < midCurve.size(); i++)
     {
+        // Skip points too close to top of frame
         if (midCurve[i].y < frameHeight_ * 0.25)
             continue;
 
-        cv::Point direction;
-        if (i > 0)
-        {
-            direction = midCurve[i] - midCurve[i - 1];
-        }
-        else if (i < midCurve.size() - 1)
-        {
-            direction = midCurve[i + 1] - midCurve[i];
-        }
-        else
-        {
-            direction = cv::Point(0, 1); // Default vertical
-        }
-
-        float length =
-            std::sqrt(direction.x * direction.x + direction.y * direction.y);
-        if (length > 0)
-        {
-            direction.x = direction.x / length;
-            direction.y = direction.y / length;
-        }
-
-        // Create perpendicular vector for width
-        cv::Point perpendicular(-direction.y, direction.x);
-
-        // Left and right boundary points
-        polygonPoints.push_back(
-            cv::Point(midCurve[i].x - perpendicular.x * zoneWidth / 2,
-                      midCurve[i].y - perpendicular.y * zoneWidth / 2));
-
-        // Store right points separately to create a complete polygon later
-        rightPoints.push_back(
-            cv::Point(midCurve[i].x + perpendicular.x * zoneWidth / 2,
-                      midCurve[i].y + perpendicular.y * zoneWidth / 2));
+        cv::Point2f tangent = calculateSmoothTangent(midCurve, i);
+        
+        // Create perpendicular vector (normal) to the tangent
+        cv::Point2f normal(-tangent.y, tangent.x);
+        
+        // Calculate boundary points
+        cv::Point2f center(midCurve[i].x, midCurve[i].y);
+        cv::Point2f leftPoint = center - normal * (zoneWidth / 2.0f);
+        cv::Point2f rightPoint = center + normal * (zoneWidth / 2.0f);
+        
+        // Ensure points are within frame bounds
+        leftPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), leftPoint.x));
+        leftPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), leftPoint.y));
+        rightPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), rightPoint.x));
+        rightPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), rightPoint.y));
+        
+        leftBoundary.push_back(cv::Point(static_cast<int>(leftPoint.x), static_cast<int>(leftPoint.y)));
+        rightBoundary.push_back(cv::Point(static_cast<int>(rightPoint.x), static_cast<int>(rightPoint.y)));
     }
 
-    if (polygonPoints.size() < 3 || rightPoints.empty())
+    if (leftBoundary.size() < 3 || rightBoundary.size() < 3)
     {
-        // Not enough points to create a polygon
         cv::putText(allPolylinesViz_,
                     "Insufficient trajectory points for collision check",
                     cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
@@ -1394,49 +1544,36 @@ bool TrajectoryDefinition::checkForwardCollision(
         return true;
     }
 
-    // Add right points in reverse order to complete the polygon
-    for (int i = rightPoints.size() - 1; i >= 0; i--)
-    {
-        polygonPoints.push_back(rightPoints[i]);
-    }
+    // Create closed polygon: left boundary + reversed right boundary
+    polygonPoints = leftBoundary;
+    polygonPoints.insert(polygonPoints.end(), rightBoundary.rbegin(), rightBoundary.rend());
 
-    // Create a mask for the polygon
+    // Apply smoothing to the polygon for better curvature following
+    polygonPoints = smoothPolygon(polygonPoints);
+
+    // Create mask and check for obstacles
     cv::Mat polygonMask = cv::Mat::zeros(segmentation_mask.size(), CV_8UC1);
     std::vector<std::vector<cv::Point>> contours = {polygonPoints};
-
-    if (polygonPoints.empty())
-    {
-        cv::putText(allPolylinesViz_,
-                    "Empty polygon - cannot check for collision",
-                    cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                    cv::Scalar(0, 0, 255), 2);
-        return true;
-    }
-
-    // After creating the polygon mask
     cv::fillPoly(polygonMask, contours, cv::Scalar(255));
 
     // Count road pixels in the polygon
     for (int y = 0; y < polygonMask.rows && y < segmentation_mask.rows; y++)
     {
-        const uchar* maskRow    = polygonMask.ptr<uchar>(y);
+        const uchar* maskRow = polygonMask.ptr<uchar>(y);
         const cv::Vec3b* segRow = segmentation_mask.ptr<cv::Vec3b>(y);
 
         for (int x = 0; x < polygonMask.cols && x < segmentation_mask.cols; x++)
         {
-            // Only check pixels inside the polygon
             if (maskRow[x] > 0)
             {
                 total_pixels++;
-
-                // Check road pixel using safer comparison
                 cv::Vec3b pixel = segRow[x];
 
-                // Use a more tolerant color comparison
-                if ((std::abs(pixel[0] - 128) < 10 &&
-                     std::abs(pixel[1] - 64) < 10 &&
-                     std::abs(pixel[2] - 128) < 10) ||
-                    (pixel[0] < 10 && pixel[1] < 10 && pixel[2] < 10))
+                // Check for road pixels (adjust color thresholds as needed)
+                if ((std::abs(pixel[0] - 128) < 15 &&
+                     std::abs(pixel[1] - 64) < 15 &&
+                     std::abs(pixel[2] - 128) < 15) ||
+                    (pixel[0] < 15 && pixel[1] < 15 && pixel[2] < 15))
                 {
                     road_pixels++;
                 }
@@ -1444,14 +1581,19 @@ bool TrajectoryDefinition::checkForwardCollision(
         }
     }
 
-    // Draw the polygon for visualization
+    // Visualize the detection zone
     cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
+    
+    // Optional: Draw the left and right boundaries separately for debugging
+    if (leftBoundary.size() > 1)
+        cv::polylines(allPolylinesViz_, leftBoundary, false, cv::Scalar(255, 0, 0), 1);
+    if (rightBoundary.size() > 1)
+        cv::polylines(allPolylinesViz_, rightBoundary, false, cv::Scalar(0, 0, 255), 1);
 
     // Calculate road percentage and check for danger
-    float road_percentage = static_cast<float>(road_pixels) /
-                            (total_pixels + 1); // Avoid division by zero
-    const float SAFE_ROAD_THRESHOLD = 0.3;      // 30% of zone should be road
-    bool danger_detected            = (road_percentage < SAFE_ROAD_THRESHOLD);
+    float road_percentage = static_cast<float>(road_pixels) / (total_pixels + 1);
+    const float SAFE_ROAD_THRESHOLD = 0.3f;
+    bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     if (danger_detected)
     {
@@ -1459,25 +1601,90 @@ bool TrajectoryDefinition::checkForwardCollision(
                     cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
 
-        // std::cout << "\033[1;31m*** WARNING: OBSTACLE DETECTED! STOPPING "
-        //              "VEHICLE ***\033[0m"
-        //           << std::endl;
-
         is_emergency_stop = true;
-
         publishEmergencyBrake("1");
-
         return true;
     }
     else if (is_emergency_stop)
     {
-        // std::cout << "\033[1;32m*** PATH CLEAR - READY TO RESUME ***\033[0m"
-        //         << std::endl;
         is_emergency_stop = false;
-
         publishEmergencyBrake("0");
     }
+    
     return false;
+}
+
+// Helper function to calculate smooth tangent at a point
+cv::Point2f TrajectoryDefinition::calculateSmoothTangent(const std::vector<cv::Point>& curve, size_t index)
+{
+    cv::Point2f tangent;
+    
+    if (curve.size() < 2)
+    {
+        return cv::Point2f(0, 1); // Default vertical direction
+    }
+    
+    if (index == 0)
+    {
+        // First point: use forward difference
+        tangent = cv::Point2f(curve[1] - curve[0]);
+    }
+    else if (index == curve.size() - 1)
+    {
+        // Last point: use backward difference
+        tangent = cv::Point2f(curve[index] - curve[index - 1]);
+    }
+    else
+    {
+        // Middle points: use central difference for smoother tangent
+        cv::Point2f forward = cv::Point2f(curve[index + 1] - curve[index]);
+        cv::Point2f backward = cv::Point2f(curve[index] - curve[index - 1]);
+        tangent = (forward + backward) * 0.5f;
+    }
+    
+    // Normalize the tangent vector
+    float length = std::sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+    if (length > 1e-6f)
+    {
+        tangent.x /= length;
+        tangent.y /= length;
+    }
+    else
+    {
+        tangent = cv::Point2f(0, 1); // Default vertical if zero length
+    }
+    
+    return tangent;
+}
+
+// Helper function to smooth polygon points
+std::vector<cv::Point> TrajectoryDefinition::smoothPolygon(const std::vector<cv::Point>& polygon)
+{
+    if (polygon.size() < 3)
+        return polygon;
+    
+    std::vector<cv::Point> smoothed;
+    smoothed.reserve(polygon.size());
+    
+    const float smoothingFactor = 0.3f; // Adjust for more/less smoothing
+    
+    for (size_t i = 0; i < polygon.size(); i++)
+    {
+        size_t prev = (i == 0) ? polygon.size() - 1 : i - 1;
+        size_t next = (i == polygon.size() - 1) ? 0 : i + 1;
+        
+        cv::Point2f current(polygon[i]);
+        cv::Point2f prevPt(polygon[prev]);
+        cv::Point2f nextPt(polygon[next]);
+        
+        // Apply simple smoothing filter
+        cv::Point2f smoothedPt = current * (1.0f - smoothingFactor) + 
+                                (prevPt + nextPt) * (smoothingFactor * 0.5f);
+        
+        smoothed.push_back(cv::Point(static_cast<int>(smoothedPt.x), static_cast<int>(smoothedPt.y)));
+    }
+    
+    return smoothed;
 }
 
 void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask,

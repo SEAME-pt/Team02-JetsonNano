@@ -156,4 +156,7 @@ class TrajectoryDefinition
     void mpcDebug(void);
     void setAutonomousDriveState(std::string activeAutonomyLevel);
     void adaptiveSpeedControl(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
+
+    cv::Point2f calculateSmoothTangent(const std::vector<cv::Point>& curve, size_t index);
+    std::vector<cv::Point> smoothPolygon(const std::vector<cv::Point>& polygon);
 };  
