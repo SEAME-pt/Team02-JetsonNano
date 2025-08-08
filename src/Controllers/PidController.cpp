@@ -472,8 +472,8 @@ void PidController::run()
 {
     while (true)
     {
-        if (xboxController_->getPidEnable())
-        {
+        // if (xboxController_->getPidEnable())
+        // {
             std::string sae_level = getAutonomousDriveState();
 
             speedDefinition();
@@ -507,10 +507,10 @@ void PidController::run()
             else
             {
             }
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
+        // }
+        // else
+        // {
+            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        // }
     }
 }
