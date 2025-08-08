@@ -365,13 +365,6 @@ void XboxController::run()
             }
             default:
                 break;
-                // if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
-                // {
-                //     gear[0] = 0;
-                //     ;
-                //     gear[0] ^= (1 << 2);
-                //     this->m_pubGear.put(gear);
-                // }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
