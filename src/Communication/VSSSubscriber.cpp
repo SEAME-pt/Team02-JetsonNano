@@ -26,6 +26,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Chassis/SteeringWheel/Angle",
         [this](const zenoh::Sample& sample)
         {
+            std::cout << "ESTOU AQUI" << std::endl;
             float steering = std::stof(sample.get_payload().as_string());
             this->vehicle_.get_mutable_chassis()
                 .get_mutable_steering_wheel()
@@ -178,6 +179,7 @@ void VSSSubscriber::setupSubscriptions()
         "Vehicle/1/Speed",
         [this](const zenoh::Sample& sample)
         {
+            std::cout << "ESTOU AQUI" << std::endl;
             float speed = std::stof(sample.get_payload().as_string());
             this->vehicle_.set_speed(speed);
         },
