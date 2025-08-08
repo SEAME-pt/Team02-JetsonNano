@@ -10,7 +10,8 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
     // pub_options.priority = Z_PRIORITY_REAL_TIME;
     // pub_options.is_express = true;
     speed_pub.emplace(
-        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"), std::move(pub_options)));
+        // session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"), std::move(pub_options)));
+        session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed")));
     current_voltage_pub.emplace(session_->declare_publisher(
         zenoh::KeyExpr("Vehicle/1/Powertrain/TractionBattery/CurrentVoltage")));
     current_current_pub.emplace(session_->declare_publisher(
