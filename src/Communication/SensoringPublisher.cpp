@@ -7,7 +7,8 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
 
     zenoh::Session::PublisherOptions pub_options;
     pub_options.congestion_control = zenoh::Z_CONGESTION_CONTROL_DROP;
-    pub_options.priority = zenoh::Z_PRIORITY_REAL_TIME;
+    // pub_options.priority = zenoh::Z_PRIORITY_REAL_TIME;
+    pub_options.priority = 1;
     pub_options.is_express = true;
     speed_pub.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"), std::move(pub_options)));
