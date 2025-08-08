@@ -217,7 +217,7 @@ void XboxController::run()
                         if (speed < -5)      publisher_->publishCurrentGear(-1);
                         else if (speed > 5)  publisher_->publishCurrentGear(1);
                         else                 publisher_->publishCurrentGear(0);
-                        manual_speed_.store(40);
+                        manual_speed_.store(speed);
                         last_speed = speed;
                     }
                 }
