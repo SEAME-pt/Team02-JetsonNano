@@ -86,12 +86,11 @@ int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
 
-    if (axis < 3)
-    {
+    if (axis >= 0 && static_cast<size_t>(axis) < axes.size()) {
         if (event.number % 2 == 0)
-            axes[axis]->x = event.value;
+            axes[axis].x = event.value;
         else
-            axes[axis]->y = event.value;
+            axes[axis].y = event.value;
     }
     return axis;
 }
@@ -212,7 +211,7 @@ void XboxController::run()
                 {
                     case (AXIS_LEFT_STICK):
                     {
-                        float speed = -this->axes[axis]->y * 50 / 32767;
+                        float speed = -static_cast<float>(axes[axis].y) * 50.0f / 32767.0f;
                         // publisher_->publishActiveAutonomyLevel("SAE_0");
 
                         if (speed < -5)
@@ -233,7 +232,7 @@ void XboxController::run()
                     }
                     case (AXIS_RIGHT_STICK):
                     {
-                        float direction = 90 + this->axes[axis]->x * 90 / 32767;
+                        float direction = 90.0f + static_cast<float>(axes[axis].x) * 90.0f / 32767.0f;
 
                         if (sae_2 || sae_3 || sae_4)
                         {
