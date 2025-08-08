@@ -110,7 +110,7 @@ class XboxController
     std::optional<zenoh::Subscriber<void>> autonomy_env_enable_subscriber_;
 
     std::atomic<float> manual_steering_{90.0f};
-    std::atomic<float> manual_speed_{30.0f};
+    std::atomic<float> manual_speed_{0.0f};
     std::atomic<bool> pidEnable_{true};
 
     bool sae_4 = false;
