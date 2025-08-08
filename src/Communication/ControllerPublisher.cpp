@@ -49,7 +49,6 @@ ControllerPublisher::ControllerPublisher(
 
 void ControllerPublisher::publishSpeed(float speed)
 {
-    std::cout << "ESTOU AQUI" << std::endl;
     std::string value_str = std::to_string(speed);
     const auto len        = value_str.size() + 1;
     auto alloc_result =
@@ -61,7 +60,6 @@ void ControllerPublisher::publishSpeed(float speed)
 
 void ControllerPublisher::publishSteering(float steering)
 {
-    std::cout << "ESTOU AQUI" << std::endl;
     std::string value_str = std::to_string(steering);
     const auto len        = value_str.size() + 1;
     auto alloc_result =
