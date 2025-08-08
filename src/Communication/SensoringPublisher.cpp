@@ -5,10 +5,10 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
     session_ = session;
     provider_.emplace(zenoh::MemoryLayout(65536, zenoh::AllocAlignment({2})));
 
-    zenoh::Session::PublisherOptions pub_options;
-    pub_options.congestion_control = Z_CONGESTION_CONTROL_DROP;
-    pub_options.priority = Z_PRIORITY_REAL_TIME;
-    pub_options.is_express = true;
+    // zenoh::Session::PublisherOptions pub_options;
+    // pub_options.congestion_control = Z_CONGESTION_CONTROL_DROP;
+    // pub_options.priority = Z_PRIORITY_REAL_TIME;
+    // pub_options.is_express = true;
     speed_pub.emplace(
         session_->declare_publisher(zenoh::KeyExpr("Vehicle/1/Speed"), std::move(pub_options)));
     current_voltage_pub.emplace(session_->declare_publisher(
