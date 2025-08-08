@@ -122,7 +122,7 @@ class XboxController
     bool autonomyEnvEnable_ = false;
 
   public:
-    std::vector<struct axis_state*> axes;
+    std::vector<axis_state> axes;
     struct js_event event;
 
     XboxController(std::shared_ptr<zenoh::Session> session);
