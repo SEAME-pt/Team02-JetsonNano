@@ -397,7 +397,7 @@ void XboxController::run()
                 //     this->m_pubGear.put(gear);
                 // }
         }
-        usleep(1000);
+        usleep(100000);
         fflush(stdout);
     }
 }
