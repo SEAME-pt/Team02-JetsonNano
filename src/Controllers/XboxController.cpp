@@ -75,7 +75,7 @@ int XboxController::getButtonCount(void)
 
 int XboxController::getAxisCount(void)
 {
-    int axes;
+    int axes = 0;
     if (device_ioctl(js, JSIOCGAXES, &axes) == -1)
         return 0;
 
