@@ -24,12 +24,12 @@ SensoringPublisher::SensoringPublisher(std::shared_ptr<zenoh::Session> session)
 void SensoringPublisher::publishSpeed(float speed)
 {
     std::string value_str = std::to_string(speed);
-    const auto len        = value_str.size() + 1;
-    auto alloc_result =
-        provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
-    zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
-    memcpy(buf.data(), value_str.c_str(), len);
-    speed_pub->put(std::move(buf));
+    // const auto len        = value_str.size() + 1;
+    // auto alloc_result =
+    //     provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
+    // zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
+    // std::memcpy(speed, value_str.c_str(), len);
+    speed_pub->put(value_str);
 }
 
 void SensoringPublisher::publishCurrentVoltage(float voltage)
