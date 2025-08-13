@@ -16,23 +16,23 @@ int main(int argc, char** argv)
             return -1;
         }
 
-        // double Qx = 100.0, Qy = 600.0, Qpsi = 300.0, Qv = 250.0,
-        //        Rthrottle = 20.0, Rsteer = 40.0;
-        // for (int i = 1; i < argc; ++i)
-        // {
-        //     if (std::string(argv[i]) == "--Qx" && i + 1 < argc)
-        //         Qx = std::stod(argv[++i]);
-        //     if (std::string(argv[i]) == "--Qy" && i + 1 < argc)
-        //         Qy = std::stod(argv[++i]);
-        //     if (std::string(argv[i]) == "--Qpsi" && i + 1 < argc)
-        //         Qpsi = std::stod(argv[++i]);
-        //     if (std::string(argv[i]) == "--Qv" && i + 1 < argc)
-        //         Qv = std::stod(argv[++i]);
-        //     if (std::string(argv[i]) == "--Rthrottle" && i + 1 < argc)
-        //         Rthrottle = std::stod(argv[++i]);
-        //     if (std::string(argv[i]) == "--Rsteer" && i + 1 < argc)
-        //         Rsteer = std::stod(argv[++i]);
-        // }
+        double Qx = 100.0, Qy = 600.0, Qpsi = 300.0, Qv = 250.0,
+               Rthrottle = 20.0, Rsteer = 40.0;
+        for (int i = 1; i < argc; ++i)
+        {
+            if (std::string(argv[i]) == "--Qx" && i + 1 < argc)
+                Qx = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qy" && i + 1 < argc)
+                Qy = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qpsi" && i + 1 < argc)
+                Qpsi = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Qv" && i + 1 < argc)
+                Qv = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rthrottle" && i + 1 < argc)
+                Rthrottle = std::stod(argv[++i]);
+            if (std::string(argv[i]) == "--Rsteer" && i + 1 < argc)
+                Rsteer = std::stod(argv[++i]);
+        }
 
         std::shared_ptr<zenoh::Session> session;
         if (!configFile.empty())
@@ -60,81 +60,81 @@ int main(int argc, char** argv)
         }
 
         XboxController manualController(session);
-        // PidController pidController(session, &manualController);
-        // ModelPredictiveController MPController(session, &manualController);
+        PidController pidController(session, &manualController);
+        ModelPredictiveController MPController(session, &manualController);
         SpeedPidController speedPidController(session, &manualController);
 
         if (mode == "local")
         {
-        //     std::cout << "Running in LOCAL mode" << std::endl;
-        //     // PID controller values
-        //     float kp             = 130;
-        //     float ki             = 0.000001;
-        //     float kd             = 10;
-        //     float constant_speed = 0.33; // m/s
-        //     float delta_time     = 0.05;
+            std::cout << "Running in LOCAL mode" << std::endl;
+            // PID controller values
+            float kp             = 130;
+            float ki             = 0.000001;
+            float kd             = 10;
+            float constant_speed = 0.33; // m/s
+            float delta_time     = 0.05;
 
-        //     int screen_height = 480;
-        //     int screen_width  = 640;
+            int screen_height = 480;
+            int screen_width  = 640;
 
-        //     // MPC controller values
-        //     size_t N  = 5;
-        //     double L  = 0.15;
-        //     double Ts = 0.2;
+            // MPC controller values
+            size_t N  = 5;
+            double L  = 0.15;
+            double Ts = 0.2;
 
-        //     Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-        //     Q(0, 0)           = Qx;
-        //     Q(1, 1)           = Qy;
-        //     Q(2, 2)           = Qpsi;
-        //     Q(3, 3)           = Qv;
+            Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+            Q(0, 0)           = Qx;
+            Q(1, 1)           = Qy;
+            Q(2, 2)           = Qpsi;
+            Q(3, 3)           = Qv;
 
-        //     Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-        //     R(0, 0)           = Rthrottle;
-        //     R(1, 1)           = Rsteer;
+            Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
+            R(0, 0)           = Rthrottle;
+            R(1, 1)           = Rsteer;
 
-        //     Eigen::Matrix4d Qf = 5 * Q;
-        //     pidController.init(kp, ki, kd, constant_speed, delta_time);
-        //     MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width,
-        //                       constant_speed, false);
-        //     speedPidController.init(0.25, 0.005, 0.0005, delta_time);
+            Eigen::Matrix4d Qf = 5 * Q;
+            pidController.init(kp, ki, kd, constant_speed, delta_time);
+            MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width,
+                              constant_speed, false);
+            speedPidController.init(0.25, 0.005, 0.0005, delta_time);
         }
         else
         {
-        //     std::cout << "Running in CARLA mode" << std::endl;
-        //     // PID controller values
-        //     float kp             = 20;
-        //     float ki             = 0.2;
-        //     float kd             = 4.0;
-        //     float constant_speed = 10;
-        //     float delta_time     = 0.05;
+            std::cout << "Running in CARLA mode" << std::endl;
+            // PID controller values
+            float kp             = 20;
+            float ki             = 0.2;
+            float kd             = 4.0;
+            float constant_speed = 10;
+            float delta_time     = 0.05;
 
-        //     int screen_height = 512;
-        //     int screen_width  = 1024;
-        //     // MPC controller values
-        //     size_t N  = 5;
-        //     double L  = 2.9;
-        //     double Ts = 0.05;
+            int screen_height = 512;
+            int screen_width  = 1024;
+            // MPC controller values
+            size_t N  = 5;
+            double L  = 2.9;
+            double Ts = 0.05;
 
-        //     Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
-        //     Q(0, 0)           = Qx;
-        //     Q(1, 1)           = Qy;
-        //     Q(2, 2)           = Qpsi;
-        //     Q(3, 3)           = Qv;
+            Eigen::Matrix4d Q = Eigen::Matrix4d::Zero();
+            Q(0, 0)           = Qx;
+            Q(1, 1)           = Qy;
+            Q(2, 2)           = Qpsi;
+            Q(3, 3)           = Qv;
 
-        //     Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
-        //     R(0, 0)           = Rthrottle;
-        //     R(1, 1)           = Rsteer;
+            Eigen::Matrix2d R = Eigen::Matrix2d::Zero();
+            R(0, 0)           = Rthrottle;
+            R(1, 1)           = Rsteer;
 
-        //     Eigen::Matrix4d Qf = Q * 5; // Terminal cost, more aggressive
-        //     pidController.init(kp, ki, kd, constant_speed, delta_time);
-        //     MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width,
-        //                       constant_speed, true);
-        //     speedPidController.init(0.25, 0.005, 0.0005, delta_time);
+            Eigen::Matrix4d Qf = Q * 5; // Terminal cost, more aggressive
+            pidController.init(kp, ki, kd, constant_speed, delta_time);
+            MPController.init(N, L, Ts, Q, R, Qf, screen_height, screen_width,
+                              constant_speed, true);
+            speedPidController.init(0.25, 0.005, 0.0005, delta_time);
         }
 
         std::thread manualThread(&XboxController::run, &manualController);
-        // std::thread pidThread(&PidController::run, &pidController);
-        // std::thread MPCThread(&ModelPredictiveController::run, &MPController);
+        std::thread pidThread(&PidController::run, &pidController);
+        std::thread MPCThread(&ModelPredictiveController::run, &MPController);
         std::thread speedPidThread(&SpeedPidController::run,
                                    &speedPidController);
 
