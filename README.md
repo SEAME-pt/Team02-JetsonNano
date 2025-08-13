@@ -1,187 +1,99 @@
-# Vehicle Control System for Jetson Nano Platform
+# Jetson Nano ECU — Vehicle Control Stack (Team02-Course submodule)
 
-This repository contains the complete control system for an autonomous vehicle, designed to run on the NVIDIA Jetson Nano platform. The system leverages computer vision, sensor fusion, and advanced control algorithms to enable autonomous driving capabilities.
+This repository contains the core software that runs on an NVIDIA Jetson Nano used as an ECU in an autonomous driving lab platform. It is a submodule of the Team02-Course monorepo and provides perception, control, middleware, and tooling required to operate the vehicle in manual and autonomous modes.
 
-## System Overview
+Key features:
+- Combined Controller: manual control via Xbox controller, PID/MPC steering, and speed PID control.
+- Vehicle System: vehicle state model and actuation interface.
+- Middleware: CAN <-> Zenoh bridge for battery, lights, speed, etc.
+- Perception: lane detection, object detection, ACC, LKAS, traffic light/sign classification.
+- Tools: camera calibration, Zenoh router (cloud bridge with InfluxDB), PID calibration, system monitor, VSS helpers.
 
-The Vehicle Control System integrates multiple components that work together to provide autonomous driving functionality:
-
-- **Vehicle System**: Core vehicle management and control
-- **Object Detection**: Real-time object detection using TensorRT
-- **Lane Detection**: Lane marking detection and tracking
-- **Middleware**: Sensor data processing and signal conversion
-- **Combined Controller**: Intelligent control switching between manual and autonomous modes
-
-## Architecture
-
-The system follows a modular architecture based on automotive domain standards:
+Architecture:
+- IPC is Zenoh-based (pub/sub). Middleware bridges vehicle CAN to Zenoh topics.
+- Controllers switch between manual (SAE_0/SAE_1) and autonomous levels, consuming perception outputs to steer and modulate speed.
+- Object detection triggers emergency braking and supports ACC (distance/speed tracking).
+- Lane detection provides midpoint error for PID and trajectory for MPC.
 
 ![Architecture Diagram](./docs/architecture.png)
 
-### Key Components:
+## Executables
 
-1. **Vehicle System**
-   - Manages overall vehicle state and behavior
-   - Implements VSS (Vehicle Signal Specification) data model
-   - Coordinates subsystems (Powertrain, Chassis, Body, ...)
-
-2. **ADAS System**
-   - Obstacle detection and avoidance
-   - Trajectory planning
-   - Safety monitoring
-
-3. **Middleware**
-   - Converts between communication protocols
-   - Handles sensor data acquisition and processing
-   - Implements signal routing between components
-
-4. **Controller Systems**
-   - PID controller for autonomous driving
-   - Xbox controller interface for manual override
-   - Controller switching logic
-
-5. **Perception Systems**
-   - Object Detection using TensorRT-accelerated CNN
-   - Lane Detection with optimized image processing
+- Vehicle System (src/vehicle.cpp)
+  - Holds vehicle state, VSS-aligned signals, and actuates chassis/body.
+- Middleware (src/middleware.cpp)
+  - Publishes CAN-derived signals (battery, lights, etc.) and converts received CAN to Zenoh (e.g., speed).
+- Combined Controller (src/combinedControl.cpp)
+  - Threads:
+    - ManualControl: reads Xbox inputs, exposes manual speed/steering.
+    - PIDController or MPCController: steering control (mode-dependent).
+    - SpeedPidController: regulates throttle using desiredSpeed/currentSpeed.
+  - Uses manual inputs in manual modes, and perception-derived signals in autonomous modes.
+- Detection (src/detection.cpp)
+  - Lane Detection: midpoint error for PID and trajectory for MPC.
+  - Object Detection: obstacle/road checks, emergency brake, ACC (relative speed), LKAS helpers.
+  - Traffic lights/signs: crop and classify; results shared with controller to adjust speed/brake.
 
 ## Communication
 
-The system uses a sophisticated communication architecture:
+- Zenoh: primary IPC between components and tools.
+- CAN Bus: vehicle-side communication; Middleware bridges to Zenoh.
+- VSS: used to structure signals and naming.
 
-- **Zenoh**: High-performance pub/sub middleware for IPC communication with shared-memory
-- **Zenoh Router**: Connects vehicle systems to cloud services
-- **CAN Bus**: Communication with vehicle hardware components (Micro Controller and Raspberry Pi)
-- **VSS**: Standardized vehicle signal specification for data exchange
+## Repository layout
 
-## Building and Running
+- include/, src/: core code (ADAS, Controllers, Communication, Detection, Vehicle, …)
+- config/
+  - Zenoh/*.json: component configs
+  - Systemd/*.service: systemd units for deployment
+- tools/: calibration, PID tuning, system monitor, VSS, zenoh-router
+- docs/: diagrams and documentation assets
+- deploy/: Dockerfiles and scripts for Jetson deployment
 
-### Prerequisites
+## Build
 
-- NVIDIA Jetson Nano with JetPack 4.6 or later
-- CUDA Toolkit 10.2 or later
-- OpenCV 4.1.1 or later
-- Zenoh C/C++ libraries
-- CMake 3.16 or later
+Prerequisites:
+- Jetson Nano (JetPack 4.6+), CUDA (if using perception), OpenCV, Zenoh C/C++ libs, CMake 3.16+
 
-### Build Instructions
+Build:
+- On device (recommended):
+  - mkdir -p build && cd build
+  - cmake ..
+  - make -j
+- For deployment via systemd, see config/Systemd and deploy/scripts.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/SEAME-pt/Team02-JetsonNano.git
-   cd Team02-JetsonNano
-   ```
+## Run (examples)
 
-2. Create a build directory:
-   ```bash
-   mkdir build && cd build
-   ```
+- Vehicle System:
+  - ./build/VehicleSystem
+- Middleware:
+  - ./build/MiddleWare
+- Combined Controller:
+  - ./build/CombinedController
+- Detection:
+  - ./build/Detection
 
-3. Configure and build:
-   ```bash
-   cmake ..
-   make -j4
-   ```
+Systemd units (optional):
+- config/Systemd/*.service contain ready-to-use services for each component.
 
-### Running the System
+## Configuration
 
-#### Vehicle System
-```bash
-./VehicleSystem
-```
+- Zenoh configs: config/Zenoh/*.json
+- Environment and runtime settings: .env/, config/* (per-component)
+- Camera calibration and model parameters: tools/cam_calibration/
 
-#### Object Detector
-```bash
-./ObjectDetector
-```
+## Tools
 
-#### Middleware
-```bash
-./MiddleWare
-```
-
-#### Combined Controller
-```bash
-./CombinedController
-```
-
-## Components in Detail
-
-### Vehicle System
-
-The core vehicle management system implementing a complete vehicle model following automotive standards:
-
-- **Powertrain**: Electric motor, transmission, and battery management
-- **Chassis**: Accelerator, brake, steering, and axle control
-- **Body**: Exterior components, lights, and accessories
-- **Vehicle**: Main vehicle state, connectivity, and motion management
-
-### Object Detector
-
-Computer vision system for detecting and classifying road objects:
-
-- Uses TensorRT-optimized neural networks for efficient inference
-- Processes camera input in real-time
-- Identifies vehicles, pedestrians, traffic signs, etc.
-- Publishes detection results via Zenoh
-
-### Lane Detector
-
-Vision system for lane detection and tracking:
-
-- Processes camera frames to identify lane markings
-- Calculates road geometry and vehicle position
-- Provides lane keeping assistance data
-- Optimized for Jetson Nano using CUDA acceleration
-
-### Middleware
-
-Communication and signal processing system:
-
-- Interfaces with physical sensors (battery, etc.)
-- Converts between communication protocols
-- Implements signal routing and filtering
-- Provides hardware abstraction layer
-
-### Combined Controller
-
-Intelligent control system with manual and autonomous capabilities:
-
-- Xbox controller interface for manual control
-- PID controller implementation for autonomous driving
-- Trajectory planning and following
-- Transition between control modes
-
-## Testing
-
-The system includes comprehensive unit tests using Catch2:
-
-```bash
-cd build
-cmake -DENABLE_TESTING=ON ..
-make
-ctest
-```
-
-For generating code coverage:
-```bash
-cmake -DENABLE_TESTING=ON -DENABLE_COVERAGE=ON ..
-make coverage
-```
-
-## Dependencies
-
-The system depends on several external libraries:
-
-- **CUDA**: GPU acceleration for computer vision
-- **OpenCV**: Computer vision algorithms
-- **Zenoh**: Communication middleware
-- **TensorRT**: Neural network inference acceleration
-- **Team02-Libs**: Custom libraries for hardware interface
+- zenoh-router: bridge to cloud (InfluxDB plugin) for telemetry
+- cam_calibration: camera intrinsic/extrinsic calibration helpers
+- pid_calibrator: PID gain tuning
+- system_monitor: runtime resource tracking
+- vss, zenoh-router helpers
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see LICENSE.
 
 ## Team
 
-This project is developed by Team02 at SEAME Polytechnic Singapore.
+Developed by Team02 at SEAME Portugal.
