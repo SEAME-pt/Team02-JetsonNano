@@ -449,7 +449,7 @@ void PidController::speedDefinition(void)
         if (stopped && stop_signal && counter % 50 == 0)
         {
             desired_speed_ = active_speed;
-            counter = 0;
+            counter = 1;
         }
         else if (stopped && current_speed_ == 0)
         {
