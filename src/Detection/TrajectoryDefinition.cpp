@@ -1964,6 +1964,7 @@ void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
     // ipm_frame_publisher_->put(std::move(buf));
+    ipm_frame_publisher_->put(value_str);
 }
 
 void TrajectoryDefinition::publishOrigFrame(const std::string& value_str)
@@ -1973,7 +1974,8 @@ void TrajectoryDefinition::publishOrigFrame(const std::string& value_str)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    frame_publisher_->put(std::move(buf));
+    // frame_publisher_->put(std::move(buf));
+    frame_publisher_->put(value_str);
 }
 
 void TrajectoryDefinition::publishBinMask(const std::string& value_str)
@@ -1983,7 +1985,8 @@ void TrajectoryDefinition::publishBinMask(const std::string& value_str)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    lane_mask_publisher_->put(std::move(buf));
+    // lane_mask_publisher_->put(std::move(buf));
+    lane_mask_publisher_->put(value_str);
 }
 
 void TrajectoryDefinition::publishClassMask(const std::string& value_str)
@@ -1993,5 +1996,6 @@ void TrajectoryDefinition::publishClassMask(const std::string& value_str)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    class_mask_publisher_->put(std::move(buf));
+    // class_mask_publisher_->put(std::move(buf));
+    class_mask_publisher_->put(value_str);
 }
