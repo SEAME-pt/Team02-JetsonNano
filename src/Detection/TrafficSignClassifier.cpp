@@ -115,7 +115,7 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask,
                     if (classes[bestClass].find("Stop") == std::string::npos) {
                         publishTrafficSign(classes[bestClass]);
                     } else {
-                        if (componentSizes[i] > 750)
+                        if (componentSizes[i] > 2000)
                         {
                             publishTrafficSign(classes[bestClass]);
                         }

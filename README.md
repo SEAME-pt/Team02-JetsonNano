@@ -79,6 +79,7 @@ Systemd units (optional):
 ## Configuration
 
 - Zenoh configs: config/Zenoh/*.json
+- Environment and runtime settings: .env/, config/* (per-component)
 - Camera calibration and model parameters: tools/cam_calibration/
 
 ## Tools
