@@ -384,7 +384,7 @@ void PidController::speedDefinition(void)
     double current_time   = getCurrentTime();
     double threshold      = 2.0;
     double red_threshold  = 5.0;
-    double stop_threshold = 2.0;
+    double stop_threshold = 5.0;
     double active_speed   = speed_limit_;
 
     if (std::abs(current_time - last_acc_speed_receive_) < threshold)
@@ -402,7 +402,45 @@ void PidController::speedDefinition(void)
     static bool stopped = 0;
     static bool stop_signal = 0;
     static int counter = 1;
-    if (std::abs(current_time - last_danger_received_) < threshold)
+    if (std::abs(current_time - last_stop_received_) < stop_threshold)
+    {
+        // if (counter % 10 != 0)
+        //     stop_active_ = !stop_active_;
+
+        // counter++;
+
+        // if (stop_active_ == true)
+        //     desired_speed_ = 0;
+        // else
+        //     desired_speed_ = active_speed;
+
+        
+        //if stopped == 1 && speed == 0
+        //go
+        //else
+        //desired_speed_ = 0;
+
+
+        if (stopped && stop_signal && counter % 50 == 0)
+        {
+            desired_speed_ = active_speed;
+            std::cout << "desired speed " << desired_speed_ << std::endl;
+        }
+        else if (stopped && current_speed_ == 0)
+        {
+            desired_speed_ = 0;
+            stop_signal = 1;
+            counter++;
+            std::cout << "Counter: " << counter << std::endl;
+        }
+        else
+        {
+            desired_speed_ = 0;
+            stopped = 1;
+        }
+
+    }
+    else if (std::abs(current_time - last_danger_received_) < threshold)
     {
         desired_speed_ = active_speed - 0.05;
     }
@@ -425,42 +463,6 @@ void PidController::speedDefinition(void)
     else if (std::abs(current_time - last_red_received_) < red_threshold)
     {
         desired_speed_ = 0;
-    }
-    else if (std::abs(current_time - last_stop_received_) < stop_threshold)
-    {
-        // if (counter % 10 != 0)
-        //     stop_active_ = !stop_active_;
-
-        // counter++;
-
-        // if (stop_active_ == true)
-        //     desired_speed_ = 0;
-        // else
-        //     desired_speed_ = active_speed;
-
-        
-        //if stopped == 1 && speed == 0
-        //go
-        //else
-        //desired_speed_ = 0;
-
-
-        if (stopped && stop_signal && counter % 50 == 0)
-        {
-            desired_speed_ = active_speed;
-        }
-        else if (stopped && current_speed_ == 0)
-        {
-            desired_speed_ = active_speed;
-            stop_signal = 1;
-            counter++;
-        }
-        else
-        {
-            desired_speed_ = 0;
-            stopped = 1;
-        }
-
     }
     else
     {
