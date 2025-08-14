@@ -138,27 +138,20 @@ int main(int argc, char** argv)
         std::thread speedPidThread(&SpeedPidController::run,
                                    &speedPidController);
 
-        std::thread monitorThread([]() {
-            while(true) {
-                std::this_thread::sleep_for(std::chrono::seconds(5));
-                std::system("top -p $(pgrep CombinedControl) -n 1 -b | tail -1");
-            }
-        });
-
         if (manualThread.joinable())
         {
             manualThread.join();
         }
 
-        // if (pidThread.joinable())
-        // {
-        //     pidThread.join();
-        // }
+        if (pidThread.joinable())
+        {
+            pidThread.join();
+        }
 
-        // if (MPCThread.joinable())
-        // {
-        //     MPCThread.join();
-        // }
+        if (MPCThread.joinable())
+        {
+            MPCThread.join();
+        }
 
         if (speedPidThread.joinable())
         {
