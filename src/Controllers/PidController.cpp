@@ -427,7 +427,7 @@ void PidController::speedDefinition(void)
     }
     else if (std::abs(current_time - last_stop_received_) < stop_threshold)
     {
-        // static int counter = 0;
+        static int counter = 0;
 
         // if (counter % 10 != 0)
         //     stop_active_ = !stop_active_;
@@ -446,12 +446,16 @@ void PidController::speedDefinition(void)
         //desired_speed_ = 0;
 
 
-        if (stopped && stop_signal)
+        if (stopped && stop_signal && counter % 10 == 0)
+        {
             desired_speed_ = active_speed;
+            counter = 0;
+        }
         else if (stopped && current_speed_ == 0)
         {
             desired_speed_ = active_speed;
             stop_signal = 1;
+            counter++;
         }
         else
         {
