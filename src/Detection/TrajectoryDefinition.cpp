@@ -1963,7 +1963,7 @@ void TrajectoryDefinition::publishIPMFrame(const std::string& value_str)
         provider_->alloc_gc_defrag_blocking(len, zenoh::AllocAlignment({0}));
     zenoh::ZShmMut&& buf = std::get<zenoh::ZShmMut>(std::move(alloc_result));
     memcpy(buf.data(), value_str.c_str(), len);
-    ipm_frame_publisher_->put(std::move(buf));
+    // ipm_frame_publisher_->put(std::move(buf));
 }
 
 void TrajectoryDefinition::publishOrigFrame(const std::string& value_str)
