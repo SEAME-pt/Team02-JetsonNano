@@ -23,12 +23,9 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
     if (js == -1)
         throw std::exception();
 
-    int numAxes = this->getAxisCount();
-    for (int i = 0; i < numAxes; i++)
-    {
-        struct axis_state* axis = new struct axis_state();
-        axes.push_back(axis);
-    }
+    int numAxes = getAxisCount();
+    axes.clear();
+    axes.resize(numAxes);
 
     session_ = session;
 
@@ -55,22 +52,15 @@ XboxController::XboxController(std::shared_ptr<zenoh::Session> session)
 
 XboxController::~XboxController()
 {
-    for (unsigned int i = 0; i < axes.size(); i++)
-    {
-        delete axes[i];
-    }
-
     device_close(js);
 }
-int XboxController::readEvent(void)
+
+int XboxController::readEvent()
 {
-    int bytes;
-
-    bytes = read(js, &event, sizeof(event));
-
-    if (bytes == sizeof(event))
-        return 0;
-
+    std::memset(&event, 0, sizeof(event));
+    ssize_t bytes = device_read(js, &event, sizeof(event));
+    if (bytes == sizeof(event)) return 0;
+    if (bytes < 0 && (errno == EAGAIN || errno == EINTR)) return -2;
     return -1;
 }
 
@@ -85,7 +75,7 @@ int XboxController::getButtonCount(void)
 
 int XboxController::getAxisCount(void)
 {
-    int axes;
+    int axes = 0;
     if (device_ioctl(js, JSIOCGAXES, &axes) == -1)
         return 0;
 
@@ -96,12 +86,11 @@ int XboxController::getAxisState(void)
 {
     int axis = event.number / 2;
 
-    if (axis < 3)
-    {
+    if (axis >= 0 && static_cast<size_t>(axis) < axes.size()) {
         if (event.number % 2 == 0)
-            axes[axis]->x = event.value;
+            axes[axis].x = event.value;
         else
-            axes[axis]->y = event.value;
+            axes[axis].y = event.value;
     }
     return axis;
 }
@@ -111,155 +100,142 @@ void XboxController::run()
     size_t axis;
     size_t button;
 
+    float last_speed = std::numeric_limits<float>::quiet_NaN();
+    float last_dir   = std::numeric_limits<float>::quiet_NaN();
+
     while (this->readEvent() == 0)
     {
         switch (this->event.type)
         {
             case JS_EVENT_BUTTON:
             {
-                button = this->event.number;
-                if (this->event.value == 1)
+                if (event.value != 1) break;
+                button = event.number;
+                switch (button)
                 {
-                    switch (button)
+                    case BUTTON_RB:
                     {
-                        case BUTTON_RB:
-                        {
-                            publisher_->publishDirectionIndicatorRight(true);
+                        publisher_->publishDirectionIndicatorRight(true);
 
-                            std::cout << "RightBlinker" << std::endl;
-                            break;
-                        }
-                        case BUTTON_LB:
+                        std::cout << "RightBlinker" << std::endl;
+                        break;
+                    }
+                    case BUTTON_LB:
+                    {
+                        publisher_->publishDirectionIndicatorLeft(true);
+                        std::cout << "LeftBlinker" << std::endl;
+                        break;
+                    }
+                    case BUTTON_A:
+                    {
+                        publisher_->publishBeamLow(true);
+                        std::cout << "lowBeam" << std::endl;
+                        break;
+                    }
+                    case BUTTON_B:
+                    {
+                        publisher_->publishBeamHigh(true);
+                        std::cout << "highBeam" << std::endl;
+                        break;
+                    }
+                    case BUTTON_X:
+                    {
+                        publisher_->publishFogRear(true);
+                        std::cout << "rearFogLight" << std::endl;
+                        break;
+                    }
+                    case BUTTON_Y:
+                    {
+                        publisher_->publishFogFront(true);
+                        std::cout << "frontFogLight" << std::endl;
+                        break;
+                    }
+                    case BUTTON_L2:
+                    {
+                        publisher_->publishHazard(true);
+                        std::cout << "hazardLight" << std::endl;
+                        break;
+                    }
+                    case BUTTON_R2:
+                    {
+                        publisher_->publishParking(true);
+                        std::cout << "parkingLight" << std::endl;
+                        break;
+                    }
+                    case BUTTON_START:
+                    {
+                        if (sae_4 == true)
                         {
-                            publisher_->publishDirectionIndicatorLeft(true);
-                            std::cout << "LeftBlinker" << std::endl;
-                            break;
+                            publisher_->publishActiveAutonomyLevel("SAE_0");
+                            std::cout << "SAE_0 Driving" << std::endl;
+                            sae_4 = false;
                         }
-                        case BUTTON_A:
+                        else
                         {
-                            publisher_->publishBeamLow(true);
-                            std::cout << "lowBeam" << std::endl;
-                            break;
-                        }
-                        case BUTTON_B:
-                        {
-                            publisher_->publishBeamHigh(true);
-                            std::cout << "highBeam" << std::endl;
-                            break;
-                        }
-                        case BUTTON_X:
-                        {
-                            publisher_->publishFogRear(true);
-                            std::cout << "rearFogLight" << std::endl;
-                            break;
-                        }
-                        case BUTTON_Y:
-                        {
-                            publisher_->publishFogFront(true);
-                            std::cout << "frontFogLight" << std::endl;
-                            break;
-                        }
-                        case BUTTON_L2:
-                        {
-                            publisher_->publishHazard(true);
-                            std::cout << "hazardLight" << std::endl;
-                            break;
-                        }
-                        case BUTTON_R2:
-                        {
-                            publisher_->publishParking(true);
-                            std::cout << "parkingLight" << std::endl;
-                            break;
-                        }
-                        case BUTTON_START:
-                        {
-                            if (sae_4 == true)
+                            if (autonomyEnvEnable_)
                             {
-                                publisher_->publishActiveAutonomyLevel("SAE_0");
-                                std::cout << "SAE_0 Driving" << std::endl;
-                                sae_4 = false;
+                                publisher_->publishActiveAutonomyLevel(
+                                    "SAE_4");
+                                std::cout << "SAE_4 Driving" << std::endl;
+                                sae_4      = true;
+                                sae_3      = false;
+                                sae_2      = false;
+                                sae_1_LKAS = false;
+                                sae_1_ACC  = false;
                             }
                             else
                             {
-                                if (autonomyEnvEnable_)
-                                {
-                                    publisher_->publishActiveAutonomyLevel(
-                                        "SAE_4");
-                                    std::cout << "SAE_4 Driving" << std::endl;
-                                    sae_4      = true;
-                                    sae_3      = false;
-                                    sae_2      = false;
-                                    sae_1_LKAS = false;
-                                    sae_1_ACC  = false;
-                                }
-                                else
-                                {
-                                    std::cout << "Autonomy Env not ready"
-                                              << std::endl;
-                                }
+                                std::cout << "Autonomy Env not ready"
+                                            << std::endl;
                             }
-                            break;
                         }
-                        case BUTTON_SELECT:
-                        {
-                            pidEnable_.load() ? pidEnable_.store(false)
-                                              : pidEnable_.store(true);
-                            std::cout << "Control Type Switch" << std::endl;
-                            break;
-                        }
-
-                        default:
-                            break;
+                        break;
                     }
+                    case BUTTON_SELECT:
+                    {
+                        pidEnable_.load() ? pidEnable_.store(false)
+                                            : pidEnable_.store(true);
+                        std::cout << "Control Type Switch" << std::endl;
+                        break;
+                    }
+
+                    default:
+                        break;
                 }
-                break;
+                break;   
             }
             case JS_EVENT_AXIS:
             {
                 axis   = this->getAxisState();
                 button = this->event.number;
-                switch (axis)
+
+                if (axis == AXIS_LEFT_STICK)
                 {
-                    case (AXIS_LEFT_STICK):
+                    float speed = -static_cast<float>(axes[axis].y) * 50.0f / 32767.0f;
+                    if (speed != last_speed)
                     {
-                        float speed = -this->axes[axis]->y * 50 / 32767;
-                        // publisher_->publishActiveAutonomyLevel("SAE_0");
-
-                        if (speed < -5)
-                        {
-                            publisher_->publishCurrentGear(-1);
-                        }
-                        else if (speed > 5)
-                        {
-                            publisher_->publishCurrentGear(1);
-                        }
-                        else
-                        {
-                            publisher_->publishCurrentGear(0);
-                        }
+                        if (speed < -5)      publisher_->publishCurrentGear(-1);
+                        else if (speed > 5)  publisher_->publishCurrentGear(1);
+                        else                 publisher_->publishCurrentGear(0);
                         manual_speed_.store(speed);
-                        // std::cout << "Speed" << std::endl;
-                        break;
+                        last_speed = speed;
                     }
-                    case (AXIS_RIGHT_STICK):
+                }
+                else if (axis == AXIS_RIGHT_STICK)
+                {
+                    float direction = 90.0f + static_cast<float>(axes[axis].x) * 90.0f / 32767.0f;
+                    if (direction != last_dir)
                     {
-                        float direction = 90 + this->axes[axis]->x * 90 / 32767;
-
                         if (sae_2 || sae_3 || sae_4)
                         {
                             publisher_->publishActiveAutonomyLevel("SAE_0");
-                            sae_2 = false;
-                            sae_3 = false;
-                            sae_4 = false;
+                            sae_2 = sae_3 = sae_4 = false;
                         }
-                        // publisher_->publishSteering(direction);
                         manual_steering_.store(direction);
-                        // std::cout << "Direction" << std::endl;
-                        break;
+                        last_dir = direction;
                     }
-                    default:
-                        break;
                 }
+
                 switch (button)
                 {
                     case (BUTTON_CLICK_LEFT_RIGHT):
@@ -389,16 +365,8 @@ void XboxController::run()
             }
             default:
                 break;
-                // if ((gear[0] >> 1) == 1 || (gear[0] >> 3) == 1)
-                // {
-                //     gear[0] = 0;
-                //     ;
-                //     gear[0] ^= (1 << 2);
-                //     this->m_pubGear.put(gear);
-                // }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        fflush(stdout);
     }
 }
 

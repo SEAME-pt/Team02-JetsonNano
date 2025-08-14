@@ -112,7 +112,15 @@ void TrafficSignClassifier::classify(cv::Mat frame, cv::Mat& class_mask,
                         "Traffic Green", "Traffic Red",  "Traffic Yellow",
                         "Unknown"};
 
-                    publishTrafficSign(classes[bestClass]);
+                    if (classes[bestClass].find("Stop") == std::string::npos) {
+                        publishTrafficSign(classes[bestClass]);
+                    } else {
+                        if (componentSizes[i] > 750)
+                        {
+                            publishTrafficSign(classes[bestClass]);
+                        }
+                    }
+
 
                     cv::putText(preprocessedFrame, classes[bestClass],
                                 cv::Point(5, 5), cv::FONT_HERSHEY_SIMPLEX, 0.3,

@@ -384,17 +384,15 @@ void Signals::run()
         if (frame.can_id == 0x01)
         {
             int speed;
-            // double wheelDiame = 0.067;
 
             memcpy(&speed, frame.data, sizeof(int));
             speed = ntohl(speed);
-            // speed                 = wheelDiame * 3.14 * speed * 10 / 60;
 
             float fspeed = static_cast<float>(speed);
             std::cout << fspeed << std::endl;
 
             this->publisher_->publishSpeed(fspeed);
         }
-        usleep(25000);
+        usleep(10);
     }
 }

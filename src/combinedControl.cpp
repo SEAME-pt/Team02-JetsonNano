@@ -71,7 +71,7 @@ int main(int argc, char** argv)
             float kp             = 130;
             float ki             = 0.000001;
             float kd             = 10;
-            float constant_speed = 0.33; // m/s
+            float constant_speed = 0.30; // m/s
             float delta_time     = 0.05;
 
             int screen_height = 480;
@@ -134,16 +134,9 @@ int main(int argc, char** argv)
 
         std::thread manualThread(&XboxController::run, &manualController);
         std::thread pidThread(&PidController::run, &pidController);
-        // std::thread MPCThread(&ModelPredictiveController::run, &MPController);
+        std::thread MPCThread(&ModelPredictiveController::run, &MPController);
         std::thread speedPidThread(&SpeedPidController::run,
                                    &speedPidController);
-
-        std::thread monitorThread([]() {
-            while(true) {
-                std::this_thread::sleep_for(std::chrono::seconds(5));
-                std::system("top -p $(pgrep CombinedControl) -n 1 -b | tail -1");
-            }
-        });
 
         if (manualThread.joinable())
         {
@@ -155,10 +148,10 @@ int main(int argc, char** argv)
             pidThread.join();
         }
 
-        // if (MPCThread.joinable())
-        // {
-        //     MPCThread.join();
-        // }
+        if (MPCThread.joinable())
+        {
+            MPCThread.join();
+        }
 
         if (speedPidThread.joinable())
         {

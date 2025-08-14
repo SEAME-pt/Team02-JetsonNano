@@ -61,10 +61,9 @@ enum Axis
     AXIS_LEFT_STICK  = 1,
 };
 
-struct axis_state
-{
-    int x = 0;
-    int y = 0;
+struct axis_state {
+    int16_t x{0};
+    int16_t y{0};
 };
 
 /**
@@ -123,7 +122,7 @@ class XboxController
     bool autonomyEnvEnable_ = false;
 
   public:
-    std::vector<struct axis_state*> axes;
+    std::vector<axis_state> axes;
     struct js_event event;
 
     XboxController(std::shared_ptr<zenoh::Session> session);
