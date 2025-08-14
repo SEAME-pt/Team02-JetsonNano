@@ -448,12 +448,14 @@ void PidController::speedDefinition(void)
         if (stopped && stop_signal && counter % 50 == 0)
         {
             desired_speed_ = active_speed;
+            std::cout << "desired speed " << desired_speed_ << std::endl;
         }
         else if (stopped && current_speed_ == 0)
         {
             desired_speed_ = active_speed;
             stop_signal = 1;
             counter++;
+            std::cout << "Counter: " << counter << std::endl;
         }
         else
         {
