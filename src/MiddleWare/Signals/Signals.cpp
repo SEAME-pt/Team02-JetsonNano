@@ -395,6 +395,6 @@ void Signals::run()
 
             this->publisher_->publishSpeed(fspeed);
         }
-        usleep(25000);
+        usleep(10);
     }
 }
