@@ -384,7 +384,7 @@ void PidController::speedDefinition(void)
     double current_time   = getCurrentTime();
     double threshold      = 2.0;
     double red_threshold  = 5.0;
-    double stop_threshold = 25.0;
+    double stop_threshold = 5.0;
     double active_speed   = speed_limit_;
 
     if (std::abs(current_time - last_acc_speed_receive_) < threshold)
@@ -428,7 +428,7 @@ void PidController::speedDefinition(void)
         }
         else if (stopped && current_speed_ == 0)
         {
-            desired_speed_ = active_speed;
+            desired_speed_ = 0;
             stop_signal = 1;
             counter++;
             std::cout << "Counter: " << counter << std::endl;
