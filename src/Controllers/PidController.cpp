@@ -402,31 +402,7 @@ void PidController::speedDefinition(void)
     static bool stopped = 0;
     static bool stop_signal = 0;
     static int counter = 1;
-    if (std::abs(current_time - last_danger_received_) < threshold)
-    {
-        desired_speed_ = active_speed - 0.05;
-    }
-    else if (std::abs(current_time - last_crosswalk_received_) < threshold)
-    {
-        desired_speed_ = active_speed - 0.05;
-    }
-    else if (std::abs(current_time - last_yield_received_) < threshold)
-    {
-        desired_speed_ = active_speed - 0.05;
-    }
-    else if (std::abs(current_time - last_green_received_) < threshold)
-    {
-        desired_speed_ = active_speed;
-    }
-    else if (std::abs(current_time - last_yellow_received_ < threshold))
-    {
-        desired_speed_ = active_speed - 0.05;
-    }
-    else if (std::abs(current_time - last_red_received_) < red_threshold)
-    {
-        desired_speed_ = 0;
-    }
-    else if (std::abs(current_time - last_stop_received_) < stop_threshold)
+    if (std::abs(current_time - last_stop_received_) < stop_threshold)
     {
         // if (counter % 10 != 0)
         //     stop_active_ = !stop_active_;
@@ -463,6 +439,30 @@ void PidController::speedDefinition(void)
             stopped = 1;
         }
 
+    }
+    else if (std::abs(current_time - last_danger_received_) < threshold)
+    {
+        desired_speed_ = active_speed - 0.05;
+    }
+    else if (std::abs(current_time - last_crosswalk_received_) < threshold)
+    {
+        desired_speed_ = active_speed - 0.05;
+    }
+    else if (std::abs(current_time - last_yield_received_) < threshold)
+    {
+        desired_speed_ = active_speed - 0.05;
+    }
+    else if (std::abs(current_time - last_green_received_) < threshold)
+    {
+        desired_speed_ = active_speed;
+    }
+    else if (std::abs(current_time - last_yellow_received_ < threshold))
+    {
+        desired_speed_ = active_speed - 0.05;
+    }
+    else if (std::abs(current_time - last_red_received_) < red_threshold)
+    {
+        desired_speed_ = 0;
     }
     else
     {
