@@ -1722,14 +1722,14 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask,
             int targetY = frameHeight_ - (0.65 * frameHeight_);
 
             // Find closest point in adjusted trajectory at target Y
-            cv::Point adjustedPoint =
-                findClosestPointAtY(adjustedTrajectory, targetY);
+            // cv::Point adjustedPoint =
+            //     findClosestPointAtY(adjustedTrajectory, targetY);
 
-            // Find lane boundaries at same Y level
-            cv::Point leftLanePoint =
-                findClosestPointAtY(prevLeftCurve, targetY);
-            cv::Point rightLanePoint =
-                findClosestPointAtY(prevRightCurve, targetY);
+            // // Find lane boundaries at same Y level
+            // cv::Point leftLanePoint =
+            //     findClosestPointAtY(prevLeftCurve, targetY);
+            // cv::Point rightLanePoint =
+            //     findClosestPointAtY(prevRightCurve, targetY);
 
             // if (adjustedPoint.x < leftLanePoint.x)
             // {
