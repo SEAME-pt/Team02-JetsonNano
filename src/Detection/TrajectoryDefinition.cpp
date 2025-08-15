@@ -1731,20 +1731,20 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask,
             cv::Point rightLanePoint =
                 findClosestPointAtY(prevRightCurve, targetY);
 
-            if (adjustedPoint.x < leftLanePoint.x)
-            {
-                // Trajectory crossed left - swap lanes
-                prevRightCurve = prevLeftCurve;
-                prevLeftCurve.clear();
-                std::cout << "Trajectory crossed right" << std::endl;
-            }
-            else if (adjustedPoint.x > rightLanePoint.x)
-            {
-                // Trajectory crossed right - swap lanes
-                prevLeftCurve = prevRightCurve;
-                prevRightCurve.clear();
-                std::cout << "Trajectory crossed right" << std::endl;
-            }
+            // if (adjustedPoint.x < leftLanePoint.x)
+            // {
+            //     // Trajectory crossed left - swap lanes
+            //     prevRightCurve = prevLeftCurve;
+            //     prevLeftCurve.clear();
+            //     std::cout << "Trajectory crossed right" << std::endl;
+            // }
+            // else if (adjustedPoint.x > rightLanePoint.x)
+            // {
+            //     // Trajectory crossed right - swap lanes
+            //     prevLeftCurve = prevRightCurve;
+            //     prevRightCurve.clear();
+            //     std::cout << "Trajectory crossed right" << std::endl;
+            // }
         }
         avoidance->visualizeGrid(&midCurve, segmentation_mask);
     }
