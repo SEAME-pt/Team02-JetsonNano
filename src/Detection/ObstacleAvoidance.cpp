@@ -114,12 +114,11 @@ bool ObstacleAvoidance::detectAllCollisions()
         }
     }
 
-    // For collision points, you could either:
     // 1. Use all obstacle points as collision points
     collisionPoints_ = obstaclePoints_;
 
-    // 2. Or find trajectory cells that are affected (if you still want this
-    // logic) for (const auto& trajCell : trajectoryCells_) {
+    // 2. Find trajectory cells that are affected 
+    // for (const auto& trajCell : trajectoryCells_) {
     //     int r = trajCell.first;
     //     int c = trajCell.second;
     //     if (r < ignoreZoneRowThreshold && occupancy_[gridIndex(r, c)]) {

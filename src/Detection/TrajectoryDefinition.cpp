@@ -1707,43 +1707,69 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask,
         {
             std::vector<cv::Point> adjustedTrajectory =
                 avoidance->adjustTrajectory(midCurve);
-            // Replace original trajectory with adjusted one
-            midCurve.clear();
-            midCurve = adjustedTrajectory;
 
-            cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
-            for (size_t i = 1; i < midCurve.size(); i++)
+            // Only proceed with lane switching logic if there was an actual obstacle avoidance
+            bool trajectoryWasAdjusted = false;
+            
+            // Check if the trajectory was significantly modified
+            if (adjustedTrajectory.size() == midCurve.size())
             {
-                cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i],
-                         midCurveColor, 3);
+                float totalDeviation = 0.0f;
+                for (size_t i = 0; i < adjustedTrajectory.size(); i++)
+                {
+                    float deviation = std::abs(adjustedTrajectory[i].x - midCurve[i].x);
+                    totalDeviation += deviation;
+                }
+                float avgDeviation = totalDeviation / adjustedTrajectory.size();
+                
+                // Only consider it a real trajectory adjustment if deviation is significant
+                trajectoryWasAdjusted = (avgDeviation > frameWidth_ * 0.05f); // 5% of frame width
             }
-
-            // Sample point at 30% of height from bottom
-            int targetY = frameHeight_ - (0.65 * frameHeight_);
-
-            // Find closest point in adjusted trajectory at target Y
-            cv::Point adjustedPoint =
-                findClosestPointAtY(adjustedTrajectory, targetY);
-
-            // Find lane boundaries at same Y level
-            cv::Point leftLanePoint =
-                findClosestPointAtY(prevLeftCurve, targetY);
-            cv::Point rightLanePoint =
-                findClosestPointAtY(prevRightCurve, targetY);
-
-            if (adjustedPoint.x < leftLanePoint.x)
+            else
             {
-                // Trajectory crossed left - swap lanes
-                prevRightCurve = prevLeftCurve;
-                prevLeftCurve.clear();
-                std::cout << "Trajectory crossed right" << std::endl;
+                trajectoryWasAdjusted = true; // Different number of points means adjustment
             }
-            else if (adjustedPoint.x > rightLanePoint.x)
+            if (trajectoryWasAdjusted)
             {
-                // Trajectory crossed right - swap lanes
-                prevLeftCurve = prevRightCurve;
-                prevRightCurve.clear();
-                std::cout << "Trajectory crossed right" << std::endl;
+
+                // Replace original trajectory with adjusted one
+                midCurve.clear();
+                midCurve = adjustedTrajectory;
+    
+                cv::Scalar midCurveColor = cv::Scalar(0, 255, 0); // White
+                for (size_t i = 1; i < midCurve.size(); i++)
+                {
+                    cv::line(allPolylinesViz_, midCurve[i - 1], midCurve[i],
+                             midCurveColor, 3);
+                }
+    
+                // Sample point at 30% of height from bottom
+                int targetY = frameHeight_ - (0.65 * frameHeight_);
+    
+                //Find closest point in adjusted trajectory at target Y
+                cv::Point adjustedPoint =
+                    findClosestPointAtY(adjustedTrajectory, targetY);
+    
+                // Find lane boundaries at same Y level
+                cv::Point leftLanePoint =
+                    findClosestPointAtY(prevLeftCurve, targetY);
+                cv::Point rightLanePoint =
+                    findClosestPointAtY(prevRightCurve, targetY);
+    
+                if (adjustedPoint.x < leftLanePoint.x)
+                {
+                    // Trajectory crossed left - swap lanes
+                    prevRightCurve = prevLeftCurve;
+                    prevLeftCurve.clear();
+                    std::cout << "Trajectory crossed right" << std::endl;
+                }
+                else if (adjustedPoint.x > rightLanePoint.x)
+                {
+                    // Trajectory crossed right - swap lanes
+                    prevLeftCurve = prevRightCurve;
+                    prevRightCurve.clear();
+                    std::cout << "Trajectory crossed right" << std::endl;
+                }
             }
         }
         avoidance->visualizeGrid(&midCurve, segmentation_mask);
