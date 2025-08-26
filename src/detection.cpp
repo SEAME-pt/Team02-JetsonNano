@@ -104,10 +104,14 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                 writersInitialized = true;
             }
 
+            cv::Mat lane_overlay, obj_overlay;
+            cv::addWeighted(original_frame, 1.0, lane_mask, 0.5, 0.0, lane_overlay);
+            cv::addWeighted(original_frame, 1.0, object_mask, 0.5, 0.0, obj_overlay);
+
             if (!new_frame.empty()) ipmWriter.write(new_frame);
             if (!original_frame.empty()) origWriter.write(original_frame);
-            if (!lane_mask.empty()) laneWriter.write(lane_mask);
-            if (!object_mask.empty()) objWriter.write(object_mask);
+            if (!lane_overlay.empty()) laneWriter.write(lane_overlay);
+            if (!obj_overlay.empty()) objWriter.write(obj_overlay);
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
