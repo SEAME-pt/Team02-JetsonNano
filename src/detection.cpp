@@ -84,6 +84,8 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                               SynchronizedProcessor* processor)
 {
     cv::Mat original_frame, lane_mask, object_mask;
+    cv::VideoWriter ipmWriter, origWriter, laneWriter, objWriter;
+    bool writersInitialized = false;
 
     while (running)
     {
@@ -93,6 +95,19 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         {
             cv::Mat new_frame =
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
+
+            if (!writersInitialized) {
+                ipmWriter.open("ipm_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, new_frame.size());
+                origWriter.open("orig_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, original_frame.size());
+                laneWriter.open("lane_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, lane_mask.size());
+                objWriter.open("obj_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, object_mask.size());
+                writersInitialized = true;
+            }
+
+            if (!new_frame.empty()) ipmWriter.write(new_frame);
+            if (!original_frame.empty()) origWriter.write(original_frame);
+            if (!lane_mask.empty()) laneWriter.write(lane_mask);
+            if (!object_mask.empty()) objWriter.write(object_mask);
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
@@ -125,6 +140,13 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
+    }
+
+    if (writersInitialized) {
+        ipmWriter.release();
+        origWriter.release();
+        laneWriter.release();
+        objWriter.release();
     }
 }
 
