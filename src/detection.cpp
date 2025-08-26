@@ -104,9 +104,27 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                 writersInitialized = true;
             }
 
+            cv::Mat lane_mask_bgr, object_mask_bgr;
+            if (lane_mask.channels() == 1)
+                cv::cvtColor(lane_mask, lane_mask_bgr, cv::COLOR_GRAY2BGR);
+            else
+                lane_mask_bgr = lane_mask;
+
+            if (object_mask.channels() == 1)
+                cv::cvtColor(object_mask, object_mask_bgr, cv::COLOR_GRAY2BGR);
+            else
+                object_mask_bgr = object_mask;
+
+            // Resize masks to match original_frame if needed
+            if (lane_mask_bgr.size() != original_frame.size())
+                cv::resize(lane_mask_bgr, lane_mask_bgr, original_frame.size());
+            if (object_mask_bgr.size() != original_frame.size())
+                cv::resize(object_mask_bgr, object_mask_bgr, original_frame.size());
+
+            // Now safe to overlay
             cv::Mat lane_overlay, obj_overlay;
-            cv::addWeighted(original_frame, 1.0, lane_mask, 0.5, 0.0, lane_overlay);
-            cv::addWeighted(original_frame, 1.0, object_mask, 0.5, 0.0, obj_overlay);
+            cv::addWeighted(original_frame, 1.0, lane_mask_bgr, 0.5, 0.0, lane_overlay);
+            cv::addWeighted(original_frame, 1.0, object_mask_bgr, 0.5, 0.0, obj_overlay);
 
             if (!new_frame.empty()) ipmWriter.write(new_frame);
             if (!original_frame.empty()) origWriter.write(original_frame);
