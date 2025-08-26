@@ -99,24 +99,24 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             if (!writersInitialized) {
                 ipmWriter.open("ipm_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, new_frame.size());
                 origWriter.open("orig_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, original_frame.size());
-                laneWriter.open("lane_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, lane_mask.size());
-                objWriter.open("obj_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, object_mask.size());
+                // laneWriter.open("lane_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, lane_mask.size());
+                // objWriter.open("obj_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, object_mask.size());
                 writersInitialized = true;
             }
 
-            cv::Mat laneMask_resized, objMask_resized;
+            // cv::Mat laneMask_resized, objMask_resized;
 
-            cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
-            cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
+            // cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
+            // cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
 
-            cv::Mat lane_overlay, obj_overlay;
-            cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
-            cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
+            // cv::Mat lane_overlay, obj_overlay;
+            // cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
+            // cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
 
             if (!new_frame.empty()) ipmWriter.write(new_frame);
             if (!original_frame.empty()) origWriter.write(original_frame);
-            if (!lane_overlay.empty()) laneWriter.write(lane_overlay);
-            if (!obj_overlay.empty()) objWriter.write(obj_overlay);
+            // if (!lane_overlay.empty()) laneWriter.write(lane_overlay);
+            // if (!obj_overlay.empty()) objWriter.write(obj_overlay);
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
