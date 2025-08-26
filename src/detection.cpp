@@ -97,8 +97,8 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
 
             if (!writersInitialized) {
-                ipmWriter.open("ipm_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, new_frame.size());
-                origWriter.open("orig_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, original_frame.size());
+                ipmWriter.open("ipm_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 20, new_frame.size());
+                origWriter.open("orig_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 20, original_frame.size());
                 // laneWriter.open("lane_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, lane_mask.size());
                 // objWriter.open("obj_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, object_mask.size());
                 writersInitialized = true;
