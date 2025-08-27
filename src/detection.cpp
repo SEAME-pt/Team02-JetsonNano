@@ -86,7 +86,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 {
     cv::Mat original_frame, lane_mask, object_mask;
 
-    std::string save_folder = "output_frames";
+    std::string save_folder = "output_frames_lane";
     mkdir(save_folder.c_str(), 0777); 
 
     while (running)
