@@ -71,7 +71,7 @@ int main(int argc, char** argv)
             float kp             = 130;
             float ki             = 0.000001;
             float kd             = 10;
-            float constant_speed = 0.30; // m/s
+            float constant_speed = 0.35; // m/s
             float delta_time     = 0.05;
 
             int screen_height = 480;
