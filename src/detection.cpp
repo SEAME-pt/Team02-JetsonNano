@@ -80,12 +80,14 @@ void objectDetectionThreadFunction(ObjectDetector* detector,
     }
 }
 
+#include <sys/stat.h> 
 void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                               SynchronizedProcessor* processor)
 {
     cv::Mat original_frame, lane_mask, object_mask;
-    cv::VideoWriter ipmWriter, origWriter, laneWriter, objWriter;
-    bool writersInitialized = false;
+
+    std::string save_folder = "output_frames";
+    mkdir(save_folder.c_str(), 0777); 
 
     while (running)
     {
@@ -96,13 +98,6 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             cv::Mat new_frame =
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
 
-            if (!writersInitialized) {
-                ipmWriter.open("ipm_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, new_frame.size());
-                origWriter.open("orig_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 10, original_frame.size());
-                // laneWriter.open("lane_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, lane_mask.size());
-                // objWriter.open("obj_output.avi", cv::VideoWriter::fourcc('M','J','P','G'), 100, object_mask.size());
-                writersInitialized = true;
-            }
 
             // cv::Mat laneMask_resized, objMask_resized;
 
@@ -113,10 +108,21 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             // cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
             // cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
 
-            if (!new_frame.empty()) ipmWriter.write(new_frame);
-            if (!original_frame.empty()) origWriter.write(original_frame);
-            // if (!lane_overlay.empty()) laneWriter.write(lane_overlay);
-            // if (!obj_overlay.empty()) objWriter.write(obj_overlay);
+
+            auto now = std::chrono::system_clock::now();
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+            std::string orig_name = save_folder + "/orig_" + std::to_string(ms) + ".png";
+            cv::imwrite(orig_name, original_frame);
+
+            // std::string lane_name = save_folder + "/lane_" + std::to_string(ms) + ".png";
+            // cv::imwrite(lane_name, lane_mask);
+
+            // std::string obj_name = save_folder + "/obj_" + std::to_string(ms) + ".png";
+            // cv::imwrite(obj_name, object_mask);
+
+            std::string ipm_name = save_folder + "/ipm_" + std::to_string(ms) + ".png";
+            cv::imwrite(ipm_name, new_frame);
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
