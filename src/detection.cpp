@@ -156,13 +156,6 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
-
-    if (writersInitialized) {
-        ipmWriter.release();
-        origWriter.release();
-        laneWriter.release();
-        objWriter.release();
-    }
 }
 
 void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
