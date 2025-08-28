@@ -86,7 +86,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 {
     cv::Mat original_frame, lane_mask, object_mask;
 
-    std::string save_folder = "output_frames_traffic_light";
+    std::string save_folder = "output_images_example";
     mkdir(save_folder.c_str(), 0777); 
 
     while (running)
@@ -99,29 +99,29 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
 
 
-            cv::Mat objMask_resized;
+            cv::Mat objMask_resized, laneMask_resized;
 
-            // cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
+            cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
             cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
 
-            cv::Mat obj_overlay;
+            // cv::Mat obj_overlay;
             // cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
-            cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
+            // cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
 
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-            // std::string orig_name = save_folder + "/orig_" + std::to_string(ms) + ".png";
-            // cv::imwrite(orig_name, original_frame);
+            std::string orig_name = save_folder + "/orig_" + std::to_string(ms) + ".png";
+            cv::imwrite(orig_name, original_frame);
 
-            // std::string lane_name = save_folder + "/lane_" + std::to_string(ms) + ".png";
-            // cv::imwrite(lane_name, lane_mask);
+            std::string lane_name = save_folder + "/lane_" + std::to_string(ms) + ".png";
+            cv::imwrite(lane_name, laneMask_resized);
 
             std::string obj_name = save_folder + "/obj_" + std::to_string(ms) + ".png";
-            cv::imwrite(obj_name, obj_overlay);
+            cv::imwrite(obj_name, objMask_resized);
 
-            // std::string ipm_name = save_folder + "/ipm_" + std::to_string(ms) + ".png";
-            // cv::imwrite(ipm_name, new_frame);
+            std::string ipm_name = save_folder + "/ipm_" + std::to_string(ms) + ".png";
+            cv::imwrite(ipm_name, new_frame);
 
             std::vector<uchar> buffer_ipm_frame;
             std::vector<int> params_ipm = {cv::IMWRITE_JPEG_QUALITY, 20};
@@ -162,7 +162,7 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
 {
     cv::Mat frame, object_mask;
 
-    std::string save_folder = "output_frames_traffic_light";
+    std::string save_folder = "output_images_example";
     mkdir(save_folder.c_str(), 0777); 
     while (running)
     {
