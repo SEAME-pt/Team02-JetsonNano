@@ -86,7 +86,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
 {
     cv::Mat original_frame, lane_mask, object_mask;
 
-    std::string save_folder = "output_frames_traffic_yield";
+    std::string save_folder = "output_frames_traffic_crosswalk";
     mkdir(save_folder.c_str(), 0777); 
 
     while (running)
@@ -162,7 +162,7 @@ void trafficSignThreadFunction(TrafficSignClassifier* trafficSignClassifier,
 {
     cv::Mat frame, object_mask;
 
-    std::string save_folder = "output_frames_traffic_yield";
+    std::string save_folder = "output_frames_traffic_crosswalk";
     mkdir(save_folder.c_str(), 0777); 
     while (running)
     {
