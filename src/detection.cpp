@@ -118,7 +118,7 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             // cv::imwrite(lane_name, lane_mask);
 
             std::string obj_name = save_folder + "/obj_" + std::to_string(ms) + ".png";
-            cv::imwrite(obj_name, object_mask);
+            cv::imwrite(obj_name, obj_overlay);
 
             // std::string ipm_name = save_folder + "/ipm_" + std::to_string(ms) + ".png";
             // cv::imwrite(ipm_name, new_frame);
