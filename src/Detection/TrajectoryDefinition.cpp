@@ -239,7 +239,7 @@ cv::Mat TrajectoryDefinition::process(cv::Mat& frame, cv::Mat& binary_mask,
     cv::Mat res_class_mask;
     cv::resize(ipm_class_mask, res_class_mask, size, 0, 0, cv::INTER_LINEAR);
 
-    cv::addWeighted(res_frame, 0.7, res_class_mask, 0.3, 0.0, res_frame);
+    // cv::addWeighted(res_frame, 0.7, res_class_mask, 0.3, 0.0, res_frame);
     return (res_frame);
 }
 
