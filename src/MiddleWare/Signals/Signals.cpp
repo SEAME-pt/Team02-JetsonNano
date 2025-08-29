@@ -389,7 +389,7 @@ void Signals::run()
             speed = ntohl(speed);
 
             float fspeed = static_cast<float>(speed);
-            std::cout << fspeed << std::endl;
+            // std::cout << fspeed << std::endl;
 
             this->publisher_->publishSpeed(fspeed);
         }
