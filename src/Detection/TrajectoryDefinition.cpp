@@ -1366,6 +1366,65 @@ bool TrajectoryDefinition::checkForwardCollision(
         rightPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), rightPoint.x));
         rightPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), rightPoint.y));
         
+        if (!leftCurve.empty() && !rightCurve.empty()) {
+            // Find the closest points on left and right curves at the current Y level
+            cv::Point leftBoundaryPoint = findClosestPointAtY(leftCurve, static_cast<int>(leftPoint.y));
+            cv::Point rightBoundaryPoint = findClosestPointAtY(rightCurve, static_cast<int>(rightPoint.y));
+            
+            // Calculate vectors from center to boundary points
+            cv::Point2f leftBoundaryVec = cv::Point2f(leftBoundaryPoint.x - center.x, leftBoundaryPoint.y - center.y);
+            cv::Point2f rightBoundaryVec = cv::Point2f(rightBoundaryPoint.x - center.x, rightBoundaryPoint.y - center.y);
+            
+            // Calculate vectors from center to current points
+            cv::Point2f leftPointVec = leftPoint - center;
+            cv::Point2f rightPointVec = rightPoint - center;
+            
+            // Project boundary vectors onto the normal direction to determine which side they're on
+            float leftBoundaryProjection = leftBoundaryVec.dot(normal);
+            float rightBoundaryProjection = rightBoundaryVec.dot(normal);
+            
+            // Project current points onto normal direction
+            float leftPointProjection = leftPointVec.dot(normal);
+            float rightPointProjection = rightPointVec.dot(normal);
+            
+            // Determine which boundary is actually on the left/right side based on normal projection
+            bool leftBoundaryIsLeft = leftBoundaryProjection < rightBoundaryProjection;
+            
+            if (leftBoundaryIsLeft) {
+                // leftCurve is actually on the left side (negative normal direction)
+                // Constrain leftPoint to not go beyond leftCurve (more negative than boundary)
+                if (leftPointProjection < leftBoundaryProjection) {
+                    leftPoint = center + normal * leftBoundaryProjection;
+                }
+                
+                // Constrain rightPoint to not go beyond rightCurve (more positive than boundary)
+                if (rightPointProjection > rightBoundaryProjection) {
+                    rightPoint = center + normal * rightBoundaryProjection;
+                }
+            } else {
+                // Curves are swapped or very bent - rightCurve is on left side
+                // Constrain leftPoint to not go beyond rightCurve
+                if (leftPointProjection < rightBoundaryProjection) {
+                    leftPoint = center + normal * rightBoundaryProjection;
+                }
+                
+                // Constrain rightPoint to not go beyond leftCurve  
+                if (rightPointProjection > leftBoundaryProjection) {
+                    rightPoint = center + normal * leftBoundaryProjection;
+                }
+            }
+            
+            // Final safety check: ensure leftPoint is still to the left of rightPoint in normal direction
+            leftPointProjection = (leftPoint - center).dot(normal);
+            rightPointProjection = (rightPoint - center).dot(normal);
+            
+            if (leftPointProjection > rightPointProjection) {
+                float midProjection = (leftPointProjection + rightPointProjection) * 0.5f;
+                leftPoint = center + normal * (midProjection - 5.0f);  // Small offset to maintain separation
+                rightPoint = center + normal * (midProjection + 5.0f);
+            }
+        }
+
         leftBoundary.push_back(cv::Point(static_cast<int>(leftPoint.x), static_cast<int>(leftPoint.y)));
         rightBoundary.push_back(cv::Point(static_cast<int>(rightPoint.x), static_cast<int>(rightPoint.y)));
     }
