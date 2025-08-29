@@ -1412,9 +1412,9 @@ bool TrajectoryDefinition::checkForwardCollision(
                 // {
                 //     road_pixels++;
                 // }
-                if ((std::abs(pixel[0] - 128) < 15 &&
-                     std::abs(pixel[1] - 64) < 15 &&
-                     std::abs(pixel[2] - 128) < 15))
+                if ((std::abs(pixel[0] - 128) == 0 &&
+                     std::abs(pixel[1] - 64) == 0 &&
+                     std::abs(pixel[2] - 128) == 0))
                 {
                     road_pixels++;
                 }
@@ -1437,7 +1437,7 @@ bool TrajectoryDefinition::checkForwardCollision(
 
     // Calculate road percentage and check for danger
     float road_percentage = static_cast<float>(road_pixels) / (total_pixels + 1);
-    const float SAFE_ROAD_THRESHOLD = 0.75f;
+    const float SAFE_ROAD_THRESHOLD = 0.3f;
     bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     if (danger_detected)
