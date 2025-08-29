@@ -124,7 +124,6 @@ void TrajectoryDefinition::initLocalEnv()
             std::atan((img_height / img_width) * std::tan(h_fov_rad / 2.0f)) *
             180.0f / CV_PI;
         nearDistance_     = 0.2f; // meters
-        nearDistance_     = 0.2f; // meters
         farDistance_      = 0.8f; // meters
         laneWidth_        = 0.6f; // meters
         cv::Size bevSize  = cv::Size(width_, height_);

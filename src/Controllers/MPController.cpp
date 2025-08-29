@@ -118,8 +118,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // double time = getCurrentTime();
     // Conversion factors
-    const double mx = 0.49 / (width_ * 0.4 / 0.49); // meters per pixel in x
-    const double my = 0.4 / height_;                // meters per pixel in y
+    const double mx = 0.6 / (width_ * 0.6 / 0.6); // meters per pixel in x
+    const double my = 0.6 / height_;                // meters per pixel in y
     // double time2 = getCurrentTime();
     // std::cout << "Time for conversion factors: " << (time2 - time) << " s" <<
     // std::endl; Convert pixel-space trajectory coeffs to meter-space
