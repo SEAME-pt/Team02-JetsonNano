@@ -145,7 +145,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     {
         // double v_ref = v_init + (target_velocity_ - v_init) * double(k) / N_;
         double v_ref   = target_velocity_;
-        double y_ref   = x0(1) + k * v_ref * Ts_;
+        double y_ref   = k * v_ref * Ts_;
         // double y_ref   = x0(1) + k * v_ref * Ts_;
         double x_ref_m = meter_coeffs[0] + meter_coeffs[1] * y_ref +
                          meter_coeffs[2] * y_ref * y_ref +
