@@ -1366,10 +1366,10 @@ bool TrajectoryDefinition::checkForwardCollision(
         rightPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), rightPoint.x));
         rightPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), rightPoint.y));
         
-        if (!leftCurve.empty() && !rightCurve.empty()) {
+        if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
             // Find the closest points on left and right curves at the current Y level
-            cv::Point leftBoundaryPoint = findClosestPointAtY(leftCurve, static_cast<int>(leftPoint.y));
-            cv::Point rightBoundaryPoint = findClosestPointAtY(rightCurve, static_cast<int>(rightPoint.y));
+            cv::Point leftBoundaryPoint = findClosestPointAtY(prevLeftCurve, static_cast<int>(leftPoint.y));
+            cv::Point rightBoundaryPoint = findClosestPointAtY(prevRightCurve, static_cast<int>(rightPoint.y));
             
             // Calculate vectors from center to boundary points
             cv::Point2f leftBoundaryVec = cv::Point2f(leftBoundaryPoint.x - center.x, leftBoundaryPoint.y - center.y);
