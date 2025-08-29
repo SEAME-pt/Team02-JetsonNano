@@ -77,6 +77,8 @@ class TrajectoryDefinition
 
     int distanceToObstacle_;
 
+    cv::Mat blackPixelMask_;
+
     
   public:
     std::optional<zenoh::Publisher> ipm_frame_publisher_;
@@ -147,8 +149,9 @@ class TrajectoryDefinition
     void checkAutonomyEnvEnable(std::vector<cv::Point>& midCurve);
     bool isCurveStraight(const cv::Mat& coeffs, double threshold);
     
-    bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
-
+    bool checkForwardCollision(const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve, cv::Mat& frame);
+    bool isBlackPixel(int x, int y) const;
+\
     void obstacleAvoidance(cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve);
     cv::Point findClosestPointAtY(const std::vector<cv::Point>& curve, int targetY);
 

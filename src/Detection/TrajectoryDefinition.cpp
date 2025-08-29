@@ -309,7 +309,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     }
     else
     {
-        checkForwardCollision(class_mask, midCurve);
+        checkForwardCollision(class_mask, midCurve, frame);
     }
 
     if (activeAutonomyLevel_ == "SAE_2" || activeAutonomyLevel_ == "SAE_3" ||
@@ -1312,8 +1312,35 @@ void TrajectoryDefinition::checkAutonomyEnvEnable(
 }
 
 bool TrajectoryDefinition::checkForwardCollision(
-    const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve)
+    const cv::Mat& segmentation_mask, std::vector<cv::Point>& midCurve, cv::Mat& frame)
 {
+    static bool define_ipm_usable_area = 0;
+
+    if (define_ipm_usable_area == 0)
+    {
+        // Create a boolean mask for black pixels
+        blackPixelMask_ = cv::Mat::zeros(frame.size(), CV_8UC1);
+        
+        for (int y = 0; y < frame.rows; y++)
+        {
+            const cv::Vec3b* frameRow = frame.ptr<cv::Vec3b>(y);
+            uchar* maskRow = blackPixelMask_.ptr<uchar>(y);
+            
+            for (int x = 0; x < frame.cols; x++)
+            {
+                const cv::Vec3b& pixel = frameRow[x];
+                // Check if pixel is black (0, 0, 0)
+                if (pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0)
+                {
+                    maskRow[x] = 255; // Mark as black pixel
+                }
+            }
+        }
+        
+        define_ipm_usable_area = 1; // Fixed assignment operator
+    }
+
+
     if (midCurve.empty())
     {
         cv::putText(allPolylinesViz_,
@@ -1366,70 +1393,6 @@ bool TrajectoryDefinition::checkForwardCollision(
         {
             continue;
         }
-        // leftPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), leftPoint.x));
-        // leftPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), leftPoint.y));
-        // rightPoint.x = std::max(0.0f, std::min(static_cast<float>(frameWidth_ - 1), rightPoint.x));
-        // rightPoint.y = std::max(0.0f, std::min(static_cast<float>(frameHeight_ - 1), rightPoint.y));
-        
-        // if (!prevLeftCurve.empty() && !prevRightCurve.empty()) {
-        //     // Find the closest points on left and right curves at the current Y level
-        //     cv::Point leftBoundaryPoint = findClosestPointAtY(prevLeftCurve, static_cast<int>(leftPoint.y));
-        //     cv::Point rightBoundaryPoint = findClosestPointAtY(prevRightCurve, static_cast<int>(rightPoint.y));
-            
-        //     // Calculate vectors from center to boundary points
-        //     cv::Point2f leftBoundaryVec = cv::Point2f(leftBoundaryPoint.x - center.x, leftBoundaryPoint.y - center.y);
-        //     cv::Point2f rightBoundaryVec = cv::Point2f(rightBoundaryPoint.x - center.x, rightBoundaryPoint.y - center.y);
-            
-        //     // Calculate vectors from center to current points
-        //     cv::Point2f leftPointVec = leftPoint - center;
-        //     cv::Point2f rightPointVec = rightPoint - center;
-            
-        //     // Project boundary vectors onto the normal direction to determine which side they're on
-        //     float leftBoundaryProjection = leftBoundaryVec.dot(normal);
-        //     float rightBoundaryProjection = rightBoundaryVec.dot(normal);
-            
-        //     // Project current points onto normal direction
-        //     float leftPointProjection = leftPointVec.dot(normal);
-        //     float rightPointProjection = rightPointVec.dot(normal);
-            
-        //     // Determine which boundary is actually on the left/right side based on normal projection
-        //     bool leftBoundaryIsLeft = leftBoundaryProjection < rightBoundaryProjection;
-            
-        //     if (leftBoundaryIsLeft) {
-        //         // leftCurve is actually on the left side (negative normal direction)
-        //         // Constrain leftPoint to not go beyond leftCurve (more negative than boundary)
-        //         if (leftPointProjection < leftBoundaryProjection) {
-        //             leftPoint = center + normal * leftBoundaryProjection;
-        //         }
-                
-        //         // Constrain rightPoint to not go beyond rightCurve (more positive than boundary)
-        //         if (rightPointProjection > rightBoundaryProjection) {
-        //             rightPoint = center + normal * rightBoundaryProjection;
-        //         }
-        //     } else {
-        //         // Curves are swapped or very bent - rightCurve is on left side
-        //         // Constrain leftPoint to not go beyond rightCurve
-        //         if (leftPointProjection < rightBoundaryProjection) {
-        //             leftPoint = center + normal * rightBoundaryProjection;
-        //         }
-                
-        //         // Constrain rightPoint to not go beyond leftCurve  
-        //         if (rightPointProjection > leftBoundaryProjection) {
-        //             rightPoint = center + normal * leftBoundaryProjection;
-        //         }
-        //     }
-            
-        //     // Final safety check: ensure leftPoint is still to the left of rightPoint in normal direction
-        //     leftPointProjection = (leftPoint - center).dot(normal);
-        //     rightPointProjection = (rightPoint - center).dot(normal);
-            
-        //     if (leftPointProjection > rightPointProjection) {
-        //         float midProjection = (leftPointProjection + rightPointProjection) * 0.5f;
-        //         leftPoint = center + normal * (midProjection - 5.0f);  // Small offset to maintain separation
-        //         rightPoint = center + normal * (midProjection + 5.0f);
-        //     }
-        // }
-
         leftBoundary.push_back(cv::Point(static_cast<int>(leftPoint.x), static_cast<int>(leftPoint.y)));
         rightBoundary.push_back(cv::Point(static_cast<int>(rightPoint.x), static_cast<int>(rightPoint.y)));
     }
@@ -1469,7 +1432,7 @@ bool TrajectoryDefinition::checkForwardCollision(
                 cv::Vec3b pixel = segRow[x];
                 if ((std::abs(pixel[0] - 128) == 0 &&
                      std::abs(pixel[1] - 64) == 0 &&
-                     std::abs(pixel[2] - 128) == 0))
+                     std::abs(pixel[2] - 128) == 0) || isBlackPixel(x, y))
                 {
                     road_pixels++;
                 }
@@ -1509,6 +1472,23 @@ bool TrajectoryDefinition::checkForwardCollision(
     }
     
     return false;
+}
+
+bool TrajectoryDefinition::isBlackPixel(int x, int y) const
+{
+    // Check bounds first
+    if (x < 0 || x >= frameWidth_ || y < 0 || y >= frameHeight_)
+    {
+        return false;
+    }
+    
+    // Check if blackPixelMask has been initialized and is valid
+    if (blackPixelMask_.empty() || blackPixelMask_.cols != frameWidth_ || blackPixelMask_.rows != frameHeight_)
+    {
+        return false;
+    }
+    
+    return blackPixelMask_.at<uchar>(y, x) == 255;
 }
 
 // Helper function to calculate smooth tangent at a point
