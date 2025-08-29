@@ -132,11 +132,11 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     meter_coeffs[1] = mx * traj_coeffs[1] / my;
     meter_coeffs[2] = mx * traj_coeffs[2] / (my * my);
     meter_coeffs[3] = mx * traj_coeffs[3] / (my * my * my);
-    // std::cout << "Meter coefficients: "
-    //           << meter_coeffs[0] << ", "
-    //           << meter_coeffs[1] << ", "
-    //           << meter_coeffs[2] << ", "
-    //           << meter_coeffs[3] << std::endl;
+    std::cout << "Meter coefficients: "
+              << meter_coeffs[0] << ", "
+              << meter_coeffs[1] << ", "
+              << meter_coeffs[2] << ", "
+              << meter_coeffs[3] << std::endl;
 
     // Build reference trajectory in meter-space
     std::vector<Eigen::Vector4d> x_ref(N_ + 1);
