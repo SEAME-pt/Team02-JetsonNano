@@ -1405,21 +1405,20 @@ bool TrajectoryDefinition::checkForwardCollision(
                 cv::Vec3b pixel = segRow[x];
 
                 // Check for road pixels (adjust color thresholds as needed)
+                // if ((std::abs(pixel[0] - 128) < 15 &&
+                //      std::abs(pixel[1] - 64) < 15 &&
+                //      std::abs(pixel[2] - 128) < 15) ||
+                //     (pixel[0] < 15 && pixel[1] < 15 && pixel[2] < 15))
+                // {
+                //     road_pixels++;
+                // }
                 if ((std::abs(pixel[0] - 128) < 15 &&
                      std::abs(pixel[1] - 64) < 15 &&
-                     std::abs(pixel[2] - 128) < 15) ||
-                    (pixel[0] < 15 && pixel[1] < 15 && pixel[2] < 15))
+                     std::abs(pixel[2] - 128) < 15))
                 {
                     road_pixels++;
                 }
 
-//                 if ((std::abs(pixel[0] - 128) < 10 &&
-//                      std::abs(pixel[1] - 64) < 10 &&
-//                      std::abs(pixel[2] - 128) < 10) ||
-//                     (pixel[0] < 10 && pixel[1] < 10 && pixel[2] < 10))
-//                 {
-//                     road_pixels++;
-//                 }
             }
         }
     }
