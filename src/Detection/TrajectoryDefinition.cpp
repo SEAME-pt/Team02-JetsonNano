@@ -1426,8 +1426,9 @@ bool TrajectoryDefinition::checkForwardCollision(
 
     // Visualize the detection zone
     cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
-    cv::putText(allPolylinesViz_, "Road Pixels : ",
-                    cv::Point(road_pixels),
+    std::string road =  "Road Pixels : " + std::to_string(road_pixels))
+    cv::putText(allPolylinesViz_, road,
+                    cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255), 3);
     // Optional: Draw the left and right boundaries separately for debugging
     if (leftBoundary.size() > 1)
