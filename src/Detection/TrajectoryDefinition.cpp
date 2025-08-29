@@ -1344,7 +1344,7 @@ bool TrajectoryDefinition::checkForwardCollision(
     std::vector<cv::Point> polygonPoints;
 
     // Create smooth boundaries that follow trajectory curvature
-    for (size_t i = 0; i < midCurve.size(); i++)
+    for (size_t i = 0; i < midCurve.size() - 1; i++)
     {
         // Skip points too close to top of frame
         if (midCurve[i].y < frameHeight_ * 0.25)
