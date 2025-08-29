@@ -309,7 +309,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     }
     else
     {
-        // checkForwardCollision(class_mask, midCurve);
+        checkForwardCollision(class_mask, midCurve);
     }
 
     if (activeAutonomyLevel_ == "SAE_2" || activeAutonomyLevel_ == "SAE_3" ||
@@ -1412,6 +1412,14 @@ bool TrajectoryDefinition::checkForwardCollision(
                 {
                     road_pixels++;
                 }
+
+//                 if ((std::abs(pixel[0] - 128) < 10 &&
+//                      std::abs(pixel[1] - 64) < 10 &&
+//                      std::abs(pixel[2] - 128) < 10) ||
+//                     (pixel[0] < 10 && pixel[1] < 10 && pixel[2] < 10))
+//                 {
+//                     road_pixels++;
+//                 }
             }
         }
     }
@@ -1427,7 +1435,7 @@ bool TrajectoryDefinition::checkForwardCollision(
 
     // Calculate road percentage and check for danger
     float road_percentage = static_cast<float>(road_pixels) / (total_pixels + 1);
-    const float SAFE_ROAD_THRESHOLD = 0.3f;
+    const float SAFE_ROAD_THRESHOLD = 0.5f;
     bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     if (danger_detected)
