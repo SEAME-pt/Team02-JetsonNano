@@ -1361,8 +1361,8 @@ bool TrajectoryDefinition::checkForwardCollision(
         cv::Point2f rightPoint = center + normal * (zoneWidth / 2.0f);
         
         // Ensure points are within frame bounds
-        if ((leftPoint[i].y < 0 && leftPoint[i].y > frameHeight_ - 1 && leftPoint[i].x < 0 && leftPoint[i].x > frameWidth_ - 1) ||
-        (rightPoint[i].y < 0 && rightPoint[i].y > frameHeight_ - 1 && rightPoint[i].x < 0 && rightPoint[i].x > frameWidth_ - 1))
+        if ((leftPoint.y < 0 && leftPoint.y > frameHeight_ - 1 && leftPoint.x < 0 && leftPoint.x > frameWidth_ - 1) ||
+        (rightPoint.y < 0 && rightPoint.y > frameHeight_ - 1 && rightPoint.x < 0 && rightPoint.x > frameWidth_ - 1))
         {
             continue;
         }
