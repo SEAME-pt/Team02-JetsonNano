@@ -258,7 +258,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     frameHeight_     = frame.rows;
 
     lanePolylines = clusterLaneMask(binary_mask, 2, 30, 6);
-    clusterObjMask(class_mask, 50);
+    clusterObjMask(class_mask, 60);
 
     filterFalseLanes(lanePolylines, coeffsSave);
 
@@ -770,7 +770,7 @@ void TrajectoryDefinition::clusterObjMask(const cv::Mat& classMask,
                                           int kernelSize)
 {
     static cv::Mat verticalKernel = cv::getStructuringElement(
-        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize * 2));
+        cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
     static cv::Mat horizontalKernel = cv::getStructuringElement(
         cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
 
