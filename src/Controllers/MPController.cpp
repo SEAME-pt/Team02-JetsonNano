@@ -126,7 +126,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     std::vector<double> meter_coeffs(4);
 
     // const double image_width_px = 1024.0;
-    // const double center_x_px = image_width_px / 2.0;
+    // const double center_x_px = width_ / 2.0;
     // meter_coeffs[0] = mx * (traj_coeffs[0] - center_x_px);
     meter_coeffs[0] = mx * traj_coeffs[0];
     meter_coeffs[1] = mx * traj_coeffs[1] / my;
@@ -146,6 +146,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
         // double v_ref = v_init + (target_velocity_ - v_init) * double(k) / N_;
         double v_ref   = target_velocity_;
         double y_ref   = x0(1) + k * v_ref * Ts_;
+        // double y_ref   = x0(1) + k * v_ref * Ts_;
         double x_ref_m = meter_coeffs[0] + meter_coeffs[1] * y_ref +
                          meter_coeffs[2] * y_ref * y_ref +
                          meter_coeffs[3] * y_ref * y_ref * y_ref;
