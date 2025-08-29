@@ -328,7 +328,7 @@ void TrajectoryDefinition::createLanes(cv::Mat& frame, cv::Mat& binary_mask,
     }
     else if (activeAutonomyLevel_ == "SAE_1_ACC")
     {
-        std::cout << "ACC Mode" << std::endl;
+        // std::cout << "ACC Mode" << std::endl;
         adaptiveSpeedControl(class_mask, midCurve);
     }
 
@@ -425,9 +425,9 @@ void TrajectoryDefinition::defineLaneEnv(
         else
         {
             lowerPointLaneDefinition(lanePolylines, leftCurve, rightCurve);
-            std::cout
-                << "Lower Point Lane Definition in prev history for both lanes"
-                << std::endl;
+            // std::cout
+            //     << "Lower Point Lane Definition in prev history for both lanes"
+            //     << std::endl;
         }
     }
     else if (!prevLeftCurve.empty())
@@ -792,7 +792,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
 
         leftLaneLastUpdatedFrame = currentFrame;
 
-        std::cout << "Left (Valid) | Right (Predicted)" << std::endl;
+        // std::cout << "Left (Valid) | Right (Predicted)" << std::endl;
     }
     else
     {
@@ -805,7 +805,7 @@ void TrajectoryDefinition::onePolyline(std::vector<cv::Point>& leftCurve,
 
         rightLaneLastUpdatedFrame = currentFrame;
 
-        std::cout << "Right (Valid) | Left (Predicted)" << std::endl;
+        // std::cout << "Right (Valid) | Left (Predicted)" << std::endl;
     }
 }
 
@@ -1199,25 +1199,25 @@ bool TrajectoryDefinition::checkIfLeftLane(
 
         isLeftLane = leftDistance < rightDistance;
 
-        std::string debugMsg =
-            "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") +
-            " (L:" + std::to_string(leftDistance).substr(0, 5) +
-            "/R:" + std::to_string(rightDistance).substr(0, 5) + ")";
+        // std::string debugMsg =
+        //     "Memory match: " + std::string(isLeftLane ? "LEFT" : "RIGHT") +
+        //     " (L:" + std::to_string(leftDistance).substr(0, 5) +
+        //     "/R:" + std::to_string(rightDistance).substr(0, 5) + ")";
         // cv::putText(allPolylinesViz_, debugMsg, cv::Point(20, 80),
         //             cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255, 255, 0),
         //             2);
 
-        std::cout << debugMsg << std::endl;
+        // std::cout << debugMsg << std::endl;
 
-        std::string staleMsg =
-            "Staleness - L:" +
-            std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
-            " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
+        // std::string staleMsg =
+        //     "Staleness - L:" +
+        //     std::to_string(currentFrame - leftLaneLastUpdatedFrame) +
+        //     " R:" + std::to_string(currentFrame - rightLaneLastUpdatedFrame);
         // cv::putText(allPolylinesViz_, staleMsg, cv::Point(20, 100),
         //             cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0),
         //             1);
 
-        std::cout << staleMsg << std::endl;
+        // std::cout << staleMsg << std::endl;
     }
     else
     {
@@ -1594,14 +1594,14 @@ void TrajectoryDefinition::obstacleAvoidance(cv::Mat& segmentation_mask,
                     // Trajectory crossed left - swap lanes
                     prevRightCurve = prevLeftCurve;
                     prevLeftCurve.clear();
-                    std::cout << "Trajectory crossed right" << std::endl;
+                    // std::cout << "Trajectory crossed right" << std::endl;
                 }
                 else if (adjustedPoint.x > rightLanePoint.x)
                 {
                     // Trajectory crossed right - swap lanes
                     prevLeftCurve = prevRightCurve;
                     prevRightCurve.clear();
-                    std::cout << "Trajectory crossed right" << std::endl;
+                    // std::cout << "Trajectory crossed right" << std::endl;
                 }
             }
         }

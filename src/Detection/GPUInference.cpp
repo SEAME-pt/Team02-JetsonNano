@@ -103,24 +103,24 @@ void GPUInference::inference()
 
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    // if (outputChannels_ == 1)
-    // {
-    //     std::cout << "\033[32mInference time in lane detection: " <<
-    //     milliseconds
-    //             << "ms\033[0m\n"; // Green
-    // }
-    // else if (outputChannels_ == 8)
-    // {
-    //     std::cout << "\033[34mInference time in object detection: " <<
-    //     milliseconds
-    //             << "ms\033[0m\n"; // Blue
-    // }
-    // else if (outputChannels_ == 9)
-    // {
-    //     std::cout << "\033[33mInference time in traffic classification: " <<
-    //     milliseconds
-    //             << "ms\033[0m\n"; // Yellow
-    // }
+    if (outputChannels_ == 1)
+    {
+        std::cout << "\033[32mInference time in lane detection: " <<
+        milliseconds
+                << "ms\033[0m\n"; // Green
+    }
+    else if (outputChannels_ == 8)
+    {
+        std::cout << "\033[34mInference time in object detection: " <<
+        milliseconds
+                << "ms\033[0m\n"; // Blue
+    }
+    else if (outputChannels_ == 9)
+    {
+        std::cout << "\033[33mInference time in traffic classification: " <<
+        milliseconds
+                << "ms\033[0m\n"; // Yellow
+    }
 }
 
 void GPUInference::copyToGPU(cv::Mat& preprocessedFrame)
