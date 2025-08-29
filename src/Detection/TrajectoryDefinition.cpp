@@ -1344,10 +1344,10 @@ bool TrajectoryDefinition::checkForwardCollision(
     std::vector<cv::Point> polygonPoints;
 
     // Create smooth boundaries that follow trajectory curvature
-    for (size_t i = 5; i < midCurve.size(); i++)
+    for (size_t i = 0; i < midCurve.size(); i++)
     {
         // Skip points too close to top of frame
-        if (midCurve[i].y < frameHeight_ * 0.25)
+        if (midCurve[i].y < frameHeight_ * 0.25 || (midCurve[i].y < 0 && midCurve[i].y > frameHeight_ - 1 && midCurve[i].x < 0 && midCurve[i].x > frameWidth_ - 1))
             continue;
 
         cv::Point2f tangent = calculateSmoothTangent(midCurve, i);
