@@ -1425,7 +1425,7 @@ bool TrajectoryDefinition::checkForwardCollision(
 
     // Calculate road percentage and check for danger
     float road_percentage = static_cast<float>(road_pixels) / (total_pixels + 1);
-    const float SAFE_ROAD_THRESHOLD = 0.45f;
+    const float SAFE_ROAD_THRESHOLD = 0.55f;
     bool danger_detected = (road_percentage < SAFE_ROAD_THRESHOLD);
 
     if (danger_detected)
