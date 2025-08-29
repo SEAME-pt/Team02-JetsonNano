@@ -1403,15 +1403,6 @@ bool TrajectoryDefinition::checkForwardCollision(
             {
                 total_pixels++;
                 cv::Vec3b pixel = segRow[x];
-
-                // Check for road pixels (adjust color thresholds as needed)
-                // if ((std::abs(pixel[0] - 128) < 15 &&
-                //      std::abs(pixel[1] - 64) < 15 &&
-                //      std::abs(pixel[2] - 128) < 15) ||
-                //     (pixel[0] < 15 && pixel[1] < 15 && pixel[2] < 15))
-                // {
-                //     road_pixels++;
-                // }
                 if ((std::abs(pixel[0] - 128) == 0 &&
                      std::abs(pixel[1] - 64) == 0 &&
                      std::abs(pixel[2] - 128) == 0))
@@ -1425,10 +1416,7 @@ bool TrajectoryDefinition::checkForwardCollision(
 
     // Visualize the detection zone
     cv::polylines(allPolylinesViz_, contours, true, cv::Scalar(0, 255, 255), 2);
-    std::string road =  "Road Pixels : " + std::to_string(road_pixels);
-    cv::putText(allPolylinesViz_, road,
-                    cv::Point(frameWidth_ / 2 - 150, frameHeight_ / 2),
-                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(0, 0, 255), 3);
+
     // Optional: Draw the left and right boundaries separately for debugging
     if (leftBoundary.size() > 1)
         cv::polylines(allPolylinesViz_, leftBoundary, false, cv::Scalar(255, 0, 0), 1);
