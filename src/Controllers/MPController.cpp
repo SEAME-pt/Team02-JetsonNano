@@ -359,7 +359,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     // if (carlaMode_) {
     desired_speed_ = u_flat(0);
     double max_allowed_speed = target_velocity_ * 1.5;
-    desired_speed_ = static_cast<float>(std::clamp(desired_speed_, 0.0, max_allowed_speed));
+    desired_speed_ = static_cast<float>(std::clamp(static_cast<double>(desired_speed_), 0.0, max_allowed_speed));
     // } else {
     // desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s
     // to rpm
