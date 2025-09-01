@@ -224,7 +224,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
 
     // 3.2) gradient‐descent with backtracking line-search
     const double tol   = 1e-4;
-    const int max_iter = 20;
+    const int max_iter = 30;
     double alpha0 = 0.1, beta = 0.5;
     Eigen::VectorXd grad(2 * N_);
 
