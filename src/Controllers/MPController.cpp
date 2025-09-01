@@ -316,7 +316,7 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             // clamp
             for (size_t k = 0; k < N_; ++k)
             {
-                double max_speed = target_velocity_ * 1.5;
+                double max_speed = target_velocity_ * 1.2;
                 u_next(2 * k) = std::clamp(u_next(2 * k), 0.0, max_speed);
                 u_next(2 * k + 1) =
                     std::clamp(u_next(2 * k + 1), -0.7854, 0.7854);
