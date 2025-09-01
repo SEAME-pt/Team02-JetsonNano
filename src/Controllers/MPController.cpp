@@ -316,7 +316,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
             // clamp
             for (size_t k = 0; k < N_; ++k)
             {
-                u_next(2 * k) = std::clamp(u_next(2 * k), 0.0, 10.0);
+                double max_speed = target_velocity_ * 1.5;
+                u_next(2 * k) = std::clamp(u_next(2 * k), 0.0, max_speed);
                 u_next(2 * k + 1) =
                     std::clamp(u_next(2 * k + 1), -0.7854, 0.7854);
             }
@@ -357,6 +358,8 @@ void ModelPredictiveController::solve(const Eigen::Vector4d& x0,
     // set outputs
     // if (carlaMode_) {
     desired_speed_ = u_flat(0);
+    double max_allowed_speed = target_velocity_ * 1.5;
+    desired_speed_ = std::clamp(desired_speed_, 0.0, max_allowed_speed);
     // } else {
     // desired_speed_ = u_flat(0) * 60.0 / (M_PI * 0.067); // convert from m/s
     // to rpm
