@@ -104,9 +104,9 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             // cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
             // cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
 
-            // cv::Mat obj_overlay;
+            cv::Mat obj_overlay;
             // cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
-            // cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
+            cv::addWeighted(original_frame, 1.0, objMask_resized, 0.5, 0.0, obj_overlay);
 
             auto now = std::chrono::system_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
@@ -117,8 +117,8 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
             // std::string lane_name = save_folder + "/lane_" + std::to_string(ms) + ".png";
             // cv::imwrite(lane_name, laneMask_resized);
 
-            // std::string obj_name = save_folder + "/obj_" + std::to_string(ms) + ".png";
-            // cv::imwrite(obj_name, objMask_resized);
+            std::string obj_name = save_folder + "/obj_" + std::to_string(ms) + ".png";
+            cv::imwrite(obj_name, objMask_resized);
 
             std::string ipm_name = save_folder + "/ipm_" + std::to_string(ms) + ".png";
             cv::imwrite(ipm_name, new_frame);
