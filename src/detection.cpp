@@ -99,10 +99,10 @@ void trajectoryThreadFunction(TrajectoryDefinition* trajectoryDef,
                 trajectoryDef->process(original_frame, lane_mask, object_mask);
 
 
-            // cv::Mat objMask_resized, laneMask_resized;
+            cv::Mat objMask_resized, laneMask_resized;
 
-            // cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
-            // cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
+            cv::resize(lane_mask, laneMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
+            cv::resize(object_mask, objMask_resized, original_frame.size(), 0, 0, cv::INTER_LINEAR);
 
             cv::Mat obj_overlay;
             // cv::addWeighted(original_frame, 1.0, laneMask_resized, 0.5, 0.0, lane_overlay);
